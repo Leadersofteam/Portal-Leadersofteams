@@ -10,22 +10,22 @@ Portal leadersofteams.pl powstaje od zera. Ekosystem LoT ma precedens technologi
 
 ## Decyzja
 
-| Warstwa | Wybór | Wersja |
-|---|---|---|
-| Język | TypeScript (całość, strict mode) | 5.x |
-| Monorepo | pnpm workspaces | pnpm 9+ |
-| Frontend | Next.js (App Router) / React 19 | Next 15 |
-| Backend API | Node.js + Fastify | Node 22 LTS |
-| Worker (zadania tła) | BullMQ (ten sam kod co API, osobny proces/kontener) | — |
-| ORM | Prisma | 6.x |
-| Baza danych | **MySQL 8** (osobna instancja/kontener dla portalu) | 8.4 LTS |
-| Cache / kolejki / pub-sub | Redis | 7.x |
-| Realtime | Socket.IO (adapter Redis) | 4.x |
-| Reverse proxy / TLS | Traefik (istniejący na VPS) | — |
-| Konteneryzacja | Docker Compose (osobny projekt compose) | — |
-| CI/CD | GitHub Actions → GHCR → SSH deploy | — |
-| Walidacja | Zod (współdzielone schematy web ↔ api w `packages/contracts`) | — |
-| Testy | Vitest (unit/integration), Playwright (e2e), k6 (load) | — |
+| Warstwa                   | Wybór                                                         | Wersja      |
+| ------------------------- | ------------------------------------------------------------- | ----------- |
+| Język                     | TypeScript (całość, strict mode)                              | 5.x         |
+| Monorepo                  | pnpm workspaces                                               | pnpm 9+     |
+| Frontend                  | Next.js (App Router) / React 19                               | Next 15     |
+| Backend API               | Node.js + Fastify                                             | Node 22 LTS |
+| Worker (zadania tła)      | BullMQ (ten sam kod co API, osobny proces/kontener)           | —           |
+| ORM                       | Prisma                                                        | 6.x         |
+| Baza danych               | **MySQL 8** (osobna instancja/kontener dla portalu)           | 8.4 LTS     |
+| Cache / kolejki / pub-sub | Redis                                                         | 7.x         |
+| Realtime                  | Socket.IO (adapter Redis)                                     | 4.x         |
+| Reverse proxy / TLS       | Traefik (istniejący na VPS)                                   | —           |
+| Konteneryzacja            | Docker Compose (osobny projekt compose)                       | —           |
+| CI/CD                     | GitHub Actions → GHCR → SSH deploy                            | —           |
+| Walidacja                 | Zod (współdzielone schematy web ↔ api w `packages/contracts`) | —           |
+| Testy                     | Vitest (unit/integration), Playwright (e2e), k6 (load)        | —           |
 
 ## Uzasadnienie
 

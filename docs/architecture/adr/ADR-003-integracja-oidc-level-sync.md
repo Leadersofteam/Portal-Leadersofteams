@@ -22,11 +22,11 @@ Portal implementuje rolę **OpenID Provider** przy użyciu biblioteki [`oidc-pro
 
 Poziom w app.leadersofteams.com jest **kopią cache**; prawda jest zawsze w portalu.
 
-| Warstwa | Mechanizm | Latencja | Rola |
-|---|---|---|---|
-| 1. Login-time | claim `lot_level` w ID token/userinfo przy każdym logowaniu przez portal | przy logowaniu | samonaprawa przy każdej wizycie |
-| 2. Push | webhook `POST /webhooks/lot-portal/level-changed` przy awansie; payload podpisany HMAC-SHA256 (wspólny sekret), idempotency key = id zdarzenia `LevelAchievement`; wysyłka przez BullMQ z retry i backoffem wykładniczym (do 24 h), po wyczerpaniu → alert + kolejka ręczna | sekundy | natychmiastowe odblokowanie nagrody |
-| 3. Rekoncyliacja | nocny job po stronie app: `GET /api/integration/levels?since=<cursor>` (paginowany, autoryzacja tokenem serwer-serwer) — app porównuje i koryguje wszystkie rozjazdy | ≤ 24 h | gwarancja spójności ostatecznej |
+| Warstwa          | Mechanizm                                                                                                                                                                                                                                                                   | Latencja       | Rola                                |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------------- |
+| 1. Login-time    | claim `lot_level` w ID token/userinfo przy każdym logowaniu przez portal                                                                                                                                                                                                    | przy logowaniu | samonaprawa przy każdej wizycie     |
+| 2. Push          | webhook `POST /webhooks/lot-portal/level-changed` przy awansie; payload podpisany HMAC-SHA256 (wspólny sekret), idempotency key = id zdarzenia `LevelAchievement`; wysyłka przez BullMQ z retry i backoffem wykładniczym (do 24 h), po wyczerpaniu → alert + kolejka ręczna | sekundy        | natychmiastowe odblokowanie nagrody |
+| 3. Rekoncyliacja | nocny job po stronie app: `GET /api/integration/levels?since=<cursor>` (paginowany, autoryzacja tokenem serwer-serwer) — app porównuje i koryguje wszystkie rozjazdy                                                                                                        | ≤ 24 h         | gwarancja spójności ostatecznej     |
 
 Zasady rozstrzygania rozjazdów:
 

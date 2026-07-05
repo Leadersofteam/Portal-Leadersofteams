@@ -14,7 +14,9 @@ Portal-Leadersofteams/
 │       │   ├── modules/
 │       │   │   ├── identity/       #   każdy moduł: index.ts (publiczne API),
 │       │   │   ├── marketplace/    #   routes/, services/, events/ (konsumenci),
-│       │   │   ├── community/      #   repo/ (dostęp do własnych tabel)
+│       │   │   ├── groups/         #   repo/ (dostęp do własnych tabel)
+│       │   │   ├── community/
+│       │   │   ├── teams/          #   (faza 2)
 │       │   │   ├── ladder/
 │       │   │   ├── antifraud/
 │       │   │   ├── notifications/

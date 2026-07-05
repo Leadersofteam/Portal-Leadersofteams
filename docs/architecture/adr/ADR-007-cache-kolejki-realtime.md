@@ -9,13 +9,13 @@ Współdzielony VPS (ADR-005) wymusza oszczędne gospodarowanie CPU/IO. Profil r
 
 ## Decyzja 1: Cache — trzy poziomy
 
-| Poziom | Mechanizm | Co | TTL / inwalidacja |
-|---|---|---|---|
-| 1. HTTP/SSR | Next.js ISR (`revalidate`) dla stron publicznych | strona główna, listingi, profile publiczne, wątki Q&A dla niezalogowanych | 60–300 s + `revalidateTag` po mutacji |
-| 2. Aplikacyjny | Redis cache-aside w API | wyniki drogich zapytań: listingi z filtrami, agregaty profilu (średnia ocen, liczba zleceń), stan Drabinki, definicje poziomów | TTL 60 s–1 h + **inwalidacja zdarzeniowa**: konsument zdarzeń domenowych (outbox) usuwa klucze po wzorcu (`order:*`, `profile:{id}:*`) |
-| 3. Baza | poprawne indeksy > cache | wszystko | patrz DATA-MODEL.md |
+| Poziom         | Mechanizm                                        | Co                                                                                                                                                                        | TTL / inwalidacja                                                                                                                                           |
+| -------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. HTTP/SSR    | Next.js ISR (`revalidate`) dla stron publicznych | strona główna, listingi, profile publiczne, wątki Q&A dla niezalogowanych                                                                                                 | 60–300 s + `revalidateTag` po mutacji                                                                                                                       |
+| 2. Aplikacyjny | Redis cache-aside w API                          | wyniki drogich zapytań: listingi z filtrami, agregaty profilu (średnia ocen, liczba zleceń), stan Drabinki, definicje poziomów, feedy grup (pierwsze strony) i listy grup | TTL 60 s–1 h + **inwalidacja zdarzeniowa**: konsument zdarzeń domenowych (outbox) usuwa klucze po wzorcu (`order:*`, `profile:{id}:*`, `group:{id}:feed:*`) |
+| 3. Baza        | poprawne indeksy > cache                         | wszystko                                                                                                                                                                  | patrz DATA-MODEL.md                                                                                                                                         |
 
-Zasady: cache'ujemy tylko dane odtwarzalne z MySQL; klucze z prefiksem wersji schematu (`v1:`); stampede protection przez krótkie locki Redis (`SET NX PX`) przy regeneracji drogich kluczy. **Ledger punktowy i saldo do awansu nigdy nie są serwowane z przeterminowanego cache** na ekranie "Moje punkty" (wymóg transparentności z ADR-004) — tam odczyt z bazy, cache tylko mikroskalowy (≤ 5 s).
+Zasady: cache'ujemy tylko dane odtwarzalne z MySQL; klucze z prefiksem wersji schematu (`v1:`); stampede protection przez krótkie locki Redis (`SET NX PX`) przy regeneracji drogich kluczy. Feedy grup: chronologiczne, klasyczna paginacja kursorem (bez rankingu algorytmicznego i infinite scroll — wymóg anty-engagement, ADR-010), co czyni je tanio cache'owalnymi (klucz = grupa+kursor). **Ledger punktowy i saldo do awansu nigdy nie są serwowane z przeterminowanego cache** na ekranie "Moje punkty" (wymóg transparentności z ADR-004) — tam odczyt z bazy, cache tylko mikroskalowy (≤ 5 s).
 
 ## Decyzja 2: Zadania w tle — BullMQ na Redis + wzorzec outbox
 

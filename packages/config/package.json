@@ -1,0 +1,9 @@
+{
+  "name": "@lot/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Wspólna konfiguracja TypeScript dla monorepo",
+  "files": [
+    "tsconfig.base.json"
+  ]
+}

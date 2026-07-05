@@ -1,0 +1,87 @@
+// Schemat v1 (Faza 0): tożsamość + outbox.
+// Kolejne moduły (marketplace, groups, community, ladder…) dokładają swoje
+// tabele w kolejnych migracjach — patrz docs/architecture/DATA-MODEL.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum CompanyMemberRole {
+  OWNER
+  MEMBER
+}
+
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyMemberships CompanyMember[]
+
+  @@map("users")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  // NIP opcjonalny — brak weryfikacji Firm na starcie (brief 3.4),
+  // pole gotowe pod przyszłą weryfikację-odznakę.
+  nip         String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members CompanyMember[]
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String            @id @default(cuid())
+  companyId String
+  userId    String
+  role      CompanyMemberRole @default(MEMBER)
+  createdAt DateTime          @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@map("company_members")
+}
+
+// Wzorzec outbox (ADR-007): zapis w tej samej transakcji co zmiana stanu;
+// dispatcher w worker.ts publikuje do BullMQ i oznacza PUBLISHED.
+model OutboxEvent {
+  id          String       @id @default(cuid())
+  type        String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  publishedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}

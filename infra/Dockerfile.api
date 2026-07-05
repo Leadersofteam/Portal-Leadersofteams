@@ -1,0 +1,24 @@
+# Jeden obraz dla ról: api (dist/main.js) i worker (dist/worker.js) — ADR-008.
+# Budowany z korzenia repo: docker build -f infra/Dockerfile.api .
+
+FROM node:22-bookworm-slim AS build
+RUN corepack enable
+WORKDIR /repo
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages ./packages
+COPY apps/api ./apps/api
+RUN pnpm install --frozen-lockfile --filter @lot/api...
+RUN pnpm --filter @lot/api prisma:generate \
+  && pnpm --filter @lot/api build \
+  && pnpm --filter @lot/api --prod deploy --legacy /out
+# Klient Prisma musi być wygenerowany w finalnym drzewie node_modules.
+WORKDIR /out
+RUN ./node_modules/.bin/prisma generate
+
+FROM node:22-bookworm-slim AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /out /app
+USER node
+EXPOSE 3001
+CMD ["node", "dist/main.js"]

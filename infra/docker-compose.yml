@@ -1,0 +1,176 @@
+# Produkcja — osobny projekt compose na współdzielonym VPS (ADR-005).
+# Uruchamianie: docker compose -p portal --env-file /opt/portal/.env -f docker-compose.yml up -d
+# Wymaga istniejącej zewnętrznej sieci `traefik_public` (patrz bootstrap.sh).
+#
+# Obrazy: domyślnie z GHCR (CI ustawia WEB_IMAGE/API_IMAGE). Wariant 0 zł
+# build-on-VPS (ADR-009): docker compose build, gdy zmienne nie są ustawione.
+
+name: portal
+
+services:
+  web:
+    image: ${WEB_IMAGE:-portal-web:local}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:3001
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal, traefik_public]
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1536M
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public
+      - traefik.http.routers.portal-web.rule=Host(`leadersofteams.pl`) || Host(`www.leadersofteams.pl`)
+      - traefik.http.routers.portal-web.entrypoints=websecure
+      - traefik.http.routers.portal-web.tls.certresolver=letsencrypt
+      - traefik.http.services.portal-web.loadbalancer.server.port=3000
+
+  api:
+    image: ${API_IMAGE:-portal-api:local}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3001'
+      DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
+      REDIS_URL: redis://redis:6379
+      SESSION_TTL_SECONDS: '604800'
+      LOG_LEVEL: info
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [internal, traefik_public]
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1536M
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3001/healthz'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public
+      - traefik.http.routers.portal-api.rule=Host(`api.leadersofteams.pl`)
+      - traefik.http.routers.portal-api.entrypoints=websecure
+      - traefik.http.routers.portal-api.tls.certresolver=letsencrypt
+      - traefik.http.services.portal-api.loadbalancer.server.port=3001
+
+  worker:
+    image: ${API_IMAGE:-portal-api:local}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    restart: unless-stopped
+    command: ['node', 'dist/worker.js']
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: info
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 768M
+
+  # Jednorazowe migracje (krok release'u, ADR-008):
+  # docker compose -p portal run --rm migrate
+  migrate:
+    image: ${API_IMAGE:-portal-api:local}
+    profiles: [tools]
+    command: ['./node_modules/.bin/prisma', 'migrate', 'deploy']
+    environment:
+      DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [internal]
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb-buffer-pool-size=1G
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: portal
+      MYSQL_USER: portal
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - portal_mysql_data:/var/lib/mysql
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 3G
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uportal', '-p${MYSQL_PASSWORD}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory',
+        '512mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes:
+      - portal_redis_data:/data
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 768M
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  internal:
+  traefik_public:
+    external: true
+
+volumes:
+  portal_mysql_data:
+  portal_redis_data:

@@ -15,7 +15,9 @@ Platforma łączy kilka wyraźnych domen: tożsamość, marketplace, społeczno�
 modules/
 ├── identity        # konta, sesje, role, (faza 2: OIDC provider)
 ├── marketplace     # zlecenia, oferty, cykl życia, oceny
-├── community       # wątki Q&A, odpowiedzi, głosy, akceptacje
+├── groups          # grupy branżowe, posty (case studies/pomysły), komentarze, reakcje (ADR-010)
+├── community       # wątki Q&A (zakotwiczone w grupach), odpowiedzi, głosy, akceptacje
+├── teams           # zespoły Liderów lvl 7, ogłoszenia rekrutacyjne, aplikacje od lvl 3 (ADR-010, faza 2)
 ├── ladder          # ledger punktowy, projekcja poziomów, definicje progów
 ├── antifraud       # sygnały, detekcja wzajemności, kolejka moderacyjna
 ├── notifications   # powiadomienia in-app, e-mail, push przez socket
@@ -28,6 +30,7 @@ Reguły graniczne (egzekwowane, nie umowne):
 2. **Zapis do tabel innego modułu jest zakazany** — każdy moduł ma własny namespace tabel; odczyty cross-moduł tylko przez publiczne API modułu.
 3. **Komunikacja asynchroniczna przez zdarzenia domenowe**: moduł zapisuje zdarzenie do tabeli `OutboxEvent` w tej samej transakcji co zmianę stanu; dispatcher (worker) publikuje je do BullMQ; moduły subskrybują. Przykład: `marketplace` emituje `order.review_submitted` → `ladder` konsumuje i dopisuje `PointEvent` → `ladder` emituje `ladder.level_achieved` → `notifications` i `integration` konsumują.
 4. **Moduł `ladder` nie ma zależności od `identity`/`marketplace`/`community` poza ich zdarzeniami** — to gwarantuje, że logika punktowa jest audytowalna w jednym miejscu (istotne dla wymogu anty-MLM, ADR-004).
+5. **`ladder` subskrybuje wyłącznie zdarzenia `marketplace.*` i `community.*`** — moduły `groups` i `teams` nie mają żadnej krawędzi zdarzeń do `ladder` (aktywność społecznościowa i zespołowa nie generuje punktów, ADR-010); rejestr subskrypcji jest testowany automatycznie.
 
 ## Uzasadnienie
 

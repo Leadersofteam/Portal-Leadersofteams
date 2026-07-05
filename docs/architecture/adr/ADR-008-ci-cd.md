@@ -10,22 +10,25 @@ Repo na GitHubie, deploy na współdzielony VPS z Docker Compose (ADR-005). Potr
 ## Decyzja 1: Pipeline
 
 **CI (każdy PR i push na `main`):**
+
 1. `pnpm install` (cache) → lint (ESLint, w tym reguły granic modułów z ADR-002) → typecheck → testy unit/integration (Vitest; MySQL i Redis jako kontenery serwisowe w Actions) → build.
 2. Walidacja migracji Prisma: `prisma migrate diff` przeciwko schematowi — wykrycie dryfu i migracji destrukcyjnych (destrukcyjne wymagają jawnego oznaczenia w PR).
 3. E2E (Playwright) na skróconej ścieżce krytycznej: rejestracja → publikacja zlecenia → oferta → ocena → punkty.
 
 **CD (po merge do `main` → staging; tag `v*` → produkcja):**
+
 1. Build obrazów (`portal-web`, `portal-api-worker` — jeden obraz, dwie role przez command) → push do **GHCR** z tagiem = SHA commita + tag semver dla produkcji.
+   _Wariant 0 zł bez limitów (ADR-009):_ jeśli darmowe limity Actions/GHCR dla repo prywatnego się wyczerpią, deploy przełącza się na build-on-VPS: workflow robi tylko `ssh` → `git pull` + `docker compose build` + `up -d` na VPS (dłuższy build, zero zależności od GHCR). Pliki compose wspierają oba warianty (`image:` z fallbackiem `build:`).
 2. Deploy przez SSH (klucz deploy w GitHub Secrets, dedykowany user na VPS bez sudo, ograniczony do katalogu portalu):
    `docker compose pull` → **migracje Prisma jako jednorazowy kontener z lockiem** (`prisma migrate deploy`; advisory lock w MySQL zapobiega równoległym migracjom) → `docker compose up -d` → healthcheck (`/healthz` sprawdza MySQL, Redis, wersję) z timeoutem.
 3. **Rollback automatyczny**: jeśli healthcheck nie przejdzie w 120 s → ponowny `up -d` z poprzednim tagiem obrazu (zapisywany w pliku na VPS). Migracje projektujemy jako **expand/contract** (najpierw addytywne, usunięcia w osobnym, późniejszym release) — dzięki temu poprzednia wersja aplikacji zawsze działa na nowym schemacie i rollback nie wymaga cofania migracji.
 
 ## Decyzja 2: Środowiska
 
-| Środowisko | Gdzie | Trigger | Dane |
-|---|---|---|---|
-| `staging` | ten sam VPS, osobny projekt compose (`portal-staging`), subdomena `staging.leadersofteams.pl` za basic-auth w Traefiku, mocno przycięte limity zasobów | merge do `main` | syntetyczne/seed, nigdy kopia produkcji z danymi osobowymi |
-| `production` | projekt compose `portal` | tag `v*` (świadome wydanie) | produkcyjne |
+| Środowisko   | Gdzie                                                                                                                                                  | Trigger                     | Dane                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- | ---------------------------------------------------------- |
+| `staging`    | ten sam VPS, osobny projekt compose (`portal-staging`), subdomena `staging.leadersofteams.pl` za basic-auth w Traefiku, mocno przycięte limity zasobów | merge do `main`             | syntetyczne/seed, nigdy kopia produkcji z danymi osobowymi |
+| `production` | projekt compose `portal`                                                                                                                               | tag `v*` (świadome wydanie) | produkcyjne                                                |
 
 ## Decyzja 3: Konfiguracja i sekrety
 
