@@ -1,45 +1,80 @@
-import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import type { SessionUser } from '@lot/contracts';
 
+import { serverApi } from '@/lib/server-api';
+
 import { LogoutButton } from './logout-button';
 
-const apiUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:3001';
-
-async function getSessionUser(): Promise<SessionUser | null> {
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiUrl}/api/v1/auth/me`, {
-    headers: { cookie: cookieStore.toString() },
-    cache: 'no-store',
-  }).catch(() => null);
-  if (!res?.ok) return null;
-  const body = (await res.json()) as { user: SessionUser | null };
-  return body.user;
-}
-
 export default async function PanelPage() {
-  const user = await getSessionUser();
-  if (!user) redirect('/logowanie');
+  const me = await serverApi<{ user: SessionUser | null }>('/auth/me');
+  if (!me?.user) redirect('/logowanie');
+  const user = me.user;
+
+  const [profile, companies] = await Promise.all([
+    serverApi<{ profile: { id: string; headline: string } | null }>('/me/leader-profile'),
+    serverApi<{ companies: Array<{ id: string; name: string }> }>('/me/companies'),
+  ]);
 
   return (
     <main>
       <h1>Cześć, {user.displayName}!</h1>
       <p className="muted">Twoje konto: {user.email}</p>
+
+      <nav className="panel-nav">
+        <Link className="btn secondary" href="/panel/profil">
+          Profil Lidera
+        </Link>
+        <Link className="btn secondary" href="/panel/oferty">
+          Moje oferty
+        </Link>
+        <Link className="btn secondary" href="/panel/zlecenia">
+          Zlecenia firmy
+        </Link>
+        <Link className="btn" href="/zlecenia/nowe">
+          + Nowe zlecenie
+        </Link>
+      </nav>
+
       <section className="feature-grid">
         <div className="card">
+          <h3>Strona Lidera</h3>
+          {profile?.profile ? (
+            <p>
+              Twój profil: „{profile.profile.headline}”.{' '}
+              <Link href={`/liderzy/${profile.profile.id}`}>Zobacz publiczny profil →</Link>
+            </p>
+          ) : (
+            <p>
+              Nie masz jeszcze profilu Lidera. <Link href="/panel/profil">Utwórz go</Link>, żeby
+              składać oferty na zlecenia.
+            </p>
+          )}
+        </div>
+        <div className="card">
+          <h3>Strona Firmy</h3>
+          {companies?.companies?.length ? (
+            <p>
+              Twoje firmy: {companies.companies.map((c) => c.name).join(', ')}.{' '}
+              <Link href="/panel/zlecenia">Zarządzaj zleceniami →</Link>
+            </p>
+          ) : (
+            <p>
+              Chcesz zlecać pracę? <Link href="/firma/nowa">Utwórz profil firmy</Link> i opublikuj
+              pierwsze zlecenie.
+            </p>
+          )}
+        </div>
+        <div className="card">
           <h3>Drabinka Lidera</h3>
-          <p>Poziom 0 — start. Moduł punktów pojawi się w kolejnych sprintach.</p>
-        </div>
-        <div className="card">
-          <h3>Zlecenia</h3>
-          <p>Marketplace w budowie (Faza 1, sprint 1–2).</p>
-        </div>
-        <div className="card">
-          <h3>Grupy branżowe</h3>
-          <p>Społeczność w budowie (Faza 1, sprint 4–5).</p>
+          <p>
+            Poziom 0 — punkty za ocenione zlecenia i mentoring pojawią się w kolejnym sprincie.
+            Zasady będą w pełni jawne.
+          </p>
         </div>
       </section>
+
       <p style={{ marginTop: '2rem' }}>
         <LogoutButton />
       </p>

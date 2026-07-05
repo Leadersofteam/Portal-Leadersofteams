@@ -2,12 +2,29 @@ import type { CreateCompanyInput, LoginInput, RegisterInput, SessionUser } from 
 
 import type { PrismaClient } from '../../shared/db';
 import { EmailTakenError, InvalidCredentialsError } from '../../shared/errors';
+import { emitEvent } from '../../shared/outbox';
 import { DUMMY_HASH_PROMISE, hashPassword, verifyPassword } from './password';
+
+export interface PublicUser {
+  id: string;
+  displayName: string;
+}
+
+export interface CompanySummary {
+  id: string;
+  name: string;
+}
 
 export interface IdentityService {
   register(input: RegisterInput): Promise<SessionUser>;
   authenticate(input: LoginInput): Promise<SessionUser>;
-  createCompany(ownerId: string, input: CreateCompanyInput): Promise<{ id: string; name: string }>;
+  createCompany(ownerId: string, input: CreateCompanyInput): Promise<CompanySummary>;
+  listCompanies(userId: string): Promise<Array<CompanySummary & { role: string }>>;
+  // Publiczne API dla innych modułów (granice — ADR-002): odczyty tabel
+  // identity wyłącznie przez te funkcje.
+  isCompanyMember(userId: string, companyId: string): Promise<boolean>;
+  getPublicUsers(userIds: string[]): Promise<Map<string, PublicUser>>;
+  getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
 }
 
 function toSessionUser(user: {
@@ -69,14 +86,44 @@ export function createIdentityService(prisma: PrismaClient): IdentityService {
             members: { create: { userId: ownerId, role: 'OWNER' } },
           },
         });
-        await tx.outboxEvent.create({
-          data: {
-            type: 'identity.company_created',
-            payload: { companyId: company.id, ownerId },
-          },
-        });
+        await emitEvent(tx, 'identity.company_created', { companyId: company.id, ownerId });
         return { id: company.id, name: company.name };
       });
+    },
+
+    async listCompanies(userId) {
+      const memberships = await prisma.companyMember.findMany({
+        where: { userId },
+        include: { company: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'asc' },
+      });
+      return memberships.map((m) => ({ id: m.company.id, name: m.company.name, role: m.role }));
+    },
+
+    async isCompanyMember(userId, companyId) {
+      const member = await prisma.companyMember.findUnique({
+        where: { companyId_userId: { companyId, userId } },
+        select: { id: true },
+      });
+      return member !== null;
+    },
+
+    async getPublicUsers(userIds) {
+      if (userIds.length === 0) return new Map();
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, displayName: true },
+      });
+      return new Map(users.map((u) => [u.id, { id: u.id, displayName: u.displayName }]));
+    },
+
+    async getPublicCompanies(companyIds) {
+      if (companyIds.length === 0) return new Map();
+      const companies = await prisma.company.findMany({
+        where: { id: { in: companyIds } },
+        select: { id: true, name: true },
+      });
+      return new Map(companies.map((c) => [c.id, { id: c.id, name: c.name }]));
     },
   };
 }

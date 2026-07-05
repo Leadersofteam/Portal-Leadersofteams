@@ -5,6 +5,13 @@ import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
 
 import { createIdentityService, identityRoutes } from './modules/identity/index';
+import { createLadderService } from './modules/ladder/index';
+import {
+  createOrdersService,
+  createProfilesService,
+  marketplaceRoutes,
+} from './modules/marketplace/index';
+import { createAuthHelpers } from './shared/auth';
 import type { AppConfig } from './shared/config';
 import { createPrisma } from './shared/db';
 import type { PrismaClient } from './shared/db';
@@ -79,10 +86,23 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     return reply.code(healthy ? 200 : 503).send({ status: healthy ? 'ok' : 'degraded', checks });
   });
 
+  const auth = createAuthHelpers(sessions, config);
   const identityService = createIdentityService(prisma);
-  await app.register(identityRoutes({ service: identityService, sessions, config }), {
+  const ladderService = createLadderService();
+  const profilesService = createProfilesService(prisma, identityService);
+  const ordersService = createOrdersService({
+    prisma,
+    identity: identityService,
+    ladder: ladderService,
+  });
+
+  await app.register(identityRoutes({ service: identityService, sessions, auth, config }), {
     prefix: '/api/v1',
   });
+  await app.register(
+    marketplaceRoutes({ profiles: profilesService, orders: ordersService, auth }),
+    { prefix: '/api/v1' },
+  );
 
   return {
     app,
