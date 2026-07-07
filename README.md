@@ -2,7 +2,7 @@
 
 Platforma leadersofteams.pl — marketplace usług B2B (Firmy ↔ Liderzy) połączony ze społecznością: **grupami branżowymi** (posty, case studies, pomysły — także Zespołów z app), **Q&A/mentoringiem** oraz systemem poziomów **Drabinka Lidera**, którego najwyższe szczeble odblokowują darmowy dostęp do [app.leadersofteams.com](https://app.leadersofteams.com) i możliwość założenia własnego zespołu (rekrutacja ciągła: tworzenie od lvl 7, aplikowanie od lvl 3). Koszt operacyjny usług zewnętrznych: **0 zł** (ADR-009).
 
-**Status:** Faza 0 — fundament (monorepo, CI/CD, auth).
+**Status:** Faza 1 w toku — zrealizowane: fundament (Faza 0), marketplace core (Sprint 1–2), **Drabinka Lidera z antyfraudem** (Sprint 2–3). Następne: grupy branżowe + Q&A (Sprint 4–5). Pełny stan projektu i plan sprintów: **[docs/HANDOFF-OPUS.md](docs/HANDOFF-OPUS.md)**.
 
 ## Dokumentacja
 
@@ -21,6 +21,7 @@ Platforma leadersofteams.pl — marketplace usług B2B (Firmy ↔ Liderzy) poł�
 | [ADR-008 — CI/CD](docs/architecture/adr/ADR-008-ci-cd.md)                                             | GitHub Actions → GHCR → deploy SSH, rollback                            |
 | [ADR-009 — Zero kosztów zewnętrznych](docs/architecture/adr/ADR-009-zero-kosztow-zewnetrznych.md)     | polityka 0 zł: self-hosted OSS + darmowe tiery z fallbackami            |
 | [ADR-010 — Grupy, Zespoły, Case Studies](docs/architecture/adr/ADR-010-grupy-zespoly-case-studies.md) | grupy branżowe, zespoły lvl 7 / aplikacje lvl 3+, case studies zespołów |
+| [**Handoff / plan sprintów**](docs/HANDOFF-OPUS.md)                                                   | **stan projektu, dług techniczny, rozpisane sprinty 4–9 z DoD**         |
 | [Struktura repozytorium](docs/REPO-STRUCTURE.md)                                                      | docelowy układ monorepo (pnpm workspaces)                               |
 | [Roadmapa](docs/ROADMAP.md)                                                                           | zakres MVP, fazy 0–3, kamienie decyzyjne                                |
 | [Rejestr ryzyk](docs/RISKS.md)                                                                        | ryzyka techniczne i produktowe z mitygacjami                            |
