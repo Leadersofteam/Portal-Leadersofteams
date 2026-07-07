@@ -1,0 +1,10 @@
+{
+  "extends": "@lot/config/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src", "prisma/seed.ts", "tsup.config.ts", "vitest.config.ts"]
+}

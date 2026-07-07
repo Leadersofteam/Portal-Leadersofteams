@@ -1,0 +1,165 @@
+# Staging — osobny projekt compose na tym samym VPS (ADR-008), przycięte limity.
+# Uruchamianie: docker compose -p portal-staging --env-file /opt/portal-staging/.env -f docker-compose.staging.yml up -d
+# Dostęp za basic-auth w Traefiku (STAGING_BASIC_AUTH: wynik `htpasswd -nB user`).
+
+name: portal-staging
+
+services:
+  web:
+    image: ${WEB_IMAGE:-portal-web:staging}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:3001
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal, traefik_public]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 640M
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public
+      - traefik.http.routers.portal-staging-web.rule=Host(`staging.leadersofteams.pl`)
+      - traefik.http.routers.portal-staging-web.entrypoints=websecure
+      - traefik.http.routers.portal-staging-web.tls.certresolver=letsencrypt
+      - traefik.http.routers.portal-staging-web.middlewares=portal-staging-auth
+      - traefik.http.middlewares.portal-staging-auth.basicauth.users=${STAGING_BASIC_AUTH}
+      - traefik.http.services.portal-staging-web.loadbalancer.server.port=3000
+
+  api:
+    image: ${API_IMAGE:-portal-api:staging}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3001'
+      DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: debug
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 640M
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3001/healthz'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    image: ${API_IMAGE:-portal-api:staging}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    restart: unless-stopped
+    command: ['node', 'dist/worker.js']
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: debug
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 384M
+
+  migrate:
+    image: ${API_IMAGE:-portal-api:staging}
+    profiles: [tools]
+    command: ['./node_modules/.bin/prisma', 'migrate', 'deploy']
+    environment:
+      DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [internal]
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb-buffer-pool-size=256M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: portal
+      MYSQL_USER: portal
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - portal_staging_mysql_data:/var/lib/mysql
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 768M
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uportal', '-p${MYSQL_PASSWORD}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory',
+        '128mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes:
+      - portal_staging_redis_data:/data
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 192M
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  internal:
+  traefik_public:
+    external: true
+
+volumes:
+  portal_staging_mysql_data:
+  portal_staging_redis_data:

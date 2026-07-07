@@ -17,14 +17,14 @@ Punkty istnieją wyłącznie jako niemutowalne wpisy w tabeli `PointEvent`:
 
 `PointEventType` to **enum w bazie i w kodzie domeny**. Kompletna lista na start:
 
-| Typ | Źródło wartości | Kto uznaje |
-|---|---|---|
-| `ORDER_COMPLETED_RATED` | zrealizowane zlecenie z oceną | Firma (zleceniodawca) |
-| `ORDER_REPEAT_CLIENT_BONUS` | kolejne zlecenie od tej samej Firmy (mniejsza waga, patrz Decyzja 4) | Firma |
-| `ANSWER_ACCEPTED` | odpowiedź zaakceptowana przez autora pytania | inny Lider |
-| `ANSWER_UPVOTED_QUALIFIED` | głosy w górę od użytkowników spełniających próg wiarygodności | inni Liderzy |
-| `MENTORSHIP_SESSION_RATED` | sesja mentoringowa oceniona przez mentee (faza ≥ 2) | inny Lider |
-| `ADJUSTMENT_MODERATION` | korekta moderacyjna (może być ujemna) | moderator, z uzasadnieniem |
+| Typ                         | Źródło wartości                                                      | Kto uznaje                 |
+| --------------------------- | -------------------------------------------------------------------- | -------------------------- |
+| `ORDER_COMPLETED_RATED`     | zrealizowane zlecenie z oceną                                        | Firma (zleceniodawca)      |
+| `ORDER_REPEAT_CLIENT_BONUS` | kolejne zlecenie od tej samej Firmy (mniejsza waga, patrz Decyzja 4) | Firma                      |
+| `ANSWER_ACCEPTED`           | odpowiedź zaakceptowana przez autora pytania                         | inny Lider                 |
+| `ANSWER_UPVOTED_QUALIFIED`  | głosy w górę od użytkowników spełniających próg wiarygodności        | inni Liderzy               |
+| `MENTORSHIP_SESSION_RATED`  | sesja mentoringowa oceniona przez mentee (faza ≥ 2)                  | inny Lider                 |
+| `ADJUSTMENT_MODERATION`     | korekta moderacyjna (może być ujemna)                                | moderator, z uzasadnieniem |
 
 Właściwości tej konstrukcji:
 
@@ -49,16 +49,19 @@ zdarzenie źródłowe → PointEvent(status=PENDING) → [okno karencji 7 dni] �
 Zaprojektowane przeciw konkretnym wektorom nadużyć (brief, sekcja 7, pyt. 7):
 
 **Wektor: sztuczne zlecenia między znajomymi / własnymi firmami**
+
 - **Malejące zwroty od tego samego kontrahenta**: n-te punktowane zlecenie od tej samej Firmy dla tego samego Lidera ma wagę `max(0.1, 0.5^(n-1))` w oknie kroczącym 12 miesięcy. Podbijanie poziomu jedną zaprzyjaźnioną firmą staje się wykładniczo nieopłacalne, a naturalna stała współpraca wciąż jest doceniana.
 - **Detekcja wzajemności**: worker antyfraudowy utrzymuje graf relacji Firma↔Lider i flaguje: pary o anomalnie wysokiej wzajemnej aktywności, cykle (A zleca B, B zleca A przez inną firmę), Firmy zlecające wyłącznie jednemu Liderowi od rejestracji, wspólne sygnały techniczne kont (heurystyki rejestracyjne). Flaga ⇒ `HOLD` + `ModerationCase`; człowiek rozstrzyga.
 - **Próg dojrzałości konta Firmy**: oceny od Firmy młodszej niż 14 dni lub bez uzupełnionego profilu wchodzą z obniżoną wagą do czasu zbudowania historii.
 
 **Wektor: fałszywe oceny / kupione głosy w Q&A**
+
 - Głos w górę liczy się do `ANSWER_UPVOTED_QUALIFIED` tylko od użytkownika spełniającego próg wiarygodności (konto ≥ 14 dni + własna minimalna historia aktywności) — świeże konta mogą głosować (UX), ale ich głosy nie generują punktów.
 - Malejące zwroty również tutaj: punkty za akceptacje/głosy od tego samego użytkownika podlegają tej samej krzywej wygaszania.
 - Limity szybkości naliczania: dzienne/tygodniowe czapki punktów z Q&A — chronią przed farmami i jednocześnie realizują wymóg briefu "progres tygodniowy/miesięczny, nie dopaminowy".
 
 **Wektor: degeneracja w mechaniki engagement (wymóg anty-MLM wprost)**
+
 - Brak punktów za obecność: żadnych streaków, dziennych logowań, "spal albo strać". Poziom raz zdobyty **nie wygasa** z powodu nieaktywności.
 - Brak dark patterns w warstwie produktowej: zero fałszywych liczników, zero sztucznego niedoboru; publiczne rankingi wyłącznie opt-in/opt-out zgodnie z briefem.
 - **Pełna transparentność**: ekran "Moje punkty" pokazuje każdy wpis ledgera (za co, ile, od kogo, status, dlaczego waga obniżona) oraz dokładny dystans do następnego progu. Reguły punktacji są publicznie opublikowane na stronie portalu.

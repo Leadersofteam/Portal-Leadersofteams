@@ -1,0 +1,378 @@
+// Schemat v2 (Sprint 1–2): tożsamość + outbox + marketplace.
+// Kolejne moduły (ladder, groups, community…) dokładają swoje tabele
+// w kolejnych migracjach — patrz docs/architecture/DATA-MODEL.md.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// identity
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum CompanyMemberRole {
+  OWNER
+  MEMBER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyMemberships CompanyMember[]
+  leaderProfile      LeaderProfile?
+  createdOrders      Order[]
+
+  @@map("users")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  // NIP opcjonalny — brak weryfikacji Firm na starcie (brief 3.4),
+  // pole gotowe pod przyszłą weryfikację-odznakę.
+  nip         String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members CompanyMember[]
+  orders  Order[]
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String            @id @default(cuid())
+  companyId String
+  userId    String
+  role      CompanyMemberRole @default(MEMBER)
+  createdAt DateTime          @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@map("company_members")
+}
+
+// ---------------------------------------------------------------------------
+// marketplace — słownik branż, profile Liderów, zlecenia, oferty
+// ---------------------------------------------------------------------------
+
+model Industry {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  leaderProfiles LeaderProfile[]
+  orders         Order[]
+
+  @@map("industries")
+}
+
+model LeaderProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  industryId String
+  headline   String
+  bio        String?  @db.Text
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  industry       Industry        @relation(fields: [industryId], references: [id])
+  portfolioItems PortfolioItem[]
+  offers         Offer[]
+
+  @@index([industryId, isVisible])
+  @@map("leader_profiles")
+}
+
+model PortfolioItem {
+  id              String   @id @default(cuid())
+  leaderProfileId String
+  title           String
+  url             String?
+  description     String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  leaderProfile LeaderProfile @relation(fields: [leaderProfileId], references: [id], onDelete: Cascade)
+
+  @@index([leaderProfileId])
+  @@map("portfolio_items")
+}
+
+// Cykl życia (ADR-006): DRAFT → PUBLISHED → AWARDED → IN_PROGRESS →
+// DELIVERED → CONFIRMED (+ CANCELLED, DISPUTED). Ocena (RATED) dojdzie
+// w sprincie Drabinki jako osobna encja Review.
+enum OrderStatus {
+  DRAFT
+  PUBLISHED
+  AWARDED
+  IN_PROGRESS
+  DELIVERED
+  CONFIRMED
+  CANCELLED
+  DISPUTED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  companyId      String
+  createdById    String
+  industryId     String
+  title          String
+  description    String      @db.Text
+  budgetMin      Int
+  budgetMax      Int
+  minLevel       Int         @default(0)
+  status         OrderStatus @default(DRAFT)
+  publishedAt    DateTime?
+  awardedOfferId String?     @unique
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  company      Company  @relation(fields: [companyId], references: [id])
+  createdBy    User     @relation(fields: [createdById], references: [id])
+  industry     Industry @relation(fields: [industryId], references: [id])
+  offers       Offer[]  @relation("orderOffers")
+  awardedOffer Offer?   @relation("awardedOffer", fields: [awardedOfferId], references: [id])
+  reviews      Review[]
+
+  @@index([status, industryId, minLevel, publishedAt])
+  @@index([companyId, status])
+  @@fulltext([title, description])
+  @@map("orders")
+}
+
+enum OfferStatus {
+  SUBMITTED
+  WITHDRAWN
+  ACCEPTED
+  REJECTED
+}
+
+model Offer {
+  id              String      @id @default(cuid())
+  orderId         String
+  leaderProfileId String
+  message         String      @db.Text
+  proposedBudget  Int?
+  proposedDays    Int?
+  status          OfferStatus @default(SUBMITTED)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  order         Order         @relation("orderOffers", fields: [orderId], references: [id], onDelete: Cascade)
+  leaderProfile LeaderProfile @relation(fields: [leaderProfileId], references: [id])
+  awardedFor    Order?        @relation("awardedOffer")
+
+  @@unique([orderId, leaderProfileId])
+  @@index([leaderProfileId, createdAt])
+  @@map("offers")
+}
+
+// ---------------------------------------------------------------------------
+// infrastruktura domenowa
+// ---------------------------------------------------------------------------
+
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+// Wzorzec outbox (ADR-007): zapis w tej samej transakcji co zmiana stanu;
+// dispatcher w worker.ts publikuje do BullMQ i oznacza PUBLISHED.
+model OutboxEvent {
+  id          String       @id @default(cuid())
+  type        String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  publishedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}
+
+// ---------------------------------------------------------------------------
+// marketplace — oceny (dwustronne, publikacja symultaniczna)
+// ---------------------------------------------------------------------------
+
+enum ReviewDirection {
+  COMPANY_TO_LEADER
+  LEADER_TO_COMPANY
+}
+
+// Ocena po CONFIRMED. Publikacja symultaniczna (anty-odwet, ADR-004/R-11):
+// publishedAt ustawiane gdy obie strony oceniły albo po upływie okna 14 dni.
+model Review {
+  id                  String          @id @default(cuid())
+  orderId             String
+  direction           ReviewDirection
+  authorUserId        String
+  rating              Int
+  comment             String?         @db.Text
+  // denormalizacja pod statystyki profili (średnia ocen bez joinów)
+  subjectLeaderUserId String?
+  subjectCompanyId    String?
+  createdAt           DateTime        @default(now())
+  publishedAt         DateTime?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, direction])
+  @@index([subjectLeaderUserId, publishedAt])
+  @@index([subjectCompanyId, publishedAt])
+  @@index([publishedAt, createdAt])
+  @@map("reviews")
+}
+
+// ---------------------------------------------------------------------------
+// ladder — append-only ledger punktowy (ADR-004)
+// ---------------------------------------------------------------------------
+
+// ZAMKNIĘTY enum źródeł punktów — anty-MLM w schemacie: nie istnieje typ
+// za zaproszenie/rekrutację/aktywność. Zmiana wymaga migracji + rewizji ADR-004.
+enum PointEventType {
+  ORDER_COMPLETED_RATED
+  ANSWER_ACCEPTED
+  ANSWER_UPVOTED_QUALIFIED
+  MENTORSHIP_SESSION_RATED
+  ADJUSTMENT_MODERATION
+}
+
+enum PointEventStatus {
+  PENDING
+  CONFIRMED
+  HOLD
+  REVERSED
+}
+
+// Wpisy niemutowalne (poza statusem); korekta = nowy wpis z reversalOfId.
+model PointEvent {
+  id              String           @id @default(cuid())
+  userId          String
+  type            PointEventType
+  points          Int
+  weightApplied   Float            @default(1)
+  // pełne pochodzenie + wyjaśnienie wag (transparentność "za co i ile")
+  meta            Json
+  sourceType      String
+  sourceId        String
+  grantedByUserId String?
+  counterpartyId  String?
+  status          PointEventStatus @default(PENDING)
+  reversalOfId    String?
+  rulesetVersion  String
+  createdAt       DateTime         @default(now())
+  confirmedAt     DateTime?
+
+  // idempotencja naliczeń: redelivery zdarzenia nie duplikuje punktów
+  @@unique([type, sourceId, userId])
+  @@index([userId, status, createdAt])
+  @@index([counterpartyId, userId, type, createdAt])
+  @@index([status, createdAt])
+  @@map("point_events")
+}
+
+model LevelDefinition {
+  id                   String  @id @default(cuid())
+  rulesetVersion       String
+  level                Int
+  name                 String
+  pointsRequired       Int
+  // od L4: min. udział KAŻDEJ ze ścieżek (marketplace/community) w progu
+  minPathSharePct      Int     @default(0)
+  unlocksAppAccess     Boolean @default(false)
+  unlocksTeamCreation  Boolean @default(false)
+
+  @@unique([rulesetVersion, level])
+  @@map("level_definitions")
+}
+
+// Projekcja z ledgera — nigdy źródło prawdy, zawsze odtwarzalna.
+model LadderState {
+  userId            String   @id
+  marketplacePoints Int      @default(0)
+  communityPoints   Int      @default(0)
+  totalPoints       Int      @default(0)
+  level             Int      @default(0)
+  isLeader          Boolean  @default(false)
+  rulesetVersion    String
+  updatedAt         DateTime @updatedAt
+
+  @@index([level])
+  @@map("ladder_states")
+}
+
+// Fakt awansu — poziom raz zdobyty nie wygasa (brief 6).
+model LevelAchievement {
+  id         String   @id @default(cuid())
+  userId     String
+  level      Int
+  achievedAt DateTime @default(now())
+
+  @@unique([userId, level])
+  @@index([userId])
+  @@map("level_achievements")
+}
+
+// ---------------------------------------------------------------------------
+// antifraud + moderacja
+// ---------------------------------------------------------------------------
+
+model FraudSignal {
+  id             String   @id @default(cuid())
+  type           String
+  userId         String
+  counterpartyId String?
+  payload        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("fraud_signals")
+}
+
+enum ModerationCaseStatus {
+  OPEN
+  RESOLVED
+}
+
+model ModerationCase {
+  id            String               @id @default(cuid())
+  source        String
+  status        ModerationCaseStatus @default(OPEN)
+  subjectUserId String?
+  fraudSignalId String?
+  pointEventId  String?
+  note          String?              @db.Text
+  resolution    String?
+  resolvedById  String?
+  createdAt     DateTime             @default(now())
+  resolvedAt    DateTime?
+
+  @@index([status, createdAt])
+  @@map("moderation_cases")
+}

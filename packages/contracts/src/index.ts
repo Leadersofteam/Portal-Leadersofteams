@@ -1,0 +1,206 @@
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// Wspólne
+// ---------------------------------------------------------------------------
+
+export const idSchema = z.string().cuid();
+
+export const apiErrorSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    details: z.unknown().optional(),
+  }),
+});
+export type ApiError = z.infer<typeof apiErrorSchema>;
+
+// ---------------------------------------------------------------------------
+// Auth / Identity
+// ---------------------------------------------------------------------------
+
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email('Nieprawidłowy adres e-mail')
+  .max(254);
+
+// Zgodnie z zaleceniami OWASP/NIST: długość zamiast reguł znakowych.
+export const passwordSchema = z
+  .string()
+  .min(10, 'Hasło musi mieć co najmniej 10 znaków')
+  .max(128, 'Hasło może mieć maksymalnie 128 znaków');
+
+export const displayNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Nazwa musi mieć co najmniej 2 znaki')
+  .max(80);
+
+export const registerInputSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  displayName: displayNameSchema,
+});
+export type RegisterInput = z.infer<typeof registerInputSchema>;
+
+export const loginInputSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1).max(128),
+});
+export type LoginInput = z.infer<typeof loginInputSchema>;
+
+export const userRoleSchema = z.enum(['USER', 'MODERATOR', 'ADMIN']);
+export type UserRole = z.infer<typeof userRoleSchema>;
+
+export const sessionUserSchema = z.object({
+  id: idSchema,
+  email: emailSchema,
+  displayName: z.string(),
+  role: userRoleSchema,
+});
+export type SessionUser = z.infer<typeof sessionUserSchema>;
+
+// ---------------------------------------------------------------------------
+// Firma
+// ---------------------------------------------------------------------------
+
+export const createCompanyInputSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  // NIP opcjonalny na starcie (brak weryfikacji Firm — brief 3.4);
+  // pole gotowe pod przyszłą weryfikację-odznakę.
+  nip: z
+    .string()
+    .trim()
+    .regex(/^\d{10}$/, 'NIP musi składać się z 10 cyfr')
+    .optional(),
+  description: z.string().trim().max(2000).optional(),
+});
+export type CreateCompanyInput = z.infer<typeof createCompanyInputSchema>;
+
+export const companySchema = z.object({
+  id: idSchema,
+  name: z.string(),
+  nip: z.string().nullable(),
+  description: z.string().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type Company = z.infer<typeof companySchema>;
+
+// ---------------------------------------------------------------------------
+// Marketplace — profile Liderów
+// ---------------------------------------------------------------------------
+
+export const industrySchema = z.object({
+  id: idSchema,
+  name: z.string(),
+  slug: z.string(),
+});
+export type Industry = z.infer<typeof industrySchema>;
+
+export const createLeaderProfileInputSchema = z.object({
+  industryId: idSchema,
+  headline: z.string().trim().min(5, 'Nagłówek: min. 5 znaków').max(120),
+  bio: z.string().trim().max(5000).optional(),
+  isVisible: z.boolean().default(true),
+});
+export type CreateLeaderProfileInput = z.infer<typeof createLeaderProfileInputSchema>;
+
+export const updateLeaderProfileInputSchema = createLeaderProfileInputSchema.partial();
+export type UpdateLeaderProfileInput = z.infer<typeof updateLeaderProfileInputSchema>;
+
+export const portfolioItemInputSchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  url: z.string().trim().url('Nieprawidłowy adres URL').max(500).optional(),
+  description: z.string().trim().max(1000).optional(),
+});
+export type PortfolioItemInput = z.infer<typeof portfolioItemInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Marketplace — zlecenia i oferty
+// ---------------------------------------------------------------------------
+
+// Cykl życia zlecenia (ADR-006): lead-gen z formalnym przepływem.
+export const orderStatusSchema = z.enum([
+  'DRAFT',
+  'PUBLISHED',
+  'AWARDED',
+  'IN_PROGRESS',
+  'DELIVERED',
+  'CONFIRMED',
+  'CANCELLED',
+  'DISPUTED',
+]);
+export type OrderStatus = z.infer<typeof orderStatusSchema>;
+
+export const offerStatusSchema = z.enum(['SUBMITTED', 'WITHDRAWN', 'ACCEPTED', 'REJECTED']);
+export type OfferStatus = z.infer<typeof offerStatusSchema>;
+
+const orderCoreShape = {
+  title: z.string().trim().min(5, 'Tytuł: min. 5 znaków').max(140),
+  description: z.string().trim().min(20, 'Opis: min. 20 znaków').max(10000),
+  industryId: idSchema,
+  budgetMin: z.number().int().min(0),
+  budgetMax: z.number().int().min(0),
+  // Mechanizm „małe zlecenia na start" (brief 3.2): widoczność/ofertowanie
+  // od zadanego poziomu Drabinki.
+  minLevel: z.number().int().min(0).max(7).default(0),
+};
+
+export const createOrderInputSchema = z
+  .object({ companyId: idSchema, ...orderCoreShape })
+  .refine((v) => v.budgetMax >= v.budgetMin, {
+    message: 'Budżet maksymalny nie może być niższy niż minimalny',
+    path: ['budgetMax'],
+  });
+export type CreateOrderInput = z.infer<typeof createOrderInputSchema>;
+
+export const updateOrderInputSchema = z
+  .object(orderCoreShape)
+  .partial()
+  .refine(
+    (v) => v.budgetMin === undefined || v.budgetMax === undefined || v.budgetMax >= v.budgetMin,
+    {
+      message: 'Budżet maksymalny nie może być niższy niż minimalny',
+      path: ['budgetMax'],
+    },
+  );
+export type UpdateOrderInput = z.infer<typeof updateOrderInputSchema>;
+
+export const orderFiltersSchema = z.object({
+  industryId: idSchema.optional(),
+  maxMinLevel: z.coerce.number().int().min(0).max(7).optional(),
+  budgetMin: z.coerce.number().int().min(0).optional(),
+  budgetMax: z.coerce.number().int().min(0).optional(),
+  q: z.string().trim().min(2).max(200).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type OrderFilters = z.infer<typeof orderFiltersSchema>;
+
+export const createOfferInputSchema = z.object({
+  message: z.string().trim().min(20, 'Wiadomość: min. 20 znaków').max(5000),
+  proposedBudget: z.number().int().min(0).optional(),
+  proposedDays: z.number().int().min(1).max(365).optional(),
+});
+export type CreateOfferInput = z.infer<typeof createOfferInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Oceny i Drabinka
+// ---------------------------------------------------------------------------
+
+export const reviewInputSchema = z.object({
+  rating: z.number().int().min(1, 'Ocena 1–5').max(5, 'Ocena 1–5'),
+  comment: z.string().trim().max(2000).optional(),
+});
+export type ReviewInput = z.infer<typeof reviewInputSchema>;
+
+export const pointEventStatusSchema = z.enum(['PENDING', 'CONFIRMED', 'HOLD', 'REVERSED']);
+export type PointEventStatus = z.infer<typeof pointEventStatusSchema>;
+
+export const moderationResolveInputSchema = z.object({
+  action: z.enum(['RELEASE', 'REJECT']),
+  note: z.string().trim().min(5, 'Uzasadnienie: min. 5 znaków').max(2000),
+});
+export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;

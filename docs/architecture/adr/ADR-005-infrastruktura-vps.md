@@ -34,13 +34,13 @@ Realny profil obciążenia: 10k aktywnych ≈ 500–1500 sesji dziennie ≈ **20
 
 ## Decyzja 3: Ścieżka skalowania (bez przepisywania czegokolwiek)
 
-| Etap | Trigger (progi) | Ruch |
-|---|---|---|
-| 0. Wspólny VPS (start) | — | jak wyżej |
+| Etap                    | Trigger (progi)                                                                            | Ruch                                                                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0. Wspólny VPS (start)  | —                                                                                          | jak wyżej                                                                                                                                       |
 | 1. Portal na własny VPS | stały CPU > 60% lub RAM > 80% na wspólnej maszynie, albo wzajemne zakłócenia w monitoringu | `docker compose down` → przeniesienie wolumenów (mysqldump/rsync) → `up` na nowej maszynie → zmiana DNS. Przestój ≤ 30 min, zero zmian w kodzie |
-| 2. Rozdział danych | MySQL/Redis konkurują z aplikacją o CPU/IO | DB + Redis na osobny VPS (zmiana connection stringów) |
-| 3. Repliki aplikacji | api p95 przekracza budżet przy zdrowej bazie | 2–3 repliki `portal-api`/`portal-web` za Traefikiem; **bez sticky sessions** — sesje w Redis, Socket.IO z adapterem Redis od dnia 1 |
-| 4. Dalej | dopiero przy wielokrotności 10k | read-repliki MySQL, wydzielenie modułów (umożliwione przez ADR-002) |
+| 2. Rozdział danych      | MySQL/Redis konkurują z aplikacją o CPU/IO                                                 | DB + Redis na osobny VPS (zmiana connection stringów)                                                                                           |
+| 3. Repliki aplikacji    | api p95 przekracza budżet przy zdrowej bazie                                               | 2–3 repliki `portal-api`/`portal-web` za Traefikiem; **bez sticky sessions** — sesje w Redis, Socket.IO z adapterem Redis od dnia 1             |
+| 4. Dalej                | dopiero przy wielokrotności 10k                                                            | read-repliki MySQL, wydzielenie modułów (umożliwione przez ADR-002)                                                                             |
 
 Architektura aplikacji jest **od dnia 1 bezstanowa** (stan wyłącznie w MySQL/Redis) — dlatego każdy etap to operacja infrastrukturalna, nie programistyczna.
 

@@ -1,0 +1,23 @@
+{
+  "name": "@lot/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Współdzielone kontrakty API (schematy Zod + typy DTO) dla web i api",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'brak testów w contracts' && exit 0"
+  },
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@lot/config": "workspace:*",
+    "typescript": "^5.9.0"
+  }
+}

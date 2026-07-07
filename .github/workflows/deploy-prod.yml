@@ -1,0 +1,114 @@
+name: Deploy production
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      web_image: ${{ steps.meta.outputs.web_image }}
+      api_image: ${{ steps.meta.outputs.api_image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        name: Tagi obrazów (semver z taga)
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          echo "web_image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/portal-web:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "api_image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/portal-api:${TAG}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.web
+          push: true
+          tags: ${{ steps.meta.outputs.web_image }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: Build + push api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.api
+          push: true
+          tags: ${{ steps.meta.outputs.api_image }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Deploy przez SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          WEB_IMAGE: ${{ needs.build-and-push.outputs.web_image }}
+          API_IMAGE: ${{ needs.build-and-push.outputs.api_image }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
+            WEB_IMAGE="$WEB_IMAGE" API_IMAGE="$API_IMAGE" GHCR_PULL_TOKEN="$GHCR_PULL_TOKEN" GITHUB_SHA="$GITHUB_SHA" 'bash -s' <<'DEPLOY'
+          set -euo pipefail
+          DIR=/opt/portal
+          REPO=$DIR/repo
+          COMPOSE="docker compose -p portal --env-file $DIR/.env -f $REPO/infra/docker-compose.yml"
+
+          cd "$REPO"
+          git fetch origin
+          git reset --hard "$GITHUB_SHA"
+
+          echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u token --password-stdin
+
+          export WEB_IMAGE API_IMAGE
+          $COMPOSE pull web api worker
+          $COMPOSE run --rm migrate
+          $COMPOSE up -d --remove-orphans
+
+          for i in $(seq 1 24); do
+            if $COMPOSE ps api --format '{{.Health}}' | grep -q healthy; then
+              echo "$WEB_IMAGE $API_IMAGE" > "$DIR/last-good"
+              echo "Deploy produkcyjny OK"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Healthcheck nie przeszedł — rollback"
+          if [ -f "$DIR/last-good" ]; then
+            read -r WEB_IMAGE API_IMAGE < "$DIR/last-good"
+            export WEB_IMAGE API_IMAGE
+            $COMPOSE up -d --remove-orphans
+          fi
+          exit 1
+          DEPLOY

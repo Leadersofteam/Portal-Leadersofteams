@@ -17,10 +17,23 @@ erDiagram
     PointEvent }o--|| LevelDefinition : "wg reguł (rulesetVersion)"
     User ||--o| LadderState : "projekcja"
     User ||--o{ LevelAchievement : "osiąga"
+    Group ||--o{ GroupMembership : "ma członków"
+    User ||--o{ GroupMembership : "należy do grup"
+    Group ||--o{ Post : "zawiera posty"
+    User ||--o{ Post : "publikuje"
+    Team |o--o{ Post : "publikuje jako zespół"
+    Post ||--o{ Comment : "ma komentarze"
+    Post ||--o{ Reaction : "ma reakcje"
+    Group ||--o{ Thread : "zawiera wątki Q&A"
     User ||--o{ Thread : "pyta"
     Thread ||--o{ Answer : "ma odpowiedzi"
     User ||--o{ Answer : "odpowiada"
     Answer ||--o{ AnswerVote : "otrzymuje głosy"
+    User ||--o{ Team : "zakłada (lvl 7)"
+    Team ||--o{ TeamMember : "ma skład"
+    Team ||--o{ TeamOpening : "rekrutuje"
+    TeamOpening ||--o{ TeamApplication : "otrzymuje aplikacje"
+    User ||--o{ TeamApplication : "aplikuje (lvl 3+)"
     User ||--o{ Notification : "otrzymuje"
     User ||--o{ FraudSignal : "dotyczy"
     FraudSignal }o--o| ModerationCase : "eskaluje do"
@@ -31,9 +44,9 @@ erDiagram
 
 ### Tożsamość (moduł `identity`)
 
-- **User** — jedno konto na osobę; e-mail + hasło (argon2id), role (`USER`, `MODERATOR`, `ADMIN`). Rejestracja otwarta, bez bramki (brief 3.1). Uwaga: *zarejestrowany ≠ Lider* — tytuł Lidera wynika ze stanu Drabinki, nie z rejestracji.
+- **User** — jedno konto na osobę; e-mail + hasło (argon2id), role (`USER`, `MODERATOR`, `ADMIN`). Rejestracja otwarta, bez bramki (brief 3.1). Uwaga: _zarejestrowany ≠ Lider_ — tytuł Lidera wynika ze stanu Drabinki, nie z rejestracji.
 - **LeaderProfile** — profil publiczny użytkownika działającego jako Lider: branża/kompetencja (słownik `Industry`), bio, portfolio (pozycje z linkami/plikami), widoczność w wyszukiwarce. Tworzony przez użytkownika, gdy chce działać po stronie podażowej.
-- **Company** — profil firmowy (nazwa, NIP *opcjonalny na starcie* — brak weryfikacji zgodnie z briefem 3.4, ale pole gotowe pod przyszłą weryfikację), branża, opis. **CompanyMember** wiąże userów z firmą (rola `OWNER`/`MEMBER`) — jedna osoba może działać i jako Lider, i w imieniu Firmy, ale guardraile ADR-004 widzą to powiązanie.
+- **Company** — profil firmowy (nazwa, NIP _opcjonalny na starcie_ — brak weryfikacji zgodnie z briefem 3.4, ale pole gotowe pod przyszłą weryfikację), branża, opis. **CompanyMember** wiąże userów z firmą (rola `OWNER`/`MEMBER`) — jedna osoba może działać i jako Lider, i w imieniu Firmy, ale guardraile ADR-004 widzą to powiązanie.
 - **OidcClient / OidcGrant / OidcKey** (faza 2) — storage dla `oidc-provider`: zarejestrowani klienci (app.leadersofteams.com), granty/sesje/kody, klucze JWKS z rotacją.
 
 ### Marketplace (moduł `marketplace`)
@@ -42,17 +55,32 @@ erDiagram
 - **Offer** — oferta Lidera do zlecenia: treść, proponowane widełki/termin, status (`SUBMITTED/WITHDRAWN/ACCEPTED/REJECTED`). Unikat (`orderId`,`leaderProfileId`).
 - **Review** — dwustronna ocena po `CONFIRMED`: Firma→Lider (źródło punktów) i Lider→Firma (reputacja Firmy — istotna wobec braku weryfikacji na starcie). Ocena 1–5 + wymiary + komentarz; publikacja symultaniczna (obie na raz albo po upływie okna), żeby uniknąć ocen odwetowych.
 
-### Społeczność (moduł `community`)
+### Grupy branżowe (moduł `groups`, ADR-010)
 
-- **Thread** — wątek Q&A/mentoringowy: tytuł, treść, kategoria/branża, status (`OPEN/ANSWERED/CLOSED`), autor.
+- **Group** — grupa per sektor/branża (`industryId`) lub tematyczna: nazwa, opis, typ członkostwa (`OPEN/MODERATED`), `createdById`; grupy startowe systemowe, tworzenie przez użytkowników od progu poziomu (konfiguracja, start: lvl 2).
+- **GroupMembership** — członkostwo: user, grupa, rola (`MEMBER/MODERATOR`), status (`ACTIVE/PENDING/BANNED`); unikat (`groupId`,`userId`).
+- **Post** — wpis w grupie: typ (`DISCUSSION/CASE_STUDY/IDEA`), tytuł, treść, autor, **`teamId` opcjonalne** (publikacja w imieniu zespołu — case studies zespołów), status moderacji.
+- **Comment** — komentarz do posta (wątkowanie 1 poziom: `parentId` opcjonalny).
+- **Reaction** — pojedynczy typ „doceniam"; unikat (`postId`,`userId`). Reakcje/posty/komentarze **nie generują punktów Drabinki** (ADR-010, dec. 4).
+
+### Zespoły (moduł `teams`, ADR-010 — faza 2)
+
+- **Team** — zespół: nazwa, misja, branża, `ownerId` (wyłącznie Lider **lvl 7** — warunek egzekwowany w domenie na `LadderState.level`), `appTeamRef` opcjonalne (powiązanie z zespołem w app.leadersofteams.com przez integrację, faza 2).
+- **TeamMember** — skład zespołu: user, rola opisowa, status; unikat (`teamId`,`userId`). Członkostwo **nie generuje punktów**.
+- **TeamOpening** — ogłoszenie rekrutacyjne: rola (np. „lider ds. marketingu"), opis, `minLevel` (domyślnie 3), model współpracy (`RESULTS_BASED/FIXED/EQUITY/HYBRID` — deklaracja, bez przepływu pieniędzy), status (`OPEN/PAUSED/CLOSED`).
+- **TeamApplication** — aplikacja Lidera (**wymóg lvl ≥ `minLevel`**, sprawdzany na `LadderState` w momencie aplikowania): wiadomość, status (`SUBMITTED/WITHDRAWN/ACCEPTED/REJECTED`); akceptacja tworzy `TeamMember`; unikat (`openingId`,`userId`).
+
+### Społeczność Q&A (moduł `community`)
+
+- **Thread** — wątek Q&A/mentoringowy: tytuł, treść, **`groupId` (wątek żyje w grupie branżowej — ADR-010)**, status (`OPEN/ANSWERED/CLOSED`), autor.
 - **Answer** — odpowiedź: treść, `isAccepted` (jedna zaakceptowana per wątek; akceptuje autor pytania → zdarzenie punktowe).
 - **AnswerVote** — głos (`UP`, unikat per user+answer); do punktów kwalifikują się tylko głosy od kont spełniających próg wiarygodności (ADR-004) — kwalifikację ocenia moduł `ladder` w momencie naliczania, głos zapisywany zawsze.
 
 ### Drabinka (moduł `ladder`) — serce systemu
 
-- **PointEvent** *(append-only)* — `userId`, `type` (zamknięty enum, ADR-004), `points` (wartość po wagach; może być ujemna dla korekt), `weightApplied`, `sourceType`+`sourceId` (polimorficzne wskazanie: Review/Answer/AnswerVote/ModerationCase), `grantedByUserId` (człowiek-poręczyciel), `counterpartyId` (druga strona — pod malejące zwroty), `status` (`PENDING/CONFIRMED/HOLD/REVERSED`), `reversalOfId`, `rulesetVersion`, `createdAt`. **Bez `updatedAt`** poza zmianą `status` — treść wpisu niemutowalna.
+- **PointEvent** _(append-only)_ — `userId`, `type` (zamknięty enum, ADR-004), `points` (wartość po wagach; może być ujemna dla korekt), `weightApplied`, `sourceType`+`sourceId` (polimorficzne wskazanie: Review/Answer/AnswerVote/ModerationCase), `grantedByUserId` (człowiek-poręczyciel), `counterpartyId` (druga strona — pod malejące zwroty), `status` (`PENDING/CONFIRMED/HOLD/REVERSED`), `reversalOfId`, `rulesetVersion`, `createdAt`. **Bez `updatedAt`** poza zmianą `status` — treść wpisu niemutowalna.
 - **LevelDefinition** — 7 poziomów: próg punktów łącznych, wymóg minimalnego udziału obu ścieżek (od poziomu 4), odblokowania (`maxOrderBudget` widoczny na portalu; `unlocksAppAccess`, `unlocksTeamCreation` dla najwyższych), `rulesetVersion`.
-- **LadderState** *(projekcja, odtwarzalna z ledgera)* — `userId`, punkty `CONFIRMED` (łącznie + rozbicie na ścieżki marketplace/community), bieżący poziom, `isLeader` (tytuł od poziomu 1), przeliczana wyłącznie przez worker `ladder`.
+- **LadderState** _(projekcja, odtwarzalna z ledgera)_ — `userId`, punkty `CONFIRMED` (łącznie + rozbicie na ścieżki marketplace/community), bieżący poziom, `isLeader` (tytuł od poziomu 1), przeliczana wyłącznie przez worker `ladder`.
 - **LevelAchievement** — fakt awansu: user, poziom, data, id-idempotencji dla webhooka (ADR-003). Poziom nie wygasa (brief: brak mechanik utraty statusu).
 
 ### Antyfraud i moderacja (moduł `antifraud`)
@@ -68,8 +96,8 @@ erDiagram
 
 ## Indeksy i wydajność (kluczowe decyzje)
 
-- **Wzorce dostępu → indeksy złożone:** `Order(status, industryId, minLevel, publishedAt)` dla listingu; `Offer(orderId, status)`; `PointEvent(userId, status, createdAt)` dla ekranu „Moje punkty" i projekcji; `PointEvent(counterpartyId, userId, createdAt)` dla malejących zwrotów; `Thread(industryId, status, lastActivityAt)`; `Notification(userId, readAt, createdAt)`.
-- **FULLTEXT (parser ngram)** na `Order(title, description)` i `Thread(title, body)` — wyszukiwarka MVP; Meilisearch jako opcjonalny upgrade w fazie 3 bez zmiany schematu.
+- **Wzorce dostępu → indeksy złożone:** `Order(status, industryId, minLevel, publishedAt)` dla listingu; `Offer(orderId, status)`; `PointEvent(userId, status, createdAt)` dla ekranu „Moje punkty" i projekcji; `PointEvent(counterpartyId, userId, createdAt)` dla malejących zwrotów; `Thread(groupId, status, lastActivityAt)`; `Post(groupId, createdAt)` dla chronologicznych feedów grup (paginacja kursorem); `Comment(postId, createdAt)`; `TeamOpening(status, minLevel, createdAt)`; `Notification(userId, readAt, createdAt)`.
+- **FULLTEXT (parser ngram)** na `Order(title, description)`, `Thread(title, body)` i `Post(title, body)` — wyszukiwarka MVP; Meilisearch jako opcjonalny upgrade w fazie 3 bez zmiany schematu.
 - **Duże tabele:** `PointEvent`, `Notification`, `OutboxEvent`, `WebhookDelivery` rosną liniowo. Przy 10k userów to rzędu pojedynczych milionów wierszy rocznie — MySQL z poprawnymi indeksami obsługuje to bez partycjonowania. Strategia: **archiwizacja zamiast partycji** (miesięczny job przenosi `Notification` > 6 mies. i opublikowane `OutboxEvent` > 3 mies. do tabel archiwalnych; `PointEvent` **nigdy nie jest archiwizowany ani usuwany** — to księga główna). Partycjonowanie po `createdAt` pozostaje udokumentowaną opcją, jeśli tabele przekroczą ~50 mln wierszy.
 - **Blokady:** projekcja `LadderState` przeliczana sekwencyjnie per user (lock w BullMQ) — brak wyścigów bez blokad pesymistycznych w MySQL.
 
