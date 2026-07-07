@@ -8,6 +8,9 @@ interface PublicProfile {
     displayName: string;
     headline: string;
     bio: string | null;
+    level: number;
+    averageRating: number | null;
+    reviewCount: number;
     industry: { name: string };
     portfolioItems: Array<{
       id: string;
@@ -28,7 +31,17 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
     <main>
       <h1>{profile.displayName}</h1>
       <p className="meta muted">
-        {profile.industry.name} · <span className="badge">Poziom 0 — Drabinka wkrótce</span>
+        {profile.industry.name} ·{' '}
+        <span className="badge accent">Poziom {profile.level} w Drabince Lidera</span>
+        {profile.reviewCount > 0 && (
+          <>
+            {' '}
+            <span className="badge">
+              ★ {profile.averageRating}/5 ({profile.reviewCount}{' '}
+              {profile.reviewCount === 1 ? 'ocena' : 'ocen'})
+            </span>
+          </>
+        )}
       </p>
       <p style={{ fontSize: '1.1rem' }}>{profile.headline}</p>
       {profile.bio && <p className="description">{profile.bio}</p>}

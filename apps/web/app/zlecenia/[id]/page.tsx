@@ -5,6 +5,18 @@ import { ORDER_STATUS_LABELS, OFFER_STATUS_LABELS, formatBudget } from '@/lib/la
 import { serverApi } from '@/lib/server-api';
 
 import { ActionButton, OfferForm } from './actions';
+import { ReviewForm } from './review-form';
+
+interface ReviewsData {
+  reviews: Array<{
+    id: string;
+    direction: string;
+    rating: number;
+    comment: string | null;
+    authorName: string;
+  }>;
+  myReview: { id: string; published: boolean } | null;
+}
 
 interface OrderDetail {
   order: {
@@ -50,6 +62,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const canOffer =
     isLoggedIn && !viewer.isCompanyMember && order.status === 'PUBLISHED' && !viewer.myOffer;
+
+  const reviewsData =
+    order.status === 'CONFIRMED' ? await serverApi<ReviewsData>(`/orders/${id}/reviews`) : null;
+  const isParticipant = viewer.isCompanyMember || viewer.isAwardedLeader;
+  const canReview = order.status === 'CONFIRMED' && isParticipant && !reviewsData?.myReview;
 
   return (
     <main>
@@ -141,6 +158,30 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       )}
 
       {canOffer && <OfferForm orderId={order.id} />}
+
+      {/* --- oceny po zakończeniu --- */}
+      {reviewsData && reviewsData.reviews.length > 0 && (
+        <section>
+          <h2>Oceny</h2>
+          {reviewsData.reviews.map((review) => (
+            <div key={review.id} className="card" style={{ marginBottom: '1rem' }}>
+              <h3>
+                {review.authorName} <span className="badge accent">{review.rating}/5</span>{' '}
+                <span className="badge">
+                  {review.direction === 'COMPANY_TO_LEADER' ? 'ocena Lidera' : 'ocena Firmy'}
+                </span>
+              </h3>
+              {review.comment && <p className="description">{review.comment}</p>}
+            </div>
+          ))}
+        </section>
+      )}
+      {reviewsData?.myReview && !reviewsData.myReview.published && (
+        <p className="muted">
+          Twoja ocena czeka na ocenę drugiej strony (publikacja symultaniczna — maks. 14 dni).
+        </p>
+      )}
+      {canReview && <ReviewForm orderId={order.id} />}
 
       {!isLoggedIn && order.status === 'PUBLISHED' && (
         <p>

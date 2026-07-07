@@ -25,6 +25,7 @@ export interface IdentityService {
   isCompanyMember(userId: string, companyId: string): Promise<boolean>;
   getPublicUsers(userIds: string[]): Promise<Map<string, PublicUser>>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
+  getCompanyMeta(companyId: string): Promise<(CompanySummary & { createdAt: Date }) | null>;
 }
 
 function toSessionUser(user: {
@@ -124,6 +125,14 @@ export function createIdentityService(prisma: PrismaClient): IdentityService {
         select: { id: true, name: true },
       });
       return new Map(companies.map((c) => [c.id, { id: c.id, name: c.name }]));
+    },
+
+    async getCompanyMeta(companyId) {
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
+        select: { id: true, name: true, createdAt: true },
+      });
+      return company;
     },
   };
 }

@@ -406,6 +406,21 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
       }));
     },
 
+    // Publiczne API pod antyfraud (ADR-004): czy Lider ma firmę, która
+    // zlecała pracę członkom firmy-kontrahenta (wzajemne podbijanie).
+    async hasReciprocalRelationship(leaderUserId: string, companyId: string): Promise<boolean> {
+      const count = await prisma.order.count({
+        where: {
+          company: { members: { some: { userId: leaderUserId } } },
+          status: { in: ['AWARDED', 'IN_PROGRESS', 'DELIVERED', 'CONFIRMED'] },
+          awardedOffer: {
+            leaderProfile: { user: { companyMemberships: { some: { companyId } } } },
+          },
+        },
+      });
+      return count > 0;
+    },
+
     async myCompanyOrders(userId: string) {
       // Odczyt członkostw przez publiczne API identity byłby tu N+1;
       // filtrowanie po relacji members jest odczytem przez własną relację

@@ -12,7 +12,10 @@ export interface IdentityRoutesDeps {
   service: IdentityService;
   sessions: SessionStore;
   auth: AuthHelpers;
-  config: Pick<AppConfig, 'SESSION_COOKIE_NAME' | 'SESSION_TTL_SECONDS' | 'cookieSecure'>;
+  config: Pick<
+    AppConfig,
+    'SESSION_COOKIE_NAME' | 'SESSION_TTL_SECONDS' | 'cookieSecure' | 'NODE_ENV'
+  >;
 }
 
 export function identityRoutes(deps: IdentityRoutesDeps) {
@@ -33,8 +36,10 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
 
   return async function plugin(app: FastifyInstance) {
     // Ostrzejszy limit dla endpointów auth (ochrona przed credential stuffing).
+    // W testach limit jest zdjęty — wszystkie suity dzielą IP 127.0.0.1
+    // i wspólne klucze limitera w Redis.
     const authRateLimit = {
-      rateLimit: { max: 10, timeWindow: '1 minute' },
+      rateLimit: { max: config.NODE_ENV === 'test' ? 10_000 : 10, timeWindow: '1 minute' },
     };
 
     app.post('/auth/register', { config: authRateLimit }, async (request, reply) => {

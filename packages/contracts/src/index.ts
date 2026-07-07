@@ -185,3 +185,22 @@ export const createOfferInputSchema = z.object({
   proposedDays: z.number().int().min(1).max(365).optional(),
 });
 export type CreateOfferInput = z.infer<typeof createOfferInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Oceny i Drabinka
+// ---------------------------------------------------------------------------
+
+export const reviewInputSchema = z.object({
+  rating: z.number().int().min(1, 'Ocena 1–5').max(5, 'Ocena 1–5'),
+  comment: z.string().trim().max(2000).optional(),
+});
+export type ReviewInput = z.infer<typeof reviewInputSchema>;
+
+export const pointEventStatusSchema = z.enum(['PENDING', 'CONFIRMED', 'HOLD', 'REVERSED']);
+export type PointEventStatus = z.infer<typeof pointEventStatusSchema>;
+
+export const moderationResolveInputSchema = z.object({
+  action: z.enum(['RELEASE', 'REJECT']),
+  note: z.string().trim().min(5, 'Uzasadnienie: min. 5 znaków').max(2000),
+});
+export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;

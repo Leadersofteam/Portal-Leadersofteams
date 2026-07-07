@@ -12,9 +12,13 @@ export default async function PanelPage() {
   if (!me?.user) redirect('/logowanie');
   const user = me.user;
 
-  const [profile, companies] = await Promise.all([
+  const [profile, companies, ladder] = await Promise.all([
     serverApi<{ profile: { id: string; headline: string } | null }>('/me/leader-profile'),
     serverApi<{ companies: Array<{ id: string; name: string }> }>('/me/companies'),
+    serverApi<{
+      state: { level: number; levelName: string | null; totalPoints: number };
+      nextLevel: { missingPoints: number; level: number } | null;
+    }>('/me/ladder'),
   ]);
 
   return (
@@ -69,8 +73,13 @@ export default async function PanelPage() {
         <div className="card">
           <h3>Drabinka Lidera</h3>
           <p>
-            Poziom 0 — punkty za ocenione zlecenia i mentoring pojawią się w kolejnym sprincie.
-            Zasady będą w pełni jawne.
+            Poziom {ladder?.state.level ?? 0}
+            {ladder?.state.levelName ? ` — ${ladder.state.levelName}` : ''} ·{' '}
+            {ladder?.state.totalPoints ?? 0} pkt
+            {ladder?.nextLevel
+              ? ` · do poziomu ${ladder.nextLevel.level} brakuje ${ladder.nextLevel.missingPoints} pkt`
+              : ''}
+            . <Link href="/panel/punkty">Moje punkty →</Link>
           </p>
         </div>
       </section>

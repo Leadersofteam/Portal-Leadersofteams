@@ -17,6 +17,10 @@ const INDUSTRIES: Array<{ name: string; slug: string }> = [
   { name: 'Produkcja i logistyka', slug: 'produkcja-logistyka' },
 ];
 
+// Definicje poziomów trzymane w kodzie (modules/ladder/rules.ts) i lustrzanie
+// w DB — do audytu i publicznego endpointu GET /ladder/levels.
+import { LEVELS, RULESET_VERSION } from '../src/modules/ladder/rules';
+
 async function main() {
   for (const industry of INDUSTRIES) {
     await prisma.industry.upsert({
@@ -25,7 +29,20 @@ async function main() {
       create: industry,
     });
   }
-  console.log(`Seed: ${INDUSTRIES.length} branż`);
+  for (const rule of LEVELS) {
+    await prisma.levelDefinition.upsert({
+      where: { rulesetVersion_level: { rulesetVersion: RULESET_VERSION, level: rule.level } },
+      update: {
+        name: rule.name,
+        pointsRequired: rule.pointsRequired,
+        minPathSharePct: rule.minPathSharePct,
+        unlocksAppAccess: rule.unlocksAppAccess,
+        unlocksTeamCreation: rule.unlocksTeamCreation,
+      },
+      create: { rulesetVersion: RULESET_VERSION, ...rule },
+    });
+  }
+  console.log(`Seed: ${INDUSTRIES.length} branż, ${LEVELS.length} poziomów (${RULESET_VERSION})`);
 }
 
 main()

@@ -2,12 +2,13 @@ import type { SessionUser } from '@lot/contracts';
 import type { FastifyRequest } from 'fastify';
 
 import type { AppConfig } from './config';
-import { UnauthorizedError } from './errors';
+import { ForbiddenError, UnauthorizedError } from './errors';
 import type { SessionStore } from './session';
 
 export interface AuthHelpers {
   currentUser(request: FastifyRequest): Promise<SessionUser | null>;
   requireUser(request: FastifyRequest): Promise<SessionUser>;
+  requireRole(request: FastifyRequest, roles: Array<SessionUser['role']>): Promise<SessionUser>;
 }
 
 export function createAuthHelpers(
@@ -19,11 +20,20 @@ export function createAuthHelpers(
     return sessionId ? sessions.get(sessionId) : null;
   }
 
+  async function requireUser(request: FastifyRequest) {
+    const user = await currentUser(request);
+    if (!user) throw new UnauthorizedError();
+    return user;
+  }
+
   return {
     currentUser,
-    async requireUser(request) {
-      const user = await currentUser(request);
-      if (!user) throw new UnauthorizedError();
+    requireUser,
+    async requireRole(request, roles) {
+      const user = await requireUser(request);
+      if (!roles.includes(user.role)) {
+        throw new ForbiddenError('INSUFFICIENT_ROLE', 'Wymagane uprawnienia moderatora');
+      }
       return user;
     },
   };

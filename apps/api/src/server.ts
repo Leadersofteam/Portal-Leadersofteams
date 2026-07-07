@@ -4,11 +4,13 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
 
+import { antifraudRoutes, createAntifraudService } from './modules/antifraud/index';
 import { createIdentityService, identityRoutes } from './modules/identity/index';
-import { createLadderService } from './modules/ladder/index';
+import { createLadderService, ladderRoutes } from './modules/ladder/index';
 import {
   createOrdersService,
   createProfilesService,
+  createReviewsService,
   marketplaceRoutes,
 } from './modules/marketplace/index';
 import { createAuthHelpers } from './shared/auth';
@@ -43,7 +45,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   await app.register(cookie);
   await app.register(rateLimit, {
     global: true,
-    max: 300,
+    max: config.NODE_ENV === 'test' ? 10_000 : 300,
     timeWindow: '1 minute',
     redis,
     nameSpace: 'rl:',
@@ -88,21 +90,37 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
 
   const auth = createAuthHelpers(sessions, config);
   const identityService = createIdentityService(prisma);
-  const ladderService = createLadderService();
+  const ladderService = createLadderService(prisma);
   const profilesService = createProfilesService(prisma, identityService);
   const ordersService = createOrdersService({
     prisma,
     identity: identityService,
     ladder: ladderService,
   });
+  const reviewsService = createReviewsService({ prisma, identity: identityService });
+  const antifraudService = createAntifraudService({
+    prisma,
+    ladder: ladderService,
+    marketplace: ordersService,
+  });
 
   await app.register(identityRoutes({ service: identityService, sessions, auth, config }), {
     prefix: '/api/v1',
   });
   await app.register(
-    marketplaceRoutes({ profiles: profilesService, orders: ordersService, auth }),
+    marketplaceRoutes({
+      profiles: profilesService,
+      orders: ordersService,
+      reviews: reviewsService,
+      ladder: ladderService,
+      auth,
+    }),
     { prefix: '/api/v1' },
   );
+  await app.register(ladderRoutes({ ladder: ladderService, auth }), { prefix: '/api/v1' });
+  await app.register(antifraudRoutes({ antifraud: antifraudService, auth }), {
+    prefix: '/api/v1',
+  });
 
   return {
     app,
