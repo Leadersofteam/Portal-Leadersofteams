@@ -54,15 +54,27 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 - **Moduł Zespołów ([ADR-010](architecture/adr/ADR-010-grupy-zespoly-case-studies.md))**: `Team` (tworzenie od lvl 7), profil publiczny zespołu, `TeamOpening` (rekrutacja ciągła, modele współpracy), `TeamApplication` (od lvl 3), powiązanie `Team.appTeamRef` z zespołem w app + publikowanie case studies w imieniu zespołu (`Post.teamId`). Budowany w tej fazie, bo dopiero wtedy istnieją użytkownicy z odpowiednimi poziomami, a tożsamość zespołów z app wymaga integracji.
 - E2E całego przepływu unlock + rekrutacji zespołowej na stagingu obu aplikacji.
 
+## Faza Academy + Monetyzacja — nauka, kursy, przychód, wzrost (nowa, po Fazie 1/2)
+
+Kierunek strategiczny (2026-07-08): [strategia różnicowania i wzrostu](strategy/DIFFERENTIATION-AND-GROWTH.md) + [ADR-011](architecture/adr/ADR-011-program-polecen.md)/[ADR-012](architecture/adr/ADR-012-academy-kursy.md)/[ADR-013](architecture/adr/ADR-013-monetyzacja-platnosci.md). Wprowadza dwie nowe płaszczyzny **obok** Drabinki (pieniądz + polecenia), nigdy w niej. **Drabinka pozostaje nietknięta na całej tej ścieżce** (zamknięty enum `PointEventType`, brak krawędzi zdarzeń nowych modułów → `ladder`).
+
+- **Moduł `billing`** (ADR-013): integracja PSP (Przelewy24/Stripe), split payout (bez custodialnego escrow na start), webhooki idempotentne przez outbox, prowizja platformy **malejąca z poziomem Drabinki**.
+- **Moduł `academy`** (ADR-012): kursy (darmowe i płatne) — publikacja od progu poziomu, `Enrollment`, `CourseReview` (reputacja autora, nie punkty), `SkillCredential` (odznaka). Sprzedaż przez `billing`. Magnes na aspirujących liderów i lek na cold-start (R-06). **Zero punktów Drabinki.**
+- **Moduł `referral`** (ADR-011): afiliacja jednopoziomowa — nagroda za PIERWSZĄ realną transakcję zaproszonego, głębokość = 1 (brak downline), karencja + clawback, guardraile antyfraud. **Zero punktów Drabinki, zero wielopoziomowości.**
+- Rozszerzenie `subscriptions.test.ts`: dowód, że `academy.*`/`referral.*`/`billing.*` nie trafiają do `ladder`.
+
+Kolejność wewnątrz fazy: `billing` (fundament płatności) → `academy` (pierwszy przychód) → `referral` (dźwignia wzrostu na działających płatnościach). Wchodzi po dojrzałym MVP i realnych użytkownikach.
+
 ## Faza 3+ — Rozszerzenia (kolejność do decyzji po danych z launchu)
 
-Monetyzacja (prowizja/premium — wymaga decyzji biznesowej i rewizji ADR-009), płatności/escrow (wzmacnia też antyfraud), sesje mentoringowe 1:1 jako punktowane zdarzenie (`MENTORSHIP_SESSION_RATED`), Meilisearch self-hosted, rankingi opt-in, weryfikacja Firm (KRS/NIP) jako odznaka.
+Escrow/prowizja od zleceń (wzmacnia też antyfraud), sesje mentoringowe 1:1 jako punktowane zdarzenie (`MENTORSHIP_SESSION_RATED`), Meilisearch self-hosted, rankingi opt-in, weryfikacja Firm (KRS/NIP) jako odznaka, premium dla Firm.
 
 ## Kamienie decyzyjne dla właściciela
 
-| Kiedy                 | Decyzja                                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------------------- |
-| przed fazą 0          | akceptacja tej dokumentacji; parametry VPS (upgrade do 8 vCPU/16 GB, jeśli mniejszy)           |
-| faza 1, sprint 2      | kalibracja ruleset v1 (wartości punktowe, progi 7 poziomów) — warsztat na propozycji liczbowej |
-| przed launchem        | strategia seedingu rynku + wsad prawny (regulamin, RODO)                                       |
-| po 3 mies. od launchu | rewizja decyzji o płatnościach (ADR-006) na danych                                             |
+| Kiedy                 | Decyzja                                                                                                                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| przed fazą 0          | akceptacja tej dokumentacji; parametry VPS (upgrade do 8 vCPU/16 GB, jeśli mniejszy)                                                                                                               |
+| faza 1, sprint 2      | kalibracja ruleset v1 (wartości punktowe, progi 7 poziomów) — warsztat na propozycji liczbowej                                                                                                     |
+| przed launchem        | strategia seedingu rynku + wsad prawny (regulamin, RODO)                                                                                                                                           |
+| po 3 mies. od launchu | rewizja decyzji o płatnościach (ADR-006) na danych                                                                                                                                                 |
+| przed Fazą Academy    | kalibracja monetyzacji (ADR-013): take-rate na poziom, kwota+karencja nagrody afiliacyjnej (ADR-011), wybór PSP produkcyjnego, polityka zwrotów kursów; wsad prawny (VAT/OSS, regulamin sprzedaży) |
