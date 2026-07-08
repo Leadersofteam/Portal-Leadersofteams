@@ -39,6 +39,12 @@ model User {
   companyMemberships CompanyMember[]
   leaderProfile      LeaderProfile?
   createdOrders      Order[]
+  createdGroups      Group[]
+  groupMemberships   GroupMembership[]
+  posts              Post[]
+  comments           Comment[]
+  reactions          Reaction[]
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -85,6 +91,7 @@ model Industry {
 
   leaderProfiles LeaderProfile[]
   orders         Order[]
+  groups         Group[]
 
   @@map("industries")
 }
@@ -375,4 +382,160 @@ model ModerationCase {
 
   @@index([status, createdAt])
   @@map("moderation_cases")
+}
+
+// ---------------------------------------------------------------------------
+// groups — grupy branżowe „jak Facebook" (ADR-010 dec. 1)
+//
+// GRANICA ANTY-MLM (ADR-004/010 dec. 4): żadna aktywność w groups nie generuje
+// punktów. Zdarzenia groups.* NIE są konsumowane przez ladder (test
+// subscriptions.test.ts). Posty/komentarze/reakcje/członkostwo = 0 pkt.
+// ---------------------------------------------------------------------------
+
+enum GroupType {
+  OPEN
+  MODERATED
+}
+
+enum GroupMemberRole {
+  MEMBER
+  MODERATOR
+}
+
+enum GroupMemberStatus {
+  ACTIVE
+  PENDING
+  BANNED
+}
+
+model Group {
+  id          String    @id @default(cuid())
+  // Grupa per branża (słownik Industry) lub przekrojowa (industryId = null).
+  industryId  String?
+  name        String
+  description String?   @db.Text
+  type        GroupType @default(OPEN)
+  createdById String?
+  // Grupy systemowe zakłada platforma (seed) — kuratorowana lista sektorów.
+  isSystem    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  industry    Industry?         @relation(fields: [industryId], references: [id])
+  createdBy   User?             @relation(fields: [createdById], references: [id])
+  memberships GroupMembership[]
+  posts       Post[]
+
+  @@index([industryId])
+  @@index([createdAt])
+  @@map("groups")
+}
+
+model GroupMembership {
+  id       String            @id @default(cuid())
+  groupId  String
+  userId   String
+  role     GroupMemberRole   @default(MEMBER)
+  status   GroupMemberStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@index([groupId, status])
+  @@map("group_memberships")
+}
+
+enum PostType {
+  DISCUSSION
+  CASE_STUDY
+  IDEA
+}
+
+enum PostModerationStatus {
+  VISIBLE
+  HIDDEN
+}
+
+model Post {
+  id               String               @id @default(cuid())
+  groupId          String
+  authorUserId     String
+  type             PostType             @default(DISCUSSION)
+  title            String
+  body             String               @db.Text
+  // teamId pod fazę 2 (case studies w imieniu zespołu, ADR-010 dec. 3) —
+  // FK celowo pominięty do czasu istnienia modułu teams.
+  teamId           String?
+  moderationStatus PostModerationStatus @default(VISIBLE)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  group    Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author   User       @relation(fields: [authorUserId], references: [id])
+  comments Comment[]
+  reactions Reaction[]
+
+  @@index([groupId, createdAt])
+  @@index([authorUserId])
+  @@fulltext([title, body])
+  @@map("posts")
+}
+
+model Comment {
+  id           String   @id @default(cuid())
+  postId       String
+  authorUserId String
+  // Wątkowanie 1 poziom (ADR-010): komentarz-odpowiedź wskazuje rodzica,
+  // ale rodzic nie może mieć rodzica (walidacja w domenie).
+  parentId     String?
+  body         String   @db.Text
+  createdAt    DateTime @default(now())
+
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User      @relation(fields: [authorUserId], references: [id])
+  parent  Comment?  @relation("commentThread", fields: [parentId], references: [id])
+  replies Comment[] @relation("commentThread")
+
+  @@index([postId, createdAt])
+  @@map("comments")
+}
+
+// Jeden typ reakcji „doceniam" (ADR-010: celowo bez palety emocji — to portal
+// pracy). Reakcje NIE generują punktów (anty-MLM).
+model Reaction {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("reactions")
+}
+
+// ---------------------------------------------------------------------------
+// notifications — powiadomienia in-app (D1; ADR-007 dec. 3)
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  payload   Json
+  // Klucz idempotencji konsumenta (at-least-once): "{eventType}:{entityId}".
+  dedupeKey String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
 }

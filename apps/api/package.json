@@ -28,6 +28,7 @@
     "ioredis": "^5.8.0",
     "pino": "^9.13.0",
     "prisma": "^6.16.0",
+    "socket.io": "^4.8.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {

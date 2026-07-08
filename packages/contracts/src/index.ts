@@ -204,3 +204,71 @@ export const moderationResolveInputSchema = z.object({
   note: z.string().trim().min(5, 'Uzasadnienie: min. 5 znaków').max(2000),
 });
 export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Grupy branżowe (moduł groups, ADR-010) — „portal jak Facebook".
+// UWAGA (anty-MLM, ADR-004/010): żadna aktywność tu nie generuje punktów.
+// ---------------------------------------------------------------------------
+
+export const groupTypeSchema = z.enum(['OPEN', 'MODERATED']);
+export type GroupType = z.infer<typeof groupTypeSchema>;
+
+export const postTypeSchema = z.enum(['DISCUSSION', 'CASE_STUDY', 'IDEA']);
+export type PostType = z.infer<typeof postTypeSchema>;
+
+export const createGroupInputSchema = z.object({
+  name: z.string().trim().min(3, 'Nazwa: min. 3 znaki').max(120),
+  description: z.string().trim().max(2000).optional(),
+  industryId: idSchema.optional(),
+  type: groupTypeSchema.default('OPEN'),
+});
+export type CreateGroupInput = z.infer<typeof createGroupInputSchema>;
+
+export const groupFiltersSchema = z.object({
+  industryId: idSchema.optional(),
+  q: z.string().trim().min(2).max(200).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type GroupFilters = z.infer<typeof groupFiltersSchema>;
+
+export const createPostInputSchema = z.object({
+  type: postTypeSchema.default('DISCUSSION'),
+  title: z.string().trim().min(5, 'Tytuł: min. 5 znaków').max(140),
+  body: z.string().trim().min(10, 'Treść: min. 10 znaków').max(20000),
+});
+export type CreatePostInput = z.infer<typeof createPostInputSchema>;
+
+export const feedFiltersSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type FeedFilters = z.infer<typeof feedFiltersSchema>;
+
+export const createCommentInputSchema = z.object({
+  body: z.string().trim().min(1, 'Komentarz nie może być pusty').max(5000),
+  // Wątkowanie 1 poziom (ADR-010): odpowiedź wskazuje komentarz nadrzędny.
+  parentId: idSchema.optional(),
+});
+export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Powiadomienia (moduł notifications)
+// ---------------------------------------------------------------------------
+
+export const notificationsFiltersSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type NotificationsFilters = z.infer<typeof notificationsFiltersSchema>;
+
+export const notificationsReadInputSchema = z
+  .object({
+    ids: z.array(idSchema).max(200).optional(),
+    all: z.boolean().optional(),
+  })
+  .refine((v) => v.all === true || (v.ids !== undefined && v.ids.length > 0), {
+    message: 'Podaj listę id lub all=true',
+    path: ['ids'],
+  });
+export type NotificationsReadInput = z.infer<typeof notificationsReadInputSchema>;

@@ -23,6 +23,7 @@ export interface IdentityService {
   // Publiczne API dla innych modułów (granice — ADR-002): odczyty tabel
   // identity wyłącznie przez te funkcje.
   isCompanyMember(userId: string, companyId: string): Promise<boolean>;
+  getCompanyMemberUserIds(companyId: string): Promise<string[]>;
   getPublicUsers(userIds: string[]): Promise<Map<string, PublicUser>>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
   getCompanyMeta(companyId: string): Promise<(CompanySummary & { createdAt: Date }) | null>;
@@ -107,6 +108,16 @@ export function createIdentityService(prisma: PrismaClient): IdentityService {
         select: { id: true },
       });
       return member !== null;
+    },
+
+    // Publiczne API dla notifications (granice — ADR-002): odbiorcy powiadomień
+    // kierowanych „do firmy" (np. nowa oferta do zlecenia firmy).
+    async getCompanyMemberUserIds(companyId) {
+      const members = await prisma.companyMember.findMany({
+        where: { companyId },
+        select: { userId: true },
+      });
+      return members.map((m) => m.userId);
     },
 
     async getPublicUsers(userIds) {
