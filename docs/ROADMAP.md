@@ -2,7 +2,7 @@
 
 Rekomendacja architektoniczna (brief zostawił zakres MVP otwarty — sekcja 5 i 7, pyt. 4). Sprint = 2 tygodnie. Fazy są sekwencyjne; sprinty wewnątrz faz mogą się przesuwać.
 
-> **Status wykonania (2026-07-07):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ▶ następny: Sprint 4 (grupy + powiadomienia). Szczegółowy plan kolejnych sprintów z DoD i listą długu technicznego: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
+> **Status wykonania (2026-07-08):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ▶ następny: **Sprint 5** (moduł `community` — Q&A/mentoring). Szczegółowy plan kolejnych sprintów z DoD i listą długu technicznego: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
 
 ## Zasada przewodnia zakresu MVP
 
@@ -30,12 +30,10 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 - Moduł `ladder`: ledger `PointEvent`, cykl `PENDING → CONFIRMED`, projekcja `LadderState`, `LevelDefinition` (7 poziomów, ruleset v1), ekran „Moje punkty" (pełna transparentność) i publiczna strona zasad punktacji.
 - Moduł `antifraud` v1: malejące zwroty, progi wiarygodności/dojrzałości kont, limity szybkości, detekcja wzajemności (heurystyki par), `ModerationCase` + minimalny panel moderatora.
 
-**▶ Sprint 4–5 · Społeczność: grupy branżowe + Q&A/mentoring — NASTĘPNE ([ADR-010](architecture/adr/ADR-010-grupy-zespoly-case-studies.md), szczegóły: [HANDOFF-OPUS.md](HANDOFF-OPUS.md)):**
+**Sprint 4–5 · Społeczność: grupy branżowe + Q&A/mentoring ([ADR-010](architecture/adr/ADR-010-grupy-zespoly-case-studies.md), szczegóły: [HANDOFF-OPUS.md](HANDOFF-OPUS.md)):**
 
-- Grupy per sektor/branża (startowy zestaw systemowy + tworzenie od lvl 2), członkostwo OPEN/MODERATED, moderatorzy grup.
-- Posty (dyskusje / case studies / pomysły), komentarze, reakcja „doceniam"; feed chronologiczny z paginacją (bez infinite scroll).
-- Wątki Q&A zakotwiczone w grupach: odpowiedzi, głosy kwalifikowane, akceptacja; punktacja ścieżki społecznościowej (z guardrailami) — **posty/komentarze/reakcje bez punktów**.
-- Powiadomienia in-app + Socket.IO (badge, nowa odpowiedź/oferta/komentarz) + digest e-mail (limit darmowego tieru, ADR-009).
+- ✅ **Sprint 4 (`234d30a`)** — Grupy per sektor/branża (systemowe + tworzenie od lvl 2), członkostwo OPEN/MODERATED, moderatorzy; posty (dyskusje / case studies / pomysły), komentarze, reakcja „doceniam"; feed chronologiczny z paginacją kursorem (bez infinite scroll); powiadomienia in-app + Socket.IO (badge realtime). Test anty-MLM: aktywność w grupach = 0 punktów.
+- ▶ **Sprint 5 (NASTĘPNY)** — Wątki Q&A zakotwiczone w grupach (moduł `community`): odpowiedzi, głosy kwalifikowane, akceptacja; **druga ścieżka punktowa** ładowana do `ladder` (community.*) z guardrailami (kwalifikacja głosów, czapka tygodniowa, wzajemna adoracja → HOLD). Digest e-mail powiadomień dochodzi w Sprincie 6 (ADR-009).
 
 **Sprint 6 · Hardening i launch:**
 

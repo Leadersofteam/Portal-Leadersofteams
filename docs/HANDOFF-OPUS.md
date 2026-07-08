@@ -1,29 +1,35 @@
 # Handoff dla Claude Code Opus 4.8 — stan projektu i plan sprintów
 
-**Data przekazania:** 2026-07-07 · **Branch roboczy:** `claude/lot-portal-architecture-2jhgf7`
-**Przekazuje:** Fable 5 (architekt/wykonawca faz 0–1a) · **Przejmuje:** Opus 4.8
+**Ostatnia aktualizacja:** 2026-07-08 · **Branch roboczy:** `claude/lot-portal-sprints-4-9-szq1jf`
+**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 dostarczony · ▶ następny: **Sprint 5**
 
 Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kolejności:
 
 1. [Brief kontekstowy](../brief-leadersofteams-platforma.md) — rozstrzygnięcia biznesowe (nienaruszalne),
-2. [OVERVIEW architektury](architecture/OVERVIEW.md) + ADR-y 001–010,
-3. ten dokument (stan + sprinty),
-4. [ROADMAP](ROADMAP.md) i [RISKS](RISKS.md).
+2. [OVERVIEW architektury](architecture/OVERVIEW.md) + ADR-y 001–013,
+3. [Strategia różnicowania i wzrostu](strategy/DIFFERENTIATION-AND-GROWTH.md) — model Trzech Płaszczyzn (anty-MLM), Academy, polecenia (ADR-011/012/013),
+4. ten dokument (stan + sprinty),
+5. [ROADMAP](ROADMAP.md) i [RISKS](RISKS.md).
+
+> **Uwaga o branchu:** pracuj i pushuj **wyłącznie** na `claude/lot-portal-sprints-4-9-szq1jf`
+> (na nim jest cała aktualna praca: Sprint 4 + strategia). PR tworzy właściciel.
 
 ---
 
 ## 1. Stan projektu (co jest ZROBIONE i zweryfikowane)
 
-| Etap                     | Commit    | Zakres                                                                                                                                                                                                  |
-| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Architektura             | `5ad095d` | 10 ADR-ów, model danych, roadmapa, rejestr ryzyk                                                                                                                                                        |
-| Faza 0 — fundament       | `a6e5a18` | monorepo pnpm, CI/CD (GitHub Actions → GHCR → SSH), infra compose prod/staging/dev, backupy, auth (argon2id, sesje Redis), outbox+worker BullMQ, runbooki                                               |
-| Sprint 1–2 — marketplace | `08a295e` | profile Liderów+portfolio, słownik branż, pełny cykl życia zleceń z blokadą optymistyczną, oferty z bramką `minLevel`, listing z FULLTEXT, frontend                                                     |
-| Sprint 2–3 — Drabinka    | `1836767` | oceny dwustronne (publikacja symultaniczna), append-only ledger `PointEvent`, ruleset v1, karencja 7 dni, malejące zwroty, detekcja wzajemności → HOLD → moderacja (RBAC), `/drabinka`, `/panel/punkty` |
+| Etap                             | Commit    | Zakres                                                                                                                                                                                                                                                                                        |
+| -------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Architektura                     | `5ad095d` | 10 ADR-ów, model danych, roadmapa, rejestr ryzyk                                                                                                                                                                                                                                              |
+| Faza 0 — fundament               | `a6e5a18` | monorepo pnpm, CI/CD (GitHub Actions → GHCR → SSH), infra compose prod/staging/dev, backupy, auth (argon2id, sesje Redis), outbox+worker BullMQ, runbooki                                                                                                                                     |
+| Sprint 1–2 — marketplace         | `08a295e` | profile Liderów+portfolio, słownik branż, pełny cykl życia zleceń z blokadą optymistyczną, oferty z bramką `minLevel`, listing z FULLTEXT, frontend                                                                                                                                           |
+| Sprint 2–3 — Drabinka            | `1836767` | oceny dwustronne (publikacja symultaniczna), append-only ledger `PointEvent`, ruleset v1, karencja 7 dni, malejące zwroty, detekcja wzajemności → HOLD → moderacja (RBAC), `/drabinka`, `/panel/punkty`                                                                                       |
+| Sprint 4 — grupy + powiadomienia | `234d30a` | moduły `groups` (grupy OPEN/MODERATED od lvl 2, posty/komentarze/reakcje, feed kursorem) i `notifications` (konsumenci zdarzeń → in-app, dedupeKey); Socket.IO sygnał-only (ADR-007); dzwonek w headerze; `/grupy`, `/powiadomienia`; **test anty-MLM: aktywność w grupach = 0 `PointEvent`** |
+| Strategia — kierunek             | `157522d` | model Trzech Płaszczyzn (anty-MLM), ADR-011 (polecenia — afiliacja 1-poziomowa), ADR-012 (Academy/kursy), ADR-013 (monetyzacja/płatności, rewizja ADR-006/009), aktualizacja ROADMAP/RISKS. **Same dokumenty — zero zmian kodu**                                                              |
 
-**Jakość:** 41 testów (unit + integracyjne na realnym MySQL/Redis), lint z twardymi granicami modułów, typecheck strict, build produkcyjny, ręczne e2e każdego sprintu na zbudowanym API z realnym workerem. CI odpala wszystko na każdym pushu.
+**Jakość:** 55 testów (unit + integracyjne na realnym MySQL/Redis), lint z twardymi granicami modułów, typecheck strict, build produkcyjny, ręczne e2e każdego sprintu na zbudowanym API z realnym workerem. CI odpala wszystko na każdym pushu.
 
-**Architektura w pigułce:** modular monolith (Fastify) z modułami `identity / marketplace / ladder / antifraud` (+ zarezerwowane: `groups / community / teams / notifications / integration`); komunikacja przez outbox→BullMQ; Next.js 15 SSR z rewrites do API (same-origin cookies); MySQL 8 + Redis 7; wszystko 0 zł (ADR-009).
+**Architektura w pigułce:** modular monolith (Fastify) z modułami `identity / marketplace / ladder / antifraud / groups / notifications` (+ zarezerwowane: `community / teams / integration` oraz zaprojektowane w ADR-011/012/013: `referral / academy / billing`); komunikacja przez outbox→BullMQ; realtime Socket.IO (sygnał-only, ADR-007); Next.js 15 SSR z rewrites do API (same-origin cookies); MySQL 8 + Redis 7; wszystko 0 zł (ADR-009, wyjątek: prowizje PSP przy monetyzacji — ADR-013).
 
 **Kluczowe inwarianty (nie do naruszenia — patrz ADR-002/004/010):**
 
@@ -35,24 +41,28 @@ Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kole
 
 ## 2. Zidentyfikowany dług / luki (do domknięcia w najbliższych sprintach)
 
-| #   | Luka                                                                                                         | Gdzie domknąć                             |
-| --- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| D1  | Moduł `notifications` nie istnieje (zdarzenia lecą w próżnię — konsument tylko loguje)                       | Sprint 4                                  |
-| D2  | Socket.IO z ADR-007 niewdrożony (brak realtime)                                                              | Sprint 4                                  |
-| D3  | Cache aplikacyjny Redis (cache-aside z ADR-007) nieużywany — listingi biją prosto w MySQL                    | Sprint 6                                  |
-| D4  | E-mail (Brevo) niepodpięty — brak weryfikacji e-maila, resetu hasła, digestów                                | Sprint 6                                  |
-| D5  | Brak e2e Playwright (skrót ścieżki krytycznej z ADR-008 CI)                                                  | Sprint 6                                  |
-| D6  | Brak RODO: usunięcie konta (anonimizacja), eksport danych                                                    | Sprint 6                                  |
-| D7  | Brak Turnstile i rate-limitów publikacji dla świeżych kont (R-03, R-13)                                      | Sprint 5/6                                |
-| D8  | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu   | Sprint 5 (przy grupach) — niski priorytet |
-| D9  | `docker-compose` deploy nieprzetestowany na realnym VPS (sekrety GitHub nieustawione — czeka na właściciela) | Sprint 6 przed launchem                   |
-| D10 | Panel Bull Board (wgląd w kolejki) niewdrożony                                                               | Sprint 6, opcjonalnie                     |
+| #      | Luka                                                                                                             | Gdzie domknąć                             |
+| ------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| ~~D1~~ | ✅ **ZROBIONE (Sprint 4)** — moduł `notifications` konsumuje zdarzenia → wpisy in-app + sygnał realtime          | —                                         |
+| ~~D2~~ | ✅ **ZROBIONE (Sprint 4)** — Socket.IO sygnał-only (pokój `user:{id}`, handshake sesyjnym cookie, Redis pub/sub) | —                                         |
+| D3     | Cache aplikacyjny Redis (cache-aside z ADR-007) nieużywany — listingi/feedy biją prosto w MySQL                  | Sprint 6                                  |
+| D4     | E-mail (Brevo) niepodpięty — brak weryfikacji e-maila, resetu hasła, digestów                                    | Sprint 6                                  |
+| D5     | Brak e2e Playwright (skrót ścieżki krytycznej z ADR-008 CI)                                                      | Sprint 6                                  |
+| D6     | Brak RODO: usunięcie konta (anonimizacja), eksport danych                                                        | Sprint 6                                  |
+| D7     | Brak Turnstile i rate-limitów publikacji dla świeżych kont (R-03, R-13)                                          | Sprint 5/6                                |
+| D8     | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu       | Sprint 5 (przy grupach) — niski priorytet |
+| D9     | `docker-compose` deploy nieprzetestowany na realnym VPS (sekrety GitHub nieustawione — czeka na właściciela)     | Sprint 6 przed launchem                   |
+| D10    | Panel Bull Board (wgląd w kolejki) niewdrożony                                                                   | Sprint 6, opcjonalnie                     |
 
 ## 3. Rekomendowane kolejne kroki — plan sprintów dla Opus 4.8
 
 Pracuj **sprint po sprincie**: jeden sprint = jeden spójny, zweryfikowany i wypchnięty przyrost. Po każdym sprincie: `pnpm lint && pnpm typecheck && pnpm test` (integracyjne na `infra/docker-compose.dev.yml`), `pnpm build`, ręczny e2e nowej funkcji na zbudowanym API, commit z opisem, push na branch roboczy.
 
-### SPRINT 4 — Grupy branżowe + fundament powiadomień (moduły `groups`, `notifications`)
+> **▶ TU ZACZYNASZ: Sprint 5** (moduł `community`). Sprint 4 jest zamknięty (niżej, dla kontekstu wzorca). Po sprintach 5–9 (Faza 1/2) wchodzi **Faza Academy + Monetyzacja** (moduły `billing → academy → referral`, ADR-011/012/013) — patrz [ROADMAP](ROADMAP.md).
+
+### ✅ SPRINT 4 — Grupy branżowe + fundament powiadomień (`groups`, `notifications`) — ZROBIONE (`234d30a`)
+
+Dostarczony i zweryfikowany (55 testów, e2e na zbudowanym API + workerem). Trzymaj ten moduł jako **wzorzec** dla kolejnych: `groups`/`notifications` powielają konwencję `marketplace`/`ladder` (index.ts jako publiczne API, serwisy z DI, zdarzenia przez `emitEvent` w transakcji, idempotentni konsumenci, testy przez `buildServer`+`app.inject`). Dispatcher workera obsługuje **wielu konsumentów na jeden typ zdarzenia** (`Record<string, EventHandler[]>`). Oryginalna specyfikacja poniżej — dla odniesienia.
 
 Cel: warstwa „portal jak Facebook" (ADR-010 dec. 1) + zdarzenia przestają lecieć w próżnię.
 
@@ -96,16 +106,16 @@ DoD: staging działa na VPS; k6 w budżecie (p95 < 300 ms publiczne z cache); ta
 
 ### FAZA 3+ (backlog, kolejność po danych z launchu)
 
-Monetyzacja (decyzja biznesowa właściciela + rewizja ADR-006/009) · Meilisearch self-hosted · rankingi opt-in · weryfikacja Firm (KRS/NIP) jako odznaka · sesje mentoringowe 1:1 (`MENTORSHIP_SESSION_RATED`) · czat przy zleceniu · PWA/mobile.
+Monetyzacja i wzrost — **kierunek już zaprojektowany** (ADR-011 polecenia, ADR-012 Academy, ADR-013 płatności; osobna Faza Academy+Monetyzacja w [ROADMAP](ROADMAP.md)) · Meilisearch self-hosted · rankingi opt-in · weryfikacja Firm (KRS/NIP) jako odznaka · sesje mentoringowe 1:1 (`MENTORSHIP_SESSION_RATED`) · czat przy zleceniu · PWA/mobile.
 
 ## 4. Zasady pracy (obowiązują bez wyjątku)
 
 1. **Nie reinterpretuj briefu ani ADR-ów.** Zmiana reguł punktacji = nowa wersja rulesetu + wpis w publicznym changelogu + zgoda właściciela.
 2. **Bramki jakości przed każdym pushem**: lint (granice modułów!), typecheck, pełne testy na realnym MySQL/Redis, build, ręczny e2e nowej funkcji na zbudowanym API.
 3. **0 zł** (ADR-009) — żadnych płatnych usług; nowe zależności tylko OSS/darmowe tiery z fallbackiem.
-4. **Wzorce z kodu są kontraktem**: nowe moduły dokładnie jak `marketplace`/`ladder` (index.ts jako publiczne API, serwisy z DI przez argumenty, zdarzenia przez `emitEvent` w transakcji, idempotentni konsumenci, testy integracyjne przez `buildServer` + `app.inject`).
-5. **Branch**: `claude/lot-portal-architecture-2jhgf7`, push po każdym sprincie; PR tworzy wyłącznie właściciel.
-6. **Kamienie decyzyjne właściciela** (nie blokuj się — pytaj i jedź dalej): kalibracja wartości punktowych community (sprint 5), sekrety deploy + parametry VPS (sprint 6), plan seedingu rynku (przed launchem), monetyzacja (faza 3).
+4. **Wzorce z kodu są kontraktem**: nowe moduły dokładnie jak `marketplace`/`ladder`/`groups` (index.ts jako publiczne API, serwisy z DI przez argumenty, zdarzenia przez `emitEvent` w transakcji, idempotentni konsumenci, testy integracyjne przez `buildServer` + `app.inject`).
+5. **Branch**: `claude/lot-portal-sprints-4-9-szq1jf`, push po każdym sprincie; PR tworzy wyłącznie właściciel.
+6. **Kamienie decyzyjne właściciela** (nie blokuj się — pytaj i jedź dalej): kalibracja wartości punktowych community (sprint 5), sekrety deploy + parametry VPS (sprint 6), plan seedingu rynku (przed launchem), monetyzacja/kalibracja prowizji i nagród afiliacyjnych (Faza Academy — ADR-013).
 
 ## 5. Szybki start środowiska
 
@@ -118,3 +128,18 @@ cd apps/api && DATABASE_URL='mysql://portal:portal@localhost:3306/portal' \
 DATABASE_URL='mysql://portal:portal@127.0.0.1:3306/portal' REDIS_URL='redis://127.0.0.1:6379' pnpm test
 # dev: apps/api → pnpm dev (port 3001), pnpm dev:worker; apps/web → pnpm dev (port 3000)
 ```
+
+**Środowisko zdalne (web/CI-sandbox) bez Dockera** — jeśli `docker compose` nie działa (brak
+`/var/run/docker.sock`), postaw zależności lokalnie (potwierdzony przepływ ze Sprintu 4):
+
+```bash
+redis-server --daemonize yes --save '' --appendonly no        # Redis (zwykle preinstalowany)
+DEBIAN_FRONTEND=noninteractive apt-get update -qq && apt-get install -y -qq mysql-server   # MySQL 8 (Ubuntu 24.04)
+mysqld --user=mysql --daemonize                               # (raz: mysqld --initialize-insecure --user=mysql)
+mysql -uroot -e "CREATE DATABASE IF NOT EXISTS portal; \
+  CREATE USER IF NOT EXISTS 'portal'@'%' IDENTIFIED BY 'portal'; \
+  GRANT ALL ON portal.* TO 'portal'@'%'; FLUSH PRIVILEGES;"
+# dalej jak wyżej: prisma db push --skip-generate + db seed + pnpm test
+```
+
+Komendy dotykające bazy/Redis mogą wymagać `dangerouslyDisableSandbox` (sandbox blokuje część I/O).
