@@ -11,10 +11,15 @@ import { createIdentityService } from './modules/identity/index';
 import { createLadderService, ladderSubscriptions } from './modules/ladder/index';
 import type { EventHandler } from './modules/ladder/index';
 import { createOrdersService, createReviewsService } from './modules/marketplace/index';
+import {
+  createNotificationsService,
+  notificationsSubscriptions,
+} from './modules/notifications/index';
 import { loadConfig } from './shared/config';
 import { createPrisma } from './shared/db';
 import { createLogger } from './shared/logger';
-import { createBullConnectionOptions } from './shared/redis';
+import { REALTIME_CHANNEL } from './shared/realtime';
+import { createBullConnectionOptions, createRedis } from './shared/redis';
 
 const EVENTS_QUEUE = 'events';
 const POLL_INTERVAL_MS = 1000;
@@ -25,6 +30,9 @@ const config = loadConfig();
 const logger = createLogger(config);
 const prisma = createPrisma(config.DATABASE_URL);
 const connection = createBullConnectionOptions(config.REDIS_URL);
+// Publisher sygnałów realtime (ADR-007): po zapisie Notification budzi socket
+// użytkownika przez kanał Redis; proces api relayuje do pokoju user:{id}.
+const redisPub = createRedis(config.REDIS_URL);
 
 // Composition root workera — te same serwisy co w API, bez warstwy HTTP.
 const identity = createIdentityService(prisma);
@@ -32,11 +40,36 @@ const ladder = createLadderService(prisma);
 const orders = createOrdersService({ prisma, identity, ladder });
 const reviews = createReviewsService({ prisma, identity });
 const antifraud = createAntifraudService({ prisma, ladder, marketplace: orders });
+const notifications = createNotificationsService({
+  prisma,
+  identity,
+  signal: async (userId) => {
+    await redisPub.publish(REALTIME_CHANNEL, JSON.stringify({ userId, kind: 'notification' }));
+  },
+});
 
-const handlers: Record<string, EventHandler> = {
-  ...ladderSubscriptions(ladder),
-  ...antifraudSubscriptions(antifraud),
-};
+// Rejestr subskrypcji: WIELU konsumentów na jeden typ zdarzenia (np.
+// marketplace.review_published konsumują i ladder, i notifications). Każdy
+// konsument jest idempotentny osobno (przy retry joba odpalają się wszyscy).
+// GRANICA ANTY-MLM: subskrypcje ladder pozostają ograniczone do marketplace.*/
+// community.* (test subscriptions.test.ts) — notifications nie zmienia tego.
+function mergeSubscriptions(
+  ...maps: Array<Record<string, EventHandler>>
+): Record<string, EventHandler[]> {
+  const merged: Record<string, EventHandler[]> = {};
+  for (const map of maps) {
+    for (const [type, handler] of Object.entries(map)) {
+      (merged[type] ??= []).push(handler);
+    }
+  }
+  return merged;
+}
+
+const handlers: Record<string, EventHandler[]> = mergeSubscriptions(
+  ladderSubscriptions(ladder),
+  antifraudSubscriptions(antifraud),
+  notificationsSubscriptions(notifications),
+);
 
 const eventsQueue = new Queue(EVENTS_QUEUE, { connection });
 
@@ -45,13 +78,20 @@ const eventsQueue = new Queue(EVENTS_QUEUE, { connection });
 const eventsWorker = new Worker(
   EVENTS_QUEUE,
   async (job) => {
-    const handler = handlers[job.name];
-    if (!handler) {
+    const eventHandlers = handlers[job.name];
+    if (!eventHandlers || eventHandlers.length === 0) {
       logger.debug({ type: job.name }, 'Zdarzenie bez konsumenta (na razie)');
       return;
     }
-    await handler(job.data);
-    logger.info({ eventId: job.id, type: job.name }, 'Zdarzenie przetworzone');
+    // Wszyscy konsumenci danego typu (idempotentni) — sekwencyjnie, żeby błąd
+    // jednego nie gubił kontekstu (retry joba powtórzy wszystkich bezpiecznie).
+    for (const handler of eventHandlers) {
+      await handler(job.data);
+    }
+    logger.info(
+      { eventId: job.id, type: job.name, consumers: eventHandlers.length },
+      'Zdarzenie przetworzone',
+    );
   },
   { connection, concurrency: 5 },
 );
@@ -128,6 +168,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(maintenanceTimer);
     await eventsWorker.close();
     await eventsQueue.close();
+    redisPub.disconnect();
     await prisma.$disconnect();
     process.exit(0);
   });

@@ -270,3 +270,27 @@ main {
   flex-wrap: wrap;
   margin: 1rem 0 2rem;
 }
+
+/* Dzwonek powiadomień (realtime badge — ADR-007) */
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.bell-badge {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.6rem;
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1.1rem;
+  text-align: center;
+}

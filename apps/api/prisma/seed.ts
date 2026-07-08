@@ -29,6 +29,32 @@ async function main() {
       create: industry,
     });
   }
+
+  // Grupy systemowe (ADR-010 dec. 1): jedna otwarta grupa branżowa na sektor ze
+  // słownika — kuratorowana lista startowa „portalu jak Facebook". Właścicielem
+  // jest platforma (createdById = null, isSystem = true). Aktywność w tych
+  // grupach NIE generuje punktów Drabinki (anty-MLM, ADR-010 dec. 4).
+  let createdGroups = 0;
+  for (const industry of INDUSTRIES) {
+    const record = await prisma.industry.findUnique({ where: { slug: industry.slug } });
+    if (!record) continue;
+    const existing = await prisma.group.findFirst({
+      where: { industryId: record.id, isSystem: true },
+    });
+    if (!existing) {
+      await prisma.group.create({
+        data: {
+          name: industry.name,
+          description: `Grupa branżowa: ${industry.name}. Dyskusje, case studies i pomysły.`,
+          industryId: record.id,
+          type: 'OPEN',
+          isSystem: true,
+        },
+      });
+      createdGroups++;
+    }
+  }
+
   for (const rule of LEVELS) {
     await prisma.levelDefinition.upsert({
       where: { rulesetVersion_level: { rulesetVersion: RULESET_VERSION, level: rule.level } },
@@ -42,7 +68,9 @@ async function main() {
       create: { rulesetVersion: RULESET_VERSION, ...rule },
     });
   }
-  console.log(`Seed: ${INDUSTRIES.length} branż, ${LEVELS.length} poziomów (${RULESET_VERSION})`);
+  console.log(
+    `Seed: ${INDUSTRIES.length} branż, ${createdGroups} nowych grup systemowych, ${LEVELS.length} poziomów (${RULESET_VERSION})`,
+  );
 }
 
 main()

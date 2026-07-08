@@ -20,3 +20,49 @@ export function formatBudget(min: number, max: number): string {
   const fmt = new Intl.NumberFormat('pl-PL');
   return min === max ? `${fmt.format(min)} zł` : `${fmt.format(min)}–${fmt.format(max)} zł`;
 }
+
+export const GROUP_TYPE_LABELS: Record<string, string> = {
+  OPEN: 'Otwarta',
+  MODERATED: 'Moderowana',
+};
+
+export const POST_TYPE_LABELS: Record<string, string> = {
+  DISCUSSION: 'Dyskusja',
+  CASE_STUDY: 'Case study',
+  IDEA: 'Pomysł',
+};
+
+// Powiadomienia in-app: tekst budowany z typu + payloadu (bez PII w payloadzie).
+export function notificationMessage(type: string, payload: Record<string, unknown>): string {
+  switch (type) {
+    case 'offer_submitted':
+      return 'Nowa oferta do Twojego zlecenia.';
+    case 'offer_accepted':
+      return 'Twoja oferta została przyjęta.';
+    case 'order_confirmed':
+      return 'Zlecenie zostało potwierdzone jako zrealizowane.';
+    case 'review_received':
+      return 'Otrzymałeś nową ocenę.';
+    case 'level_achieved':
+      return `Awans w Drabince Lidera — poziom ${payload.level ?? ''}.`;
+    case 'post_commented':
+      return 'Nowy komentarz do Twojego posta.';
+    case 'membership_requested':
+      return 'Nowa prośba o dołączenie do Twojej grupy.';
+    case 'membership_accepted':
+      return 'Przyjęto Cię do grupy.';
+    default:
+      return 'Nowe powiadomienie.';
+  }
+}
+
+// Cel linku powiadomienia (dane zawsze dociągane REST-em — ADR-007).
+export function notificationHref(type: string, payload: Record<string, unknown>): string {
+  if (type === 'post_commented' && payload.groupId && payload.postId)
+    return `/grupy/${payload.groupId}/post/${payload.postId}`;
+  if ((type === 'membership_requested' || type === 'membership_accepted') && payload.groupId)
+    return `/grupy/${payload.groupId}`;
+  if (payload.orderId) return `/zlecenia/${payload.orderId}`;
+  if (type === 'level_achieved') return '/panel/punkty';
+  return '/powiadomienia';
+}

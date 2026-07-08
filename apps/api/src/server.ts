@@ -5,6 +5,7 @@ import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
 
 import { antifraudRoutes, createAntifraudService } from './modules/antifraud/index';
+import { createGroupsService, groupsRoutes } from './modules/groups/index';
 import { createIdentityService, identityRoutes } from './modules/identity/index';
 import { createLadderService, ladderRoutes } from './modules/ladder/index';
 import {
@@ -13,12 +14,15 @@ import {
   createReviewsService,
   marketplaceRoutes,
 } from './modules/marketplace/index';
+import { createNotificationsService, notificationsRoutes } from './modules/notifications/index';
 import { createAuthHelpers } from './shared/auth';
 import type { AppConfig } from './shared/config';
 import { createPrisma } from './shared/db';
 import type { PrismaClient } from './shared/db';
 import { DomainError } from './shared/errors';
 import { createLogger } from './shared/logger';
+import { createRealtime } from './shared/realtime';
+import type { Realtime } from './shared/realtime';
 import { createRedis } from './shared/redis';
 import type { Redis } from './shared/redis';
 import { createSessionStore } from './shared/session';
@@ -27,6 +31,7 @@ export interface AppContext {
   app: FastifyInstance;
   prisma: PrismaClient;
   redis: Redis;
+  realtime: Realtime;
   close(): Promise<void>;
 }
 
@@ -103,6 +108,12 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     ladder: ladderService,
     marketplace: ordersService,
   });
+  const groupsService = createGroupsService({
+    prisma,
+    identity: identityService,
+    ladder: ladderService,
+  });
+  const notificationsService = createNotificationsService({ prisma, identity: identityService });
 
   await app.register(identityRoutes({ service: identityService, sessions, auth, config }), {
     prefix: '/api/v1',
@@ -121,12 +132,23 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   await app.register(antifraudRoutes({ antifraud: antifraudService, auth }), {
     prefix: '/api/v1',
   });
+  await app.register(groupsRoutes({ groups: groupsService, auth }), { prefix: '/api/v1' });
+  await app.register(notificationsRoutes({ notifications: notificationsService, auth }), {
+    prefix: '/api/v1',
+  });
+
+  // Socket.IO musi być podpięty po gotowości serwera HTTP (app.server istnieje
+  // po app.ready()). Realtime to tylko sygnał (ADR-007) — patrz shared/realtime.
+  await app.ready();
+  const realtime = createRealtime(app.server, sessions, config);
 
   return {
     app,
     prisma,
     redis,
+    realtime,
     async close() {
+      await realtime.close();
       await app.close();
       await prisma.$disconnect();
       redis.disconnect();

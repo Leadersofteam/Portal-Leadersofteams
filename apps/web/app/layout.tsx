@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { NotificationBell } from '@/components/notification-bell';
+
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,8 +22,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </Link>
           <nav>
             <Link href="/zlecenia">Zlecenia</Link>
+            <Link href="/grupy">Grupy</Link>
             <Link href="/drabinka">Drabinka</Link>
             <Link href="/panel">Panel</Link>
+            <NotificationBell />
             <Link href="/logowanie">Zaloguj się</Link>
             <Link href="/rejestracja" className="btn secondary">
               Dołącz

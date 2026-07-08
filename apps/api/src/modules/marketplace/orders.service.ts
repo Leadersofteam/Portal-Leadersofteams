@@ -261,6 +261,7 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
             offerId: offer.id,
             orderId,
             leaderUserId: userId,
+            companyId: order.companyId,
           });
           return { id: offer.id };
         });
