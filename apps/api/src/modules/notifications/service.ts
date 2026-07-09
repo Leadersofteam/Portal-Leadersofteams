@@ -66,6 +66,20 @@ interface MembershipAcceptedPayload {
   groupId: string;
   requesterUserId: string;
 }
+interface AnswerCreatedPayload {
+  answerId: string;
+  threadId: string;
+  threadAuthorUserId: string;
+  answerAuthorUserId: string;
+  groupId: string;
+}
+interface AnswerAcceptedPayload {
+  answerId: string;
+  threadId: string;
+  answerAuthorUserId: string;
+  questionAuthorUserId: string;
+  groupId: string;
+}
 
 export function createNotificationsService({ prisma, identity, signal }: NotificationsServiceDeps) {
   // Idempotentna dostawa (at-least-once): unikat (userId, dedupeKey) + skipDuplicates.
@@ -193,6 +207,33 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
           type: 'membership_accepted',
           dedupeKey: `membership_accepted:${p.groupId}:${p.requesterUserId}`,
           payload: { groupId: p.groupId },
+        },
+      ]);
+    },
+
+    // Community (Q&A): powiadom autora pytania o nowej odpowiedzi. To fan-out
+    // powiadomień — ZERO logiki punktowej (punkty żyją tylko w ladder).
+    async onAnswerCreated(p: AnswerCreatedPayload) {
+      if (p.threadAuthorUserId === p.answerAuthorUserId) return 0;
+      return deliver([
+        {
+          userId: p.threadAuthorUserId,
+          type: 'answer_received',
+          dedupeKey: `answer_created:${p.answerId}`,
+          payload: { threadId: p.threadId, groupId: p.groupId },
+        },
+      ]);
+    },
+
+    // Community (Q&A): powiadom autora odpowiedzi o jej zaakceptowaniu.
+    async onAnswerAccepted(p: AnswerAcceptedPayload) {
+      if (p.answerAuthorUserId === p.questionAuthorUserId) return 0;
+      return deliver([
+        {
+          userId: p.answerAuthorUserId,
+          type: 'answer_accepted',
+          dedupeKey: `answer_accepted:${p.answerId}`,
+          payload: { threadId: p.threadId, groupId: p.groupId },
         },
       ]);
     },

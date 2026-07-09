@@ -27,6 +27,9 @@ export interface IdentityService {
   getPublicUsers(userIds: string[]): Promise<Map<string, PublicUser>>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
   getCompanyMeta(companyId: string): Promise<(CompanySummary & { createdAt: Date }) | null>;
+  // Wiek konta użytkownika — dla progu dojrzałości głosu Q&A (kwalifikacja
+  // rozstrzygana w ladder; community tylko przekazuje datę w zdarzeniu).
+  getUserCreatedAt(userId: string): Promise<Date | null>;
 }
 
 function toSessionUser(user: {
@@ -144,6 +147,14 @@ export function createIdentityService(prisma: PrismaClient): IdentityService {
         select: { id: true, name: true, createdAt: true },
       });
       return company;
+    },
+
+    async getUserCreatedAt(userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { createdAt: true },
+      });
+      return user?.createdAt ?? null;
     },
   };
 }

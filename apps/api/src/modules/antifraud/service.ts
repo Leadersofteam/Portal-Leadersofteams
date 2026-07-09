@@ -9,6 +9,9 @@ export interface PointPendingPayload {
   userId: string;
   counterpartyId: string | null;
   orderId?: string;
+  // Dyskryminator ścieżki: brak/'marketplace' → detektory zleceń; 'community'
+  // → detektory Q&A (limit dobowy + wzajemna adoracja). Ustawiany przez ladder.
+  kind?: 'marketplace' | 'community';
 }
 
 export interface AntifraudDeps {
@@ -19,11 +22,98 @@ export interface AntifraudDeps {
   };
 }
 
+// Typy punktowe ścieżki community — do detektorów (globalne wartości enum
+// Prisma, nie import międzymodułowy: antifraud nie sięga do logiki ladder).
+const COMMUNITY_POINT_TYPES = ['ANSWER_ACCEPTED', 'ANSWER_UPVOTED_QUALIFIED'] as const;
+// Dobowy limit punktowanych zdarzeń community (kamień decyzyjny właściciela,
+// Sprint 5). Nadmiar ponad ten próg → HOLD do decyzji moderatora.
+const COMMUNITY_DAILY_LIMIT = 5;
+// Okno wykrywania wzajemnej adoracji A↔B w Q&A.
+const RECIPROCITY_QA_WINDOW_DAYS = 7;
+
 export function createAntifraudService({ prisma, ladder, marketplace }: AntifraudDeps) {
+  // Wspólny zapis flagi: FraudSignal → HOLD punktu → sprawa moderacyjna.
+  async function flagAndHold(
+    payload: PointPendingPayload,
+    type: string,
+    detail: string,
+    note: string,
+  ) {
+    const signal = await prisma.fraudSignal.create({
+      data: {
+        type,
+        userId: payload.userId,
+        counterpartyId: payload.counterpartyId,
+        payload: { pointEventId: payload.pointEventId, orderId: payload.orderId ?? null, detail },
+      },
+    });
+    await ladder.holdPointEvent(payload.pointEventId, type);
+    return prisma.moderationCase.create({
+      data: {
+        source: 'FRAUD_SIGNAL',
+        subjectUserId: payload.userId,
+        fraudSignalId: signal.id,
+        pointEventId: payload.pointEventId,
+        note,
+      },
+    });
+  }
+
+  // Detektory ścieżki community (Sprint 5): limit dobowy + wzajemna adoracja.
+  async function evaluateCommunityPoint(payload: PointPendingPayload, now: Date) {
+    if (!payload.counterpartyId) return null;
+
+    // Wzajemna adoracja: istnieje punktowane zdarzenie community z ODWRÓCONĄ
+    // parą (uznający ↔ uznawany) w oknie — A akceptuje B, B akceptuje A.
+    const reciprocityStart = new Date(now.getTime() - RECIPROCITY_QA_WINDOW_DAYS * 86_400_000);
+    const mutual = await prisma.pointEvent.findFirst({
+      where: {
+        userId: payload.counterpartyId,
+        counterpartyId: payload.userId,
+        type: { in: [...COMMUNITY_POINT_TYPES] },
+        status: { not: 'REVERSED' },
+        createdAt: { gte: reciprocityStart },
+      },
+      select: { id: true },
+    });
+    if (mutual) {
+      return flagAndHold(
+        payload,
+        'RECIPROCITY_QA',
+        'Wykryto wzajemne uznawanie odpowiedzi w Q&A (A↔B) — możliwe zawyżanie punktów.',
+        'Automatyczna flaga: wzajemna adoracja w Q&A. Punkty wstrzymane do decyzji.',
+      );
+    }
+
+    // Limit dobowy: liczba punktowanych zdarzeń community usera w ostatnich 24h
+    // (wliczając bieżące). Powyżej progu → HOLD nadmiarowego punktu.
+    const dayStart = new Date(now.getTime() - 86_400_000);
+    const dailyCount = await prisma.pointEvent.count({
+      where: {
+        userId: payload.userId,
+        type: { in: [...COMMUNITY_POINT_TYPES] },
+        status: { not: 'REVERSED' },
+        createdAt: { gte: dayStart },
+      },
+    });
+    if (dailyCount > COMMUNITY_DAILY_LIMIT) {
+      return flagAndHold(
+        payload,
+        'RATE_LIMIT_QA',
+        `Przekroczono dobowy limit ${COMMUNITY_DAILY_LIMIT} punktowanych zdarzeń Q&A (${dailyCount}).`,
+        'Automatyczna flaga: dobowy limit punktów Q&A. Punkt wstrzymany do decyzji.',
+      );
+    }
+    return null;
+  }
+
   return {
     // Konsument ladder.point_pending_created: detektory biegną w oknie
     // karencji — flaga wstrzymuje punkt ZANIM policzy się do awansu.
-    async evaluatePendingPoint(payload: PointPendingPayload) {
+    async evaluatePendingPoint(payload: PointPendingPayload, now = new Date()) {
+      if (payload.kind === 'community') return evaluateCommunityPoint(payload, now);
+
+      // Ścieżka marketplace (domyślna): wzajemność zleceń Firma↔Lider.
       if (!payload.counterpartyId) return null;
 
       const reciprocal = await marketplace.hasReciprocalRelationship(
@@ -32,30 +122,12 @@ export function createAntifraudService({ prisma, ladder, marketplace }: Antifrau
       );
       if (!reciprocal) return null;
 
-      const signal = await prisma.fraudSignal.create({
-        data: {
-          type: 'RECIPROCITY',
-          userId: payload.userId,
-          counterpartyId: payload.counterpartyId,
-          payload: {
-            pointEventId: payload.pointEventId,
-            orderId: payload.orderId ?? null,
-            detail:
-              'Wykryto wzajemną relację zleceń: firma Lidera zleca pracę członkom firmy oceniającej',
-          },
-        },
-      });
-      await ladder.holdPointEvent(payload.pointEventId, 'RECIPROCITY');
-      const moderationCase = await prisma.moderationCase.create({
-        data: {
-          source: 'FRAUD_SIGNAL',
-          subjectUserId: payload.userId,
-          fraudSignalId: signal.id,
-          pointEventId: payload.pointEventId,
-          note: 'Automatyczna flaga: wzajemność zleceń Firma↔Lider. Punkty wstrzymane do decyzji.',
-        },
-      });
-      return moderationCase;
+      return flagAndHold(
+        payload,
+        'RECIPROCITY',
+        'Wykryto wzajemną relację zleceń: firma Lidera zleca pracę członkom firmy oceniającej',
+        'Automatyczna flaga: wzajemność zleceń Firma↔Lider. Punkty wstrzymane do decyzji.',
+      );
     },
 
     async listCases(status: 'OPEN' | 'RESOLVED') {

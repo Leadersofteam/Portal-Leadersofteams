@@ -17,5 +17,7 @@ export function notificationsSubscriptions(
     'groups.comment_added': (p) => service.onCommentAdded(p as never),
     'groups.membership_requested': (p) => service.onMembershipRequested(p as never),
     'groups.membership_accepted': (p) => service.onMembershipAccepted(p as never),
+    'community.answer_created': (p) => service.onAnswerCreated(p as never),
+    'community.answer_accepted': (p) => service.onAnswerAccepted(p as never),
   };
 }

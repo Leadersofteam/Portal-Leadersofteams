@@ -5,6 +5,7 @@ import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
 
 import { antifraudRoutes, createAntifraudService } from './modules/antifraud/index';
+import { communityRoutes, createCommunityService } from './modules/community/index';
 import { createGroupsService, groupsRoutes } from './modules/groups/index';
 import { createIdentityService, identityRoutes } from './modules/identity/index';
 import { createLadderService, ladderRoutes } from './modules/ladder/index';
@@ -113,6 +114,11 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     identity: identityService,
     ladder: ladderService,
   });
+  const communityService = createCommunityService({
+    prisma,
+    identity: identityService,
+    groups: groupsService,
+  });
   const notificationsService = createNotificationsService({ prisma, identity: identityService });
 
   await app.register(identityRoutes({ service: identityService, sessions, auth, config }), {
@@ -133,6 +139,9 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     prefix: '/api/v1',
   });
   await app.register(groupsRoutes({ groups: groupsService, auth }), { prefix: '/api/v1' });
+  await app.register(communityRoutes({ community: communityService, auth }), {
+    prefix: '/api/v1',
+  });
   await app.register(notificationsRoutes({ notifications: notificationsService, auth }), {
     prefix: '/api/v1',
   });

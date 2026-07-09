@@ -32,6 +32,13 @@ export const POST_TYPE_LABELS: Record<string, string> = {
   IDEA: 'Pomysł',
 };
 
+// Q&A / mentoring (moduł community) — druga, punktowana ścieżka awansu.
+export const THREAD_STATUS_LABELS: Record<string, string> = {
+  OPEN: 'Otwarte',
+  ANSWERED: 'Rozwiązane',
+  CLOSED: 'Zamknięte',
+};
+
 // Powiadomienia in-app: tekst budowany z typu + payloadu (bez PII w payloadzie).
 export function notificationMessage(type: string, payload: Record<string, unknown>): string {
   switch (type) {
@@ -51,6 +58,10 @@ export function notificationMessage(type: string, payload: Record<string, unknow
       return 'Nowa prośba o dołączenie do Twojej grupy.';
     case 'membership_accepted':
       return 'Przyjęto Cię do grupy.';
+    case 'answer_received':
+      return 'Nowa odpowiedź na Twoje pytanie.';
+    case 'answer_accepted':
+      return 'Twoja odpowiedź została zaakceptowana — punkty w Drabince.';
     default:
       return 'Nowe powiadomienie.';
   }
@@ -62,6 +73,8 @@ export function notificationHref(type: string, payload: Record<string, unknown>)
     return `/grupy/${payload.groupId}/post/${payload.postId}`;
   if ((type === 'membership_requested' || type === 'membership_accepted') && payload.groupId)
     return `/grupy/${payload.groupId}`;
+  if ((type === 'answer_received' || type === 'answer_accepted') && payload.threadId)
+    return `/watki/${payload.threadId}`;
   if (payload.orderId) return `/zlecenia/${payload.orderId}`;
   if (type === 'level_achieved') return '/panel/punkty';
   return '/powiadomienia';
