@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 
 import type { PrismaClient } from '../../shared/db';
+import type { MailService } from '../../shared/mail';
 import type { IdentityService } from '../identity/index';
 
 // Sygnał realtime (ADR-007 dec. 3): worker po zapisie powiadomienia budzi socket
@@ -274,6 +275,34 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
       };
       const result = await prisma.notification.updateMany({ where, data: { readAt: new Date() } });
       return { updated: result.count };
+    },
+
+    // Dzienny digest (D4, ADR-009): jeden zbiorczy e-mail zamiast wielu — trzyma
+    // wolumen poniżej darmowego limitu Brevo. No-op gdy wysyłka wyłączona.
+    async sendDailyDigests(
+      mail: MailService,
+      getEmails: (userIds: string[]) => Promise<Map<string, string>>,
+    ): Promise<number> {
+      if (!mail.enabled) return 0;
+      const groups = await prisma.notification.groupBy({
+        by: ['userId'],
+        where: { readAt: null },
+        _count: { _all: true },
+      });
+      if (groups.length === 0) return 0;
+      const emails = await getEmails(groups.map((g) => g.userId));
+      let sent = 0;
+      for (const g of groups) {
+        const email = emails.get(g.userId);
+        if (!email) continue;
+        await mail.send({
+          to: email,
+          subject: 'Twoje powiadomienia — Leaders of Teams',
+          text: `Masz ${g._count._all} nieprzeczytanych powiadomień w portalu leadersofteams.pl.`,
+        });
+        sent += 1;
+      }
+      return sent;
     },
   };
 }

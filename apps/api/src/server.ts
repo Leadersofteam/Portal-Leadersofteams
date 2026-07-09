@@ -5,11 +5,16 @@ import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
 
 import { antifraudRoutes, createAntifraudService } from './modules/antifraud/index';
-import { communityRoutes, createCommunityService } from './modules/community/index';
-import { createGroupsService, groupsRoutes } from './modules/groups/index';
+import {
+  communityRoutes,
+  createCommunityAccountData,
+  createCommunityService,
+} from './modules/community/index';
+import { createGroupsAccountData, createGroupsService, groupsRoutes } from './modules/groups/index';
 import { createIdentityService, identityRoutes } from './modules/identity/index';
 import { createLadderService, ladderRoutes } from './modules/ladder/index';
 import {
+  createMarketplaceAccountData,
   createOrdersService,
   createProfilesService,
   createReviewsService,
@@ -17,11 +22,13 @@ import {
 } from './modules/marketplace/index';
 import { createNotificationsService, notificationsRoutes } from './modules/notifications/index';
 import { createAuthHelpers } from './shared/auth';
+import { createCache } from './shared/cache';
 import type { AppConfig } from './shared/config';
 import { createPrisma } from './shared/db';
 import type { PrismaClient } from './shared/db';
 import { DomainError } from './shared/errors';
 import { createLogger } from './shared/logger';
+import { createMailService } from './shared/mail';
 import { createRealtime } from './shared/realtime';
 import type { Realtime } from './shared/realtime';
 import { createRedis } from './shared/redis';
@@ -95,13 +102,35 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   });
 
   const auth = createAuthHelpers(sessions, config);
-  const identityService = createIdentityService(prisma);
+  const cache = createCache(redis);
+  const mail = createMailService(
+    {
+      mailEnabled: config.mailEnabled,
+      brevoApiKey: config.BREVO_API_KEY,
+      mailFrom: config.MAIL_FROM,
+      mailFromName: config.MAIL_FROM_NAME,
+    },
+    (event, data) => logger.info(data, event),
+  );
+  const identityService = createIdentityService(prisma, {
+    sessions,
+    // RODO (D6): każdy moduł anonimizuje/eksportuje własne tabele (ADR-002).
+    accountModules: [
+      createMarketplaceAccountData(prisma),
+      createGroupsAccountData(prisma),
+      createCommunityAccountData(prisma),
+    ],
+    mail,
+    appBaseUrl: config.APP_BASE_URL,
+  });
   const ladderService = createLadderService(prisma);
   const profilesService = createProfilesService(prisma, identityService);
   const ordersService = createOrdersService({
     prisma,
     identity: identityService,
     ladder: ladderService,
+    cache,
+    redis,
   });
   const reviewsService = createReviewsService({ prisma, identity: identityService });
   const antifraudService = createAntifraudService({
@@ -113,11 +142,14 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     prisma,
     identity: identityService,
     ladder: ladderService,
+    cache,
+    redis,
   });
   const communityService = createCommunityService({
     prisma,
     identity: identityService,
     groups: groupsService,
+    redis,
   });
   const notificationsService = createNotificationsService({ prisma, identity: identityService });
 

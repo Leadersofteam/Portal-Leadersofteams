@@ -1,9 +1,12 @@
 import type { CreateCommentInput, CreateGroupInput, CreatePostInput } from '@lot/contracts';
 import type { Prisma } from '@prisma/client';
 
+import type { Cache } from '../../shared/cache';
 import type { PrismaClient } from '../../shared/db';
 import { ConflictError, DomainError, ForbiddenError, NotFoundError } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
+import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
+import type { Redis } from '../../shared/redis';
 import type { IdentityService } from '../identity/index';
 import type { LadderService } from '../ladder/index';
 
@@ -11,17 +14,23 @@ import type { LadderService } from '../ladder/index';
 // — bariera anty-spam przy otwartej rejestracji (R-13). NIE jest to punktacja.
 export const GROUP_CREATION_MIN_LEVEL = 2;
 
+// Cache publicznego listingu grup (D3).
+const GROUPS_CACHE_NS = 'groups';
+const GROUPS_CACHE_TTL = 300;
+
 export interface GroupsServiceDeps {
   prisma: PrismaClient;
-  identity: Pick<IdentityService, 'getPublicUsers'>;
+  identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt'>;
   // ladder tylko do ODCZYTU poziomu (bramka) — żadnej krawędzi zdarzeń do ladder
   // (anty-MLM, ADR-010 dec. 4). Aktywność w groups nie generuje punktów.
   ladder: Pick<LadderService, 'getLevel'>;
+  cache?: Cache;
+  redis?: Redis;
 }
 
 const FEED_PAGE_DEFAULT = 20;
 
-export function createGroupsService({ prisma, identity, ladder }: GroupsServiceDeps) {
+export function createGroupsService({ prisma, identity, ladder, cache, redis }: GroupsServiceDeps) {
   async function requireGroup(groupId: string) {
     const group = await prisma.group.findUnique({ where: { id: groupId } });
     if (!group) throw new NotFoundError('Grupa nie istnieje');
@@ -50,6 +59,42 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
     return mods.map((m) => m.userId);
   }
 
+  // Właściwy odczyt listingu grup (owinięty cache-aside w listGroups).
+  async function loadGroups(filters: {
+    industryId?: string;
+    q?: string;
+    cursor?: string;
+    limit?: number;
+  }) {
+    const limit = filters.limit ?? FEED_PAGE_DEFAULT;
+    const where: Prisma.GroupWhereInput = {
+      ...(filters.industryId ? { industryId: filters.industryId } : {}),
+      ...(filters.q ? { name: { contains: filters.q } } : {}),
+    };
+    const rows = await prisma.group.findMany({
+      where,
+      include: { industry: true, _count: { select: { memberships: true, posts: true } } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+    });
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    return {
+      groups: page.map((g) => ({
+        id: g.id,
+        name: g.name,
+        description: g.description,
+        type: g.type,
+        isSystem: g.isSystem,
+        industry: g.industry ? { id: g.industry.id, name: g.industry.name } : null,
+        membersCount: g._count.memberships,
+        postsCount: g._count.posts,
+      })),
+      nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    };
+  }
+
   return {
     // Publiczne API dla modułu community (granice — ADR-002): community
     // bramkuje wątki/odpowiedzi członkostwem w grupie, nie sięgając do tabel
@@ -72,7 +117,7 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
         const industry = await prisma.industry.findUnique({ where: { id: input.industryId } });
         if (!industry) throw new DomainError('UNKNOWN_INDUSTRY', 'Nieznana branża', 400);
       }
-      return prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx) => {
         const group = await tx.group.create({
           data: {
             name: input.name,
@@ -86,6 +131,8 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
         await emitEvent(tx, 'groups.group_created', { groupId: group.id, createdById: userId });
         return { id: group.id, type: group.type };
       });
+      await cache?.bump(GROUPS_CACHE_NS); // listing grup nieaktualny
+      return result;
     },
 
     async join(userId: string, groupId: string) {
@@ -119,6 +166,7 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
           },
         });
       }
+      await cache?.bump(GROUPS_CACHE_NS); // liczba członków w listingu zmieniona
       return { status };
     },
 
@@ -168,12 +216,20 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
     async leave(userId: string, groupId: string) {
       const result = await prisma.groupMembership.deleteMany({ where: { groupId, userId } });
       if (result.count === 0) throw new NotFoundError('Nie jesteś członkiem tej grupy');
+      await cache?.bump(GROUPS_CACHE_NS);
     },
 
     async createPost(userId: string, groupId: string, input: CreatePostInput) {
       await requireGroup(groupId);
       await requireActiveMembership(userId, groupId);
-      return prisma.$transaction(async (tx) => {
+      // Limit publikacji dla świeżych kont (D7).
+      await enforceFreshAccountQuota(
+        redis,
+        identity.getUserCreatedAt,
+        userId,
+        FRESH_ACCOUNT_LIMITS.group_post,
+      );
+      const result = await prisma.$transaction(async (tx) => {
         const post = await tx.post.create({
           data: {
             groupId,
@@ -190,6 +246,8 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
         });
         return { id: post.id };
       });
+      await cache?.bump(GROUPS_CACHE_NS); // liczba postów w listingu zmieniona
+      return result;
     },
 
     async addComment(userId: string, postId: string, input: CreateCommentInput) {
@@ -274,33 +332,10 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
       cursor?: string;
       limit?: number;
     }) {
-      const limit = filters.limit ?? FEED_PAGE_DEFAULT;
-      const where: Prisma.GroupWhereInput = {
-        ...(filters.industryId ? { industryId: filters.industryId } : {}),
-        ...(filters.q ? { name: { contains: filters.q } } : {}),
-      };
-      const rows = await prisma.group.findMany({
-        where,
-        include: { industry: true, _count: { select: { memberships: true, posts: true } } },
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: limit + 1,
-        ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
-      });
-      const hasMore = rows.length > limit;
-      const page = hasMore ? rows.slice(0, limit) : rows;
-      return {
-        groups: page.map((g) => ({
-          id: g.id,
-          name: g.name,
-          description: g.description,
-          type: g.type,
-          isSystem: g.isSystem,
-          industry: g.industry ? { id: g.industry.id, name: g.industry.name } : null,
-          membersCount: g._count.memberships,
-          postsCount: g._count.posts,
-        })),
-        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
-      };
+      // Cache-aside (D3): listing publiczny, niezależny od widza. Bez cache
+      // (część testów) → odczyt bezpośredni.
+      if (!cache) return loadGroups(filters);
+      return cache.getOrSet(GROUPS_CACHE_NS, filters, GROUPS_CACHE_TTL, () => loadGroups(filters));
     },
 
     async getGroup(groupId: string, viewerId: string | null) {

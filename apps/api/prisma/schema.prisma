@@ -28,13 +28,17 @@ enum CompanyMemberRole {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   displayName  String
-  role         UserRole @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         UserRole  @default(USER)
+  // RODO (D6): anonimizacja W MIEJSCU — konto usunięte, ledger zachowany.
+  anonymizedAt DateTime?
+  // Weryfikacja adresu (D4, e-mail za flagą) — null = niezweryfikowany.
+  emailVerifiedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   companyMemberships CompanyMember[]
   leaderProfile      LeaderProfile?
@@ -48,8 +52,31 @@ model User {
   answers            Answer[]
   answerVotes        AnswerVote[]
   notifications      Notification[]
+  verificationTokens VerificationToken[]
 
   @@map("users")
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+// Tokeny weryfikacji e-mail i resetu hasła (D4). Przechowujemy wyłącznie HASH
+// tokena (surowy trafia tylko do e-maila); jednorazowy (usedAt) + wygasający.
+model VerificationToken {
+  id        String                @id @default(cuid())
+  userId    String
+  type      VerificationTokenType
+  tokenHash String                @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("verification_tokens")
 }
 
 model Company {
@@ -377,6 +404,10 @@ model ModerationCase {
   subjectUserId String?
   fraudSignalId String?
   pointEventId  String?
+  // Zgłoszenie użytkownika (D7): typ i id zgłoszonej encji + kto zgłosił.
+  subjectType      String?
+  subjectId        String?
+  reportedByUserId String?
   note          String?              @db.Text
   resolution    String?
   resolvedById  String?
@@ -384,6 +415,7 @@ model ModerationCase {
   resolvedAt    DateTime?
 
   @@index([status, createdAt])
+  @@index([reportedByUserId, subjectType, subjectId])
   @@map("moderation_cases")
 }
 
