@@ -51,6 +51,14 @@ export function createGroupsService({ prisma, identity, ladder }: GroupsServiceD
   }
 
   return {
+    // Publiczne API dla modułu community (granice — ADR-002): community
+    // bramkuje wątki/odpowiedzi członkostwem w grupie, nie sięgając do tabel
+    // groups. Odczyt statusu członkostwa — bez żadnej logiki punktowej.
+    async isActiveMember(userId: string, groupId: string): Promise<boolean> {
+      const m = await membership(userId, groupId);
+      return m?.status === 'ACTIVE';
+    },
+
     async createGroup(userId: string, input: CreateGroupInput) {
       // Bramka poziomu (jak marketplace.submitOffer) — odczyt z projekcji ladder.
       const level = await ladder.getLevel(userId);

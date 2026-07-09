@@ -18,6 +18,24 @@ export const COUNTERPARTY_WINDOW_DAYS = 365;
 export const NEW_COMPANY_AGE_DAYS = 14;
 export const NEW_COMPANY_WEIGHT = 0.5;
 
+// --- ścieżka community (Q&A/mentoring, brief 3.3) — ruleset v1 --------------
+// Kalibracja zatwierdzona przez właściciela (kamień decyzyjny Sprintu 5).
+// Wypełnienie już zaprojektowanych typów (ANSWER_ACCEPTED/ANSWER_UPVOTED_QUALIFIED)
+// — NIE zmiana reguły, więc RULESET_VERSION pozostaje v1.
+// Punkt odniesienia: ocena 5/5 za zlecenie = 100 pkt (marketplace).
+export const ANSWER_ACCEPTED_POINTS = 50;
+export const ANSWER_UPVOTED_POINTS = 10;
+// Limit tygodniowy ścieżki community — realizuje „postęp tygodniowy" z briefu
+// (rytm B2B, bez mechanik nieskończonego zaangażowania). Nadmiar = wpis 0 pkt
+// z wyjaśnieniem w meta (transparentność, ADR-004).
+export const COMMUNITY_WEEKLY_CAP = 300;
+export const COMMUNITY_WINDOW_DAYS = 7;
+// Kwalifikacja głosu (ADR-004: próg dojrzałości + własna aktywność) — chroni
+// przed farmieniem upvote'ów świeżymi/pustymi kontami. Niekwalifikowany głos
+// = 0 punktów (i żadnego wpisu w ledgerze).
+export const VOTER_MIN_ACCOUNT_AGE_DAYS = 14;
+export const VOTER_MIN_ACTIVITY = 1;
+
 export interface LevelRule {
   level: number;
   name: string;

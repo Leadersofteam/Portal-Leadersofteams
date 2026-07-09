@@ -4,12 +4,18 @@ import type { PrismaClient } from '../../shared/db';
 import { DomainError, NotFoundError } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
 import {
+  ANSWER_ACCEPTED_POINTS,
+  ANSWER_UPVOTED_POINTS,
+  COMMUNITY_WEEKLY_CAP,
+  COMMUNITY_WINDOW_DAYS,
   COUNTERPARTY_WINDOW_DAYS,
   LEVELS,
   MATURATION_DAYS,
   NEW_COMPANY_AGE_DAYS,
   NEW_COMPANY_WEIGHT,
   RULESET_VERSION,
+  VOTER_MIN_ACCOUNT_AGE_DAYS,
+  VOTER_MIN_ACTIVITY,
   basePointsForRating,
   computeLevel,
   diminishingWeight,
@@ -27,6 +33,28 @@ export interface ReviewPublishedPayload {
   companyCreatedAt: string;
   publishedAt: string;
 }
+
+// Zdarzenia ścieżki community (emitowane przez moduł community). Punkty płyną
+// z uznania drugiego człowieka: autora pytania (accept) i innego Lidera (upvote).
+export interface AnswerAcceptedPayload {
+  answerId: string;
+  answerAuthorUserId: string;
+  questionAuthorUserId: string;
+  groupId: string;
+}
+
+export interface AnswerUpvotedPayload {
+  voteId: string;
+  answerId: string;
+  answerAuthorUserId: string;
+  voterUserId: string;
+  groupId: string;
+  // dane wyborcy do kwalifikacji (decyzja punktowa w ladder — ADR-004)
+  voterAccountCreatedAt: string;
+  voterActivityCount: number;
+}
+
+const COMMUNITY_TYPES = ['ANSWER_ACCEPTED', 'ANSWER_UPVOTED_QUALIFIED'] as const;
 
 export function createLadderService(prisma: PrismaClient) {
   // Projekcja LadderState z ledgera (tylko CONFIRMED). Wywoływana w tx,
@@ -85,6 +113,106 @@ export function createLadderService(prisma: PrismaClient) {
         level: lvl,
         achievedAt: now.toISOString(),
       });
+    }
+  }
+
+  // Wspólny naliczacz ścieżki community: malejące zwroty od uznającego + limit
+  // tygodniowy. Wpis ledgera powstaje ZAWSZE (nawet 0 pkt przy przekroczeniu
+  // limitu) z pełnym wyjaśnieniem w meta — transparentność „za co i ile" (ADR-004).
+  async function awardCommunityPoint(args: {
+    type: 'ANSWER_ACCEPTED' | 'ANSWER_UPVOTED_QUALIFIED';
+    base: number;
+    earnerUserId: string;
+    recognizerUserId: string;
+    sourceType: string;
+    sourceId: string;
+    reason: string;
+    now: Date;
+  }) {
+    const { type, base, earnerUserId, recognizerUserId, sourceType, sourceId, reason, now } = args;
+
+    // Malejące zwroty od tego samego uznającego (ADR-004) — jak marketplace,
+    // ale kontrahentem jest userId uznającego (autor pytania / wyborca).
+    const cpWindowStart = new Date(now.getTime() - COUNTERPARTY_WINDOW_DAYS * 86_400_000);
+    const previousCount = await prisma.pointEvent.count({
+      where: {
+        userId: earnerUserId,
+        type: { in: [...COMMUNITY_TYPES] },
+        counterpartyId: recognizerUserId,
+        status: { not: 'REVERSED' },
+        createdAt: { gte: cpWindowStart },
+      },
+    });
+    const repeatWeight = diminishingWeight(previousCount);
+    const pointsAfterWeight = Math.round(base * repeatWeight);
+
+    // Limit tygodniowy ścieżki community: suma punktów usera w oknie kroczącym.
+    const weekStart = new Date(now.getTime() - COMMUNITY_WINDOW_DAYS * 86_400_000);
+    const weekAgg = await prisma.pointEvent.aggregate({
+      where: {
+        userId: earnerUserId,
+        type: { in: [...COMMUNITY_TYPES] },
+        status: { not: 'REVERSED' },
+        createdAt: { gte: weekStart },
+      },
+      _sum: { points: true },
+    });
+    const weekSum = weekAgg._sum.points ?? 0;
+    const remaining = Math.max(0, COMMUNITY_WEEKLY_CAP - weekSum);
+    const points = Math.min(pointsAfterWeight, remaining);
+    const capApplied = points < pointsAfterWeight;
+
+    try {
+      const event = await prisma.pointEvent.create({
+        data: {
+          userId: earnerUserId,
+          type,
+          points,
+          weightApplied: repeatWeight,
+          meta: {
+            basePoints: base,
+            repeatWeight,
+            repeatCount: previousCount,
+            weeklyCap: COMMUNITY_WEEKLY_CAP,
+            weeklySumBefore: weekSum,
+            capApplied,
+            explanation:
+              `${reason}: ${base} pkt bazowych` +
+              (repeatWeight < 1
+                ? `; ${previousCount + 1}. uznanie od tej samej osoby → waga ${repeatWeight}`
+                : '') +
+              (capApplied
+                ? `; tygodniowy limit community ${COMMUNITY_WEEKLY_CAP} pkt → przyznano ${points} pkt`
+                : ''),
+          },
+          sourceType,
+          sourceId,
+          grantedByUserId: recognizerUserId,
+          counterpartyId: recognizerUserId,
+          rulesetVersion: RULESET_VERSION,
+          createdAt: now,
+        },
+      });
+      // Sygnał dla antifraud: detektory community (limit dobowy, wzajemna
+      // adoracja) biegną w oknie karencji — patrz modules/antifraud.
+      await prisma.outboxEvent.create({
+        data: {
+          type: 'ladder.point_pending_created',
+          payload: {
+            pointEventId: event.id,
+            userId: earnerUserId,
+            counterpartyId: recognizerUserId,
+            kind: 'community',
+          },
+        },
+      });
+      return event;
+    } catch (err: unknown) {
+      // unique(type, sourceId, userId) — redelivery zdarzenia jest no-opem.
+      if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'P2002') {
+        return null;
+      }
+      throw err;
     }
   }
 
@@ -227,6 +355,48 @@ export function createLadderService(prisma: PrismaClient) {
         }
         throw err;
       }
+    },
+
+    // --- naliczanie (konsument zdarzeń community.*) ---------------------------
+    // DRUGA, równoważna ścieżka awansu (brief 3.3). Punkty wyłącznie z uznania
+    // drugiego człowieka: zaakceptowana odpowiedź i kwalifikowany upvote.
+    // Wspólny naliczacz: malejące zwroty od uznającego + limit tygodniowy +
+    // idempotencja przez unikat ledgera; wpis powstaje ZAWSZE (transparentność).
+    async handleAnswerAccepted(payload: AnswerAcceptedPayload, now = new Date()) {
+      // Autor pytania nie punktuje własnej odpowiedzi (blokada też w domenie).
+      if (payload.answerAuthorUserId === payload.questionAuthorUserId) return null;
+      return awardCommunityPoint({
+        type: 'ANSWER_ACCEPTED',
+        base: ANSWER_ACCEPTED_POINTS,
+        earnerUserId: payload.answerAuthorUserId,
+        recognizerUserId: payload.questionAuthorUserId,
+        sourceType: 'Answer',
+        sourceId: payload.answerId,
+        reason: 'Odpowiedź zaakceptowana przez autora pytania',
+        now,
+      });
+    },
+
+    async handleAnswerUpvoted(payload: AnswerUpvotedPayload, now = new Date()) {
+      // Wyborca nie punktuje własnej odpowiedzi.
+      if (payload.answerAuthorUserId === payload.voterUserId) return null;
+      // Kwalifikacja głosu (ADR-004): konto dojrzałe ORAZ własna aktywność.
+      // Niekwalifikowany głos = 0 punktów i ŻADNEGO wpisu (jak w specyfikacji).
+      const ageDays =
+        (now.getTime() - new Date(payload.voterAccountCreatedAt).getTime()) / 86_400_000;
+      const qualified =
+        ageDays >= VOTER_MIN_ACCOUNT_AGE_DAYS && payload.voterActivityCount >= VOTER_MIN_ACTIVITY;
+      if (!qualified) return null;
+      return awardCommunityPoint({
+        type: 'ANSWER_UPVOTED_QUALIFIED',
+        base: ANSWER_UPVOTED_POINTS,
+        earnerUserId: payload.answerAuthorUserId,
+        recognizerUserId: payload.voterUserId,
+        sourceType: 'AnswerVote',
+        sourceId: payload.voteId,
+        reason: 'Kwalifikowany upvote odpowiedzi',
+        now,
+      });
     },
 
     // --- dojrzewanie (job okresowy) -------------------------------------------

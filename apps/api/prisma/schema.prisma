@@ -44,6 +44,9 @@ model User {
   posts              Post[]
   comments           Comment[]
   reactions          Reaction[]
+  threads            Thread[]
+  answers            Answer[]
+  answerVotes        AnswerVote[]
   notifications      Notification[]
 
   @@map("users")
@@ -425,6 +428,7 @@ model Group {
   createdBy   User?             @relation(fields: [createdById], references: [id])
   memberships GroupMembership[]
   posts       Post[]
+  threads     Thread[]
 
   @@index([industryId])
   @@index([createdAt])
@@ -517,6 +521,80 @@ model Reaction {
 
   @@unique([postId, userId])
   @@map("reactions")
+}
+
+// ---------------------------------------------------------------------------
+// community — Q&A / mentoring (ADR-010 dec. 1; brief 3.3) = DRUGA, PUNKTOWANA
+// ścieżka awansu w Drabince.
+//
+// GRANICA ANTY-MLM (ADR-002 §5, ADR-004): community JAKO JEDYNY moduł poza
+// marketplace ma krawędź zdarzeń do ladder — to jest ZAPROJEKTOWANE. Punkty
+// płyną z uznania drugiego człowieka: zaakceptowana odpowiedź (autor pytania)
+// i kwalifikowany upvote (inny Lider). Wątki są zakotwiczone w grupach
+// branżowych (Thread.groupId), jak posty. Logika punktowa NIE żyje tutaj —
+// mieszka wyłącznie w ladder (jedyny punkt audytu anty-MLM).
+// ---------------------------------------------------------------------------
+
+enum ThreadStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
+model Thread {
+  id              String       @id @default(cuid())
+  groupId         String
+  authorUserId    String
+  title           String
+  body            String       @db.Text
+  status          ThreadStatus @default(OPEN)
+  // Wskaźnik na zaakceptowaną odpowiedź (jedna na wątek — egzekwowane w domenie).
+  acceptedAnswerId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  group   Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author  User     @relation(fields: [authorUserId], references: [id])
+  answers Answer[]
+
+  @@index([groupId, createdAt])
+  @@index([authorUserId])
+  @@fulltext([title, body])
+  @@map("threads")
+}
+
+model Answer {
+  id           String   @id @default(cuid())
+  threadId     String
+  authorUserId String
+  body         String   @db.Text
+  isAccepted   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  thread Thread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User        @relation(fields: [authorUserId], references: [id])
+  votes  AnswerVote[]
+
+  @@index([threadId, createdAt])
+  @@index([authorUserId])
+  @@map("answers")
+}
+
+// Upvote „doceniam odpowiedź". Unikat (answerId, userId) = idempotencja głosu
+// i zakaz podwójnego głosowania. Punktuje dopiero po kwalifikacji w ladder.
+model AnswerVote {
+  id        String   @id @default(cuid())
+  answerId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([answerId, userId])
+  @@index([userId])
+  @@map("answer_votes")
 }
 
 // ---------------------------------------------------------------------------

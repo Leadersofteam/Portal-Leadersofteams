@@ -82,6 +82,13 @@ export default async function GroupPage({
       </div>
       {group.description && <p className="description">{group.description}</p>}
 
+      <nav className="actions-row" style={{ marginTop: '0.5rem' }}>
+        <span className="badge">Aktualności</span>
+        <Link className="btn secondary" href={`/grupy/${group.id}/pytania`}>
+          Pytania (Q&amp;A) — mentoring →
+        </Link>
+      </nav>
+
       {isModerator && pending?.pending && pending.pending.length > 0 && (
         <section className="card" style={{ marginTop: '1rem' }}>
           <h3>Prośby o dołączenie ({pending.pending.length})</h3>

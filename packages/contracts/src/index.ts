@@ -253,6 +253,33 @@ export const createCommentInputSchema = z.object({
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
 
 // ---------------------------------------------------------------------------
+// Community — Q&A / mentoring (moduł community, ADR-010 / brief 3.3).
+// DRUGA, PUNKTOWANA ścieżka awansu: zaakceptowana odpowiedź i kwalifikowany
+// upvote zasilają Drabinkę (community.* → ladder). Wątki żyją w grupach.
+// ---------------------------------------------------------------------------
+
+export const threadStatusSchema = z.enum(['OPEN', 'ANSWERED', 'CLOSED']);
+export type ThreadStatus = z.infer<typeof threadStatusSchema>;
+
+export const createThreadInputSchema = z.object({
+  title: z.string().trim().min(5, 'Tytuł pytania: min. 5 znaków').max(200),
+  body: z.string().trim().min(10, 'Treść pytania: min. 10 znaków').max(10000),
+});
+export type CreateThreadInput = z.infer<typeof createThreadInputSchema>;
+
+export const createAnswerInputSchema = z.object({
+  body: z.string().trim().min(10, 'Odpowiedź: min. 10 znaków').max(10000),
+});
+export type CreateAnswerInput = z.infer<typeof createAnswerInputSchema>;
+
+export const threadFiltersSchema = z.object({
+  status: threadStatusSchema.optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type ThreadFilters = z.infer<typeof threadFiltersSchema>;
+
+// ---------------------------------------------------------------------------
 // Powiadomienia (moduł notifications)
 // ---------------------------------------------------------------------------
 
