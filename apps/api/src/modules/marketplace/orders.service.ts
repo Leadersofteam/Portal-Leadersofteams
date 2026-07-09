@@ -6,6 +6,7 @@ import type {
 } from '@lot/contracts';
 import type { OrderStatus, Prisma } from '@prisma/client';
 
+import type { Cache } from '../../shared/cache';
 import type { PrismaClient } from '../../shared/db';
 import {
   ConflictError,
@@ -15,16 +16,28 @@ import {
   NotFoundError,
 } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
+import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
+import type { Redis } from '../../shared/redis';
 import type { IdentityService } from '../identity/index';
 import type { LadderService } from '../ladder/index';
 
+// Cache publicznego listingu zleceń (D3) — TTL krótki, inwalidacja synchroniczna
+// (bump wersji namespace) przy każdej zmianie widoczności zlecenia.
+const ORDERS_CACHE_NS = 'orders';
+const ORDERS_CACHE_TTL = 60;
+
 export interface OrdersServiceDeps {
   prisma: PrismaClient;
-  identity: Pick<IdentityService, 'isCompanyMember' | 'getPublicCompanies' | 'getPublicUsers'>;
+  identity: Pick<
+    IdentityService,
+    'isCompanyMember' | 'getPublicCompanies' | 'getPublicUsers' | 'getUserCreatedAt'
+  >;
   ladder: LadderService;
+  cache?: Cache;
+  redis?: Redis;
 }
 
-export function createOrdersService({ prisma, identity, ladder }: OrdersServiceDeps) {
+export function createOrdersService({ prisma, identity, ladder, cache, redis }: OrdersServiceDeps) {
   async function requireOrder(orderId: string) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundError('Zlecenie nie istnieje');
@@ -65,6 +78,54 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
     return order?.awardedOffer?.leaderProfile.userId ?? null;
   }
 
+  // Właściwy odczyt listingu (owinięty cache-aside w listPublished).
+  async function loadPublished(filters: OrderFilters) {
+    let fulltextIds: string[] | null = null;
+    if (filters.q) {
+      const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+          SELECT id FROM orders
+          WHERE MATCH(title, description) AGAINST(${filters.q} IN NATURAL LANGUAGE MODE)
+            AND status = 'PUBLISHED'
+          LIMIT 200`;
+      fulltextIds = rows.map((r) => r.id);
+      if (fulltextIds.length === 0) return { orders: [], nextCursor: null };
+    }
+
+    const where: Prisma.OrderWhereInput = {
+      status: 'PUBLISHED',
+      ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
+      ...(filters.industryId ? { industryId: filters.industryId } : {}),
+      ...(filters.maxMinLevel !== undefined ? { minLevel: { lte: filters.maxMinLevel } } : {}),
+      ...(filters.budgetMin !== undefined ? { budgetMax: { gte: filters.budgetMin } } : {}),
+      ...(filters.budgetMax !== undefined ? { budgetMin: { lte: filters.budgetMax } } : {}),
+    };
+
+    const rows = await prisma.order.findMany({
+      where,
+      include: { industry: true },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+      take: filters.limit + 1,
+      ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+    });
+
+    const hasMore = rows.length > filters.limit;
+    const page = hasMore ? rows.slice(0, filters.limit) : rows;
+    const companies = await identity.getPublicCompanies(page.map((o) => o.companyId));
+    return {
+      orders: page.map((o) => ({
+        id: o.id,
+        title: o.title,
+        industry: o.industry,
+        budgetMin: o.budgetMin,
+        budgetMax: o.budgetMax,
+        minLevel: o.minLevel,
+        publishedAt: o.publishedAt,
+        companyName: companies.get(o.companyId)?.name ?? 'Firma',
+      })),
+      nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    };
+  }
+
   return {
     async createDraft(userId: string, input: CreateOrderInput) {
       await requireCompanyMember(userId, input.companyId);
@@ -98,6 +159,13 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
     async publish(userId: string, orderId: string) {
       const order = await requireOrder(orderId);
       await requireCompanyMember(userId, order.companyId);
+      // Limit publikacji dla świeżych kont (D7) — bariera anty-spam.
+      await enforceFreshAccountQuota(
+        redis,
+        identity.getUserCreatedAt,
+        userId,
+        FRESH_ACCOUNT_LIMITS.order_publish,
+      );
       await prisma.$transaction(async (tx) => {
         await transition(tx, orderId, ['DRAFT'], {
           status: 'PUBLISHED',
@@ -109,6 +177,7 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
           minLevel: order.minLevel,
         });
       });
+      await cache?.bump(ORDERS_CACHE_NS); // listing zleceń nieaktualny
       return { id: orderId, status: 'PUBLISHED' as const };
     },
 
@@ -122,6 +191,7 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
         });
         await emitEvent(tx, 'marketplace.order_cancelled', { orderId });
       });
+      await cache?.bump(ORDERS_CACHE_NS);
       return { id: orderId, status: 'CANCELLED' as const };
     },
 
@@ -129,50 +199,12 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
     // są WIDOCZNE (SEO + transparentność), ale ofertowanie wymaga poziomu
     // >= minLevel (bramka w submitOffer) — brief 3.2.
     async listPublished(filters: OrderFilters) {
-      let fulltextIds: string[] | null = null;
-      if (filters.q) {
-        const rows = await prisma.$queryRaw<Array<{ id: string }>>`
-          SELECT id FROM orders
-          WHERE MATCH(title, description) AGAINST(${filters.q} IN NATURAL LANGUAGE MODE)
-            AND status = 'PUBLISHED'
-          LIMIT 200`;
-        fulltextIds = rows.map((r) => r.id);
-        if (fulltextIds.length === 0) return { orders: [], nextCursor: null };
-      }
-
-      const where: Prisma.OrderWhereInput = {
-        status: 'PUBLISHED',
-        ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
-        ...(filters.industryId ? { industryId: filters.industryId } : {}),
-        ...(filters.maxMinLevel !== undefined ? { minLevel: { lte: filters.maxMinLevel } } : {}),
-        ...(filters.budgetMin !== undefined ? { budgetMax: { gte: filters.budgetMin } } : {}),
-        ...(filters.budgetMax !== undefined ? { budgetMin: { lte: filters.budgetMax } } : {}),
-      };
-
-      const rows = await prisma.order.findMany({
-        where,
-        include: { industry: true },
-        orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
-        take: filters.limit + 1,
-        ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
-      });
-
-      const hasMore = rows.length > filters.limit;
-      const page = hasMore ? rows.slice(0, filters.limit) : rows;
-      const companies = await identity.getPublicCompanies(page.map((o) => o.companyId));
-      return {
-        orders: page.map((o) => ({
-          id: o.id,
-          title: o.title,
-          industry: o.industry,
-          budgetMin: o.budgetMin,
-          budgetMax: o.budgetMax,
-          minLevel: o.minLevel,
-          publishedAt: o.publishedAt,
-          companyName: companies.get(o.companyId)?.name ?? 'Firma',
-        })),
-        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
-      };
+      // Cache-aside (D3): widok w pełni publiczny, klucz = filtry. NIGDY dla
+      // danych punktowych. Brak cache (część testów) → odczyt bezpośredni.
+      if (!cache) return loadPublished(filters);
+      return cache.getOrSet(ORDERS_CACHE_NS, filters, ORDERS_CACHE_TTL, () =>
+        loadPublished(filters),
+      );
     },
 
     async getOrder(orderId: string, viewerId: string | null) {
@@ -336,6 +368,7 @@ export function createOrdersService({ prisma, identity, ladder }: OrdersServiceD
           leaderUserId: offer.leaderProfile.userId,
         });
       });
+      await cache?.bump(ORDERS_CACHE_NS); // zlecenie opuszcza listing PUBLISHED
       return { orderId: offer.orderId };
     },
 

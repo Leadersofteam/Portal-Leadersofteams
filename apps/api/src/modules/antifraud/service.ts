@@ -130,6 +130,35 @@ export function createAntifraudService({ prisma, ladder, marketplace }: Antifrau
       );
     },
 
+    // Zgłoszenie treści przez użytkownika (D7) → ModerationCase źródło REPORT.
+    // Soft-dedup: to samo zgłoszenie (ten sam zgłaszający + encja) nie mnoży spraw.
+    async createReport(
+      reporterUserId: string,
+      input: { subjectType: 'POST' | 'THREAD' | 'ORDER'; subjectId: string; reason: string },
+    ) {
+      const existing = await prisma.moderationCase.findFirst({
+        where: {
+          status: 'OPEN',
+          source: 'REPORT',
+          reportedByUserId: reporterUserId,
+          subjectType: input.subjectType,
+          subjectId: input.subjectId,
+        },
+        select: { id: true },
+      });
+      if (existing) return { id: existing.id, duplicate: true };
+      const created = await prisma.moderationCase.create({
+        data: {
+          source: 'REPORT',
+          reportedByUserId: reporterUserId,
+          subjectType: input.subjectType,
+          subjectId: input.subjectId,
+          note: input.reason,
+        },
+      });
+      return { id: created.id, duplicate: false };
+    },
+
     async listCases(status: 'OPEN' | 'RESOLVED') {
       return prisma.moderationCase.findMany({
         where: { status },

@@ -8,3 +8,4 @@ export { createGroupsService, GROUP_CREATION_MIN_LEVEL } from './service';
 export type { GroupsService, GroupsServiceDeps } from './service';
 export { groupsRoutes } from './routes';
 export type { GroupsRoutesDeps } from './routes';
+export { createGroupsAccountData } from './account';

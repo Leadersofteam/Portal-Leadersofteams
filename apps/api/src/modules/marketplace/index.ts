@@ -7,3 +7,4 @@ export { createReviewsService } from './reviews.service';
 export type { ReviewsService, ReviewsServiceDeps } from './reviews.service';
 export { marketplaceRoutes } from './routes';
 export type { MarketplaceRoutesDeps } from './routes';
+export { createMarketplaceAccountData } from './account';

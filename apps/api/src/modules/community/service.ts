@@ -4,6 +4,8 @@ import type { Prisma } from '@prisma/client';
 import type { PrismaClient } from '../../shared/db';
 import { DomainError, ForbiddenError, NotFoundError } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
+import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
+import type { Redis } from '../../shared/redis';
 import type { GroupsService } from '../groups/index';
 import type { IdentityService } from '../identity/index';
 
@@ -14,11 +16,12 @@ export interface CommunityServiceDeps {
   prisma: PrismaClient;
   identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt'>;
   groups: Pick<GroupsService, 'isActiveMember'>;
+  redis?: Redis;
 }
 
 const PAGE_DEFAULT = 20;
 
-export function createCommunityService({ prisma, identity, groups }: CommunityServiceDeps) {
+export function createCommunityService({ prisma, identity, groups, redis }: CommunityServiceDeps) {
   async function requireMembership(userId: string, groupId: string) {
     if (!(await groups.isActiveMember(userId, groupId))) {
       throw new ForbiddenError('NOT_GROUP_MEMBER', 'Musisz być członkiem grupy');
@@ -44,6 +47,12 @@ export function createCommunityService({ prisma, identity, groups }: CommunitySe
   return {
     async askQuestion(userId: string, groupId: string, input: CreateThreadInput) {
       await requireMembership(userId, groupId);
+      await enforceFreshAccountQuota(
+        redis,
+        identity.getUserCreatedAt,
+        userId,
+        FRESH_ACCOUNT_LIMITS.qa_thread,
+      );
       return prisma.$transaction(async (tx) => {
         const thread = await tx.thread.create({
           data: { groupId, authorUserId: userId, title: input.title, body: input.body },
@@ -63,6 +72,12 @@ export function createCommunityService({ prisma, identity, groups }: CommunitySe
       if (thread.status === 'CLOSED') {
         throw new DomainError('THREAD_CLOSED', 'Wątek jest zamknięty', 409);
       }
+      await enforceFreshAccountQuota(
+        redis,
+        identity.getUserCreatedAt,
+        userId,
+        FRESH_ACCOUNT_LIMITS.qa_answer,
+      );
       return prisma.$transaction(async (tx) => {
         const answer = await tx.answer.create({
           data: { threadId, authorUserId: userId, body: input.body },

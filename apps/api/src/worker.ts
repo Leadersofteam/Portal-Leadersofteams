@@ -18,12 +18,14 @@ import {
 import { loadConfig } from './shared/config';
 import { createPrisma } from './shared/db';
 import { createLogger } from './shared/logger';
+import { createMailService } from './shared/mail';
 import { REALTIME_CHANNEL } from './shared/realtime';
 import { createBullConnectionOptions, createRedis } from './shared/redis';
 
 const EVENTS_QUEUE = 'events';
 const POLL_INTERVAL_MS = 1000;
 const MAINTENANCE_INTERVAL_MS = 5 * 60_000;
+const DIGEST_INTERVAL_MS = 24 * 60 * 60_000;
 const BATCH_SIZE = 50;
 
 const config = loadConfig();
@@ -47,6 +49,16 @@ const notifications = createNotificationsService({
     await redisPub.publish(REALTIME_CHANNEL, JSON.stringify({ userId, kind: 'notification' }));
   },
 });
+// Warstwa e-mail (D4) — no-op dopóki brak klucza Brevo (0 zł, ADR-009).
+const mail = createMailService(
+  {
+    mailEnabled: config.mailEnabled,
+    brevoApiKey: config.BREVO_API_KEY,
+    mailFrom: config.MAIL_FROM,
+    mailFromName: config.MAIL_FROM_NAME,
+  },
+  (event, data) => logger.info(data, event),
+);
 
 // Rejestr subskrypcji: WIELU konsumentów na jeden typ zdarzenia (np.
 // marketplace.review_published konsumują i ladder, i notifications). Każdy
@@ -161,11 +173,24 @@ async function runMaintenance() {
 const maintenanceTimer = setInterval(() => void runMaintenance(), MAINTENANCE_INTERVAL_MS);
 void runMaintenance();
 
+// Dzienny digest powiadomień (D4) — uruchamiany TYLKO gdy wysyłka włączona
+// (klucz Brevo obecny). Bez klucza: zero timerów, zero wysyłki (0 zł).
+async function runDigest() {
+  try {
+    const sent = await notifications.sendDailyDigests(mail, identity.getUserEmails);
+    if (sent > 0) logger.info({ sent }, 'Wysłano dzienny digest powiadomień');
+  } catch (err) {
+    logger.error({ err }, 'Błąd wysyłki digestu');
+  }
+}
+const digestTimer = mail.enabled ? setInterval(() => void runDigest(), DIGEST_INTERVAL_MS) : null;
+
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, async () => {
     logger.info({ signal }, 'Zamykanie workera');
     running = false;
     clearInterval(maintenanceTimer);
+    if (digestTimer) clearInterval(digestTimer);
     await eventsWorker.close();
     await eventsQueue.close();
     redisPub.disconnect();

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { ReportButton } from '@/components/report-button';
 import { ORDER_STATUS_LABELS, OFFER_STATUS_LABELS, formatBudget } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -85,6 +86,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <strong>Budżet:</strong> {formatBudget(order.budgetMin, order.budgetMax)}
       </p>
       <p className="description">{order.description}</p>
+
+      {isLoggedIn && !viewer.isCompanyMember && (
+        <div className="actions-row">
+          <ReportButton subjectType="ORDER" subjectId={order.id} />
+        </div>
+      )}
 
       {/* --- akcje Firmy --- */}
       {viewer.isCompanyMember && (

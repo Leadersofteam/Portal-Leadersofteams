@@ -46,6 +46,11 @@ services:
       REDIS_URL: redis://redis:6379
       SESSION_TTL_SECONDS: '604800'
       LOG_LEVEL: info
+      APP_BASE_URL: ${APP_BASE_URL:-https://leadersofteams.pl}
+      # E-mail (D4) — opcjonalne; puste = tryb no-op (0 zł, ADR-009).
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
     depends_on:
       mysql:
         condition: service_healthy
@@ -87,6 +92,11 @@ services:
       DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
       REDIS_URL: redis://redis:6379
       LOG_LEVEL: info
+      APP_BASE_URL: ${APP_BASE_URL:-https://leadersofteams.pl}
+      # Worker wysyła dzienny digest tylko gdy klucz Brevo obecny (inaczej no-op).
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
     depends_on:
       mysql:
         condition: service_healthy

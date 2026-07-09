@@ -14,11 +14,20 @@ const envSchema = z.object({
     .positive()
     .default(60 * 60 * 24 * 7),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  // Publiczny adres bazowy (linki w e-mailach weryfikacji/resetu).
+  APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  // E-mail (D4) — opcjonalny sekret. Brak klucza = tryb no-op (0 zł, ADR-009),
+  // wysyłka wyłączona; scaffolding gotowy do włączenia po podaniu klucza Brevo.
+  BREVO_API_KEY: z.string().optional(),
+  MAIL_FROM: z.string().email().default('no-reply@leadersofteams.pl'),
+  MAIL_FROM_NAME: z.string().default('Leaders of Teams'),
 });
 
 export type AppConfig = z.infer<typeof envSchema> & {
   isProduction: boolean;
   cookieSecure: boolean;
+  // Wysyłka e-mail włączona tylko gdy podano klucz (inaczej no-op).
+  mailEnabled: boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -28,5 +37,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error(`Błędna konfiguracja środowiska: ${issues}`);
   }
   const isProduction = parsed.data.NODE_ENV === 'production';
-  return { ...parsed.data, isProduction, cookieSecure: isProduction };
+  return {
+    ...parsed.data,
+    isProduction,
+    cookieSecure: isProduction,
+    mailEnabled: Boolean(parsed.data.BREVO_API_KEY),
+  };
 }

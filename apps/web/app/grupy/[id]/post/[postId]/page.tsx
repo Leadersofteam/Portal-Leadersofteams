@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { ReportButton } from '@/components/report-button';
 import { POST_TYPE_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -79,6 +80,7 @@ export default async function PostPage({
           ) : (
             <span className="badge">👏 {post.reactionsCount}</span>
           )}
+          {canParticipate && <ReportButton subjectType="POST" subjectId={post.id} />}
         </div>
       </article>
 

@@ -1,5 +1,25 @@
 # Runbook: deploy i rollback
 
+## Pierwszy deploy (bootstrap VPS)
+
+Jednorazowo, po podłączeniu SSH (checklista sekretów w `sekrety.md`):
+
+```bash
+ssh root@VPS 'bash -s' < infra/bootstrap.sh   # user deploy, sieć, katalogi
+# uzupełnij /opt/portal/.env (wzór infra/.env.example, chmod 600)
+ssh portal-deploy@VPS
+git clone https://github.com/Leadersofteam/Portal-Leadersofteams /opt/portal/repo
+cd /opt/portal/repo
+docker compose -p portal --env-file /opt/portal/.env -f infra/docker-compose.yml build
+# migracje bazowe (schemat po Sprintach 1–6): prisma/migrations/0000_init
+docker compose -p portal --env-file /opt/portal/.env -f infra/docker-compose.yml run --rm migrate
+docker compose -p portal --env-file /opt/portal/.env -f infra/docker-compose.yml up -d
+curl -fsS https://api.leadersofteams.pl/healthz
+```
+
+Migracje w repo (`apps/api/prisma/migrations/`) są źródłem prawdy dla `migrate deploy`
+na produkcji — nie używamy `db push` poza developmentem.
+
 ## Ścieżki standardowe (automatyczne)
 
 - **Staging:** merge do `main` → workflow `deploy-staging.yml` buduje obrazy (GHCR), wykonuje migracje (`migrate`), podnosi stack `portal-staging` i czeka na healthcheck. Porażka = automatyczny rollback do obrazów z `/opt/portal-staging/last-good`.

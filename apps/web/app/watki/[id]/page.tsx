@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { ReportButton } from '@/components/report-button';
 import { THREAD_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -59,6 +60,11 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         {thread.authorName} · {new Date(thread.createdAt).toLocaleDateString('pl-PL')}
       </div>
       <p className="description">{thread.body}</p>
+      {me?.user && !isAuthor && (
+        <div className="actions-row">
+          <ReportButton subjectType="THREAD" subjectId={thread.id} />
+        </div>
+      )}
 
       <h2 style={{ marginTop: '2rem' }}>Odpowiedzi ({answers.length})</h2>
       {answers.length === 0 ? (

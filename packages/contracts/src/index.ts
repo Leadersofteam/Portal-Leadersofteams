@@ -51,6 +51,19 @@ export const loginInputSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginInputSchema>;
 
+// Weryfikacja e-mail i reset hasła (D4, e-mail za flagą).
+export const verifyEmailInputSchema = z.object({ token: z.string().min(10).max(200) });
+export type VerifyEmailInput = z.infer<typeof verifyEmailInputSchema>;
+
+export const requestPasswordResetInputSchema = z.object({ email: emailSchema });
+export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetInputSchema>;
+
+export const resetPasswordInputSchema = z.object({
+  token: z.string().min(10).max(200),
+  password: passwordSchema,
+});
+export type ResetPasswordInput = z.infer<typeof resetPasswordInputSchema>;
+
 export const userRoleSchema = z.enum(['USER', 'MODERATOR', 'ADMIN']);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
@@ -204,6 +217,17 @@ export const moderationResolveInputSchema = z.object({
   note: z.string().trim().min(5, 'Uzasadnienie: min. 5 znaków').max(2000),
 });
 export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;
+
+// Zgłoszenie treści przez użytkownika (D7) → ModerationCase źródło REPORT.
+export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER']);
+export type ReportSubjectType = z.infer<typeof reportSubjectTypeSchema>;
+
+export const reportInputSchema = z.object({
+  subjectType: reportSubjectTypeSchema,
+  subjectId: idSchema,
+  reason: z.string().trim().min(5, 'Powód: min. 5 znaków').max(2000),
+});
+export type ReportInput = z.infer<typeof reportInputSchema>;
 
 // ---------------------------------------------------------------------------
 // Grupy branżowe (moduł groups, ADR-010) — „portal jak Facebook".
