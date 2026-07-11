@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { NotificationBell } from '@/components/notification-bell';
+import { SiteHeader } from '@/components/site-header';
 
 import './globals.css';
 
@@ -23,22 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pl" className={inter.variable}>
       <body>
-        <header className="site-header">
-          <Link href="/" className="brand">
-            Leaders of Teams
-          </Link>
-          <nav>
-            <Link href="/zlecenia">Zlecenia</Link>
-            <Link href="/grupy">Grupy</Link>
-            <Link href="/drabinka">Drabinka</Link>
-            <Link href="/panel">Panel</Link>
-            <NotificationBell />
-            <Link href="/logowanie">Zaloguj się</Link>
-            <Link href="/rejestracja" className="btn secondary">
-              Dołącz
-            </Link>
-          </nav>
-        </header>
+        <SiteHeader />
         {children}
       </body>
     </html>

@@ -34,6 +34,10 @@
   --danger: #f43f5e;
   --info: #3b82f6;
 
+  /* Aliasy wstecznej zgodności — strony używają inline var(--accent). */
+  --accent: var(--primary-500);
+  --accent-hover: var(--primary-400);
+
   /* ---- Cienie / poświata ---- */
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 16px rgb(0 0 0 / 0.35);
@@ -235,12 +239,13 @@ main {
 }
 
 .hero h1 {
-  font-size: clamp(2.2rem, 5vw, 3.3rem);
+  font-size: clamp(2rem, 4.5vw + 1rem, 3.3rem);
   line-height: 1.08;
   letter-spacing: -0.03em;
   margin: 0 0 1.2rem;
   font-weight: 800;
   color: var(--text-strong);
+  overflow-wrap: break-word;
 }
 
 .hero p {
@@ -687,6 +692,234 @@ main h1 {
 }
 .feature-grid > *:nth-child(4) {
   animation-delay: 0.4s;
+}
+
+/* ===================== Typografia treści ===================== */
+:root {
+  --text-body: #c6cede;
+}
+
+main h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  margin: 2.4rem 0 0.9rem;
+}
+
+main h3 {
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--text-strong);
+  margin: 0 0 0.6rem;
+}
+
+main > p,
+main > ul,
+main > ol {
+  color: var(--text-body);
+}
+
+main p {
+  color: var(--text-body);
+}
+
+main .muted {
+  color: var(--text-muted);
+}
+
+main ul,
+main ol {
+  padding-left: 1.15rem;
+  margin: 1rem 0;
+}
+
+main li {
+  color: var(--text-body);
+  margin-bottom: 0.55rem;
+}
+
+main li::marker {
+  color: var(--primary-400);
+}
+
+main strong {
+  color: var(--text-strong);
+  font-weight: 650;
+}
+
+main hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+/* Tabele (np. progi Drabinki) — spójny wygląd niezależnie od inline-stylów. */
+main table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+main thead th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.6rem 0.6rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+main tbody td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-body);
+}
+
+main tbody tr {
+  transition: background var(--dur) var(--ease);
+}
+
+main tbody tr:hover {
+  background: var(--surface);
+}
+
+/* ===================== Nawigacja: aktywna + hamburger ===================== */
+.site-header nav > a.active {
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.nav-toggle span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text);
+  transition:
+    transform var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.nav-toggle[aria-expanded='true'] span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.nav-toggle[aria-expanded='true'] span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded='true'] span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ===================== Mobile: nawigacja ===================== */
+@media (max-width: 768px) {
+  .nav-toggle {
+    display: flex;
+  }
+
+  .site-header nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    padding: 0.6rem;
+    background: var(--surface-raised);
+    border-bottom: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-lg);
+    display: none;
+    animation: rise 0.2s var(--ease) both;
+  }
+
+  .site-header nav.open {
+    display: flex;
+  }
+
+  .site-header nav > a:not(.btn),
+  .site-header nav .btn {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    font-size: 1rem;
+  }
+
+  .site-header nav .btn.secondary {
+    margin-top: 0.35rem;
+    justify-content: center;
+  }
+
+  .site-header nav .bell {
+    align-self: flex-start;
+  }
+}
+
+/* ===================== Mobile: układ ogólny ===================== */
+@media (max-width: 640px) {
+  main {
+    padding: 1.75rem 1.1rem 3rem;
+  }
+
+  .site-header {
+    padding: 0.7rem 1.1rem;
+  }
+
+  .hero {
+    padding: 2.5rem 0 1.5rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .form-card {
+    padding: 1.4rem;
+    margin: 2rem auto;
+  }
+
+  .filters {
+    padding: 0.9rem;
+  }
+
+  .filters .field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .actions-row .btn {
+    flex: 1 1 auto;
+  }
+
+  main table {
+    font-size: 0.82rem;
+  }
+
+  main thead th,
+  main tbody td {
+    padding: 0.5rem 0.45rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
