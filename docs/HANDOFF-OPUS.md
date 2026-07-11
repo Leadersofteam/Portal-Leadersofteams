@@ -1,7 +1,7 @@
 # Handoff dla Claude Code Opus 4.8 — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-07-08 · **Branch roboczy:** `claude/lot-portal-sprints-4-9-szq1jf`
-**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 dostarczony · ▶ następny: **Sprint 5**
+**Ostatnia aktualizacja:** 2026-07-11 · **Branch tej sesji:** `fix/api-tsup-noexternal-workspace`
+**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 + **deploy staging + redesign + fixy runtime** · ▶ następny: **Sprint 4.5 (stabilizacja) → Sprint 5**
 
 Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kolejności:
 
@@ -11,8 +11,39 @@ Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kole
 4. ten dokument (stan + sprinty),
 5. [ROADMAP](ROADMAP.md) i [RISKS](RISKS.md).
 
-> **Uwaga o branchu:** pracuj i pushuj **wyłącznie** na `claude/lot-portal-sprints-4-9-szq1jf`
-> (na nim jest cała aktualna praca: Sprint 4 + strategia). PR tworzy właściciel.
+> **Uwaga o branchu (2026-07-11):** praca Sprintu 4 + strategia jest w `main`. Sesja deploy+design
+> (poniżej §0) siedzi na `fix/api-tsup-noexternal-workspace` (oparta o `main`) — **do zmergowania do
+> `main` w Sprincie 4.5**, potem Sprint 5 z nowej gałęzi. PR tworzy właściciel (brak `gh` na VPS).
+
+---
+
+## 0. Ostatnia sesja (2026-07-11) — deploy staging, fixy runtime, redesign, plan integracji
+
+Wykonane i zweryfikowane w przeglądarce na `https://staging.leadersofteams.pl` (za basic-auth):
+
+- **Deploy STAGING** na VPS (obok App i Zodiamo): `/docker/portal-staging`, projekt compose
+  `portal-staging`, sieć Traefika `n8n_default` + resolver `mytlschallenge` (override
+  `infra/staging.override.yml`, niecommitowany). Wdrożenie **ręczne** — auto-deploy CI świadomie
+  NIE uzbrojony.
+- **3 bugi repo (blokowały też produkcję/CD) — naprawione i wypchnięte:**
+  1. `apps/api/tsup.config.ts` → `noExternal: [/^@lot\//]` (bez tego prod Node pada
+     `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING` na `@lot/contracts`).
+  2. `infra/Dockerfile.web` → `ENV API_INTERNAL_URL=http://api:3001` przed buildem (cel rewrite'u
+     `/api/*` jest zapiekany w build-time; bez tego web proxował do `localhost:3001` → wszystkie /api 500).
+  3. `apps/web/next.config.ts` → `skipTrailingSlashRedirect` + dokładna reguła rewrite `/api/socket.io/`
+     (Next gubił końcowy ukośnik → handshake Socket.IO 404/500).
+- **Redesign UI/UX + responsywność (mobile + hamburger)**: `apps/web/app/globals.css` przebudowany
+  w duchu design-systemu App (indigo/Inter/tokeny) + atmosfera/gradienty/hover-lift; `SiteHeader`
+  (`apps/web/components/site-header.tsx`) z menu mobilnym; typografia treści (h2/h3/listy/tabele).
+  Zweryfikowane desktop+mobile (390px, headless Chromium): home, zlecenia, drabinka, formularze,
+  panel zalogowany. Auth/rejestracja działają E2E (register 201, /auth/me 200).
+- **Plan strategiczny**: roadmapa sprintów + **architektura integracji App↔Portal** (patrz nowy
+  `docs/architecture/INTEGRATION-APP-PORTAL.md`) + mapa funkcji ekosystemu.
+
+**Dług z tej sesji do domknięcia (Sprint 4.5):** merge gałęzi → `main`; **seed danych demo** (pusta
+tabela poziomów w `/drabinka`, przykładowe zlecenia/grupy — `apps/api/prisma/seed.ts`); `openssl`
+w `Dockerfile.api` (ostrzeżenie Prisma); usunięcie kont testowych z bazy staging; decyzja o
+**prod-VPS** (osobny/większy — 8 GB nie udźwignie 3. bazy MySQL + App pod ruchem).
 
 ---
 
@@ -51,7 +82,7 @@ Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kole
 | D6     | Brak RODO: usunięcie konta (anonimizacja), eksport danych                                                        | Sprint 6                                  |
 | D7     | Brak Turnstile i rate-limitów publikacji dla świeżych kont (R-03, R-13)                                          | Sprint 5/6                                |
 | D8     | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu       | Sprint 5 (przy grupach) — niski priorytet |
-| D9     | `docker-compose` deploy nieprzetestowany na realnym VPS (sekrety GitHub nieustawione — czeka na właściciela)     | Sprint 6 przed launchem                   |
+| ~~D9~~ | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: prod na osobnym VPS + zdjęcie basic-auth | Sprint 6 przed launchem                   |
 | D10    | Panel Bull Board (wgląd w kolejki) niewdrożony                                                                   | Sprint 6, opcjonalnie                     |
 
 ## 3. Rekomendowane kolejne kroki — plan sprintów dla Opus 4.8

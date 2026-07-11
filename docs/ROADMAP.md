@@ -2,7 +2,7 @@
 
 Rekomendacja architektoniczna (brief zostawił zakres MVP otwarty — sekcja 5 i 7, pyt. 4). Sprint = 2 tygodnie. Fazy są sekwencyjne; sprinty wewnątrz faz mogą się przesuwać.
 
-> **Status wykonania (2026-07-08):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ▶ następny: **Sprint 5** (moduł `community` — Q&A/mentoring). Szczegółowy plan kolejnych sprintów z DoD i listą długu technicznego: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
+> **Status wykonania (2026-07-11):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ✅ **Deploy STAGING + redesign + 3 fixy runtime** (gałąź `fix/api-tsup-noexternal-workspace`, 2026-07-11) · ▶ następny: **Sprint 4.5 (stabilizacja: merge, seed demo, decyzja prod-VPS) → Sprint 5** (moduł `community` — Q&A/mentoring). Architektura integracji App↔Portal: **[INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md)**. Szczegóły stanu, długu i sprintów: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
 
 ## Zasada przewodnia zakresu MVP
 
