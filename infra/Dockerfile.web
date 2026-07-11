@@ -9,6 +9,10 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages ./packages
 COPY apps/web ./apps/web
 RUN pnpm install --frozen-lockfile --filter @lot/web...
+# Cel rewrite'u /api/* w next.config jest ZAPIEKANY w build-time (routes-manifest.json),
+# a nie czytany z env w runtime. W obrazie (compose) api jest zawsze pod http://api:3001,
+# więc pieczemy tę wartość tu. Dev (pnpm dev poza Dockerem) używa fallbacku localhost:3001.
+ENV API_INTERNAL_URL=http://api:3001
 RUN pnpm --filter @lot/web build
 
 FROM node:22-bookworm-slim AS runner
