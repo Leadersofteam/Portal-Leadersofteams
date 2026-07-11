@@ -1,10 +1,17 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { NotificationBell } from '@/components/notification-bell';
 
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: 'Leaders of Teams — portal Liderów i Firm',
@@ -14,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl">
+    <html lang="pl" className={inter.variable}>
       <body>
         <header className="site-header">
           <Link href="/" className="brand">
