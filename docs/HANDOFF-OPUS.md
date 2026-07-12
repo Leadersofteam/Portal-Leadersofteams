@@ -1,7 +1,13 @@
 # Handoff dla Claude Code Opus 4.8 — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-07-11 · **Branch tej sesji:** `fix/api-tsup-noexternal-workspace`
-**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 + **deploy staging + redesign + fixy runtime** · ▶ następny: **Sprint 4.5 (stabilizacja) → Sprint 5**
+**Ostatnia aktualizacja:** 2026-07-12 · **Branch tej sesji:** `fix/api-tsup-noexternal-workspace`
+**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 · ✅ **Sprint 5 (`community` — Q&A/mentoring)** w `main` (PR #8), **zweryfikowany 2026-07-12** · ✅ **deploy staging + redesign + fixy runtime** · ▶ trwa: **Sprint 4.5 (stabilizacja)** → następny **Sprint 6 (hardening/launch)**
+
+> **⚠️ Dryf dok↔kod naprawiony 2026-07-12:** ten dokument opisywał Sprint 5 jako „następny do zrobienia".
+> W rzeczywistości moduł `community` był już w `main` (zmergowany PR #8 `claude/lot-portal-sprints-5-9-*`) —
+> tylko wskaźnik sprintu nie został zaktualizowany. Zweryfikowano end-to-end: 73 testy zielone (11 community
+> + anty-MLM `subscriptions`), lint/typecheck/build czyste. **Nie odtwarzać Sprintu 5.** Realny następny
+> przyrost to Sprint 4.5 (niżej), po nim Sprint 6.
 
 Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kolejności:
 
@@ -44,6 +50,14 @@ Wykonane i zweryfikowane w przeglądarce na `https://staging.leadersofteams.pl` 
 tabela poziomów w `/drabinka`, przykładowe zlecenia/grupy — `apps/api/prisma/seed.ts`); `openssl`
 w `Dockerfile.api` (ostrzeżenie Prisma); usunięcie kont testowych z bazy staging; decyzja o
 **prod-VPS** (osobny/większy — 8 GB nie udźwignie 3. bazy MySQL + App pod ruchem).
+
+**Sprint 4.5 — postęp (2026-07-12):** ✅ weryfikacja bramek na realnym MySQL/Redis (73 testy, lint,
+typecheck, build — potwierdzenie zmergowanego Sprintu 5); ✅ `openssl`+`ca-certificates` w obu
+warstwach `infra/Dockerfile.api`; ✅ reconciliacja docs (ten plik + ROADMAP). Kolejno: bogaty
+**demo-seed** (`apps/api/prisma/seed-demo.ts`, env-guarded `SEED_DEMO=1`), uruchomienie seedów na
+staging + czyszczenie kont testowych, deploy + e2e, przygotowanie merge → `main`.
+**Decyzja właściciela o prod-VPS:** zostajemy na obecnym 8 GB, rewizja przy launchu (Sprint 6) —
+wtedy twarde limity pamięci prod-MySQL w compose + pilnowanie swapu (4 G).
 
 ---
 
@@ -89,7 +103,7 @@ w `Dockerfile.api` (ostrzeżenie Prisma); usunięcie kont testowych z bazy stagi
 
 Pracuj **sprint po sprincie**: jeden sprint = jeden spójny, zweryfikowany i wypchnięty przyrost. Po każdym sprincie: `pnpm lint && pnpm typecheck && pnpm test` (integracyjne na `infra/docker-compose.dev.yml`), `pnpm build`, ręczny e2e nowej funkcji na zbudowanym API, commit z opisem, push na branch roboczy.
 
-> **▶ TU ZACZYNASZ: Sprint 5** (moduł `community`). Sprint 4 jest zamknięty (niżej, dla kontekstu wzorca). Po sprintach 5–9 (Faza 1/2) wchodzi **Faza Academy + Monetyzacja** (moduły `billing → academy → referral`, ADR-011/012/013) — patrz [ROADMAP](ROADMAP.md).
+> **▶ TU ZACZYNASZ: Sprint 4.5 (stabilizacja), potem Sprint 6.** Sprinty 4 i 5 są zamknięte (niżej, dla kontekstu wzorca — `groups`/`notifications`/`community` to wzorzec dla kolejnych modułów). Po Sprincie 6 (launch) wchodzą Faza 2 (integracja + `teams`, sprinty 7–9) i **Faza Academy + Monetyzacja** (moduły `billing → academy → referral`, ADR-011/012/013) — patrz [ROADMAP](ROADMAP.md).
 
 ### ✅ SPRINT 4 — Grupy branżowe + fundament powiadomień (`groups`, `notifications`) — ZROBIONE (`234d30a`)
 
@@ -105,9 +119,13 @@ Cel: warstwa „portal jak Facebook" (ADR-010 dec. 1) + zdarzenia przestają lec
 
 DoD: 55+ testów zielonych; feed grupy działa e2e na zbudowanym API; zero zdarzeń groups.* w subskrypcjach ladder.
 
-### SPRINT 5 — Q&A/mentoring w grupach = druga ścieżka punktowania (moduł `community`)
+### ✅ SPRINT 5 — Q&A/mentoring w grupach = druga ścieżka punktowania (moduł `community`) — ZROBIONE (w `main`, PR #8; zweryfikowany 2026-07-12)
 
 Cel: domknięcie równowagi obu dróg awansu z briefu (3.3) — najważniejszy brakujący element produktu.
+**Stan:** dostarczone i zmergowane do `main`; 11 testów integracyjnych community zielonych (akceptacja→50 pkt,
+głos kwalifikowany/niekwalifikowany, malejące zwroty, czapka tygodniowa 300, awans obiema ścieżkami,
+RECIPROCITY_QA→HOLD, RATE_LIMIT_QA→HOLD). Wartości ścieżki w `modules/ladder/rules.ts` (ruleset v1).
+Frontend: `apps/web/app/grupy/[id]/pytania/` + `apps/web/app/watki/[id]/`. Specyfikacja poniżej — dla odniesienia.
 
 1. **Prisma v5**: `Thread` (groupId, status OPEN/ANSWERED/CLOSED, FULLTEXT title+body), `Answer` (isAccepted — jedna per wątek), `AnswerVote` (unikat answer+user).
 2. **Moduł `community`**: wątki w grupach, odpowiedzi, głos „w górę", akceptacja odpowiedzi przez autora pytania (nie można akceptować własnej odpowiedzi na własne pytanie ani głosować na siebie). Zdarzenia: `community.answer_accepted` (payload: answerId, answerAuthorUserId, questionAuthorUserId, groupId, accountAges…), `community.answer_upvoted` (payload z danymi głosującego: wiek konta, własna aktywność).

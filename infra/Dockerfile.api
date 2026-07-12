@@ -2,6 +2,11 @@
 # Budowany z korzenia repo: docker build -f infra/Dockerfile.api .
 
 FROM node:22-bookworm-slim AS build
+# openssl + ca-certificates: Prisma wykrywa libssl przy `generate` i w silniku
+# zapytań; bez tego node:*-slim daje ostrzeżenie i fallback detekcji binarnej.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /repo
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -16,6 +21,10 @@ WORKDIR /out
 RUN ./node_modules/.bin/prisma generate
 
 FROM node:22-bookworm-slim AS runner
+# openssl w warstwie runtime — silnik zapytań Prisma ładuje libssl na starcie.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /out /app
