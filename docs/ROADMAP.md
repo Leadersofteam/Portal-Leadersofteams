@@ -2,7 +2,9 @@
 
 Rekomendacja architektoniczna (brief zostawił zakres MVP otwarty — sekcja 5 i 7, pyt. 4). Sprint = 2 tygodnie. Fazy są sekwencyjne; sprinty wewnątrz faz mogą się przesuwać.
 
-> **Status wykonania (2026-07-11):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ✅ **Deploy STAGING + redesign + 3 fixy runtime** (gałąź `fix/api-tsup-noexternal-workspace`, 2026-07-11) · ▶ następny: **Sprint 4.5 (stabilizacja: merge, seed demo, decyzja prod-VPS) → Sprint 5** (moduł `community` — Q&A/mentoring). Architektura integracji App↔Portal: **[INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md)**. Szczegóły stanu, długu i sprintów: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
+> **Status wykonania (2026-07-12):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ✅ **Sprint 5 — moduł `community` (Q&A/mentoring, druga ścieżka punktowa)** — w `main` przez PR #8; **zweryfikowany 2026-07-12** (73 testy zielone, w tym 11 community + anty-MLM `subscriptions`) · ✅ **Deploy STAGING + redesign + 3 fixy runtime** (gałąź `fix/api-tsup-noexternal-workspace`) · ▶ trwa: **Sprint 4.5 (stabilizacja: merge gałęzi, seed demo, dług `openssl`, czyszczenie staging)** → następny **Sprint 6 (hardening/launch)**. Architektura integracji App↔Portal: **[INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md)**. Szczegóły stanu, długu i sprintów: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
+>
+> **Nota o dryfie dok↔kod (2026-07-12):** wcześniejsze wersje tego dokumentu i HANDOFF opisywały Sprint 5 jako „następny". W rzeczywistości moduł `community` był już zaimplementowany i zmergowany do `main` (PR #8 `claude/lot-portal-sprints-5-9-*`) — wskaźnik sprintu nie został zaktualizowany. Zweryfikowano end-to-end i naprawiono opis 2026-07-12.
 
 ## Zasada przewodnia zakresu MVP
 
@@ -33,7 +35,7 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 **Sprint 4–5 · Społeczność: grupy branżowe + Q&A/mentoring ([ADR-010](architecture/adr/ADR-010-grupy-zespoly-case-studies.md), szczegóły: [HANDOFF-OPUS.md](HANDOFF-OPUS.md)):**
 
 - ✅ **Sprint 4 (`234d30a`)** — Grupy per sektor/branża (systemowe + tworzenie od lvl 2), członkostwo OPEN/MODERATED, moderatorzy; posty (dyskusje / case studies / pomysły), komentarze, reakcja „doceniam"; feed chronologiczny z paginacją kursorem (bez infinite scroll); powiadomienia in-app + Socket.IO (badge realtime). Test anty-MLM: aktywność w grupach = 0 punktów.
-- ▶ **Sprint 5 (NASTĘPNY)** — Wątki Q&A zakotwiczone w grupach (moduł `community`): odpowiedzi, głosy kwalifikowane, akceptacja; **druga ścieżka punktowa** ładowana do `ladder` (community.*) z guardrailami (kwalifikacja głosów, czapka tygodniowa, wzajemna adoracja → HOLD). Digest e-mail powiadomień dochodzi w Sprincie 6 (ADR-009).
+- ✅ **Sprint 5 (ZROBIONE — w `main` przez PR #8, zweryfikowane 2026-07-12)** — Wątki Q&A zakotwiczone w grupach (moduł `community`): odpowiedzi, głosy kwalifikowane, akceptacja; **druga ścieżka punktowa** ładowana do `ladder` (community.*) z guardrailami (kwalifikacja głosów, czapka tygodniowa 300, wzajemna adoracja → HOLD, limit dobowy → HOLD). Wartości ścieżki w `rules.ts` (ruleset v1, kalibracja zatwierdzona przez właściciela). Frontend: `/grupy/[id]/pytania` + `/watki/[id]`. Test anty-MLM (`subscriptions.test.ts`) zielony. Digest e-mail powiadomień dochodzi w Sprincie 6 (ADR-009).
 
 **Sprint 6 · Hardening i launch:**
 
