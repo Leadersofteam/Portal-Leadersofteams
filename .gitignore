@@ -13,3 +13,7 @@ apps/api/prisma/generated/
 dump.rdb
 # Lokalny override wdrożeniowy per-serwer (jak .env) — NIGDY nie commitować.
 infra/staging.override.yml
+# Artefakty Playwright (e2e)
+test-results/
+playwright-report/
+.last-run.json

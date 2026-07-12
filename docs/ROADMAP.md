@@ -42,7 +42,7 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 **Sprint 6 · Hardening i launch (backend w większości ZROBIONY — patrz HANDOFF §2/§3):**
 
 - ✅ Cache-aside Redis (D3), ✅ e-mail flag-gated + weryfikacja/reset (D4), ✅ RODO usunięcie/eksport (D6), ✅ rate-limity + „zgłoś" (D7).
-- ❌ Otwarte: Cloudflare Turnstile (anty-bot, wymaga kluczy właściciela), e2e Playwright (ADR-008), test obciążeniowy k6 (uwaga: współdzielony 8 GB VPS — planować ostrożnie), Bull Board (opcj.).
+- ✅ Cloudflare Turnstile (anty-bot, flag-gated) + ✅ e2e Playwright ścieżki krytycznej (ADR-008, `apps/web/e2e`, runner `infra/e2e.sh`). ❌ Otwarte: test obciążeniowy k6 (uwaga: współdzielony 8 GB VPS — planować ostrożnie), Bull Board (opcj.), aktywacja kluczy Turnstile przy launchu.
 - Regulamin + polityka prywatności (wsad prawny po stronie właściciela).
 - Seeding rynku: import startowych zleceń/treści (decyzja operacyjna właściciela — patrz RISKS R-06).
 - **Launch publiczny** (aktywacja `BREVO_API_KEY`, prod za flagą, zdjęcie basic-auth).
