@@ -29,7 +29,8 @@ w trybie no-op. Ustawia się je w `/opt/portal/.env` (nie w GitHub Secrets).
 | `BREVO_API_KEY` | Wysyłka e-mail (Brevo, 300/dzień) | Brak wysyłki; reset zwraca devToken poza prod |
 | `MAIL_FROM`     | Adres nadawcy                     | `no-reply@leadersofteams.pl`                  |
 | `APP_BASE_URL`  | Bazowy URL w linkach e-mail       | `https://leadersofteams.pl`                   |
-| `TURNSTILE_*`   | Antybot (kolejny przyrost)        | Wyłączony                                     |
+| `TURNSTILE_SECRET_KEY` | Antybot Turnstile na rejestracji (ZAIMPLEMENTOWANE, flag-gated) | Ochrona OFF (rejestracja przepuszcza) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Klucz publiczny widgetu (BUILD-time obrazu web) | Brak widgetu na `/rejestracja` |
 
 ## Checklista podłączenia SSH (co dostarcza właściciel)
 
