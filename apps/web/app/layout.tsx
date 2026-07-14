@@ -13,17 +13,12 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-// Publiczny adres bazowy (prod). Nadpisywalny w buildzie web przez
-// NEXT_PUBLIC_SITE_URL. Używany do metadataBase (kanoniczne URL-e, OG, sitemap).
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://leadersofteams.pl';
-
-const DESCRIPTION =
-  'Marketplace usług B2B, społeczność mentoringowa i Drabinka Lidera. Poziom zdobywasz wyłącznie realną pracą i docenionym mentoringiem — to zweryfikowany dowód, nie deklaracja.';
-
+// Adres bazowy i opis serwisu są w @/lib/site (jedyne źródło prawdy — route
+// module nie powinien eksportować dowolnych stałych; kontrakt Next).
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'Leaders of Teams — portal Liderów i Firm',
-  description: DESCRIPTION,
+  description: SITE_DESCRIPTION,
   applicationName: 'Leaders of Teams',
   alternates: { canonical: '/' },
   openGraph: {
@@ -32,7 +27,7 @@ export const metadata: Metadata = {
     siteName: 'Leaders of Teams',
     url: SITE_URL,
     title: 'Leaders of Teams — portal Liderów i Firm',
-    description: DESCRIPTION,
+    description: SITE_DESCRIPTION,
   },
   twitter: { card: 'summary_large_image' },
 };

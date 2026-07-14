@@ -1,7 +1,7 @@
 // Buildery structured data (schema.org / JSON-LD) dla publicznych stron — dają
 // rich results w Google (Q&A, oceny, oferty pracy). Czysto prezentacyjne: żadnych
 // danych prywatnych, tylko to, co i tak jest publiczne na stronie.
-import { SITE_URL } from '@/app/layout';
+import { SITE_URL } from '@/lib/site';
 
 type Json = Record<string, unknown>;
 

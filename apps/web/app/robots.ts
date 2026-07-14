@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-import { SITE_URL } from './layout';
+import { SITE_URL } from '@/lib/site';
 
 // robots.txt. Strefy prywatne/transakcyjne wyłączone z indeksacji; publiczne
 // (profile, zlecenia, grupy, wątki Q&A) otwarte. Sitemap wskazany dla crawlerów.

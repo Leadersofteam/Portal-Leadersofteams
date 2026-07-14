@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 import { serverApi } from '@/lib/server-api';
 
-import { SITE_URL } from './layout';
+import { SITE_URL } from '@/lib/site';
 
 // Dynamiczny sitemap. Statyczne huby + publiczne encje (profile, zlecenia, grupy,
 // wątki Q&A) pobierane z API. Ograniczone strony na typ, by nie mnożyć zapytań —
