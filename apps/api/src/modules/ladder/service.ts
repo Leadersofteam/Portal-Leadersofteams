@@ -223,6 +223,17 @@ export function createLadderService(prisma: PrismaClient) {
       return state?.level ?? 0;
     },
 
+    // Wsadowy odczyt poziomów (projekcja) — do wzbogacania publicznych listingów
+    // (np. katalog Liderów). Czysty odczyt LadderState, bez logiki punktowej.
+    async getLevels(userIds: string[]): Promise<Map<string, number>> {
+      if (userIds.length === 0) return new Map();
+      const states = await prisma.ladderState.findMany({
+        where: { userId: { in: userIds } },
+        select: { userId: true, level: true },
+      });
+      return new Map(states.map((s) => [s.userId, s.level]));
+    },
+
     async getMyLadder(userId: string) {
       const state = await prisma.ladderState.findUnique({ where: { userId } });
       const level = state?.level ?? 0;

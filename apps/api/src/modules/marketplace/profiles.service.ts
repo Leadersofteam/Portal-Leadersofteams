@@ -1,8 +1,10 @@
 import type {
   CreateLeaderProfileInput,
+  LeaderFilters,
   PortfolioItemInput,
   UpdateLeaderProfileInput,
 } from '@lot/contracts';
+import type { Prisma } from '@prisma/client';
 
 import type { PrismaClient } from '../../shared/db';
 import { ConflictError, DomainError, NotFoundError } from '../../shared/errors';
@@ -10,8 +12,19 @@ import type { IdentityService } from '../identity/index';
 
 const MAX_PORTFOLIO_ITEMS = 20;
 
+export interface PublicLeaderCard {
+  id: string;
+  userId: string;
+  displayName: string;
+  headline: string;
+  industry: { name: string; slug: string };
+}
+
 export interface ProfilesService {
   listIndustries(): Promise<Array<{ id: string; name: string; slug: string }>>;
+  listPublicLeaders(
+    filters: LeaderFilters,
+  ): Promise<{ leaders: PublicLeaderCard[]; nextCursor: string | null }>;
   createProfile(userId: string, input: CreateLeaderProfileInput): Promise<{ id: string }>;
   updateProfile(userId: string, input: UpdateLeaderProfileInput): Promise<{ id: string }>;
   getMyProfile(userId: string): Promise<unknown | null>;
@@ -44,6 +57,37 @@ export function createProfilesService(
   return {
     async listIndustries() {
       return prisma.industry.findMany({ orderBy: { name: 'asc' } });
+    },
+
+    // Publiczny katalog Liderów (/liderzy) — tylko widoczne profile. Filtry: branża
+    // + fraza (LIKE na nagłówku). Poziom Drabinki i oceny DOŁĄCZA warstwa route
+    // (batch przez ladder/reviews) — tu tylko dane profilu, bez logiki poziomów.
+    async listPublicLeaders(filters: LeaderFilters) {
+      const where: Prisma.LeaderProfileWhereInput = {
+        isVisible: true,
+        ...(filters.industryId ? { industryId: filters.industryId } : {}),
+        ...(filters.q ? { headline: { contains: filters.q } } : {}),
+      };
+      const rows = await prisma.leaderProfile.findMany({
+        where,
+        include: { industry: true },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: filters.limit + 1,
+        ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+      });
+      const hasMore = rows.length > filters.limit;
+      const page = hasMore ? rows.slice(0, filters.limit) : rows;
+      const users = await identity.getPublicUsers(page.map((p) => p.userId));
+      return {
+        leaders: page.map((p) => ({
+          id: p.id,
+          userId: p.userId,
+          displayName: users.get(p.userId)?.displayName ?? 'Lider',
+          headline: p.headline,
+          industry: { name: p.industry.name, slug: p.industry.slug },
+        })),
+        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+      };
     },
 
     async createProfile(userId, input) {

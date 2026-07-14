@@ -192,6 +192,17 @@ export const orderFiltersSchema = z.object({
 });
 export type OrderFilters = z.infer<typeof orderFiltersSchema>;
 
+// Filtry publicznego katalogu Liderów (/liderzy). Poziom Drabinki jest
+// DOŁĄCZANY do wyświetlenia; filtrowanie/ranking po poziomie żyje w module ladder
+// (patrz /liderzy/rankingi), by nie mieszać logiki poziomów do marketplace.
+export const leaderFiltersSchema = z.object({
+  industryId: idSchema.optional(),
+  q: z.string().trim().min(2).max(200).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type LeaderFilters = z.infer<typeof leaderFiltersSchema>;
+
 export const createOfferInputSchema = z.object({
   message: z.string().trim().min(20, 'Wiadomość: min. 20 znaków').max(5000),
   proposedBudget: z.number().int().min(0).optional(),

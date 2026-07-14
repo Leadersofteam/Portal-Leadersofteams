@@ -1,7 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
+import { JsonLd } from '@/components/json-ld';
 import { ReportButton } from '@/components/report-button';
+import { threadQaJsonLd } from '@/lib/jsonld';
 import { THREAD_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -31,13 +35,33 @@ interface ThreadDetail {
   }>;
 }
 
-export const metadata = { title: 'Wątek Q&A — Leaders of Teams' };
+const getThread = cache((id: string) => serverApi<ThreadDetail>(`/threads/${id}`));
+
+const clip = (s: string, n = 155) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const data = await getThread(id);
+  if (!data) return { title: 'Wątek nie znaleziony' };
+  const title = `${data.thread.title} | Q&A Leaders of Teams`;
+  const description = clip(data.thread.body);
+  return {
+    title,
+    description,
+    alternates: { canonical: `/watki/${id}` },
+    openGraph: { type: 'article', title, description, url: `/watki/${id}` },
+  };
+}
 
 export default async function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [me, data] = await Promise.all([
     serverApi<{ user: { id: string } | null }>('/auth/me'),
-    serverApi<ThreadDetail>(`/threads/${id}`),
+    getThread(id),
   ]);
   if (!data) notFound();
 
@@ -51,6 +75,21 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
 
   return (
     <main>
+      <JsonLd
+        data={threadQaJsonLd({
+          id: thread.id,
+          title: thread.title,
+          body: thread.body,
+          authorName: thread.authorName,
+          createdAt: thread.createdAt,
+          answers: answers.map((a) => ({
+            body: a.body,
+            authorName: a.authorName,
+            votesCount: a.votesCount,
+            isAccepted: a.isAccepted,
+          })),
+        })}
+      />
       <p className="breadcrumbs">
         <Link href={`/grupy/${thread.groupId}/pytania`}>← Pytania grupy</Link>
       </p>
