@@ -29,6 +29,7 @@ import type { PrismaClient } from './shared/db';
 import { DomainError } from './shared/errors';
 import { createLogger } from './shared/logger';
 import { createMailService } from './shared/mail';
+import { createTurnstileVerifier } from './shared/turnstile';
 import { createRealtime } from './shared/realtime';
 import type { Realtime } from './shared/realtime';
 import { createRedis } from './shared/redis';
@@ -112,6 +113,10 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     },
     (event, data) => logger.info(data, event),
   );
+  const turnstile = createTurnstileVerifier(
+    { turnstileEnabled: config.turnstileEnabled, secretKey: config.TURNSTILE_SECRET_KEY },
+    (event, data) => logger.info(data, event),
+  );
   const identityService = createIdentityService(prisma, {
     sessions,
     // RODO (D6): każdy moduł anonimizuje/eksportuje własne tabele (ADR-002).
@@ -153,7 +158,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   });
   const notificationsService = createNotificationsService({ prisma, identity: identityService });
 
-  await app.register(identityRoutes({ service: identityService, sessions, auth, config }), {
+  await app.register(identityRoutes({ service: identityService, sessions, auth, turnstile, config }), {
     prefix: '/api/v1',
   });
   await app.register(

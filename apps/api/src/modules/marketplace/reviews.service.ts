@@ -173,6 +173,32 @@ export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
         reviewCount: agg._count._all,
       };
     },
+
+    // Wsadowa wersja statystyk ocen — do listingów (katalog Liderów), jeden zapyt.
+    async getLeaderReviewStatsMany(
+      leaderUserIds: string[],
+    ): Promise<Map<string, { averageRating: number | null; reviewCount: number }>> {
+      if (leaderUserIds.length === 0) return new Map();
+      const rows = await prisma.review.groupBy({
+        by: ['subjectLeaderUserId'],
+        where: {
+          subjectLeaderUserId: { in: leaderUserIds },
+          direction: 'COMPANY_TO_LEADER',
+          publishedAt: { not: null },
+        },
+        _avg: { rating: true },
+        _count: { _all: true },
+      });
+      const map = new Map<string, { averageRating: number | null; reviewCount: number }>();
+      for (const r of rows) {
+        if (!r.subjectLeaderUserId) continue;
+        map.set(r.subjectLeaderUserId, {
+          averageRating: r._avg.rating ? Math.round(r._avg.rating * 10) / 10 : null,
+          reviewCount: r._count._all,
+        });
+      }
+      return map;
+    },
   };
 }
 

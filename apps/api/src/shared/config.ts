@@ -21,6 +21,9 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().email().default('no-reply@leadersofteams.pl'),
   MAIL_FROM_NAME: z.string().default('Leaders of Teams'),
+  // Anty-bot Turnstile (D7, R-03/R-13) — opcjonalny sekret. Brak = ochrona OFF
+  // (0 zł, bezpieczny domyślny stan otwarty); włączenie przy launchu przez właściciela.
+  TURNSTILE_SECRET_KEY: z.string().optional(),
 });
 
 export type AppConfig = z.infer<typeof envSchema> & {
@@ -28,6 +31,8 @@ export type AppConfig = z.infer<typeof envSchema> & {
   cookieSecure: boolean;
   // Wysyłka e-mail włączona tylko gdy podano klucz (inaczej no-op).
   mailEnabled: boolean;
+  // Ochrona Turnstile włączona tylko gdy podano sekret (inaczej OFF).
+  turnstileEnabled: boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -42,5 +47,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     isProduction,
     cookieSecure: isProduction,
     mailEnabled: Boolean(parsed.data.BREVO_API_KEY),
+    turnstileEnabled: Boolean(parsed.data.TURNSTILE_SECRET_KEY),
   };
 }

@@ -1,0 +1,124 @@
+import Link from 'next/link';
+
+import { serverApi } from '@/lib/server-api';
+
+interface LeaderRow {
+  id: string;
+  displayName: string;
+  headline: string;
+  industry: { name: string; slug: string };
+  level: number;
+  averageRating: number | null;
+  reviewCount: number;
+}
+
+interface Industry {
+  id: string;
+  name: string;
+}
+
+export const metadata = {
+  title: 'Liderzy — katalog zweryfikowanych ekspertów | Leaders of Teams',
+  description:
+    'Przeglądaj Liderów Leaders of Teams: poziom w Drabince zdobyty realną pracą i mentoringiem, oceny od firm, branża i specjalizacja. Znajdź eksperta do swojego zlecenia.',
+};
+
+export default async function LeadersDirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const query = new URLSearchParams();
+  for (const key of ['industryId', 'q', 'cursor'] as const) {
+    const value = params[key];
+    if (typeof value === 'string' && value) query.set(key, value);
+  }
+
+  const [data, industriesData] = await Promise.all([
+    serverApi<{ leaders: LeaderRow[]; nextCursor: string | null }>(`/leaders?${query.toString()}`),
+    serverApi<{ industries: Industry[] }>('/industries'),
+  ]);
+  const leaders = data?.leaders ?? [];
+  const industries = industriesData?.industries ?? [];
+
+  const nextParams = new URLSearchParams(query);
+  if (data?.nextCursor) nextParams.set('cursor', data.nextCursor);
+
+  return (
+    <main>
+      <h1>Liderzy</h1>
+      <p className="muted">
+        Katalog Liderów Leaders of Teams. Poziom w Drabince zdobywa się wyłącznie realną pracą i
+        mentoringiem — to zweryfikowany dowód, nie deklaracja.
+      </p>
+
+      <form className="filters" method="get">
+        <div className="field">
+          <label htmlFor="q">Szukaj</label>
+          <input
+            id="q"
+            name="q"
+            defaultValue={typeof params.q === 'string' ? params.q : ''}
+            placeholder="np. automatyzacja, performance marketing"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="industryId">Branża</label>
+          <select
+            id="industryId"
+            name="industryId"
+            defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
+          >
+            <option value="">Wszystkie</option>
+            {industries.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button className="btn" type="submit">
+          Filtruj
+        </button>
+      </form>
+
+      {leaders.length === 0 ? (
+        <p className="muted">Brak Liderów spełniających kryteria. Spróbuj innej branży lub frazy.</p>
+      ) : (
+        <div>
+          {leaders.map((leader) => (
+            <div key={leader.id} className="list-row">
+              <div>
+                <h3>
+                  <Link href={`/liderzy/${leader.id}`}>{leader.displayName}</Link>
+                </h3>
+                <div className="meta">{leader.headline}</div>
+                <div className="meta muted">{leader.industry.name}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span className="badge accent">Poziom {leader.level} w Drabince</span>
+                {leader.reviewCount > 0 && (
+                  <div style={{ marginTop: '0.35rem' }}>
+                    <span className="badge">
+                      ★ {leader.averageRating}/5 ({leader.reviewCount}{' '}
+                      {leader.reviewCount === 1 ? 'ocena' : 'ocen'})
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data?.nextCursor && (
+        <p style={{ marginTop: '1.5rem' }}>
+          <Link className="btn secondary" href={`/liderzy?${nextParams.toString()}`}>
+            Następna strona →
+          </Link>
+        </p>
+      )}
+    </main>
+  );
+}

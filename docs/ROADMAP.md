@@ -5,6 +5,8 @@ Rekomendacja architektoniczna (brief zostawił zakres MVP otwarty — sekcja 5 i
 > **Status wykonania (2026-07-12):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ✅ **Sprint 5 — moduł `community` (Q&A/mentoring, druga ścieżka punktowa)** — w `main` przez PR #8; **zweryfikowany 2026-07-12** (73 testy zielone, w tym 11 community + anty-MLM `subscriptions`) · ✅ **Deploy STAGING + redesign + 3 fixy runtime** (gałąź `fix/api-tsup-noexternal-workspace`) · ▶ trwa: **Sprint 4.5 (stabilizacja: merge gałęzi, seed demo, dług `openssl`, czyszczenie staging)** → następny **Sprint 6 (hardening/launch)**. Architektura integracji App↔Portal: **[INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md)**. Szczegóły stanu, długu i sprintów: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
 >
 > **Nota o dryfie dok↔kod (2026-07-12):** wcześniejsze wersje tego dokumentu i HANDOFF opisywały Sprint 5 jako „następny". W rzeczywistości moduł `community` był już zaimplementowany i zmergowany do `main` (PR #8 `claude/lot-portal-sprints-5-9-*`) — wskaźnik sprintu nie został zaktualizowany. Zweryfikowano end-to-end i naprawiono opis 2026-07-12.
+>
+> **Audyt Sprintu 6 (2026-07-12):** ten sam PR #8 dostarczył też BACKEND Sprintu 6 (potwierdzone testami, 73 zielone): cache-aside (D3), e-mail flag-gated + weryfikacja/reset (D4), RODO `DELETE /me`+eksport (D6), rate-limity + „zgłoś" (D7). **Realne luki przed launchem:** Cloudflare Turnstile, e2e Playwright, load-test k6, Bull Board (opcj.) oraz aktywacja launchu (sekrety: `BREVO_API_KEY`, prod deploy, zdjęcie basic-auth, seeding rynku).
 
 ## Zasada przewodnia zakresu MVP
 
@@ -37,12 +39,13 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 - ✅ **Sprint 4 (`234d30a`)** — Grupy per sektor/branża (systemowe + tworzenie od lvl 2), członkostwo OPEN/MODERATED, moderatorzy; posty (dyskusje / case studies / pomysły), komentarze, reakcja „doceniam"; feed chronologiczny z paginacją kursorem (bez infinite scroll); powiadomienia in-app + Socket.IO (badge realtime). Test anty-MLM: aktywność w grupach = 0 punktów.
 - ✅ **Sprint 5 (ZROBIONE — w `main` przez PR #8, zweryfikowane 2026-07-12)** — Wątki Q&A zakotwiczone w grupach (moduł `community`): odpowiedzi, głosy kwalifikowane, akceptacja; **druga ścieżka punktowa** ładowana do `ladder` (community.*) z guardrailami (kwalifikacja głosów, czapka tygodniowa 300, wzajemna adoracja → HOLD, limit dobowy → HOLD). Wartości ścieżki w `rules.ts` (ruleset v1, kalibracja zatwierdzona przez właściciela). Frontend: `/grupy/[id]/pytania` + `/watki/[id]`. Test anty-MLM (`subscriptions.test.ts`) zielony. Digest e-mail powiadomień dochodzi w Sprincie 6 (ADR-009).
 
-**Sprint 6 · Hardening i launch:**
+**Sprint 6 · Hardening i launch (backend w większości ZROBIONY — patrz HANDOFF §2/§3):**
 
-- Test obciążeniowy k6 (500 równoczesnych przy działającym stacku app na tym samym VPS), strojenie cache/indeksów.
-- Audyt bezpieczeństwa własny (OWASP ASVS checklist), rate-limity, RODO (usunięcie konta, eksport), regulamin + polityka prywatności (wsad prawny po stronie właściciela).
+- ✅ Cache-aside Redis (D3), ✅ e-mail flag-gated + weryfikacja/reset (D4), ✅ RODO usunięcie/eksport (D6), ✅ rate-limity + „zgłoś" (D7).
+- ✅ Cloudflare Turnstile (anty-bot, flag-gated) + ✅ e2e Playwright ścieżki krytycznej (ADR-008, `apps/web/e2e`, runner `infra/e2e.sh`). ❌ Otwarte: test obciążeniowy k6 (uwaga: współdzielony 8 GB VPS — planować ostrożnie), Bull Board (opcj.), aktywacja kluczy Turnstile przy launchu.
+- Regulamin + polityka prywatności (wsad prawny po stronie właściciela).
 - Seeding rynku: import startowych zleceń/treści (decyzja operacyjna właściciela — patrz RISKS R-06).
-- **Launch publiczny.**
+- **Launch publiczny** (aktywacja `BREVO_API_KEY`, prod za flagą, zdjęcie basic-auth).
 
 **Poza MVP świadomie:** płatności, moduł Zespołów (patrz faza 2 — wymaga realnie istniejących poziomów 3+/7), czat 1:1 (kontakt przy zleceniu przez wątek ofertowy), zaawansowany search (Meilisearch), publiczne rankingi, aplikacja mobilna, webinary/artykuły jako źródła punktów.
 

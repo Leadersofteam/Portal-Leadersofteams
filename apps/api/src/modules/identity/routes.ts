@@ -11,7 +11,9 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { AuthHelpers } from '../../shared/auth';
 import type { AppConfig } from '../../shared/config';
+import { DomainError } from '../../shared/errors';
 import type { SessionStore } from '../../shared/session';
+import type { TurnstileVerifier } from '../../shared/turnstile';
 import { parseBody } from '../../shared/validation';
 import type { IdentityService } from './service';
 
@@ -19,6 +21,7 @@ export interface IdentityRoutesDeps {
   service: IdentityService;
   sessions: SessionStore;
   auth: AuthHelpers;
+  turnstile: TurnstileVerifier;
   config: Pick<
     AppConfig,
     'SESSION_COOKIE_NAME' | 'SESSION_TTL_SECONDS' | 'cookieSecure' | 'NODE_ENV' | 'isProduction'
@@ -26,7 +29,7 @@ export interface IdentityRoutesDeps {
 }
 
 export function identityRoutes(deps: IdentityRoutesDeps) {
-  const { service, sessions, auth, config } = deps;
+  const { service, sessions, auth, turnstile, config } = deps;
 
   const cookieOptions = {
     path: '/',
@@ -50,6 +53,22 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
     };
 
     app.post('/auth/register', { config: authRateLimit }, async (request, reply) => {
+      // Anty-bot (R-03/R-13): przy WŁĄCZONYM Turnstile wymagamy ważnego tokenu
+      // z widgetu. Gdy ochrona OFF (brak sekretu) — verify() przepuszcza.
+      if (turnstile.enabled) {
+        const token = (request.body as { turnstileToken?: unknown } | undefined)?.turnstileToken;
+        const ok = await turnstile.verify(
+          typeof token === 'string' ? token : undefined,
+          request.ip,
+        );
+        if (!ok) {
+          throw new DomainError(
+            'TURNSTILE_FAILED',
+            'Weryfikacja anty-bot nie powiodła się. Odśwież stronę i spróbuj ponownie.',
+            400,
+          );
+        }
+      }
       const input = parseBody(registerInputSchema, request.body);
       const user = await service.register(input);
       await startSession(reply, user);

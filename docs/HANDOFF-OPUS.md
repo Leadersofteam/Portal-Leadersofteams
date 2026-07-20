@@ -90,14 +90,20 @@ wtedy twarde limity pamięci prod-MySQL w compose + pilnowanie swapu (4 G).
 | ------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | ~~D1~~ | ✅ **ZROBIONE (Sprint 4)** — moduł `notifications` konsumuje zdarzenia → wpisy in-app + sygnał realtime          | —                                         |
 | ~~D2~~ | ✅ **ZROBIONE (Sprint 4)** — Socket.IO sygnał-only (pokój `user:{id}`, handshake sesyjnym cookie, Redis pub/sub) | —                                         |
-| D3     | Cache aplikacyjny Redis (cache-aside z ADR-007) nieużywany — listingi/feedy biją prosto w MySQL                  | Sprint 6                                  |
-| D4     | E-mail (Brevo) niepodpięty — brak weryfikacji e-maila, resetu hasła, digestów                                    | Sprint 6                                  |
-| D5     | Brak e2e Playwright (skrót ścieżki krytycznej z ADR-008 CI)                                                      | Sprint 6                                  |
-| D6     | Brak RODO: usunięcie konta (anonimizacja), eksport danych                                                        | Sprint 6                                  |
-| D7     | Brak Turnstile i rate-limitów publikacji dla świeżych kont (R-03, R-13)                                          | Sprint 5/6                                |
-| D8     | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu       | Sprint 5 (przy grupach) — niski priorytet |
-| ~~D9~~ | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: prod na osobnym VPS + zdjęcie basic-auth | Sprint 6 przed launchem                   |
-| D10    | Panel Bull Board (wgląd w kolejki) niewdrożony                                                                   | Sprint 6, opcjonalnie                     |
+| ~~D3~~ | ✅ **ZROBIONE** — cache-aside Redis (`shared/cache.ts`, inwalidacja przez wersję namespace; `/me/ladder` NIGDY nie cache'owany). Test w `hardening.integration.test.ts` | —                        |
+| ~~D4~~ | ✅ **ZROBIONE (scaffolding)** — warstwa e-mail (`shared/mail.ts`): realny transport Brevo + fallback no-op; weryfikacja adresu, reset hasła (flow `verify-email`/`request-password-reset`/`reset-password`). **Aktywacja wysyłki = podanie `BREVO_API_KEY` przez właściciela** (do launchu). Digest powiadomień: do dołożenia | Aktywacja: launch |
+| ~~D5~~ | ✅ **ZROBIONE** — e2e Playwright ścieżki krytycznej (ADR-008): rejestracja→firma→zlecenie→oferta→przyznanie→cykl→obustronna ocena→punkty, 2 aktorów, przeglądarkowo (`apps/web/e2e/critical-path.spec.ts`, runner `infra/e2e.sh`). **Złapał realny bug prod:** `apiFetch` słał `content-type: application/json` przy pustym body → Fastify odrzucał WSZYSTKIE akcje bez body (publikuj/akceptuj/start/…) — naprawione w `apps/web/lib/api.ts` | —                       |
+| ~~D6~~ | ✅ **ZROBIONE** — RODO: `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, treści `[treść usunięta]`, profil ukryty, sesja unieważniona) + `GET /me/export`. Test w `hardening` | —                        |
+| ~~D7~~ | ✅ **ZROBIONE** — rate-limity świeżych kont (`shared/quota.ts`) + „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + **Turnstile flag-gated** (`shared/turnstile.ts`, wpięty w `/auth/register`, widget na `/rejestracja`; OFF bez kluczy). Aktywacja = klucze Cloudflare przy launchu | — (aktywacja: launch) |
+| D8     | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu       | niski priorytet |
+| ~~D9~~ | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: **launch** — prod (decyzja: zostajemy na 8 GB z limitami RAM) + zdjęcie basic-auth | Launch                   |
+| **D10**| ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony                                          | Sprint 6, opcjonalnie    |
+
+> **Audyt stanu kodu vs docs (2026-07-12):** przy wejściu w Sprint 6 potwierdzono, że backend Sprintu 6
+> jest w większości ZROBIONY i zielony (73 testy): cache-aside (D3), e-mail flag-gated + weryfikacja/reset
+> (D4), RODO (D6), rate-limity + „zgłoś" (D7). To kolejny przypadek dryfu dok↔kod (jak Sprint 5) — PR #8
+> „sprints-5-9" niósł istotnie więcej niż opisywały docs. **Realne, niezaimplementowane luki:** Turnstile,
+> e2e Playwright (D5), load-test k6, Bull Board (D10), oraz aktywacja launchu (sekrety właściciela).
 
 ## 3. Rekomendowane kolejne kroki — plan sprintów dla Opus 4.8
 
@@ -136,16 +142,18 @@ Frontend: `apps/web/app/grupy/[id]/pytania/` + `apps/web/app/watki/[id]/`. Specy
 
 DoD: użytkownik może realnie awansować oboma ścieżkami; testy obu ścieżek + guardów zielone.
 
-### SPRINT 6 — Hardening, bezpieczeństwo, launch (release `v0.1.0`)
+### SPRINT 6 — Hardening, bezpieczeństwo, launch (release `v0.1.0`) — W WIĘKSZOŚCI ZROBIONE (backend); otwarte: Turnstile, e2e, k6, launch
 
-1. **E-mail (Brevo, ADR-009)**: weryfikacja adresu przy rejestracji, reset hasła, dzienny digest powiadomień (job w workerze; pojedyncze e-maile tylko dla krytycznych zdarzeń — limit 300/dzień!).
-2. **Antybot/antyspam (R-03/R-13)**: Cloudflare Turnstile na rejestracji i pierwszej publikacji; rate-limity publikacji zleceń/postów dla kont < 7 dni; przycisk „zgłoś" (Post/Thread/Order → ModerationCase źródło REPORT).
-3. **RODO (R-10)**: `DELETE /me` = anonimizacja User (pseudonim, hash losowy, e-mail zaorany) z zachowaniem ledgera; `GET /me/export` (JSON przez job).
-4. **Cache (ADR-007, D3)**: cache-aside Redis dla listingu zleceń, listingu grup, feedów (klucz grupa+kursor), profili publicznych; inwalidacja zdarzeniowa w workerze; NIGDY dla `/me/ladder`.
-5. **E2E Playwright w CI** (ścieżka: rejestracja → zlecenie → oferta → cykl → ocena) + **load test k6** (500 równoczesnych: listing, szczegóły, logowanie) z wynikami w `docs/perf/`.
-6. **Deploy produkcyjny**: wykonać `infra/bootstrap.sh` na VPS (wymaga sekretów od właściciela — patrz `docs/runbooks/sekrety.md`), staging → smoke → tag `v0.1.0` → produkcja za flagą; Netdata + Uptime Kuma w compose; Bull Board za rolą ADMIN.
+Stan po audycie 2026-07-12 (patrz §2). Backend hardeningu jest w większości dostarczony i zielony.
 
-DoD: staging działa na VPS; k6 w budżecie (p95 < 300 ms publiczne z cache); tag `v0.1.0`.
+1. ✅ **E-mail (Brevo, ADR-009)** — weryfikacja adresu, reset hasła (`shared/mail.ts` + flow); realny transport + no-op fallback. **Otwarte:** dzienny digest (job w workerze) + aktywacja `BREVO_API_KEY` (właściciel, przy launchu).
+2. **Antybot/antyspam (R-03/R-13):** ✅ rate-limity świeżych kont (`shared/quota.ts`) + ✅ „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + ✅ **Cloudflare Turnstile flag-gated** (`shared/turnstile.ts`, fail-closed przy ON; `/auth/register` wymaga tokenu; widget na `/rejestracja` gdy `NEXT_PUBLIC_TURNSTILE_SITE_KEY`). Aktywacja: klucze Cloudflare przy launchu (`docs/runbooks/sekrety.md`).
+3. ✅ **RODO (R-10)** — `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, `anonymizedAt`, treści `[treść usunięta]`, profil ukryty, sesja unieważniona); `GET /me/export`.
+4. ✅ **Cache (ADR-007, D3)** — cache-aside Redis (`shared/cache.ts`) z inwalidacją przez wersję namespace; `/me/ladder` NIGDY nie cache'owany.
+5. ✅ **E2E Playwright** (ścieżka krytyczna, ADR-008) ZROBIONE — `apps/web/e2e/critical-path.spec.ts`, runner `infra/e2e.sh` (stack lokalny: MySQL/Redis compose + api/worker tsx + web build produkcyjny; Chromium z cache). Odporny na wyścig hydracji (ponawialne kliknięcia). Do wpięcia w CI (ADR-008): krok `bash infra/e2e.sh`. ❌ **OTWARTE: load test k6** (500 równoczesnych) z wynikami w `docs/perf/`. **Uwaga:** k6 na współdzielonym 8 GB VPS ryzykuje kontencją z App-prod/Zodiamo — planować poza szczytem lub na osobnym celu; kamień decyzyjny właściciela.
+6. ❌ **OTWARTE: Launch** — prod na obecnym 8 GB (decyzja właściciela) z twardymi limitami RAM MySQL + swap; staging → smoke → tag `v0.1.0` → produkcja za flagą; zdjęcie basic-auth; Netdata + Uptime Kuma; Bull Board (D10) za rolą ADMIN. Sekrety: `docs/runbooks/sekrety.md`.
+
+DoD: staging działa na VPS (✅); Turnstile + e2e + k6 w budżecie (p95 < 300 ms publiczne z cache); tag `v0.1.0`.
 
 ### FAZA 2 (sprinty 7–9) — Integracja z app.leadersofteams.com + moduł Zespołów
 
