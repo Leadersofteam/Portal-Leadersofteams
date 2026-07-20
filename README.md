@@ -4,6 +4,18 @@ Platforma leadersofteams.pl — marketplace usług B2B (Firmy ↔ Liderzy) poł�
 
 **Status:** Faza 1 w toku — zrealizowane: fundament (Faza 0), marketplace core (Sprint 1–2), **Drabinka Lidera z antyfraudem** (Sprint 2–3). Następne: grupy branżowe + Q&A (Sprint 4–5). Pełny stan projektu i plan sprintów: **[docs/HANDOFF-OPUS.md](docs/HANDOFF-OPUS.md)**.
 
+## Lokalizacje na VPS (uwaga: dwa różne projekty)
+
+Na VPS działają **dwa odrębne repozytoria** Leaders of Teams. Łatwo je pomylić — poniższa tabela jest rozstrzygająca:
+
+| Ścieżka                        | Repozytorium            | Co to jest                                                          |
+| ------------------------------ | ----------------------- | ------------------------------------------------------------------- |
+| `/docker/portal-staging`       | `Portal-Leadersofteams` | **to repo** — Portal (marketplace + Drabinka), wdrożenie **staging** |
+| `/docker/leaders-of-teams-app` | `Leaders-of-Teams-APP`  | osobny projekt — App/CRM, `app.leadersofteams.com`, prod             |
+| `/root/lot-sprint41`           | `Leaders-of-Teams-APP`  | worktree **App**, gałąź `sprint-41-design` — **nie należy do Portalu** |
+
+Katalog `/root/lot-sprint41` bywa mylony z Portalem — to `git worktree` repozytorium App.
+
 ## Dokumentacja
 
 | Dokument                                                                                              | Zawartość                                                               |
