@@ -1,6 +1,12 @@
 # Architektura integracji: Portal (leadersofteams.pl) ↔ App (app.leadersofteams.com)
 
-**Status:** projekt zatwierdzony (2026-07-11) — do realizacji w **Fazie 2** (sprinty 7–10), świadomie
+> ⛔ **PORZUCONE (2026-07-20).** Decyzją właściciela integracja Portal↔App **nie będzie
+> realizowana**. Dokument zachowany jako zapis historyczny rozważanego projektu (OIDC IdP +
+> outbox webhook + rekoncyliacja). **Nie wdrażać** żadnego z opisanych filarów. Powiązane:
+> [ADR-003](adr/ADR-003-integracja-oidc-level-sync.md) (SUPERSEDED), Faza 2 w
+> [ROADMAP.md](../ROADMAP.md) (porzucona), ryzyka R-05/R-09 w [RISKS.md](../RISKS.md) (nieaktualne).
+
+**Status:** ~~projekt zatwierdzony (2026-07-11)~~ → **PORZUCONY (2026-07-20)**. Pierwotnie do realizacji w **Fazie 2**, świadomie
 PO Fazie 1 (nikt nie osiągnie progu unlock w pierwszych tygodniach — naturalny runway).
 **Źródła:** brief §4 (rozstrzygnięcia biznesowe), ROADMAP „Faza 2", ADR-010 (Zespoły).
 

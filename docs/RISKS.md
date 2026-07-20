@@ -20,3 +20,28 @@ Skala: prawdopodobieństwo (P) i wpływ (W) — niski/średni/wysoki. Ryzyka prz
 | R-14 | **Nadużycia programu poleceń** — bodziec pieniężny za afiliację zachęca do kont-słupów, self-invite i farm zaproszeń, by wyłudzić nagrody                                    | wysokie | średni | Firewall anty-MLM ([ADR-011](architecture/adr/ADR-011-program-polecen.md)): głębokość 1 (brak downline), nagroda tylko za PIERWSZĄ realną transakcję zaproszonego, jednorazowo; karencja + clawback przy zwrocie/chargebacku; reużycie `antifraud` (wspólny fingerprint/IP, wzajemność, próg dojrzałości konta, limit szybkości → HOLD + moderacja); zero punktów Drabinki (brak wektora podbijania statusu)                                                | architektura + moderacja            |
 | R-15 | **Ryzyko regulacyjne/PCI/AML płatności** — wejście w przepływ pieniędzy (kursy, wypłaty) rodzi obowiązki podatkowe, konsumenckie i AML/KYC; custodia środków = wpis KNF      | średnie | wysoki | [ADR-013](architecture/adr/ADR-013-monetyzacja-platnosci.md): split payout przez PSP (Przelewy24/Stripe), platforma NIE trzyma środków (brak custodii → brak KNF); PCI SAQ-A (dane kart tylko po stronie PSP, zero przechowywania); VAT/OSS + faktury + 14-dniowe prawo odstąpienia jako wsad prawny przed uruchomieniem monetyzacji; escrow dopiero gdy uzasadni wolumen                                                                                   | właściciel (prawnik) + architektura |
 | R-16 | **Jakość treści kursów i zwroty** — słabe/wprowadzające w błąd kursy, żądania zwrotów, reklamacje psują zaufanie do Academy                                                  | średnie | średni | [ADR-012](architecture/adr/ADR-012-academy-kursy.md): publikacja kursów od progu poziomu (anty-spam); reputacja autora z ocen realnych kupujących (`CourseReview`); przycisk „zgłoś" → `ModerationCase`; jasna polityka zwrotów i 14-dniowe odstąpienie spięte z clawbackiem afiliacji (ADR-011); SLA moderacji                                                                                                                                             | produkt + moderacja                 |
+
+## Status ryzyk (przegląd 2026-07-20)
+
+Jawny status każdego ryzyka względem stanu na 2026-07-20. Legenda: **mitygowane** (mechanizm wdrożony w kodzie/architekturze), **otwarte** (wymaga działania przed launchem lub w kolejnej fazie), **zaakceptowane** (świadomie przyjęte na obecnym etapie). Statusy do potwierdzenia przez właściciela.
+
+| ID   | Status | Uzasadnienie (2026-07-20) |
+| ---- | ------ | -------------------------- |
+| R-01 | mitygowane | Pakiet ADR-004 wdrożony w kodzie: append-only `PointEvent`, karencja, `antifraud` v1, `ModerationCase`. |
+| R-02 | otwarte (produkt/komunikacja) | Egzekucja anty-MLM jest w schemacie (mitygowane technicznie), ale ryzyko reputacyjne domyka komunikacja launchowa — przed launchem publicznym. |
+| R-03 | otwarte | Rate-limity/heurystyki są; weryfikacja-odznaka Firm to faza 3. Przed launchem: kalibracja progów dla świeżych kont. |
+| R-04 | **otwarte (bloker launchu)** | Limity cgroup wdrożone, ale **load-test k6 przy działającym prod App NIE wykonany** — wymóg przed go-live. |
+| R-05 | **nieaktualne** | Integracja Portal↔App **porzucona (2026-07-20)** — ryzyko rozjazdu danych nie występuje (brak synchronizacji poziomów). |
+| R-06 | **otwarte (właściciel, bloker launchu)** | Cold-start: seeding rynku (dane demo/testowe) + start wąski — decyzja i wsad operacyjny właściciela. |
+| R-07 | zaakceptowane | Wspólny VPS = SPOF świadomie przyjęty; mitygacja: backupy + RTO/RPO. Backupy baz nadal na liście infra (patrz HANDOFF). |
+| R-08 | otwarte | Ruleset v1 zatwierdzony i wersjonowany; kalibracja na danych od dnia 1 — obserwacja po launchu. |
+| R-09 | **nieaktualne** | Zależność Fazy 2 od zespołu App nie występuje — integracja **porzucona (2026-07-20)**, [ADR-003](architecture/adr/ADR-003-integracja-oidc-level-sync.md) SUPERSEDED. |
+| R-10 | **otwarte (właściciel/prawnik, bloker launchu)** | Anonimizacja ledgera + eksport/`DELETE /me` wdrożone; **regulamin + polityka prywatności** to wsad prawny przed launchem. |
+| R-11 | mitygowane | Publikacja symultaniczna ocen + spory przez `ModerationCase` — w kodzie. |
+| R-12 | otwarte | Polityka 0 zł (ADR-009) opisana; monitoring zużycia z alertami do potwierdzenia jako wdrożony. |
+| R-13 | otwarte (aktywacja przy launchu) | Moderatorzy, rate-limity, Turnstile (flag-gated) w kodzie; **aktywacja kluczy Turnstile prod** przy launchu. |
+| R-14 | mitygowane (dot. przyszłego modułu) | Firewall anty-MLM ADR-011 zaprojektowany; moduł `referral` to Faza Academy — ryzyko realne dopiero po jego wdrożeniu. |
+| R-15 | zaakceptowane (odroczone) | Płatności poza MVP (ADR-006/013): brak custodii → brak KNF; ryzyko aktywne dopiero przy monetyzacji. |
+| R-16 | otwarte (przyszła faza) | Academy/kursy to Faza Academy; guardraile ADR-012 zaprojektowane, ryzyko realne po jej uruchomieniu. |
+
+**Blokery przed go-live Portalu (podsumowanie):** R-04 (k6), R-06 (seeding), R-10 (regulamin/RODO), R-13 (aktywacja Turnstile). Szczegóły i kolejność: [GO-LIVE-CHECKLIST.md](GO-LIVE-CHECKLIST.md).

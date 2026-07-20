@@ -2,7 +2,7 @@
 
 Rekomendacja architektoniczna (brief zostawił zakres MVP otwarty — sekcja 5 i 7, pyt. 4). Sprint = 2 tygodnie. Fazy są sekwencyjne; sprinty wewnątrz faz mogą się przesuwać.
 
-> **Status wykonania (2026-07-12):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ✅ **Sprint 5 — moduł `community` (Q&A/mentoring, druga ścieżka punktowa)** — w `main` przez PR #8; **zweryfikowany 2026-07-12** (73 testy zielone, w tym 11 community + anty-MLM `subscriptions`) · ✅ **Deploy STAGING + redesign + 3 fixy runtime** (gałąź `fix/api-tsup-noexternal-workspace`) · ▶ trwa: **Sprint 4.5 (stabilizacja: merge gałęzi, seed demo, dług `openssl`, czyszczenie staging)** → następny **Sprint 6 (hardening/launch)**. Architektura integracji App↔Portal: **[INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md)**. Szczegóły stanu, długu i sprintów: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
+> **Status wykonania (2026-07-12):** ✅ Faza 0 (`a6e5a18`) · ✅ Sprint 1–2 (`08a295e`) · ✅ Sprint 2–3 (`1836767`) · ✅ Sprint 4 — grupy + powiadomienia (`234d30a`) · ✅ Strategia/ADR-011–013 (`157522d`) · ✅ **Sprint 5 — moduł `community` (Q&A/mentoring, druga ścieżka punktowa)** — w `main` przez PR #8; **zweryfikowany 2026-07-12** (73 testy zielone, w tym 11 community + anty-MLM `subscriptions`) · ✅ **Deploy STAGING + redesign + 3 fixy runtime** (gałąź `fix/api-tsup-noexternal-workspace`) · ✅ **Sprint 4.5 (stabilizacja: merge gałęzi, seed demo, dług `openssl`, czyszczenie staging)** — zmergowany do `main` (PR #11, `4bcfca6`); higiena git domknięta 2026-07-20 (gałąź `growth/g1-seo-discoverability` wypchnięta, `main` zsynchronizowany). → następny **Sprint 6 (hardening/launch)** — patrz [GO-LIVE-CHECKLIST.md](GO-LIVE-CHECKLIST.md). Architektura integracji App↔Portal: **[INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md)**. Szczegóły stanu, długu i sprintów: **[HANDOFF-OPUS.md](HANDOFF-OPUS.md)**.
 >
 > **Nota o dryfie dok↔kod (2026-07-12):** wcześniejsze wersje tego dokumentu i HANDOFF opisywały Sprint 5 jako „następny". W rzeczywistości moduł `community` był już zaimplementowany i zmergowany do `main` (PR #8 `claude/lot-portal-sprints-5-9-*`) — wskaźnik sprintu nie został zaktualizowany. Zweryfikowano end-to-end i naprawiono opis 2026-07-12.
 
@@ -46,9 +46,18 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 
 **Poza MVP świadomie:** płatności, moduł Zespołów (patrz faza 2 — wymaga realnie istniejących poziomów 3+/7), czat 1:1 (kontakt przy zleceniu przez wątek ofertowy), zaawansowany search (Meilisearch), publiczne rankingi, aplikacja mobilna, webinary/artykuły jako źródła punktów.
 
-## Faza 2 — Integracja z app.leadersofteams.com + moduł Zespołów (3–4 sprinty)
+## Faza 2 — ~~Integracja z app.leadersofteams.com~~ + moduł Zespołów (3–4 sprinty)
 
-- OIDC provider na portalu (`oidc-provider`, tabele grantów, rotacja JWKS) + rejestracja app jako klienta.
+> ⛔ **INTEGRACJA PORZUCONA (2026-07-20).** Decyzją właściciela integracja Portal↔App (OIDC,
+> webhook `level-changed`, rekoncyliacja, „Zaloguj przez leadersofteams.pl", odblokowanie
+> darmowego dostępu do App) **nie będzie realizowana** — patrz [ADR-003](architecture/adr/ADR-003-integracja-oidc-level-sync.md)
+> (SUPERSEDED) i [INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md) (porzucone).
+> **Konsekwencja do rozstrzygnięcia przez właściciela:** moduł Zespołów (ADR-010) zakładał
+> powiązanie `Team.appTeamRef` z zespołem w App i unlock tworzenia zespołu przez poziom Drabinki
+> — bez integracji wymaga **przeprojektowania jako funkcja wyłącznie Portalu** (albo rezygnacji).
+> Poniższe punkty integracyjne pozostają jako zapis historyczny.
+
+- ~~OIDC provider na portalu (`oidc-provider`, tabele grantów, rotacja JWKS) + rejestracja app jako klienta.~~
 - Webhook `level-changed` (HMAC, retry, DLQ) + endpoint rekoncyliacyjny + `WebhookDelivery`.
 - **Po stronie app** (skoordynowany zakres, osobne repo): przycisk „Zaloguj przez leadersofteams.pl" (`openid-client`), mapowanie kont po `sub`, konsumpcja `lot_level`, odblokowanie darmowego dostępu + założenia zespołu, nocny job rekoncyliacji.
 - **Moduł Zespołów ([ADR-010](architecture/adr/ADR-010-grupy-zespoly-case-studies.md))**: `Team` (tworzenie od lvl 7), profil publiczny zespołu, `TeamOpening` (rekrutacja ciągła, modele współpracy), `TeamApplication` (od lvl 3), powiązanie `Team.appTeamRef` z zespołem w app + publikowanie case studies w imieniu zespołu (`Post.teamId`). Budowany w tej fazie, bo dopiero wtedy istnieją użytkownicy z odpowiednimi poziomami, a tożsamość zespołów z app wymaga integracji.
