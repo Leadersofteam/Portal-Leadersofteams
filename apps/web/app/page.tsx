@@ -1,6 +1,11 @@
+import { JsonLd } from '@/components/json-ld';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
+
 export default function HomePage() {
   return (
     <main>
+      <JsonLd data={organizationJsonLd()} />
+      <JsonLd data={websiteJsonLd()} />
       <section className="hero">
         <span className="hero-eyebrow">Platforma w budowie — start wkrótce</span>
         <h1>

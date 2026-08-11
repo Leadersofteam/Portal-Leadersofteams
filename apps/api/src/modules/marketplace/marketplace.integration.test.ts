@@ -187,6 +187,31 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     expect(publicProfile.json().profile.portfolioItems).toHaveLength(1);
   });
 
+  it('publiczny katalog /leaders: widoczne profile z dołączonym poziomem i oceną + filtry', async () => {
+    const list = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/leaders?industryId=${industryId}`,
+    });
+    expect(list.statusCode).toBe(200);
+    const found = list.json().leaders.find((l: { id: string }) => l.id === leaderProfileId);
+    expect(found).toBeTruthy();
+    expect(found.displayName).toBe('Lider Testowy');
+    expect(found.level).toBe(0); // brak punktów jeszcze
+    expect(found.reviewCount).toBe(0);
+    expect(found.industry.slug).toBeTruthy();
+
+    // filtr frazą po nagłówku (LIKE)
+    const search = await ctx.app.inject({ method: 'GET', url: `/api/v1/leaders?q=automatyzacji` });
+    expect(search.json().leaders.some((l: { id: string }) => l.id === leaderProfileId)).toBe(true);
+
+    // fraza bez trafień
+    const miss = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/leaders?q=nieistniejacafraza999`,
+    });
+    expect(miss.json().leaders.some((l: { id: string }) => l.id === leaderProfileId)).toBe(false);
+  });
+
   it('bramka minLevel: zlecenie z minLevel=1 odrzuca Lidera z poziomem 0', async () => {
     const gated = await ctx.app.inject({
       method: 'POST',

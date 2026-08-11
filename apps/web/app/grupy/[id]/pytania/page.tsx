@@ -1,5 +1,7 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
 import { THREAD_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
@@ -21,7 +23,25 @@ interface ThreadRow {
   createdAt: string;
 }
 
-export const metadata = { title: 'Pytania (Q&A) — Leaders of Teams' };
+const getGroupName = cache((id: string) => serverApi<GroupDetail>(`/groups/${id}`));
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const data = await getGroupName(id);
+  const name = data?.group.name ?? 'Grupa';
+  const title = `Pytania i odpowiedzi — ${name} | Leaders of Teams`;
+  const description = `Wątki Q&A i mentoring w grupie ${name}. Zadaj pytanie, pomóż innym Liderom i zdobywaj punkty w Drabince.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/grupy/${id}/pytania` },
+    openGraph: { type: 'website', title, description, url: `/grupy/${id}/pytania` },
+  };
+}
 
 export default async function GroupThreadsPage({
   params,

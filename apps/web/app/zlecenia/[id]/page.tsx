@@ -1,7 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
+import { JsonLd } from '@/components/json-ld';
 import { ReportButton } from '@/components/report-button';
+import { orderJsonLd } from '@/lib/jsonld';
 import { ORDER_STATUS_LABELS, OFFER_STATUS_LABELS, formatBudget } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -47,9 +51,32 @@ interface OfferRow {
   leader: { profileId: string; displayName: string; headline: string; industry: string };
 }
 
+const getOrder = cache((id: string) => serverApi<OrderDetail>(`/orders/${id}`));
+
+const clip = (s: string, n = 155) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const data = await getOrder(id);
+  if (!data) return { title: 'Zlecenie nie znalezione' };
+  const { order } = data;
+  const title = `${order.title} — zlecenie ${order.industry.name} | Leaders of Teams`;
+  const description = clip(`${order.companyName} · budżet ${order.budgetMin}–${order.budgetMax} zł. ${order.description}`);
+  return {
+    title,
+    description,
+    alternates: { canonical: `/zlecenia/${id}` },
+    openGraph: { type: 'article', title, description, url: `/zlecenia/${id}` },
+  };
+}
+
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const data = await serverApi<OrderDetail>(`/orders/${id}`);
+  const data = await getOrder(id);
   if (!data) notFound();
   const { order, viewer } = data;
 
@@ -71,6 +98,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <main>
+      {order.status === 'PUBLISHED' && (
+        <JsonLd
+          data={orderJsonLd({
+            id: order.id,
+            title: order.title,
+            description: order.description,
+            industryName: order.industry.name,
+            budgetMin: order.budgetMin,
+            budgetMax: order.budgetMax,
+            companyName: order.companyName,
+            publishedAt: null,
+          })}
+        />
+      )}
       <div className="breadcrumbs">
         <Link href="/zlecenia">← Wszystkie zlecenia</Link>
       </div>

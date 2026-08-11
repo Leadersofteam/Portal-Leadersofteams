@@ -2,6 +2,7 @@ import {
   createLeaderProfileInputSchema,
   createOfferInputSchema,
   createOrderInputSchema,
+  leaderFiltersSchema,
   orderFiltersSchema,
   portfolioItemInputSchema,
   reviewInputSchema,
@@ -21,7 +22,7 @@ export interface MarketplaceRoutesDeps {
   profiles: ProfilesService;
   orders: OrdersService;
   reviews: ReviewsService;
-  ladder: Pick<LadderService, 'getLevel'>;
+  ladder: Pick<LadderService, 'getLevel' | 'getLevels'>;
   auth: AuthHelpers;
 }
 
@@ -39,6 +40,30 @@ export function marketplaceRoutes({
     });
 
     // --- profile Liderów ---------------------------------------------------
+    // Publiczny katalog Liderów (/liderzy): profile + DOŁĄCZONY poziom Drabinki
+    // i oceny (batch, bez logiki punktowej w marketplace).
+    app.get('/leaders', async (request, reply) => {
+      const filters = parseBody(leaderFiltersSchema, request.query);
+      const { leaders, nextCursor } = await profiles.listPublicLeaders(filters);
+      const userIds = leaders.map((l) => l.userId);
+      const [levels, stats] = await Promise.all([
+        ladder.getLevels(userIds),
+        reviews.getLeaderReviewStatsMany(userIds),
+      ]);
+      return reply.send({
+        leaders: leaders.map((l) => ({
+          id: l.id,
+          displayName: l.displayName,
+          headline: l.headline,
+          industry: l.industry,
+          level: levels.get(l.userId) ?? 0,
+          averageRating: stats.get(l.userId)?.averageRating ?? null,
+          reviewCount: stats.get(l.userId)?.reviewCount ?? 0,
+        })),
+        nextCursor,
+      });
+    });
+
     app.get('/leaders/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
       const profile = (await profiles.getPublicProfile(id)) as { userId: string };

@@ -2,10 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { ApiRequestError, apiFetch } from '@/lib/api';
+
+// Anty-bot Turnstile (D7). Widget renderujemy TYLKO gdy podano publiczny site-key
+// (flaga; jak backendowy TURNSTILE_SECRET_KEY). Brak klucza = brak widgetu, a backend
+// z wyłączoną ochroną przepuszcza rejestrację — bezpieczny domyślny stan otwarty.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,6 +23,8 @@ export default function RegisterPage() {
     setError(null);
     setPending(true);
     const form = new FormData(event.currentTarget);
+    // Widget Turnstile wstrzykuje ukryte pole `cf-turnstile-response` do formularza.
+    const turnstileToken = form.get('cf-turnstile-response');
     try {
       await apiFetch('/auth/register', {
         method: 'POST',
@@ -24,6 +32,7 @@ export default function RegisterPage() {
           email: form.get('email'),
           password: form.get('password'),
           displayName: form.get('displayName'),
+          ...(turnstileToken ? { turnstileToken } : {}),
         }),
       });
       router.push('/panel');
@@ -66,6 +75,16 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
           </div>
+          {TURNSTILE_SITE_KEY && (
+            <>
+              <Script
+                src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                async
+                defer
+              />
+              <div className="cf-turnstile field" data-sitekey={TURNSTILE_SITE_KEY} />
+            </>
+          )}
           <button className="btn full" type="submit" disabled={pending}>
             {pending ? 'Tworzenie konta…' : 'Utwórz konto'}
           </button>

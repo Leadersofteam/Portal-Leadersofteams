@@ -8,6 +8,7 @@ import { NotificationBell } from '@/components/notification-bell';
 
 const NAV_LINKS = [
   { href: '/zlecenia', label: 'Zlecenia' },
+  { href: '/liderzy', label: 'Liderzy' },
   { href: '/grupy', label: 'Grupy' },
   { href: '/drabinka', label: 'Drabinka' },
   { href: '/panel', label: 'Panel' },

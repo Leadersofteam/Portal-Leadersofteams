@@ -1,10 +1,35 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
 import { GROUP_TYPE_LABELS, POST_TYPE_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
 import { ApproveButton, JoinLeaveButton, PostForm, ReactButton } from './group-actions';
+
+const getGroup = cache((id: string) => serverApi<GroupDetail>(`/groups/${id}`));
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const data = await getGroup(id);
+  if (!data) return { title: 'Grupa nie znaleziona' };
+  const g = data.group;
+  const title = `${g.name} — grupa branżowa | Leaders of Teams`;
+  const description = (
+    g.description ?? `Grupa branżowa ${g.name}: dyskusje, case studies i mentoring (Q&A) Liderów.`
+  ).slice(0, 155);
+  return {
+    title,
+    description,
+    alternates: { canonical: `/grupy/${id}` },
+    openGraph: { type: 'website', title, description, url: `/grupy/${id}` },
+  };
+}
 
 interface GroupDetail {
   group: {
