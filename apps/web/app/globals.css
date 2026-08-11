@@ -1303,6 +1303,17 @@ main tbody tr:hover {
   margin: 0;
 }
 
+/* Zdjęcie w karcie portfolio / galerii usługi */
+.portfolio-image {
+  display: block;
+  width: calc(100% + 2.7rem);
+  margin: -1.35rem -1.35rem 1rem;
+  border-radius: var(--radius) var(--radius) 0 0;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border);
+}
+
 /* Wcięta odpowiedź w wątku komentarzy */
 .comment-reply {
   margin-left: 1.5rem;

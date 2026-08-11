@@ -51,6 +51,9 @@ services:
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - portal_uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -184,3 +187,5 @@ networks:
 volumes:
   portal_mysql_data:
   portal_redis_data:
+  # Pliki użytkowników (moduł files) — objąć backupem razem z bazą.
+  portal_uploads:

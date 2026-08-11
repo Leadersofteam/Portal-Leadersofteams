@@ -127,8 +127,33 @@ export const portfolioItemInputSchema = z.object({
   title: z.string().trim().min(2).max(120),
   url: z.string().trim().url('Nieprawidłowy adres URL').max(500).optional(),
   description: z.string().trim().max(1000).optional(),
+  // Obraz z modułu files (upload przez POST /files, kind=PORTFOLIO).
+  imageFileId: z.string().optional(),
 });
 export type PortfolioItemInput = z.infer<typeof portfolioItemInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Files — upload obrazów (awatary, portfolio, galerie usług)
+// ---------------------------------------------------------------------------
+
+export const fileKindSchema = z.enum(['AVATAR', 'PORTFOLIO', 'LISTING']);
+export type FileKind = z.infer<typeof fileKindSchema>;
+
+export const uploadedFileSchema = z.object({
+  id: z.string(),
+  kind: fileKindSchema,
+  originalName: z.string(),
+  mime: z.string(),
+  size: z.number().int(),
+  width: z.number().int().nullable(),
+  height: z.number().int().nullable(),
+});
+export type UploadedFileDto = z.infer<typeof uploadedFileSchema>;
+
+/** Publiczny URL wariantu pliku (thumb 320 px / full 1280 px). */
+export function fileVariantUrl(fileId: string, variant: 'thumb' | 'full'): string {
+  return `/api/v1/files/${fileId}/${variant}`;
+}
 
 // ---------------------------------------------------------------------------
 // Marketplace — zlecenia i oferty

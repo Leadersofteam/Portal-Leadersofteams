@@ -37,8 +37,13 @@ model User {
   anonymizedAt DateTime?
   // Weryfikacja adresu (D4, e-mail za flagą) — null = niezweryfikowany.
   emailVerifiedAt DateTime?
+  // Awatar (moduł files) — SetNull: usunięcie pliku nie kasuje konta.
+  avatarFileId String?   @unique
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  avatarFile    UploadedFile?  @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
+  uploadedFiles UploadedFile[] @relation("FileOwner")
 
   companyMemberships CompanyMember[]
   leaderProfile      LeaderProfile?
@@ -151,12 +156,47 @@ model PortfolioItem {
   title           String
   url             String?
   description     String?  @db.Text
+  // Obraz pozycji portfolio (moduł files) — opcjonalny.
+  imageFileId     String?
   createdAt       DateTime @default(now())
 
   leaderProfile LeaderProfile @relation(fields: [leaderProfileId], references: [id], onDelete: Cascade)
+  imageFile     UploadedFile? @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
 
   @@index([leaderProfileId])
   @@map("portfolio_items")
+}
+
+// ============================= files =============================
+// Pliki użytkowników (awatary, portfolio, galerie usług). Na dysku leżą
+// wyłącznie przetworzone warianty webp pod wygenerowaną nazwą (cuid) —
+// oryginalna nazwa (po naprawie latin1→utf8) zostaje tylko w DB.
+
+enum FileKind {
+  AVATAR
+  PORTFOLIO
+  LISTING
+}
+
+model UploadedFile {
+  id           String   @id @default(cuid())
+  ownerId      String
+  kind         FileKind
+  // Ścieżka względna wobec UPLOADS_DIR, bez wariantu: <yyyy-mm>/<cuid>
+  storagePath  String
+  originalName String
+  mime         String
+  size         Int
+  width        Int?
+  height       Int?
+  createdAt    DateTime @default(now())
+
+  owner          User            @relation("FileOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  avatarOfUser   User?           @relation("UserAvatar")
+  portfolioItems PortfolioItem[]
+
+  @@index([ownerId, kind])
+  @@map("uploaded_files")
 }
 
 // Cykl życia (ADR-006): DRAFT → PUBLISHED → AWARDED → IN_PROGRESS →

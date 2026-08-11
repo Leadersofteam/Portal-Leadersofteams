@@ -12,6 +12,8 @@ import { DUMMY_HASH_PROMISE, hashPassword, verifyPassword } from './password';
 export interface PublicUser {
   id: string;
   displayName: string;
+  // Id pliku awatara (moduł files) — web buduje z niego /api/v1/files/:id/thumb.
+  avatarFileId: string | null;
 }
 
 export interface CompanySummary {
@@ -46,6 +48,8 @@ export interface IdentityService {
   isCompanyMember(userId: string, companyId: string): Promise<boolean>;
   getCompanyMemberUserIds(companyId: string): Promise<string[]>;
   getPublicUsers(userIds: string[]): Promise<Map<string, PublicUser>>;
+  // Awatar (moduł files ustawia po walidacji własności pliku).
+  setAvatar(userId: string, fileId: string | null): Promise<void>;
   // Adresy e-mail (dla digestu powiadomień) — pomija konta zanonimizowane.
   getUserEmails(userIds: string[]): Promise<Map<string, string>>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
@@ -195,9 +199,19 @@ export function createIdentityService(
       if (userIds.length === 0) return new Map();
       const users = await prisma.user.findMany({
         where: { id: { in: userIds } },
-        select: { id: true, displayName: true },
+        select: { id: true, displayName: true, avatarFileId: true },
       });
-      return new Map(users.map((u) => [u.id, { id: u.id, displayName: u.displayName }]));
+      return new Map(
+        users.map((u) => [
+          u.id,
+          { id: u.id, displayName: u.displayName, avatarFileId: u.avatarFileId },
+        ]),
+      );
+    },
+
+    async setAvatar(userId, fileId) {
+      // Własność pliku waliduje moduł files (route) — tu tylko własna tabela (ADR-002).
+      await prisma.user.update({ where: { id: userId }, data: { avatarFileId: fileId } });
     },
 
     async getUserEmails(userIds) {

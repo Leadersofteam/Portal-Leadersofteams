@@ -11,9 +11,10 @@ export default async function ProfilePage() {
   const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
   if (!me?.user) redirect('/logowanie');
 
-  const [profileData, industriesData] = await Promise.all([
+  const [profileData, industriesData, avatarData] = await Promise.all([
     serverApi<{ profile: never | null }>('/me/leader-profile'),
     serverApi<{ industries: Array<{ id: string; name: string }> }>('/industries'),
+    serverApi<{ fileId: string | null }>('/me/avatar'),
   ]);
 
   return (
@@ -24,6 +25,7 @@ export default async function ProfilePage() {
       <ProfileForm
         industries={industriesData?.industries ?? []}
         profile={profileData?.profile ?? null}
+        avatarFileId={avatarData?.fileId ?? null}
       />
     </main>
   );

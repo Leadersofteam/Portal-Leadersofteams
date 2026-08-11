@@ -8,6 +8,7 @@ import { serverApi } from '@/lib/server-api';
 interface LeaderRow {
   id: string;
   displayName: string;
+  avatarFileId: string | null;
   headline: string;
   industry: { name: string; slug: string };
   level: number;
@@ -99,7 +100,10 @@ export default async function LeadersDirectoryPage({
           {leaders.map((leader) => (
             <div key={leader.id} className="list-row">
               <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                <Avatar name={leader.displayName} />
+                <Avatar
+                  name={leader.displayName}
+                  src={leader.avatarFileId ? `/api/v1/files/${leader.avatarFileId}/thumb` : null}
+                />
                 <div>
                   <h3>
                     <Link href={`/liderzy/${leader.id}`}>{leader.displayName}</Link>

@@ -57,6 +57,9 @@ services:
       DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
       REDIS_URL: redis://redis:6379
       LOG_LEVEL: debug
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - portal_staging_uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -183,3 +186,5 @@ networks:
 volumes:
   portal_staging_mysql_data:
   portal_staging_redis_data:
+  # Pliki użytkowników (moduł files) — objąć backupem razem z bazą.
+  portal_staging_uploads:

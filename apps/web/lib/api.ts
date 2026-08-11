@@ -19,7 +19,10 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   // content-type: application/json TYLKO gdy jest body. Akcje bez body (POST
   // publish/accept/start/…, DELETE) inaczej wywołują w Fastify błąd
   // „Body cannot be empty when content-type is set to 'application/json'".
-  const hasBody = init?.body != null;
+  // FormData: przeglądarka MUSI sama ustawić multipart boundary — ręczny
+  // content-type json po cichu psuje upload (sprawdzona pułapka).
+  const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
+  const hasBody = init?.body != null && !isFormData;
   const res = await fetch(`/api/v1${path}`, {
     ...init,
     headers: {

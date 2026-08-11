@@ -16,6 +16,7 @@ export interface PublicLeaderCard {
   id: string;
   userId: string;
   displayName: string;
+  avatarFileId: string | null;
   headline: string;
   industry: { name: string; slug: string };
 }
@@ -36,6 +37,8 @@ export interface ProfilesService {
 export function createProfilesService(
   prisma: PrismaClient,
   identity: Pick<IdentityService, 'getPublicUsers'>,
+  // Walidacja własności obrazów portfolio (moduł files); opcjonalna w testach.
+  files?: { assertOwned(fileId: string, ownerId: string, kind?: string): Promise<void> },
 ): ProfilesService {
   async function requireIndustry(industryId: string) {
     const industry = await prisma.industry.findUnique({ where: { id: industryId } });
@@ -83,6 +86,7 @@ export function createProfilesService(
           id: p.id,
           userId: p.userId,
           displayName: users.get(p.userId)?.displayName ?? 'Lider',
+          avatarFileId: users.get(p.userId)?.avatarFileId ?? null,
           headline: p.headline,
           industry: { name: p.industry.name, slug: p.industry.slug },
         })),
@@ -146,7 +150,11 @@ export function createProfilesService(
       });
       if (!profile) throw new NotFoundError('Profil Lidera nie istnieje lub jest ukryty');
       const users = await identity.getPublicUsers([profile.userId]);
-      return { ...profile, displayName: users.get(profile.userId)?.displayName ?? 'Lider' };
+      return {
+        ...profile,
+        displayName: users.get(profile.userId)?.displayName ?? 'Lider',
+        avatarFileId: users.get(profile.userId)?.avatarFileId ?? null,
+      };
     },
 
     async addPortfolioItem(userId, input) {
@@ -161,12 +169,16 @@ export function createProfilesService(
           400,
         );
       }
+      if (input.imageFileId && files) {
+        await files.assertOwned(input.imageFileId, userId, 'PORTFOLIO');
+      }
       const item = await prisma.portfolioItem.create({
         data: {
           leaderProfileId: profile.id,
           title: input.title,
           url: input.url ?? null,
           description: input.description ?? null,
+          imageFileId: input.imageFileId ?? null,
         },
       });
       return { id: item.id };

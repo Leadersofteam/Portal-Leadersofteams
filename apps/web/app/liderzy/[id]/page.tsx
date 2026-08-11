@@ -12,6 +12,7 @@ interface PublicProfile {
   profile: {
     id: string;
     displayName: string;
+    avatarFileId: string | null;
     headline: string;
     bio: string | null;
     level: number;
@@ -23,6 +24,7 @@ interface PublicProfile {
       title: string;
       url: string | null;
       description: string | null;
+      imageFileId: string | null;
     }>;
   };
 }
@@ -81,7 +83,11 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
         })}
       />
       <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center' }}>
-        <Avatar name={profile.displayName} size="lg" />
+        <Avatar
+          name={profile.displayName}
+          size="lg"
+          src={profile.avatarFileId ? `/api/v1/files/${profile.avatarFileId}/thumb` : null}
+        />
         <div>
           <h1 style={{ margin: 0 }}>{profile.displayName}</h1>
           <p className="meta muted" style={{ margin: '0.45rem 0 0' }}>
@@ -109,6 +115,14 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
           <div className="feature-grid">
             {profile.portfolioItems.map((item) => (
               <div key={item.id} className="card">
+                {item.imageFileId && (
+                  <img
+                    src={`/api/v1/files/${item.imageFileId}/full`}
+                    alt={item.title}
+                    className="portfolio-image"
+                    loading="lazy"
+                  />
+                )}
                 <h3>{item.title}</h3>
                 {item.description && <p>{item.description}</p>}
                 {item.url && (

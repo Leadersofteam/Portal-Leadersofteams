@@ -1,5 +1,6 @@
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
@@ -10,6 +11,7 @@ import {
   createCommunityAccountData,
   createCommunityService,
 } from './modules/community/index';
+import { createFilesAccountData, createFilesService, filesRoutes } from './modules/files/index';
 import { createGroupsAccountData, createGroupsService, groupsRoutes } from './modules/groups/index';
 import { createIdentityService, identityRoutes } from './modules/identity/index';
 import { createLadderService, ladderRoutes } from './modules/ladder/index';
@@ -57,6 +59,10 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
 
   await app.register(helmet);
   await app.register(cookie);
+  // Upload obrazów (moduł files) — limit rozmiaru egzekwowany już na transporcie.
+  await app.register(multipart, {
+    limits: { fileSize: config.MAX_UPLOAD_BYTES, files: 1 },
+  });
   await app.register(rateLimit, {
     global: true,
     max: config.NODE_ENV === 'test' ? 10_000 : 300,
@@ -117,6 +123,10 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     { turnstileEnabled: config.turnstileEnabled, secretKey: config.TURNSTILE_SECRET_KEY },
     (event, data) => logger.info(data, event),
   );
+  const filesService = createFilesService(prisma, {
+    uploadsDir: config.UPLOADS_DIR,
+    maxUploadBytes: config.MAX_UPLOAD_BYTES,
+  });
   const identityService = createIdentityService(prisma, {
     sessions,
     // RODO (D6): każdy moduł anonimizuje/eksportuje własne tabele (ADR-002).
@@ -124,12 +134,13 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
       createMarketplaceAccountData(prisma),
       createGroupsAccountData(prisma),
       createCommunityAccountData(prisma),
+      createFilesAccountData(prisma, filesService),
     ],
     mail,
     appBaseUrl: config.APP_BASE_URL,
   });
   const ladderService = createLadderService(prisma);
-  const profilesService = createProfilesService(prisma, identityService);
+  const profilesService = createProfilesService(prisma, identityService, filesService);
   const ordersService = createOrdersService({
     prisma,
     identity: identityService,
@@ -180,6 +191,9 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     prefix: '/api/v1',
   });
   await app.register(notificationsRoutes({ notifications: notificationsService, auth }), {
+    prefix: '/api/v1',
+  });
+  await app.register(filesRoutes({ files: filesService, auth, identity: identityService }), {
     prefix: '/api/v1',
   });
 

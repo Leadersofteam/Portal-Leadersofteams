@@ -20,6 +20,7 @@
   "dependencies": {
     "@fastify/cookie": "^11.0.0",
     "@fastify/helmet": "^13.0.0",
+    "@fastify/multipart": "^10.1.0",
     "@fastify/rate-limit": "^10.3.0",
     "@lot/contracts": "workspace:*",
     "@prisma/client": "^6.16.0",
@@ -29,6 +30,7 @@
     "ioredis": "^5.8.0",
     "pino": "^9.13.0",
     "prisma": "^6.16.0",
+    "sharp": "^0.35.3",
     "socket.io": "^4.8.0",
     "zod": "^3.25.0"
   },

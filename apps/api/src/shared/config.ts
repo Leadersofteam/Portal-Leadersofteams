@@ -24,6 +24,13 @@ const envSchema = z.object({
   // Anty-bot Turnstile (D7, R-03/R-13) — opcjonalny sekret. Brak = ochrona OFF
   // (0 zł, bezpieczny domyślny stan otwarty); włączenie przy launchu przez właściciela.
   TURNSTILE_SECRET_KEY: z.string().optional(),
+  // Moduł files: katalog na przetworzone warianty (volume w compose).
+  UPLOADS_DIR: z.string().default('./uploads'),
+  MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5 * 1024 * 1024),
 });
 
 export type AppConfig = z.infer<typeof envSchema> & {
