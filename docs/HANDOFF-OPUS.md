@@ -1,7 +1,20 @@
 # Handoff dla Claude Code Opus 4.8 — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-07-12 · **Branch tej sesji:** `fix/api-tsup-noexternal-workspace`
-**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 · ✅ **Sprint 5 (`community` — Q&A/mentoring)** w `main` (PR #8), **zweryfikowany 2026-07-12** · ✅ **deploy staging + redesign + fixy runtime** · ▶ trwa: **Sprint 4.5 (stabilizacja)** → następny **Sprint 6 (hardening/launch)**
+**Ostatnia aktualizacja:** 2026-07-20 · **Branch tej sesji:** `chore/consolidation-sprint-3-4-portal-docs`
+**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 · ✅ Sprint 5 (`community`) w `main` · ✅ **Sprint 4.5 zmergowany (PR #11)** · przygotowania do go-live → **Sprint 6 (hardening/launch)**
+
+> **⛔ ZMIANA KIERUNKU (2026-07-20): integracja Portal↔App PORZUCONA.** Decyzją właściciela integracja
+> (OIDC IdP, webhook `level.changed`, rekoncyliacja, „Zaloguj przez leadersofteams.pl") **nie będzie
+> realizowana**. Dokumenty oznaczone: [ADR-003](architecture/adr/ADR-003-integracja-oidc-level-sync.md) (SUPERSEDED),
+> [INTEGRATION-APP-PORTAL.md](architecture/INTEGRATION-APP-PORTAL.md) (porzucone), Faza 2 w [ROADMAP](ROADMAP.md),
+> R-05/R-09 w [RISKS](RISKS.md). **Konsekwencja:** moduł Zespołów (ADR-010) zakładał integrację — wymaga
+> przeprojektowania jako funkcja wyłącznie Portalu albo rezygnacji (decyzja właściciela).
+
+> **Przebieg konsolidacyjny (2026-07-20):** higiena git (gałąź `growth/g1-seo-discoverability` wypchnięta,
+> `main` zsynchronizowany), Sprint 4.5 domknięty w ROADMAP, tabela statusów 16 ryzyk w RISKS,
+> healthcheck `web` w staging compose (worker udokumentowany — wymaga heartbeatu), nowy
+> [GO-LIVE-CHECKLIST.md](GO-LIVE-CHECKLIST.md), [RUNBOOK-COMPOSE.md](RUNBOOK-COMPOSE.md). Go-live NIE wykonany
+> — to osobna sesja z osobną zgodą (DNS cutover u rejestratora po stronie właściciela).
 
 > **⚠️ Dryf dok↔kod naprawiony 2026-07-12:** ten dokument opisywał Sprint 5 jako „następny do zrobienia".
 > W rzeczywistości moduł `community` był już w `main` (zmergowany PR #8 `claude/lot-portal-sprints-5-9-*`) —
@@ -147,7 +160,12 @@ DoD: użytkownik może realnie awansować oboma ścieżkami; testy obu ścieżek
 
 DoD: staging działa na VPS; k6 w budżecie (p95 < 300 ms publiczne z cache); tag `v0.1.0`.
 
-### FAZA 2 (sprinty 7–9) — Integracja z app.leadersofteams.com + moduł Zespołów
+### FAZA 2 (sprinty 7–9) — ~~Integracja z app.leadersofteams.com~~ + moduł Zespołów
+
+> ⛔ **INTEGRACJA PORZUCONA (2026-07-20)** — patrz baner na górze dokumentu. Sprinty 7–8 (OIDC, webhook
+> `level-changed`, rekoncyliacja) **anulowane**. Sprint 9 (moduł `teams`) był sprzężony z integracją
+> (`Team.appTeamRef`, unlock po poziomie) — do przeprojektowania jako funkcja wyłącznie Portalu albo
+> rezygnacji. Poniższe pozostaje jako zapis historyczny.
 
 - **Sprint 7**: OIDC provider (`oidc-provider` na Fastify, tabele grantów, rotacja JWKS, claims `lot_level`/`lot_leader_status`), rejestracja app jako klienta, ekran zgody.
 - **Sprint 8**: webhook `level-changed` (HMAC, retry/DLQ na `ladder.level_achieved` — zdarzenie już jest emitowane!), endpoint rekoncyliacyjny `GET /api/integration/levels?since=`, tabela `WebhookDelivery`; kontrakt dla zespołu app w `docs/architecture/INTEGRATION-CONTRACT.md`.

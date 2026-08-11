@@ -1,7 +1,12 @@
 # ADR-003: Integracja z app.leadersofteams.com — logowanie i synchronizacja poziomów
 
-**Status:** Zaakceptowany
-**Data:** 2026-07-04
+> ⛔ **PORZUCONE / SUPERSEDED (2026-07-20).** Decyzją właściciela integracja Portal↔App
+> **nie będzie realizowana** — uznano ją za zbędną. Ten ADR zachowany wyłącznie jako zapis
+> historyczny rozważanej architektury (OIDC IdP + sync poziomów). **Nie wdrażać.** Nie ma
+> planu implementacji OIDC/webhooków/rekoncyliacji po żadnej ze stron.
+
+**Status:** ~~Zaakceptowany~~ → **PORZUCONY (2026-07-20)**
+**Data:** 2026-07-04 (porzucony 2026-07-20)
 
 ## Kontekst
 

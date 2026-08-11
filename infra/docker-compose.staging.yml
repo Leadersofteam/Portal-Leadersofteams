@@ -22,6 +22,19 @@ services:
         limits:
           cpus: '0.5'
           memory: 640M
+    healthcheck:
+      # Next.js standalone nasłuchuje na :3000 wewnątrz kontenera (basic-auth jest
+      # w Traefiku, nie tu). Sonda mirror wzorca `api`. Jeśli dodacie dedykowaną
+      # trasę /healthz w web, podmieńcie ścieżkę '/' poniżej.
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3000/'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik_public
@@ -73,6 +86,13 @@ services:
       dockerfile: infra/Dockerfile.api
     restart: unless-stopped
     command: ['node', 'dist/worker.js']
+    # HEALTHCHECK (świadomie pominięty): worker to proces BullMQ BEZ portu HTTP,
+    # więc sonda `fetch` jak w `api`/`web` nie ma zastosowania. Rzetelny healthcheck
+    # wymaga HEARTBEATU — worker cyklicznie zapisuje klucz w Redis (np.
+    # `SET portal:worker:heartbeat <ts> EX 60`), a healthcheck sprawdza jego świeżość:
+    #   test: ['CMD-SHELL', 'node -e "const Redis=require(''ioredis'');const r=new Redis(process.env.REDIS_URL);r.get(''portal:worker:heartbeat'').then(v=>process.exit(v?0:1)).catch(()=>process.exit(1))"']
+    # To zmiana w KODZIE workera (dopisanie heartbeatu) — poza zakresem przygotowań;
+    # do wdrożenia przy hardeningu przed go-live (patrz docs/GO-LIVE-CHECKLIST.md §1).
     environment:
       NODE_ENV: production
       DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
