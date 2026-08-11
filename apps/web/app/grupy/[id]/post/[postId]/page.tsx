@@ -67,7 +67,7 @@ export default async function PostPage({
         <span className="badge">{POST_TYPE_LABELS[post.type] ?? post.type}</span>
         <h1>{post.title}</h1>
         <div className="meta">{post.authorName}</div>
-        <p className="description" style={{ whiteSpace: 'pre-wrap' }}>
+        <p className="description">
           {post.body}
         </p>
         <div className="actions-row">
@@ -84,29 +84,21 @@ export default async function PostPage({
         </div>
       </article>
 
-      <h2 style={{ marginTop: '2rem' }}>Komentarze ({comments.length})</h2>
+      <h2 className="mt-4">Komentarze ({comments.length})</h2>
       {canParticipate && <CommentForm postId={post.id} />}
 
       {topLevel.length === 0 ? (
         <p className="muted">Brak komentarzy — bądź pierwszy.</p>
       ) : (
         topLevel.map((comment) => (
-          <div key={comment.id} className="card" style={{ marginTop: '1rem' }}>
+          <div key={comment.id} className="card mt-2">
             <div className="meta">{comment.authorName}</div>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{comment.body}</p>
+            <p className="pre-wrap">{comment.body}</p>
 
             {(repliesByParent.get(comment.id) ?? []).map((reply) => (
-              <div
-                key={reply.id}
-                style={{
-                  marginLeft: '1.5rem',
-                  marginTop: '0.75rem',
-                  borderLeft: '2px solid #eee',
-                  paddingLeft: '1rem',
-                }}
-              >
+              <div key={reply.id} className="comment-reply">
                 <div className="meta">{reply.authorName}</div>
-                <p style={{ whiteSpace: 'pre-wrap' }}>{reply.body}</p>
+                <p className="pre-wrap">{reply.body}</p>
               </div>
             ))}
 

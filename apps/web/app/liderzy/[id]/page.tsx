@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
 import { JsonLd } from '@/components/json-ld';
+import { Avatar } from '@/components/ui/avatar';
+import { LevelBadge } from '@/components/ui/level-badge';
 import { leaderProfileJsonLd } from '@/lib/jsonld';
 import { serverApi } from '@/lib/server-api';
 
@@ -78,21 +80,27 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
           industryName: profile.industry.name,
         })}
       />
-      <h1>{profile.displayName}</h1>
-      <p className="meta muted">
-        {profile.industry.name} ·{' '}
-        <span className="badge accent">Poziom {profile.level} w Drabince Lidera</span>
-        {profile.reviewCount > 0 && (
-          <>
-            {' '}
-            <span className="badge">
-              ★ {profile.averageRating}/5 ({profile.reviewCount}{' '}
-              {profile.reviewCount === 1 ? 'ocena' : 'ocen'})
-            </span>
-          </>
-        )}
+      <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center' }}>
+        <Avatar name={profile.displayName} size="lg" />
+        <div>
+          <h1 style={{ margin: 0 }}>{profile.displayName}</h1>
+          <p className="meta muted" style={{ margin: '0.45rem 0 0' }}>
+            {profile.industry.name} · <LevelBadge level={profile.level} />
+            {profile.reviewCount > 0 && (
+              <>
+                {' '}
+                <span className="badge">
+                  ★ {profile.averageRating}/5 ({profile.reviewCount}{' '}
+                  {profile.reviewCount === 1 ? 'ocena' : 'ocen'})
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2" style={{ fontSize: '1.1rem' }}>
+        {profile.headline}
       </p>
-      <p style={{ fontSize: '1.1rem' }}>{profile.headline}</p>
       {profile.bio && <p className="description">{profile.bio}</p>}
 
       {profile.portfolioItems.length > 0 && (

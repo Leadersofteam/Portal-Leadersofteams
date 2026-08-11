@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { GROUP_TYPE_LABELS } from '@/lib/labels';
+import { EmptyState } from '@/components/ui/empty-state';
 import { serverApi } from '@/lib/server-api';
 
 interface GroupRow {
@@ -82,7 +83,9 @@ export default async function GroupsPage({
       </form>
 
       {groups.length === 0 ? (
-        <p className="muted">Brak grup spełniających kryteria.</p>
+        <EmptyState title="Brak grup spełniających kryteria">
+          Zmień filtry — grupy branżowe może zakładać każdy Lider od poziomu 2.
+        </EmptyState>
       ) : (
         <div>
           {groups.map((group) => (

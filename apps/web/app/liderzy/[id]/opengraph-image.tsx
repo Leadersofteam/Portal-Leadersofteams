@@ -1,11 +1,10 @@
-import { ImageResponse } from 'next/og';
-
+import { credentialCard, OG_SIZE, levelColor } from '@/lib/og';
 import { serverApi } from '@/lib/server-api';
 
 // Dynamiczny obraz OG profilu Lidera — Drabinka jako dzielony, prestiżowy
-// credential (nazwisko + poziom + ocena + branża). Renderowany przez next/og (0 zł).
+// credential (nazwisko + poziom + ocena + branża). Wspólny szablon: lib/og.tsx.
 export const alt = 'Profil Lidera — Leaders of Teams';
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = 'image/png';
 
 interface Data {
@@ -24,64 +23,16 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
   const data = await serverApi<Data>(`/leaders/${id}`).catch(() => null);
   const p = data?.profile;
 
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '72px',
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%)',
-          color: '#ffffff',
-          fontFamily: 'sans-serif',
-        }}
-      >
-        <div style={{ display: 'flex', fontSize: 30, opacity: 0.85, letterSpacing: 1 }}>
-          Leaders of Teams
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', fontSize: 68, fontWeight: 700, lineHeight: 1.05 }}>
-            {p?.displayName ?? 'Lider'}
-          </div>
-          <div style={{ display: 'flex', fontSize: 34, opacity: 0.9, marginTop: 16 }}>
-            {p?.headline ?? 'Profil Lidera'}
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div
-            style={{
-              display: 'flex',
-              background: 'rgba(255,255,255,0.16)',
-              borderRadius: 16,
-              padding: '18px 28px',
-              fontSize: 34,
-              fontWeight: 700,
-            }}
-          >
-            Poziom {p?.level ?? 0} w Drabince
-          </div>
-          {p && p.reviewCount > 0 ? (
-            <div
-              style={{
-                display: 'flex',
-                background: 'rgba(255,255,255,0.16)',
-                borderRadius: 16,
-                padding: '18px 28px',
-                fontSize: 34,
-              }}
-            >
-              ★ {p.averageRating}/5 ({p.reviewCount})
-            </div>
-          ) : null}
-          {p?.industry?.name ? (
-            <div style={{ display: 'flex', fontSize: 30, opacity: 0.85 }}>{p.industry.name}</div>
-          ) : null}
-        </div>
-      </div>
-    ),
-    size,
-  );
+  return credentialCard({
+    kicker: 'Profil Lidera · Leaders of Teams',
+    title: p?.displayName ?? 'Lider',
+    subtitle: p?.headline ?? 'Profil Lidera',
+    chips: p
+      ? [
+          { label: `Poziom ${p.level} w Drabince`, color: levelColor(p.level) },
+          ...(p.reviewCount > 0 ? [{ label: `★ ${p.averageRating}/5 (${p.reviewCount})` }] : []),
+          ...(p.industry?.name ? [{ label: p.industry.name }] : []),
+        ]
+      : [],
+  });
 }

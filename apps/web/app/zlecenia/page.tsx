@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { formatBudget } from '@/lib/labels';
+import { EmptyState } from '@/components/ui/empty-state';
 import { serverApi } from '@/lib/server-api';
 
 interface OrderRow {
@@ -91,7 +92,13 @@ export default async function OrdersPage({
       </form>
 
       {orders.length === 0 ? (
-        <p className="muted">Brak zleceń spełniających kryteria.</p>
+        <EmptyState
+          title="Brak zleceń spełniających kryteria"
+          ctaHref="/zlecenia/nowe"
+          ctaLabel="Dodaj pierwsze zlecenie"
+        >
+          Zmień filtry — albo opublikuj własne zlecenie i pozwól Liderom złożyć oferty.
+        </EmptyState>
       ) : (
         <div>
           {orders.map((order) => (

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 
 import type { SessionUser } from '@lot/contracts';
 
+import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
 
 import { LogoutButton } from './logout-button';
@@ -72,9 +73,12 @@ export default async function PanelPage() {
         </div>
         <div className="card">
           <h3>Drabinka Lidera</h3>
+          {ladder && ladder.state.level >= 1 ? (
+            <p>
+              <LevelBadge level={ladder.state.level} name={ladder.state.levelName ?? undefined} />
+            </p>
+          ) : null}
           <p>
-            Poziom {ladder?.state.level ?? 0}
-            {ladder?.state.levelName ? ` — ${ladder.state.levelName}` : ''} ·{' '}
             {ladder?.state.totalPoints ?? 0} pkt
             {ladder?.nextLevel
               ? ` · do poziomu ${ladder.nextLevel.level} brakuje ${ladder.nextLevel.missingPoints} pkt`
@@ -84,7 +88,7 @@ export default async function PanelPage() {
         </div>
       </section>
 
-      <p style={{ marginTop: '2rem' }}>
+      <p className="mt-4">
         <LogoutButton />
       </p>
     </main>

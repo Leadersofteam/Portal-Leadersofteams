@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 import { NotificationBell } from '@/components/notification-bell';
+import { LogoMark } from '@/components/ui/logo';
 
 const NAV_LINKS = [
   { href: '/zlecenia', label: 'Zlecenia' },
@@ -22,6 +23,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link href="/" className="brand" onClick={close}>
+        <LogoMark />
         Leaders of Teams
       </Link>
 

@@ -1,24 +1,101 @@
-import { JsonLd } from '@/components/json-ld';
-import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
+import Link from 'next/link';
 
-export default function HomePage() {
+import { JsonLd } from '@/components/json-ld';
+import { LevelBadge } from '@/components/ui/level-badge';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
+import { serverApi } from '@/lib/server-api';
+
+interface LeaderRow {
+  id: string;
+  displayName: string;
+  headline: string;
+  industry: { name: string };
+  level: number;
+  averageRating: number | null;
+  reviewCount: number;
+}
+
+// Nazwy poziomów — lustro apps/api/src/modules/ladder/rules.ts (ruleset v1).
+const LEVEL_NAMES = ['Adept', 'Praktyk', 'Specjalista', 'Ekspert', 'Mentor', 'Autorytet', 'Architekt Zespołów'];
+
+export default async function HomePage() {
+  // Social proof: najlepsi realni Liderzy z katalogu (sekcja znika, gdy pusto).
+  const leadersData = await serverApi<{ leaders: LeaderRow[] }>('/leaders?limit=3').catch(
+    () => null,
+  );
+  const topLeaders = (leadersData?.leaders ?? []).filter((l) => l.level >= 1).slice(0, 3);
+
   return (
     <main>
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={websiteJsonLd()} />
+
       <section className="hero">
         <span className="hero-eyebrow">Marketplace B2B + społeczność Liderów</span>
         <h1>
-          Portal Liderów i Firm —{' '}
-          <span className="gradient-text">praca, mentoring, awans</span>
+          Status, którego nie da się kupić —{' '}
+          <span className="gradient-text">tylko zapracować</span>
         </h1>
         <p>
-          Budujemy platformę, na której Liderzy zdobywają pozycję wyłącznie realną pracą ocenianą
-          przez Firmy i mentoringiem docenianym przez innych Liderów. Bez punktów za zapraszanie.
-          Bez sztucznych mechanik. Najwyższe poziomy Drabinki Lidera dają prestiżowe odznaki,
-          pierwszeństwo w katalogu i prawo do budowy własnego zespołu w Portalu.
+          Liderzy zdobywają pozycję wyłącznie realną pracą ocenianą przez Firmy i mentoringiem
+          docenianym przez innych Liderów. Bez punktów za zapraszanie. Bez sztucznych mechanik.
+          Każdy punkt w Drabince ma jawne źródło.
+        </p>
+        <div className="hero-cta">
+          <Link className="btn" href="/rejestracja">
+            Dołącz jako Lider
+          </Link>
+          <Link className="btn secondary" href="/zlecenia/nowe">
+            Dodaj zlecenie jako Firma
+          </Link>
+        </div>
+      </section>
+
+      <section>
+        <span className="section-eyebrow">Jak to działa</span>
+        <h2 style={{ marginTop: 0 }}>Ucz się → Udowodnij → Wspinaj się</h2>
+        <div className="steps">
+          <div className="step">
+            <h3>Zacznij od mniejszych zleceń</h3>
+            <p>
+              Firmy publikują potrzeby, Ty odpowiadasz ofertą. Nowi Liderzy zaczynają od zleceń
+              dostępnych od poziomu 1 — zaufanie rośnie z każdą oceną.
+            </p>
+          </div>
+          <div className="step">
+            <h3>Zbieraj punkty za realną pracę</h3>
+            <p>
+              Punkty w Drabince pochodzą tylko z dwóch źródeł: zleceń ocenionych przez Firmy i
+              odpowiedzi docenionych w Q&A. Wszystko widzisz w jawnym rejestrze.
+            </p>
+          </div>
+          <div className="step">
+            <h3>Odblokowuj kolejne poziomy</h3>
+            <p>
+              Wyższy poziom to większe zlecenia, pierwszeństwo w katalogu, prawo zakładania grup —
+              a na szczycie własny zespół w Portalu.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <span className="section-eyebrow">Drabinka Lidera</span>
+        <h2 style={{ marginTop: 0 }}>7 poziomów. Im wyżej, tym cieplejsze światło.</h2>
+        <div className="ladder-visual" aria-hidden="true">
+          {LEVEL_NAMES.map((name, i) => (
+            <div key={name} className="rung">
+              <span>{name}</span>
+              {i + 1}
+            </div>
+          ))}
+        </div>
+        <p className="muted">
+          Bursztyn poziomu 7 trzeba zdobyć — nie da się go kupić, wynegocjować ani wyrekrutować.{' '}
+          <Link href="/drabinka">Zobacz jawne zasady punktacji →</Link>
         </p>
       </section>
+
       <section className="feature-grid">
         <div className="card">
           <span className="card-eyebrow">01</span>
@@ -51,6 +128,74 @@ export default function HomePage() {
             Docelowo Liderzy z poziomem 7 będą budować w Portalu własne zespoły i rekrutować w
             trybie ciągłym — aplikować będzie mógł każdy Lider od poziomu 3.
           </p>
+        </div>
+      </section>
+
+      {topLeaders.length > 0 && (
+        <section>
+          <span className="section-eyebrow">Liderzy na platformie</span>
+          <h2 style={{ marginTop: 0 }}>Poziom to dowód, nie deklaracja</h2>
+          <div className="feature-grid">
+            {topLeaders.map((leader) => (
+              <Link key={leader.id} href={`/liderzy/${leader.id}`} className="card">
+                <LevelBadge level={leader.level} />
+                <h3 className="mt-2">{leader.displayName}</h3>
+                <p>{leader.headline}</p>
+                <p className="muted mt-1">
+                  {leader.industry.name}
+                  {leader.reviewCount > 0 ? ` · ★ ${leader.averageRating}/5` : ''}
+                </p>
+              </Link>
+            ))}
+          </div>
+          <p className="mt-2">
+            <Link href="/liderzy">Przeglądaj cały katalog Liderów →</Link>
+          </p>
+        </section>
+      )}
+
+      <section>
+        <span className="section-eyebrow">FAQ</span>
+        <h2 style={{ marginTop: 0 }}>Najczęstsze pytania</h2>
+        <div className="faq">
+          <details>
+            <summary>Czym to się różni od Fiverr czy Oferteo?</summary>
+            <p>
+              Tam kupujesz widoczność albo licytujesz ceną. Tu pozycję Lidera buduje wyłącznie
+              oceniona praca i uznany mentoring — poziom w Drabince jest zweryfikowanym dowodem
+              kompetencji, którego nie można kupić.
+            </p>
+          </details>
+          <details>
+            <summary>Czy to jakiś system MLM?</summary>
+            <p>
+              Nie — i to jest wbudowane w architekturę, nie tylko w regulamin. Zero punktów za
+              zapraszanie, rekrutację, publikowanie treści czy samo logowanie. Rejestr punktów jest
+              jawny: zawsze widać, za co i ile.
+            </p>
+          </details>
+          <details>
+            <summary>Ile kosztuje udział w platformie?</summary>
+            <p>
+              Rejestracja i korzystanie z marketplace, grup i Q&A są bezpłatne. Platforma nie
+              pośredniczy w płatnościach — rozliczasz się bezpośrednio z drugą stroną.
+            </p>
+          </details>
+          <details>
+            <summary>Jak Firma może zlecić pracę?</summary>
+            <p>
+              Załóż bezpłatne konto, dodaj profil Firmy i opublikuj zlecenie z widełkami budżetu.
+              Oferty składają Liderzy o wymaganym poziomie — po realizacji oceniacie się nawzajem.
+            </p>
+          </details>
+          <details>
+            <summary>Co daje wyższy poziom w Drabince?</summary>
+            <p>
+              Dostęp do większych zleceń, pierwszeństwo i wyróżnienie w katalogu Liderów, prawo
+              zakładania grup branżowych (od poziomu 2), a docelowo — własny zespół w Portalu (poziom
+              7). Poziom raz zdobyty nie wygasa.
+            </p>
+          </details>
         </div>
       </section>
     </main>

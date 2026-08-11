@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
 
 interface LevelRow {
@@ -32,7 +33,7 @@ export default async function LadderRulesPage() {
         <Link href="/grupy">pytaniach i odpowiedziach grup branżowych</Link>.
       </p>
 
-      <div className="card" style={{ borderColor: 'var(--accent)' }}>
+      <div className="card accent-edge">
         <h2>Czego w Drabince NIE ma — i nigdy nie będzie</h2>
         <p>
           <strong>Zero punktów za zapraszanie i rekrutację.</strong> Zero punktów za samo logowanie,
@@ -73,40 +74,34 @@ export default async function LadderRulesPage() {
       </ul>
 
       <h2>Poziomy i progi</h2>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      {levels.length === 7 && (
+        <div className="ladder-visual" aria-hidden="true">
+          {levels.map((lvl) => (
+            <div key={lvl.level} className="rung">
+              <span>{lvl.name}</span>
+              {lvl.level}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="table-wrap">
+        <table>
           <thead>
             <tr>
-              {['Poziom', 'Nazwa', 'Próg punktów', 'Wymóg obu ścieżek', 'Odblokowuje'].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    textAlign: 'left',
-                    padding: '0.5rem',
-                    borderBottom: '1px solid var(--border)',
-                  }}
-                >
-                  {h}
-                </th>
+              {['Poziom', 'Próg punktów', 'Wymóg obu ścieżek', 'Odblokowuje'].map((h) => (
+                <th key={h}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {levels.map((lvl) => (
               <tr key={lvl.level}>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                  {lvl.level}
+                <td>
+                  <LevelBadge level={lvl.level} name={lvl.name} />
                 </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                  {lvl.name}
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                  {lvl.pointsRequired}
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                  {lvl.minPathSharePct > 0 ? `min. ${lvl.minPathSharePct}% z każdej` : '—'}
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
+                <td>{lvl.pointsRequired}</td>
+                <td>{lvl.minPathSharePct > 0 ? `min. ${lvl.minPathSharePct}% z każdej` : '—'}</td>
+                <td>
                   {[
                     'większe zlecenia',
                     lvl.level === 2 ? 'zakładanie grup branżowych' : null,
@@ -121,7 +116,7 @@ export default async function LadderRulesPage() {
           </tbody>
         </table>
       </div>
-      <p className="muted" style={{ marginTop: '1rem' }}>
+      <p className="muted mt-2">
         Od poziomu 4 wymagany jest wkład z obu ścieżek — najwyższe poziomy oznaczają zarówno
         praktyka, jak i mentora. Zmiany zasad są wersjonowane i nigdy nie działają wstecz.
       </p>

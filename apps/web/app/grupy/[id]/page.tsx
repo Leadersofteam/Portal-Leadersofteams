@@ -107,7 +107,7 @@ export default async function GroupPage({
       </div>
       {group.description && <p className="description">{group.description}</p>}
 
-      <nav className="actions-row" style={{ marginTop: '0.5rem' }}>
+      <nav className="actions-row mt-1">
         <span className="badge">Aktualności</span>
         <Link className="btn secondary" href={`/grupy/${group.id}/pytania`}>
           Pytania (Q&amp;A) — mentoring →
@@ -115,7 +115,7 @@ export default async function GroupPage({
       </nav>
 
       {isModerator && pending?.pending && pending.pending.length > 0 && (
-        <section className="card" style={{ marginTop: '1rem' }}>
+        <section className="card mt-2">
           <h3>Prośby o dołączenie ({pending.pending.length})</h3>
           {pending.pending.map((p) => (
             <div key={p.membershipId} className="list-row">
@@ -128,12 +128,12 @@ export default async function GroupPage({
 
       {viewer.membershipStatus === 'ACTIVE' && <PostForm groupId={group.id} />}
 
-      <h2 style={{ marginTop: '2rem' }}>Aktualności</h2>
+      <h2 className="mt-4">Aktualności</h2>
       {posts.length === 0 ? (
         <p className="muted">W tej grupie nie ma jeszcze postów.</p>
       ) : (
         posts.map((post) => (
-          <article key={post.id} className="card" style={{ marginTop: '1rem' }}>
+          <article key={post.id} className="card mt-2">
             <span className="badge">{POST_TYPE_LABELS[post.type] ?? post.type}</span>
             <h3>
               <Link href={`/grupy/${group.id}/post/${post.id}`}>{post.title}</Link>
@@ -161,7 +161,7 @@ export default async function GroupPage({
       )}
 
       {feed?.nextCursor && (
-        <p style={{ marginTop: '1.5rem' }}>
+        <p className="mt-3">
           <Link className="btn secondary" href={`/grupy/${group.id}?cursor=${feed.nextCursor}`}>
             Następna strona →
           </Link>

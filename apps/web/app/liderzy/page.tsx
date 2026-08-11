@@ -1,5 +1,8 @@
 import Link from 'next/link';
 
+import { Avatar } from '@/components/ui/avatar';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
 
 interface LeaderRow {
@@ -84,22 +87,31 @@ export default async function LeadersDirectoryPage({
       </form>
 
       {leaders.length === 0 ? (
-        <p className="muted">Brak Liderów spełniających kryteria. Spróbuj innej branży lub frazy.</p>
+        <EmptyState
+          title="Brak Liderów spełniających kryteria"
+          ctaHref="/liderzy"
+          ctaLabel="Wyczyść filtry"
+        >
+          Spróbuj innej branży lub frazy — albo zostań pierwszym Liderem w tej specjalizacji.
+        </EmptyState>
       ) : (
         <div>
           {leaders.map((leader) => (
             <div key={leader.id} className="list-row">
-              <div>
-                <h3>
-                  <Link href={`/liderzy/${leader.id}`}>{leader.displayName}</Link>
-                </h3>
-                <div className="meta">{leader.headline}</div>
-                <div className="meta muted">{leader.industry.name}</div>
+              <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                <Avatar name={leader.displayName} />
+                <div>
+                  <h3>
+                    <Link href={`/liderzy/${leader.id}`}>{leader.displayName}</Link>
+                  </h3>
+                  <div className="meta">{leader.headline}</div>
+                  <div className="meta muted">{leader.industry.name}</div>
+                </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <span className="badge accent">Poziom {leader.level} w Drabince</span>
+              <div className="text-right">
+                <LevelBadge level={leader.level} />
                 {leader.reviewCount > 0 && (
-                  <div style={{ marginTop: '0.35rem' }}>
+                  <div className="mt-1">
                     <span className="badge">
                       ★ {leader.averageRating}/5 ({leader.reviewCount}{' '}
                       {leader.reviewCount === 1 ? 'ocena' : 'ocen'})
@@ -113,9 +125,9 @@ export default async function LeadersDirectoryPage({
       )}
 
       {data?.nextCursor && (
-        <p style={{ marginTop: '1.5rem' }}>
+        <p className="mt-3">
           <Link className="btn secondary" href={`/liderzy?${nextParams.toString()}`}>
-            Następna strona →
+            Wczytaj więcej
           </Link>
         </p>
       )}

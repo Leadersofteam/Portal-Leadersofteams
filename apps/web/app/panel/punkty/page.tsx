@@ -65,7 +65,7 @@ export default async function MyPointsPage() {
       <section className="feature-grid">
         <div className="card">
           <h3>Poziom</h3>
-          <p style={{ fontSize: '1.6rem', margin: 0 }}>
+          <p className="stat-number">
             {state.level}
             {state.levelName ? ` — ${state.levelName}` : ''}
           </p>
@@ -75,7 +75,7 @@ export default async function MyPointsPage() {
         </div>
         <div className="card">
           <h3>Punkty zaliczone</h3>
-          <p style={{ fontSize: '1.6rem', margin: 0 }}>{state.totalPoints}</p>
+          <p className="stat-number">{state.totalPoints}</p>
           <p className="muted">
             Zlecenia: {state.marketplacePoints} · Mentoring: {state.communityPoints}
           </p>
@@ -85,7 +85,7 @@ export default async function MyPointsPage() {
             <h3>
               Do poziomu {nextLevel.level} ({nextLevel.name})
             </h3>
-            <p style={{ fontSize: '1.6rem', margin: 0 }}>brakuje {nextLevel.missingPoints} pkt</p>
+            <p className="stat-number">brakuje {nextLevel.missingPoints} pkt</p>
             <p className="muted">
               Próg: {nextLevel.pointsRequired} pkt
               {nextLevel.minPathSharePct > 0 &&
@@ -116,7 +116,7 @@ export default async function MyPointsPage() {
                 {new Date(event.createdAt).toLocaleDateString('pl-PL')}
               </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
+            <div className="text-right">
               <strong>{event.points > 0 ? `+${event.points}` : event.points} pkt</strong>{' '}
               <span className="badge">{STATUS_LABELS[event.status] ?? event.status}</span>
             </div>
