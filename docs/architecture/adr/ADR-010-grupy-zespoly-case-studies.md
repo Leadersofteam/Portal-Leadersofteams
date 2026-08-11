@@ -1,8 +1,17 @@
 # ADR-010: Moduły społecznościowe — Grupy branżowe, Zespoły, Case Studies
 
-**Status:** Zaakceptowany
+**Status:** Zaakceptowany (zaktualizowany 2026-08-11 — patrz „Aktualizacja" niżej)
 **Data:** 2026-07-05
 **Decydenci:** Maciej Kucharski (wymagania), Fable 5 (projekt)
+
+> **Aktualizacja 2026-08-11 (po porzuceniu integracji Portal↔App, ADR-003 superseded):**
+> wszystkie fragmenty tego ADR odwołujące się do app.leadersofteams.com (wymaganie 2 w Kontekście,
+> `Team.appTeamRef` i „powiązanie z zespołem w app" w Decyzji 2, Decyzja 3 w części „zespoły z app")
+> są **nieaktualne**. Moduł `teams` pozostaje w planach jako **wyłącznie portalowy**: zespół tworzy
+> Lider lvl 7 w Portalu, case studies publikują zespoły portalowe i indywidualni Liderzy, pole
+> `appTeamRef` nie powstanie. Nagrody najwyższych poziomów Drabinki są Portal-native: wyróżnienie
+> i pierwszeństwo w katalogu Liderów, prawo tworzenia zespołu (lvl 7), w przyszłości malejąca
+> prowizja transakcyjna (ADR-013). Decyzje 1 i 4 obowiązują bez zmian.
 
 ## Kontekst
 

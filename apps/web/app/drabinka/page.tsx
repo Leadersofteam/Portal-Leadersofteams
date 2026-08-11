@@ -28,8 +28,8 @@ export default async function LadderRulesPage() {
         Tytuł Lidera i poziomy zdobywa się wyłącznie{' '}
         <strong>realną, uznaną przez innych pracą</strong>. Punkty pochodzą z dwóch równoważnych
         źródeł: <strong>zrealizowanych zleceń ocenionych przez Firmy</strong> oraz{' '}
-        <strong>mentoringu docenionego przez innych Liderów</strong> (moduł pytań i odpowiedzi —
-        wkrótce).
+        <strong>mentoringu docenionego przez innych Liderów</strong> — w{' '}
+        <Link href="/grupy">pytaniach i odpowiedziach grup branżowych</Link>.
       </p>
 
       <div className="card" style={{ borderColor: 'var(--accent)' }}>
@@ -109,8 +109,9 @@ export default async function LadderRulesPage() {
                 <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
                   {[
                     'większe zlecenia',
-                    lvl.unlocksAppAccess ? 'darmowy dostęp do app.leadersofteams.com' : null,
-                    lvl.unlocksTeamCreation ? 'założenie własnego zespołu' : null,
+                    lvl.level === 2 ? 'zakładanie grup branżowych' : null,
+                    lvl.unlocksAppAccess ? 'wyróżnienie i pierwszeństwo w katalogu Liderów' : null,
+                    lvl.unlocksTeamCreation ? 'założenie własnego zespołu w Portalu' : null,
                   ]
                     .filter(Boolean)
                     .join(', ')}

@@ -7,7 +7,7 @@ export default function HomePage() {
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={websiteJsonLd()} />
       <section className="hero">
-        <span className="hero-eyebrow">Platforma w budowie — start wkrótce</span>
+        <span className="hero-eyebrow">Marketplace B2B + społeczność Liderów</span>
         <h1>
           Portal Liderów i Firm —{' '}
           <span className="gradient-text">praca, mentoring, awans</span>
@@ -15,8 +15,8 @@ export default function HomePage() {
         <p>
           Budujemy platformę, na której Liderzy zdobywają pozycję wyłącznie realną pracą ocenianą
           przez Firmy i mentoringiem docenianym przez innych Liderów. Bez punktów za zapraszanie.
-          Bez sztucznych mechanik. Najwyższe poziomy Drabinki Lidera odblokowują darmowy dostęp do
-          app.leadersofteams.com i możliwość zbudowania własnego zespołu.
+          Bez sztucznych mechanik. Najwyższe poziomy Drabinki Lidera dają prestiżowe odznaki,
+          pierwszeństwo w katalogu i prawo do budowy własnego zespołu w Portalu.
         </p>
       </section>
       <section className="feature-grid">
@@ -32,8 +32,8 @@ export default function HomePage() {
           <span className="card-eyebrow">02</span>
           <h2>Grupy branżowe</h2>
           <p>
-            Społeczność podzielona na sektory biznesu: dyskusje, pomysły i case studies zespołów —
-            także tych działających w app.leadersofteams.com.
+            Społeczność podzielona na sektory biznesu: dyskusje, pomysły, case studies oraz pytania
+            i odpowiedzi, w których mentoring nagradzają sami Liderzy.
           </p>
         </div>
         <div className="card">
@@ -48,8 +48,8 @@ export default function HomePage() {
           <span className="card-eyebrow">04</span>
           <h2>Zespoły</h2>
           <p>
-            Liderzy z poziomem 7 budują zespoły i rekrutują w trybie ciągłym. Aplikować może każdy
-            Lider od poziomu 3.
+            Docelowo Liderzy z poziomem 7 będą budować w Portalu własne zespoły i rekrutować w
+            trybie ciągłym — aplikować będzie mógł każdy Lider od poziomu 3.
           </p>
         </div>
       </section>

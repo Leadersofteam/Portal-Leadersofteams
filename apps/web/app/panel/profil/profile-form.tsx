@@ -88,7 +88,7 @@ export function ProfileForm({
         <h2>{profile ? 'Twój profil Lidera' : 'Utwórz profil Lidera'}</h2>
         <p className="muted">
           Profil pozwala składać oferty na zlecenia. Tytuł „Lider" i poziomy zdobywa się pracą — w
-          Drabince Lidera (wkrótce).
+          Drabince Lidera.
         </p>
         <form onSubmit={onSubmit}>
           <div className="field">

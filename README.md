@@ -1,6 +1,6 @@
 # Portal Leaders of Teams
 
-Platforma leadersofteams.pl — marketplace usług B2B (Firmy ↔ Liderzy) połączony ze społecznością: **grupami branżowymi** (posty, case studies, pomysły — także Zespołów z app), **Q&A/mentoringiem** oraz systemem poziomów **Drabinka Lidera**, którego najwyższe szczeble odblokowują darmowy dostęp do [app.leadersofteams.com](https://app.leadersofteams.com) i możliwość założenia własnego zespołu (rekrutacja ciągła: tworzenie od lvl 7, aplikowanie od lvl 3). Koszt operacyjny usług zewnętrznych: **0 zł** (ADR-009).
+Platforma leadersofteams.pl — marketplace usług B2B (Firmy ↔ Liderzy) połączony ze społecznością: **grupami branżowymi** (posty, case studies, pomysły), **Q&A/mentoringiem** oraz systemem poziomów **Drabinka Lidera**, którego najwyższe szczeble dają wyróżnienie i pierwszeństwo w katalogu Liderów oraz prawo do założenia własnego zespołu w Portalu (rekrutacja ciągła: tworzenie od lvl 7, aplikowanie od lvl 3 — moduł planowany). Integracja z app.leadersofteams.com została porzucona (ADR-003 superseded, 2026-07-20). Koszt operacyjny usług zewnętrznych: **0 zł** (ADR-009).
 
 **Status:** Faza 1 w toku — zrealizowane: fundament (Faza 0), marketplace core (Sprint 1–2), **Drabinka Lidera z antyfraudem** (Sprint 2–3). Następne: grupy branżowe + Q&A (Sprint 4–5). Pełny stan projektu i plan sprintów: **[docs/HANDOFF-OPUS.md](docs/HANDOFF-OPUS.md)**.
 
