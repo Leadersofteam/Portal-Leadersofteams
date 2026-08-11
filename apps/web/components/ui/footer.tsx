@@ -23,6 +23,7 @@ export function SiteFooter() {
         <div>
           <h4>Platforma</h4>
           <ul>
+            <li><Link href="/uslugi">Usługi Liderów</Link></li>
             <li><Link href="/zlecenia">Zlecenia</Link></li>
             <li><Link href="/liderzy">Liderzy</Link></li>
             <li><Link href="/grupy">Grupy branżowe</Link></li>

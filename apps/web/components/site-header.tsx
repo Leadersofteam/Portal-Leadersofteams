@@ -8,6 +8,7 @@ import { NotificationBell } from '@/components/notification-bell';
 import { LogoMark } from '@/components/ui/logo';
 
 const NAV_LINKS = [
+  { href: '/uslugi', label: 'Usługi' },
   { href: '/zlecenia', label: 'Zlecenia' },
   { href: '/liderzy', label: 'Liderzy' },
   { href: '/grupy', label: 'Grupy' },

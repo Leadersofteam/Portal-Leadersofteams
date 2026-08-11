@@ -62,11 +62,27 @@ export async function generateMetadata({
   };
 }
 
+interface LeaderReviews {
+  reviews: Array<{
+    id: string;
+    rating: number;
+    comment: string | null;
+    publishedAt: string | null;
+    orderTitle: string;
+    companyName: string;
+  }>;
+  breakdown: Record<string, number>;
+}
+
 export default async function LeaderProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const data = await getProfile(id);
   if (!data) notFound();
   const { profile } = data;
+  const reviewsData =
+    profile.reviewCount > 0
+      ? await serverApi<LeaderReviews>(`/leaders/${id}/reviews`).catch(() => null)
+      : null;
 
   return (
     <main>
@@ -108,6 +124,31 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
         {profile.headline}
       </p>
       {profile.bio && <p className="description">{profile.bio}</p>}
+
+      {reviewsData && reviewsData.reviews.length > 0 && (
+        <section>
+          <h2>Opinie Firm ({profile.reviewCount})</h2>
+          <div className="mt-1" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {[5, 4, 3, 2, 1].map((stars) => (
+              <span key={stars} className="badge">
+                {stars}★ × {reviewsData.breakdown[String(stars)] ?? 0}
+              </span>
+            ))}
+          </div>
+          {reviewsData.reviews.map((review) => (
+            <div key={review.id} className="card mt-2">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <strong>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</strong>
+                <span className="muted">{review.companyName}</span>
+              </div>
+              <p className="muted" style={{ margin: '0.3rem 0 0' }}>
+                zlecenie: {review.orderTitle}
+              </p>
+              {review.comment && <p className="pre-wrap mt-1">{review.comment}</p>}
+            </div>
+          ))}
+        </section>
+      )}
 
       {profile.portfolioItems.length > 0 && (
         <section>

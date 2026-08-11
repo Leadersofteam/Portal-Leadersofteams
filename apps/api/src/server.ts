@@ -16,6 +16,11 @@ import { createGroupsAccountData, createGroupsService, groupsRoutes } from './mo
 import { createIdentityService, identityRoutes } from './modules/identity/index';
 import { createLadderService, ladderRoutes } from './modules/ladder/index';
 import {
+  createListingsAccountData,
+  createListingsService,
+  listingsRoutes,
+} from './modules/listings/index';
+import {
   createMarketplaceAccountData,
   createOrdersService,
   createProfilesService,
@@ -135,6 +140,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
       createGroupsAccountData(prisma),
       createCommunityAccountData(prisma),
       createFilesAccountData(prisma, filesService),
+      createListingsAccountData(prisma),
     ],
     mail,
     appBaseUrl: config.APP_BASE_URL,
@@ -168,6 +174,13 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
   const notificationsService = createNotificationsService({ prisma, identity: identityService });
+  const listingsService = createListingsService({
+    prisma,
+    identity: identityService,
+    orders: ordersService,
+    files: filesService,
+    redis,
+  });
 
   await app.register(identityRoutes({ service: identityService, sessions, auth, turnstile, config }), {
     prefix: '/api/v1',
@@ -196,6 +209,16 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   await app.register(filesRoutes({ files: filesService, auth, identity: identityService }), {
     prefix: '/api/v1',
   });
+  await app.register(
+    listingsRoutes({
+      listings: listingsService,
+      ladder: ladderService,
+      reviews: reviewsService,
+      identity: identityService,
+      auth,
+    }),
+    { prefix: '/api/v1' },
+  );
 
   // Socket.IO musi być podpięty po gotowości serwera HTTP (app.server istnieje
   // po app.ready()). Realtime to tylko sygnał (ADR-007) — patrz shared/realtime.

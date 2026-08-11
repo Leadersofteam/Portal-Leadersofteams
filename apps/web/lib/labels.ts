@@ -44,6 +44,10 @@ export function notificationMessage(type: string, payload: Record<string, unknow
   switch (type) {
     case 'offer_submitted':
       return 'Nowa oferta do Twojego zlecenia.';
+    case 'inquiry_created':
+      return `Nowe zapytanie o Twoją usługę${payload.listingTitle ? ` „${payload.listingTitle}"` : ''}.`;
+    case 'inquiry_message':
+      return 'Nowa wiadomość w zapytaniu o usługę.';
     case 'offer_accepted':
       return 'Twoja oferta została przyjęta.';
     case 'order_confirmed':
@@ -75,6 +79,8 @@ export function notificationHref(type: string, payload: Record<string, unknown>)
     return `/grupy/${payload.groupId}`;
   if ((type === 'answer_received' || type === 'answer_accepted') && payload.threadId)
     return `/watki/${payload.threadId}`;
+  if ((type === 'inquiry_created' || type === 'inquiry_message') && payload.inquiryId)
+    return `/zapytania/${payload.inquiryId}`;
   if (payload.orderId) return `/zlecenia/${payload.orderId}`;
   if (type === 'level_achieved') return '/panel/punkty';
   return '/powiadomienia';

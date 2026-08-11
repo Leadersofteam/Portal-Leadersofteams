@@ -54,6 +54,7 @@ export function marketplaceRoutes({
         leaders: leaders.map((l) => ({
           id: l.id,
           displayName: l.displayName,
+          avatarFileId: l.avatarFileId,
           headline: l.headline,
           industry: l.industry,
           level: levels.get(l.userId) ?? 0,
@@ -62,6 +63,13 @@ export function marketplaceRoutes({
         })),
         nextCursor,
       });
+    });
+
+    // Opinie o Liderze (D8): lista + rozkład ocen na profilu publicznym.
+    app.get('/leaders/:id/reviews', async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const profile = (await profiles.getPublicProfile(id)) as { userId: string };
+      return reply.send(await reviews.listLeaderReviews(profile.userId));
     });
 
     app.get('/leaders/:id', async (request, reply) => {

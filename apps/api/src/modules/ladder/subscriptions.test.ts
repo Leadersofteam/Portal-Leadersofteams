@@ -19,4 +19,15 @@ describe('granica anty-MLM: subskrypcje modułu ladder', () => {
       ).toBe(true);
     }
   });
+
+  // Prefiks `marketplace.` jest w allowliście, więc sam prefiks NIE chroni przed
+  // zdarzeniami modułu listings (Usługi/zapytania). Punkty za publikację usługi
+  // lub rozmowę z Firmą = wektor MLM-owy; jedyna droga do punktów to konwersja
+  // zapytania w Order i recenzja po realizacji (ADR-004/ADR-006).
+  it('ladder NIE konsumuje zdarzeń Usług (listing/inquiry) mimo prefiksu marketplace.', () => {
+    const subscriptions = ladderSubscriptions({} as LadderService);
+    for (const type of Object.keys(subscriptions)) {
+      expect(type).not.toMatch(/listing|inquiry/);
+    }
+  });
 });

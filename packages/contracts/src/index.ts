@@ -156,6 +156,80 @@ export function fileVariantUrl(fileId: string, variant: 'thumb' | 'full'): strin
 }
 
 // ---------------------------------------------------------------------------
+// Listings — Usługi Liderów (Fiverr-lite; ceny DEKLARATYWNE — ADR-006)
+// ---------------------------------------------------------------------------
+
+export const packageTierSchema = z.enum(['BASIC', 'STANDARD', 'PREMIUM']);
+export type PackageTier = z.infer<typeof packageTierSchema>;
+
+export const listingStatusSchema = z.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']);
+export type ListingStatus = z.infer<typeof listingStatusSchema>;
+
+export const listingPackageInputSchema = z.object({
+  tier: packageTierSchema,
+  name: z.string().trim().min(2).max(80),
+  // Deklarowana cena w PLN (całe złote) — informacja, nie płatność.
+  priceDeclared: z.number().int().min(1).max(1_000_000),
+  scope: z.string().trim().min(10, 'Opisz zakres: min. 10 znaków').max(2000),
+  deliveryDays: z.number().int().min(1).max(365),
+});
+export type ListingPackageInput = z.infer<typeof listingPackageInputSchema>;
+
+const listingCoreShape = {
+  industryId: idSchema,
+  title: z.string().trim().min(10, 'Tytuł: min. 10 znaków').max(120),
+  description: z.string().trim().min(50, 'Opis: min. 50 znaków').max(10_000),
+  tags: z.array(z.string().trim().min(2).max(30)).max(5).default([]),
+  packages: z
+    .array(listingPackageInputSchema)
+    .min(1, 'Dodaj przynajmniej jeden pakiet')
+    .max(3)
+    .refine((p) => new Set(p.map((x) => x.tier)).size === p.length, {
+      message: 'Każdy pakiet musi mieć inny poziom (BASIC/STANDARD/PREMIUM)',
+    }),
+  imageFileIds: z.array(z.string()).max(6).default([]),
+};
+
+export const createListingInputSchema = z.object(listingCoreShape);
+export type CreateListingInput = z.infer<typeof createListingInputSchema>;
+
+export const updateListingInputSchema = z.object(listingCoreShape).partial();
+export type UpdateListingInput = z.infer<typeof updateListingInputSchema>;
+
+// Sortowanie tylko po polach SQL-owalnych z kursorem (rating liczy się per
+// Lider poza tym modułem — świadomie poza enum, żeby nie kłamać paginacją).
+export const listingSortSchema = z
+  .enum(['newest', 'price_asc', 'price_desc'])
+  .default('newest');
+export type ListingSort = z.infer<typeof listingSortSchema>;
+
+export const listingFiltersSchema = z.object({
+  industryId: idSchema.optional(),
+  tag: z.string().trim().min(2).max(30).optional(),
+  q: z.string().trim().min(2).max(200).optional(),
+  priceMin: z.coerce.number().int().min(0).optional(),
+  priceMax: z.coerce.number().int().min(0).optional(),
+  minLevel: z.coerce.number().int().min(1).max(7).optional(),
+  sort: listingSortSchema,
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type ListingFilters = z.infer<typeof listingFiltersSchema>;
+
+export const createInquiryInputSchema = z.object({
+  companyId: idSchema,
+  message: z.string().trim().min(20, 'Wiadomość: min. 20 znaków').max(5000),
+  // Pakiet, o który pyta Firma (opcjonalnie — kontekst dla Lidera).
+  packageTier: packageTierSchema.optional(),
+});
+export type CreateInquiryInput = z.infer<typeof createInquiryInputSchema>;
+
+export const inquiryMessageInputSchema = z.object({
+  body: z.string().trim().min(1).max(5000),
+});
+export type InquiryMessageInput = z.infer<typeof inquiryMessageInputSchema>;
+
+// ---------------------------------------------------------------------------
 // Marketplace — zlecenia i oferty
 // ---------------------------------------------------------------------------
 

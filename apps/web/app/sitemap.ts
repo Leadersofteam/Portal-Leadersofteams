@@ -16,17 +16,25 @@ const url = (path: string): string => `${SITE_URL}${path}`;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: Entry[] = [
     { url: url('/'), changeFrequency: 'daily', priority: 1 },
+    { url: url('/uslugi'), changeFrequency: 'daily', priority: 0.9 },
     { url: url('/liderzy'), changeFrequency: 'daily', priority: 0.9 },
     { url: url('/zlecenia'), changeFrequency: 'hourly', priority: 0.9 },
     { url: url('/grupy'), changeFrequency: 'daily', priority: 0.7 },
     { url: url('/drabinka'), changeFrequency: 'weekly', priority: 0.6 },
   ];
 
-  const [leaders, orders, groups] = await Promise.all([
+  const [leaders, orders, groups, listings] = await Promise.all([
     serverApi<{ leaders: Array<{ id: string }> }>('/leaders?limit=50').catch(() => null),
     serverApi<{ orders: Array<{ id: string }> }>('/orders?limit=50').catch(() => null),
     serverApi<{ groups: Array<{ id: string }> }>('/groups?limit=50').catch(() => null),
+    serverApi<{ listings: Array<{ slug: string }> }>('/listings?limit=50').catch(() => null),
   ]);
+
+  const listingEntries: Entry[] = (listings?.listings ?? []).map((l) => ({
+    url: url(`/uslugi/${l.slug}`),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }));
 
   const leaderEntries: Entry[] = (leaders?.leaders ?? []).map((l) => ({
     url: url(`/liderzy/${l.id}`),
@@ -61,6 +69,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticEntries,
+    ...listingEntries,
     ...leaderEntries,
     ...orderEntries,
     ...groupEntries,

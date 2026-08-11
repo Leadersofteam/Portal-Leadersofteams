@@ -28,19 +28,19 @@ enum CompanyMemberRole {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  displayName  String
-  role         UserRole  @default(USER)
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  displayName     String
+  role            UserRole  @default(USER)
   // RODO (D6): anonimizacja W MIEJSCU — konto usunięte, ledger zachowany.
-  anonymizedAt DateTime?
+  anonymizedAt    DateTime?
   // Weryfikacja adresu (D4, e-mail za flagą) — null = niezweryfikowany.
   emailVerifiedAt DateTime?
   // Awatar (moduł files) — SetNull: usunięcie pliku nie kasuje konta.
-  avatarFileId String?   @unique
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  avatarFileId    String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   avatarFile    UploadedFile?  @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   uploadedFiles UploadedFile[] @relation("FileOwner")
@@ -48,6 +48,9 @@ model User {
   companyMemberships CompanyMember[]
   leaderProfile      LeaderProfile?
   createdOrders      Order[]
+  createdInquiries   Inquiry[]
+  inquiryMessages    InquiryMessage[]
+  listingFavorites   ListingFavorite[]
   createdGroups      Group[]
   groupMemberships   GroupMembership[]
   posts              Post[]
@@ -94,8 +97,9 @@ model Company {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members CompanyMember[]
-  orders  Order[]
+  members   CompanyMember[]
+  orders    Order[]
+  inquiries Inquiry[]
 
   @@map("companies")
 }
@@ -124,9 +128,10 @@ model Industry {
   name String
   slug String @unique
 
-  leaderProfiles LeaderProfile[]
-  orders         Order[]
-  groups         Group[]
+  leaderProfiles  LeaderProfile[]
+  orders          Order[]
+  groups          Group[]
+  serviceListings ServiceListing[]
 
   @@map("industries")
 }
@@ -141,10 +146,11 @@ model LeaderProfile {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  industry       Industry        @relation(fields: [industryId], references: [id])
-  portfolioItems PortfolioItem[]
-  offers         Offer[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  industry        Industry         @relation(fields: [industryId], references: [id])
+  portfolioItems  PortfolioItem[]
+  offers          Offer[]
+  serviceListings ServiceListing[]
 
   @@index([industryId, isVisible])
   @@map("leader_profiles")
@@ -194,6 +200,7 @@ model UploadedFile {
   owner          User            @relation("FileOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   avatarOfUser   User?           @relation("UserAvatar")
   portfolioItems PortfolioItem[]
+  listingImages  ListingImage[]
 
   @@index([ownerId, kind])
   @@map("uploaded_files")
@@ -375,15 +382,15 @@ model PointEvent {
 }
 
 model LevelDefinition {
-  id                   String  @id @default(cuid())
-  rulesetVersion       String
-  level                Int
-  name                 String
-  pointsRequired       Int
+  id                  String  @id @default(cuid())
+  rulesetVersion      String
+  level               Int
+  name                String
+  pointsRequired      Int
   // od L4: min. udział KAŻDEJ ze ścieżek (marketplace/community) w progu
-  minPathSharePct      Int     @default(0)
-  unlocksAppAccess     Boolean @default(false)
-  unlocksTeamCreation  Boolean @default(false)
+  minPathSharePct     Int     @default(0)
+  unlocksAppAccess    Boolean @default(false)
+  unlocksTeamCreation Boolean @default(false)
 
   @@unique([rulesetVersion, level])
   @@map("level_definitions")
@@ -438,21 +445,21 @@ enum ModerationCaseStatus {
 }
 
 model ModerationCase {
-  id            String               @id @default(cuid())
-  source        String
-  status        ModerationCaseStatus @default(OPEN)
-  subjectUserId String?
-  fraudSignalId String?
-  pointEventId  String?
+  id               String               @id @default(cuid())
+  source           String
+  status           ModerationCaseStatus @default(OPEN)
+  subjectUserId    String?
+  fraudSignalId    String?
+  pointEventId     String?
   // Zgłoszenie użytkownika (D7): typ i id zgłoszonej encji + kto zgłosił.
   subjectType      String?
   subjectId        String?
   reportedByUserId String?
-  note          String?              @db.Text
-  resolution    String?
-  resolvedById  String?
-  createdAt     DateTime             @default(now())
-  resolvedAt    DateTime?
+  note             String?              @db.Text
+  resolution       String?
+  resolvedById     String?
+  createdAt        DateTime             @default(now())
+  resolvedAt       DateTime?
 
   @@index([status, createdAt])
   @@index([reportedByUserId, subjectType, subjectId])
@@ -508,13 +515,13 @@ model Group {
 }
 
 model GroupMembership {
-  id       String            @id @default(cuid())
-  groupId  String
-  userId   String
-  role     GroupMemberRole   @default(MEMBER)
-  status   GroupMemberStatus @default(ACTIVE)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id        String            @id @default(cuid())
+  groupId   String
+  userId    String
+  role      GroupMemberRole   @default(MEMBER)
+  status    GroupMemberStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -550,9 +557,9 @@ model Post {
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
-  group    Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  author   User       @relation(fields: [authorUserId], references: [id])
-  comments Comment[]
+  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author    User       @relation(fields: [authorUserId], references: [id])
+  comments  Comment[]
   reactions Reaction[]
 
   @@index([groupId, createdAt])
@@ -614,16 +621,16 @@ enum ThreadStatus {
 }
 
 model Thread {
-  id              String       @id @default(cuid())
-  groupId         String
-  authorUserId    String
-  title           String
-  body            String       @db.Text
-  status          ThreadStatus @default(OPEN)
+  id               String       @id @default(cuid())
+  groupId          String
+  authorUserId     String
+  title            String
+  body             String       @db.Text
+  status           ThreadStatus @default(OPEN)
   // Wskaźnik na zaakceptowaną odpowiedź (jedna na wątek — egzekwowane w domenie).
   acceptedAnswerId String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   group   Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   author  User     @relation(fields: [authorUserId], references: [id])
@@ -644,8 +651,8 @@ model Answer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  thread Thread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  author User        @relation(fields: [authorUserId], references: [id])
+  thread Thread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User         @relation(fields: [authorUserId], references: [id])
   votes  AnswerVote[]
 
   @@index([threadId, createdAt])
@@ -688,4 +695,158 @@ model Notification {
   @@unique([userId, dedupeKey])
   @@index([userId, readAt, createdAt])
   @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// listings — Usługi Liderów (Fiverr-lite, ADR-006: ceny DEKLARATYWNE, zero
+// przepływu pieniędzy; transakcja i punkty wyłącznie przez istniejący Order)
+// ---------------------------------------------------------------------------
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  ARCHIVED
+}
+
+enum PackageTier {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum InquiryStatus {
+  OPEN
+  CONVERTED
+  CLOSED
+}
+
+model ServiceListing {
+  id              String        @id @default(cuid())
+  leaderProfileId String
+  industryId      String
+  title           String
+  slug            String        @unique
+  description     String        @db.Text
+  status          ListingStatus @default(DRAFT)
+  // Denormalizowane min(packages.priceDeclared) — sortowanie po cenie z kursorem.
+  priceFrom       Int           @default(0)
+  publishedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  leaderProfile LeaderProfile     @relation(fields: [leaderProfileId], references: [id], onDelete: Cascade)
+  industry      Industry          @relation(fields: [industryId], references: [id])
+  packages      ListingPackage[]
+  images        ListingImage[]
+  tags          ListingTagLink[]
+  inquiries     Inquiry[]
+  favorites     ListingFavorite[]
+
+  @@index([status, industryId, publishedAt])
+  @@index([leaderProfileId])
+  @@fulltext([title, description])
+  @@map("service_listings")
+}
+
+// Pakiet cenowy (1–3 na usługę). priceDeclared w PLN — DEKLARACJA, nie płatność.
+model ListingPackage {
+  id            String      @id @default(cuid())
+  listingId     String
+  tier          PackageTier
+  name          String
+  priceDeclared Int
+  scope         String      @db.Text
+  deliveryDays  Int
+
+  listing ServiceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, tier])
+  @@map("listing_packages")
+}
+
+model ListingImage {
+  id        String @id @default(cuid())
+  listingId String
+  fileId    String
+  position  Int    @default(0)
+
+  listing ServiceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  file    UploadedFile   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, fileId])
+  @@index([listingId, position])
+  @@map("listing_images")
+}
+
+// Tagi jako relacja (nie tekst w FULLTEXT — ft_min_word_len=3 zjadłby np. "HR").
+model Tag {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  listings ListingTagLink[]
+
+  @@map("tags")
+}
+
+model ListingTagLink {
+  listingId String
+  tagId     String
+
+  listing ServiceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  tag     Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, tagId])
+  @@index([tagId])
+  @@map("listing_tag_links")
+}
+
+model ListingFavorite {
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing ServiceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, listingId])
+  @@index([listingId])
+  @@map("listing_favorites")
+}
+
+// Zapytanie Firmy o usługę: wątek wiadomości; konwersja tworzy zwykły Order
+// (istniejący cykl życia → punkty/recenzje bez zmian). Kontakt bez DM — ADR-010.
+model Inquiry {
+  id               String        @id @default(cuid())
+  listingId        String
+  companyId        String
+  createdById      String
+  status           InquiryStatus @default(OPEN)
+  convertedOrderId String?       @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  listing   ServiceListing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy User             @relation(fields: [createdById], references: [id])
+  messages  InquiryMessage[]
+
+  @@index([listingId, status])
+  @@index([companyId, createdAt])
+  @@map("inquiries")
+}
+
+model InquiryMessage {
+  id        String   @id @default(cuid())
+  inquiryId String
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  inquiry Inquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@index([inquiryId, createdAt])
+  @@map("inquiry_messages")
 }

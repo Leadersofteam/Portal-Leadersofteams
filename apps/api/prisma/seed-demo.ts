@@ -643,6 +643,76 @@ async function main() {
   );
   console.log('— DANE DEMO zasiane —');
   console.log(`Firmy: ${COMPANIES.length} · Liderzy: ${LEADERS.length}`);
+  // --- Usługi (Fiverr-lite, Sprint 3): po jednej dla kilku Liderów ----------
+  const DEMO_LISTINGS: Array<{
+    leaderKey: string;
+    title: string;
+    description: string;
+    tags: string[];
+    packages: Array<{ tier: 'BASIC' | 'STANDARD' | 'PREMIUM'; name: string; price: number; scope: string; days: number }>;
+  }> = [];
+  let listingIdx = 0;
+  for (const [key, l] of leaderByKey) {
+    listingIdx += 1;
+    if (listingIdx > 6) break;
+    DEMO_LISTINGS.push({
+      leaderKey: key,
+      title: `Sprint doradczy: diagnoza i plan działań (${l.industrySlug})`,
+      description:
+        'Tygodniowy sprint doradczy: audyt obecnej sytuacji, warsztat z zespołem i plan działań na 90 dni. ' +
+        'Pracuję na Waszych danych i procesach — kończymy konkretną listą kroków z priorytetami.',
+      tags: ['doradztwo', l.industrySlug],
+      packages: [
+        { tier: 'BASIC', name: 'Diagnoza', price: 1900 + listingIdx * 100, scope: 'Audyt + raport z rekomendacjami (do 10 stron).', days: 7 },
+        { tier: 'STANDARD', name: 'Diagnoza + warsztat', price: 3900 + listingIdx * 100, scope: 'Audyt, warsztat 4h z zespołem i plan 90 dni.', days: 14 },
+      ],
+    });
+  }
+  for (const spec of DEMO_LISTINGS) {
+    const l = leader(spec.leaderKey);
+    const slugBase = spec.title
+      .toLowerCase()
+      .replace(/[ąćęłńóśźż]/g, (ch) => ({ ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z' })[ch] ?? ch)
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+    const listing = await prisma.serviceListing.create({
+      data: {
+        leaderProfileId: l.profileId,
+        industryId: (await prisma.leaderProfile.findUniqueOrThrow({ where: { id: l.profileId } })).industryId,
+        title: spec.title,
+        slug: `${slugBase}-${l.profileId.slice(-6)}`,
+        description: spec.description,
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+        priceFrom: Math.min(...spec.packages.map((p) => p.price)),
+        packages: {
+          create: spec.packages.map((p) => ({
+            tier: p.tier,
+            name: p.name,
+            priceDeclared: p.price,
+            scope: p.scope,
+            deliveryDays: p.days,
+          })),
+        },
+      },
+    });
+    for (const tagName of spec.tags) {
+      const tagSlugValue = tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (!tagSlugValue) continue;
+      const tag = await prisma.tag.upsert({
+        where: { slug: tagSlugValue },
+        update: {},
+        create: { name: tagName, slug: tagSlugValue },
+      });
+      await prisma.listingTagLink.createMany({
+        data: [{ listingId: listing.id, tagId: tag.id }],
+        skipDuplicates: true,
+      });
+    }
+  }
+  console.log(`Usługi demo: ${DEMO_LISTINGS.length}`);
+
   console.log(`Zlecenia otwarte: ${OPEN_ORDERS.length} · zakończone: ${DONE_ORDERS.length}`);
   console.log(`Punkty dojrzałe (CONFIRMED): ${matured} · usunięto zdarzeń outbox demo: ${outboxToDelete.length}`);
   console.log('Poziomy Liderów:');

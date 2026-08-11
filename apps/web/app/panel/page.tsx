@@ -31,6 +31,9 @@ export default async function PanelPage() {
         <Link className="btn secondary" href="/panel/profil">
           Profil Lidera
         </Link>
+        <Link className="btn secondary" href="/panel/uslugi">
+          Moje usługi
+        </Link>
         <Link className="btn secondary" href="/panel/oferty">
           Moje oferty
         </Link>

@@ -46,6 +46,21 @@ interface ReviewPublishedPayload {
   leaderUserId: string | null;
   companyId: string;
 }
+interface InquiryCreatedPayload {
+  inquiryId: string;
+  listingId: string;
+  listingTitle: string;
+  leaderUserId: string;
+  companyId: string;
+}
+
+interface InquiryMessagePayload {
+  inquiryId: string;
+  listingTitle: string;
+  authorUserId: string;
+  recipientUserId: string;
+}
+
 interface LevelAchievedPayload {
   achievementId: string;
   userId: string;
@@ -118,6 +133,30 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
           payload: { orderId: p.orderId, offerId: p.offerId },
         })),
       );
+    },
+
+    async onInquiryCreated(p: InquiryCreatedPayload) {
+      return deliver([
+        {
+          userId: p.leaderUserId,
+          type: 'inquiry_created',
+          dedupeKey: `inquiry_created:${p.inquiryId}`,
+          payload: { inquiryId: p.inquiryId, listingTitle: p.listingTitle },
+        },
+      ]);
+    },
+
+    async onInquiryMessage(p: InquiryMessagePayload) {
+      return deliver([
+        {
+          userId: p.recipientUserId,
+          type: 'inquiry_message',
+          // Dedupe per wiadomość byłby lepszy, ale payload nie niesie id —
+          // klucz z timestampem minutowym ogranicza spam sygnałów.
+          dedupeKey: `inquiry_message:${p.inquiryId}:${Math.floor(Date.now() / 60_000)}`,
+          payload: { inquiryId: p.inquiryId, listingTitle: p.listingTitle },
+        },
+      ]);
     },
 
     async onOfferAccepted(p: OfferAcceptedPayload) {

@@ -14,7 +14,10 @@ import { REVIEW_PUBLICATION_WINDOW_DAYS } from '../ladder/index';
 
 export interface ReviewsServiceDeps {
   prisma: PrismaClient;
-  identity: Pick<IdentityService, 'isCompanyMember' | 'getCompanyMeta' | 'getPublicUsers'>;
+  identity: Pick<
+    IdentityService,
+    'isCompanyMember' | 'getCompanyMeta' | 'getPublicUsers' | 'getPublicCompanies'
+  >;
 }
 
 export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
@@ -156,6 +159,46 @@ export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
         });
       }
       return due.length;
+    },
+
+    // Publiczna lista opinii o Liderze (dług D8): tylko opublikowane oceny
+    // od Firm, z nazwą firmy i tytułem zlecenia — dowód, nie deklaracja.
+    async listLeaderReviews(leaderUserId: string, limit = 20) {
+      const rows = await prisma.review.findMany({
+        where: {
+          subjectLeaderUserId: leaderUserId,
+          direction: 'COMPANY_TO_LEADER',
+          publishedAt: { not: null },
+        },
+        include: { order: { select: { title: true, companyId: true } } },
+        orderBy: { publishedAt: 'desc' },
+        take: limit,
+      });
+      const companies = await identity.getPublicCompanies([
+        ...new Set(rows.map((r) => r.order.companyId)),
+      ]);
+      const breakdown: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const all = await prisma.review.groupBy({
+        by: ['rating'],
+        where: {
+          subjectLeaderUserId: leaderUserId,
+          direction: 'COMPANY_TO_LEADER',
+          publishedAt: { not: null },
+        },
+        _count: { _all: true },
+      });
+      for (const r of all) breakdown[r.rating] = r._count._all;
+      return {
+        reviews: rows.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          publishedAt: r.publishedAt,
+          orderTitle: r.order.title,
+          companyName: companies.get(r.order.companyId)?.name ?? 'Firma',
+        })),
+        breakdown,
+      };
     },
 
     async getLeaderReviewStats(leaderUserId: string) {

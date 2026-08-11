@@ -10,6 +10,8 @@ export function notificationsSubscriptions(
 ): Record<string, EventHandler> {
   return {
     'marketplace.offer_submitted': (p) => service.onOfferSubmitted(p as never),
+    'marketplace.inquiry_created': (p) => service.onInquiryCreated(p as never),
+    'marketplace.inquiry_message': (p) => service.onInquiryMessage(p as never),
     'marketplace.offer_accepted': (p) => service.onOfferAccepted(p as never),
     'marketplace.order_confirmed': (p) => service.onOrderConfirmed(p as never),
     'marketplace.review_published': (p) => service.onReviewPublished(p as never),
