@@ -1,7 +1,21 @@
 # Checklista go-live Portalu — `leadersofteams.pl`
 
 Kolejność kroków cutover staging → prod. **Ten dokument NIE jest wykonaniem** — go-live to osobna sesja
-z osobną zgodą właściciela na każdy krok nieodwracalny. Stan przygotowania: 2026-07-20.
+z osobną zgodą właściciela na każdy krok nieodwracalny. Stan przygotowania: 2026-07-20,
+uzupełnienie po sesji S7: 2026-08-12.
+
+> **Aktualizacja S7 (2026-08-12):** doszły moduły `files` (uploady), `listings`
+> (Usługi/zapytania) i `social` (follow/feed/@handle) + 3 migracje
+> (`files_uploads`, `service_listings`, `social`). Nowe pozycje w checkliście:
+>
+> - [ ] **Backup wolumenu `portal_uploads`** (zdjęcia userów) razem z bazą — rozszerzyć skrypt backupu (R-07).
+> - [ ] Deploy MUSI kończyć się krokiem `docker compose … run --rm migrate`
+>       (serwis za `profiles: [tools]` — NIE startuje sam; objaw pominięcia:
+>       błędy P2022 „column does not exist" w logach api).
+> - [ ] Szkice `/regulamin` i `/prywatnosc` są w repo — sekcje **[DO UZUPEŁNIENIA]**
+>       (dane podmiotu, e-mail reklamacyjny, lista odbiorców danych) wymagają
+>       decyzji właściciela przed startem (R-10/R-15).
+> - [ ] Po seedzie rynku: uzupełnić usługi Liderów (`SEED_DEMO=1` tworzy 6 przykładowych).
 
 > Integracja Portal↔App **porzucona (2026-07-20)** — nie jest częścią go-live ani żadnego kroku poniżej.
 

@@ -1,7 +1,32 @@
-# Handoff dla Claude Code Opus 4.8 — stan projektu i plan sprintów
+# Handoff dla Claude Code — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-07-20 · **Branch tej sesji:** `chore/consolidation-sprint-3-4-portal-docs`
-**Wykonawca:** Opus 4.8 (kontynuacja) · **Stan:** ✅ Sprint 4 · ✅ Sprint 5 (`community`) w `main` · ✅ **Sprint 4.5 zmergowany (PR #11)** · przygotowania do go-live → **Sprint 6 (hardening/launch)**
+**Ostatnia aktualizacja:** 2026-08-12 · **Branch tej sesji:** `feat/s7-produkt`
+**Wykonawca:** Fable 5 (sesja S7) · **Stan:** ✅ Sprinty 1–6 + S7 (produkt/design) na `feat/s7-produkt`, wdrożone na staging
+
+> **✅ SESJA S7 (2026-08-11/12): „Marketplace + Społeczność + Tożsamość".** Cztery przyrosty
+> na gałęzi `feat/s7-produkt` (PR do main po stronie właściciela), wszystkie wdrożone i
+> zweryfikowane na stagingu:
+>
+> 1. **Design system + brand** — logo SVG drabinki (bursztynowy szczebel = zdobyty status),
+>    favicon, root OG + karty OG „credential" dla zleceń/grup/wątków/usług, tokeny
+>    `--level-1..7` („im wyżej, tym cieplejsze światło") + `LevelBadge`, Bricolage Grotesque
+>    (display), `components/ui/*`, loading/error/not-found, stopka, przebudowany landing
+>    (tagline strategii, „Jak to działa", wizual 7 poziomów, FAQ). Fix: Inter bez latin-ext.
+> 2. **Moduł `files`** — uploady obrazów (multipart+sharp, warianty webp thumb/full, EXIF
+>    wycinany), awatary + zdjęcia portfolio, volume `portal_staging_uploads` (backup!).
+> 3. **Moduł `listings` (Usługi, Fiverr-lite)** — katalog `/uslugi` z filtrami/sortem,
+>    pakiety 1–3 z cenami DEKLARATYWNYMI (ADR-006), tagi, ulubione, zapytania z wątkiem
+>    wiadomości i KONWERSJĄ w zwykły Order (punkty tylko przez istniejący cykl — test
+>    negatywny w `ladder/subscriptions.test.ts`). Dług D8 domknięty (opinie na profilu).
+> 4. **Moduł `social` (X-lite w duchu ADR-010)** — follow, chronologiczny `/feed`
+>    („Wczytaj więcej", zero algorytmu, ZERO punktów), profile `@handle` (`/profil/[handle]`),
+>    wzmianki @handle → powiadomienia, edycja/usuwanie własnych postów/komentarzy (soft delete).
+>    DM świadomie NIE MA — kontakt przez zapytania o usługi i wątki ofert.
+>
+> Nowe migracje: `files_uploads`, `service_listings`, `social`. Deploy staging MUSI kończyć się
+> `docker compose … run --rm migrate` (profil tools). Testy: 102/102 + e2e critical-path.
+> Nagrody poziomów przepisane na Portal-native (po porzuceniu integracji) — landing, /drabinka,
+> README, notka w ADR-010. Szkice /regulamin i /prywatnosc w repo (sekcje [DO UZUPEŁNIENIA]).
 
 > **⛔ ZMIANA KIERUNKU (2026-07-20): integracja Portal↔App PORZUCONA.** Decyzją właściciela integracja
 > (OIDC IdP, webhook `level.changed`, rekoncyliacja, „Zaloguj przez leadersofteams.pl") **nie będzie
