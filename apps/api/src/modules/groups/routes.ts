@@ -4,6 +4,7 @@ import {
   createPostInputSchema,
   feedFiltersSchema,
   groupFiltersSchema,
+  updatePostInputSchema,
 } from '@lot/contracts';
 import type { FastifyInstance } from 'fastify';
 
@@ -80,6 +81,26 @@ export function groupsRoutes({ groups, auth }: GroupsRoutesDeps) {
       const { id } = request.params as { id: string };
       const input = parseBody(createPostInputSchema, request.body);
       return reply.code(201).send(await groups.createPost(user.id, id, input));
+    });
+
+    // Edycja/usuwanie WŁASNYCH treści (S4) — soft delete, bez punktów.
+    app.patch('/posts/:id', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const { id } = request.params as { id: string };
+      const input = parseBody(updatePostInputSchema, request.body);
+      return reply.send(await groups.updatePost(user.id, id, input));
+    });
+
+    app.delete('/posts/:id', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const { id } = request.params as { id: string };
+      return reply.send(await groups.deletePost(user.id, id));
+    });
+
+    app.delete('/comments/:id', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const { id } = request.params as { id: string };
+      return reply.send(await groups.deleteComment(user.id, id));
     });
 
     app.post('/posts/:id/comments', async (request, reply) => {

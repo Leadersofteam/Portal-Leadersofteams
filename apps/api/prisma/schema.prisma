@@ -39,6 +39,8 @@ model User {
   emailVerifiedAt DateTime?
   // Awatar (moduł files) — SetNull: usunięcie pliku nie kasuje konta.
   avatarFileId    String?   @unique
+  // Uchwyt @handle (moduł social) — do wzmianek i publicznego profilu.
+  handle          String?   @unique
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -51,6 +53,9 @@ model User {
   createdInquiries   Inquiry[]
   inquiryMessages    InquiryMessage[]
   listingFavorites   ListingFavorite[]
+  following          Follow[]            @relation("Follower")
+  followers          Follow[]            @relation("Followed")
+  activityItems      ActivityItem[]
   createdGroups      Group[]
   groupMemberships   GroupMembership[]
   posts              Post[]
@@ -562,6 +567,10 @@ model Post {
   comments  Comment[]
   reactions Reaction[]
 
+  // Edycja/usunięcie własnych treści (moduł social, S4) — soft delete.
+  editedAt  DateTime?
+  deletedAt DateTime?
+
   @@index([groupId, createdAt])
   @@index([authorUserId])
   @@fulltext([title, body])
@@ -582,6 +591,10 @@ model Comment {
   author  User      @relation(fields: [authorUserId], references: [id])
   parent  Comment?  @relation("commentThread", fields: [parentId], references: [id])
   replies Comment[] @relation("commentThread")
+
+  // Edycja/usunięcie własnych treści (moduł social, S4) — soft delete.
+  editedAt  DateTime?
+  deletedAt DateTime?
 
   @@index([postId, createdAt])
   @@map("comments")
@@ -654,6 +667,10 @@ model Answer {
   thread Thread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
   author User         @relation(fields: [authorUserId], references: [id])
   votes  AnswerVote[]
+
+  // Edycja/usunięcie własnych treści (moduł social, S4) — soft delete.
+  editedAt  DateTime?
+  deletedAt DateTime?
 
   @@index([threadId, createdAt])
   @@index([authorUserId])
@@ -849,4 +866,47 @@ model InquiryMessage {
 
   @@index([inquiryId, createdAt])
   @@map("inquiry_messages")
+}
+
+// ---------------------------------------------------------------------------
+// social — obserwowanie + chronologiczny feed (X-lite w duchu ADR-010:
+// zero algorytmu, zero punktów, kursor + „Wczytaj więcej")
+// ---------------------------------------------------------------------------
+
+model Follow {
+  followerId String
+  followedId String
+  createdAt  DateTime @default(now())
+
+  follower User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followed User @relation("Followed", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followedId])
+  @@index([followedId])
+  @@map("follows")
+}
+
+enum ActivityType {
+  POST_PUBLISHED
+  LISTING_PUBLISHED
+  ANSWER_ACCEPTED
+  LEVEL_ACHIEVED
+}
+
+// Feed materializowany przez workera z ISTNIEJĄCYCH zdarzeń (bez fan-outu —
+// NFR 10k/1 VPS). subjectId wskazuje encję źródłową (post/usługa/wątek).
+model ActivityItem {
+  id        String       @id @default(cuid())
+  actorId   String
+  type      ActivityType
+  subjectId String
+  // Zdenormalizowany kontekst do renderu feedu bez N+1 (tytuł, slug itp.).
+  meta      Json?
+  createdAt DateTime     @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@unique([type, subjectId])
+  @@index([actorId, createdAt])
+  @@map("activity_items")
 }

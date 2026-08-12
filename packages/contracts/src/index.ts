@@ -373,6 +373,17 @@ export const createPostInputSchema = z.object({
 });
 export type CreatePostInput = z.infer<typeof createPostInputSchema>;
 
+export const updatePostInputSchema = z
+  .object({
+    title: z.string().trim().min(5, 'Tytuł: min. 5 znaków').max(140),
+    body: z.string().trim().min(10, 'Treść: min. 10 znaków').max(20000),
+  })
+  .partial()
+  .refine((v) => v.title !== undefined || v.body !== undefined, {
+    message: 'Podaj tytuł lub treść do zmiany',
+  });
+export type UpdatePostInput = z.infer<typeof updatePostInputSchema>;
+
 export const feedFiltersSchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),

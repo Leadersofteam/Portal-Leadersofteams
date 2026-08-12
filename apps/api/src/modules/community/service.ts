@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client';
 import type { PrismaClient } from '../../shared/db';
 import { DomainError, ForbiddenError, NotFoundError } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
+import { extractMentions } from '../../shared/mentions';
 import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
 import type { Redis } from '../../shared/redis';
 import type { GroupsService } from '../groups/index';
@@ -14,7 +15,7 @@ import type { IdentityService } from '../identity/index';
 // ADR-004). Członkostwo w grupie czytamy przez publiczne API groups (ADR-002).
 export interface CommunityServiceDeps {
   prisma: PrismaClient;
-  identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt'>;
+  identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt' | 'getUserIdsByHandles'>;
   groups: Pick<GroupsService, 'isActiveMember'>;
   redis?: Redis;
 }
@@ -44,6 +45,26 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
     return threads + answers;
   }
 
+  // Wzmianki @handle → zdarzenie dla notifications (zero punktów).
+  async function emitMentions(
+    tx: Parameters<typeof emitEvent>[0],
+    body: string,
+    authorUserId: string,
+    context: { threadId: string },
+  ) {
+    const handles = extractMentions(body);
+    if (handles.length === 0) return;
+    const ids = await identity.getUserIdsByHandles(handles);
+    for (const mentionedId of ids.values()) {
+      if (mentionedId === authorUserId) continue;
+      await emitEvent(tx, 'community.user_mentioned', {
+        mentionedUserId: mentionedId,
+        authorUserId,
+        ...context,
+      });
+    }
+  }
+
   return {
     async askQuestion(userId: string, groupId: string, input: CreateThreadInput) {
       await requireMembership(userId, groupId);
@@ -62,6 +83,7 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
           groupId,
           authorUserId: userId,
         });
+        await emitMentions(tx, `${input.title}\n${input.body}`, userId, { threadId: thread.id });
         return { id: thread.id };
       });
     },
@@ -89,6 +111,7 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
           answerAuthorUserId: userId,
           groupId: thread.groupId,
         });
+        await emitMentions(tx, input.body, userId, { threadId });
         return { id: answer.id };
       });
     },

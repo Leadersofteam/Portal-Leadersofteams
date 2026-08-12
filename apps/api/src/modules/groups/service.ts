@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client';
 import type { Cache } from '../../shared/cache';
 import type { PrismaClient } from '../../shared/db';
 import { ConflictError, DomainError, ForbiddenError, NotFoundError } from '../../shared/errors';
+import { extractMentions } from '../../shared/mentions';
 import { emitEvent } from '../../shared/outbox';
 import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
 import type { Redis } from '../../shared/redis';
@@ -20,7 +21,7 @@ const GROUPS_CACHE_TTL = 300;
 
 export interface GroupsServiceDeps {
   prisma: PrismaClient;
-  identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt'>;
+  identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt' | 'getUserIdsByHandles'>;
   // ladder tylko do ODCZYTU poziomu (bramka) — żadnej krawędzi zdarzeń do ladder
   // (anty-MLM, ADR-010 dec. 4). Aktywność w groups nie generuje punktów.
   ladder: Pick<LadderService, 'getLevel'>;
@@ -93,6 +94,27 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
       })),
       nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
     };
+  }
+
+  // Wzmianki @handle → zdarzenie dla notifications (zero punktów — ladder
+  // nie subskrybuje groups.*).
+  async function emitMentions(
+    tx: Parameters<typeof emitEvent>[0],
+    body: string,
+    authorUserId: string,
+    context: { groupId: string; postId: string },
+  ) {
+    const handles = extractMentions(body);
+    if (handles.length === 0) return;
+    const ids = await identity.getUserIdsByHandles(handles);
+    for (const mentionedId of ids.values()) {
+      if (mentionedId === authorUserId) continue;
+      await emitEvent(tx, 'groups.user_mentioned', {
+        mentionedUserId: mentionedId,
+        authorUserId,
+        ...context,
+      });
+    }
   }
 
   return {
@@ -244,6 +266,10 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
           groupId,
           authorUserId: userId,
         });
+        await emitMentions(tx, `${input.title}\n${input.body}`, userId, {
+          groupId,
+          postId: post.id,
+        });
         return { id: post.id };
       });
       await cache?.bump(GROUPS_CACHE_NS); // liczba postów w listingu zmieniona
@@ -296,6 +322,7 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
           postAuthorUserId: post.authorUserId,
           actorUserId: userId,
         });
+        await emitMentions(tx, input.body, userId, { groupId: post.groupId, postId });
         return { id: comment.id };
       });
     },
@@ -372,7 +399,7 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
       const limit = filters.limit ?? FEED_PAGE_DEFAULT;
       // Feed chronologiczny (ADR-010): bez rankingu, paginacja kursorem.
       const rows = await prisma.post.findMany({
-        where: { groupId, moderationStatus: 'VISIBLE' },
+        where: { groupId, moderationStatus: 'VISIBLE', deletedAt: null },
         include: { _count: { select: { comments: true, reactions: true } } },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: limit + 1,
@@ -415,7 +442,7 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
           comments: { orderBy: { createdAt: 'asc' }, take: 500 },
         },
       });
-      if (!post || post.moderationStatus !== 'VISIBLE')
+      if (!post || post.moderationStatus !== 'VISIBLE' || post.deletedAt)
         throw new NotFoundError('Post nie istnieje');
       const userIds = [post.authorUserId, ...post.comments.map((c) => c.authorUserId)];
       const users = await identity.getPublicUsers(userIds);
@@ -434,16 +461,61 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
           authorName: users.get(post.authorUserId)?.displayName ?? 'Użytkownik',
           reactionsCount: post._count.reactions,
           viewerReacted,
+          isOwn: post.authorUserId === viewerId,
+          editedAt: post.editedAt,
           createdAt: post.createdAt,
         },
         comments: post.comments.map((c) => ({
           id: c.id,
           parentId: c.parentId,
-          body: c.body,
+          body: c.deletedAt ? '[treść usunięta]' : c.body,
           authorName: users.get(c.authorUserId)?.displayName ?? 'Użytkownik',
+          isOwn: c.authorUserId === viewerId,
+          editedAt: c.editedAt,
+          deletedAt: c.deletedAt,
           createdAt: c.createdAt,
         })),
       };
+    },
+
+    // --- Edycja/usuwanie WŁASNYCH treści (S4, soft delete) -------------------
+
+    async updatePost(userId: string, postId: string, input: { title?: string; body?: string }) {
+      const post = await prisma.post.findUnique({ where: { id: postId } });
+      if (!post || post.deletedAt) throw new NotFoundError('Post nie istnieje');
+      if (post.authorUserId !== userId) throw new ForbiddenError();
+      await prisma.post.update({
+        where: { id: postId },
+        data: {
+          ...(input.title ? { title: input.title } : {}),
+          ...(input.body ? { body: input.body } : {}),
+          editedAt: new Date(),
+        },
+      });
+      return { id: postId };
+    },
+
+    async deletePost(userId: string, postId: string) {
+      const post = await prisma.post.findUnique({ where: { id: postId } });
+      if (!post || post.deletedAt) throw new NotFoundError('Post nie istnieje');
+      if (post.authorUserId !== userId) throw new ForbiddenError();
+      await prisma.post.update({
+        where: { id: postId },
+        data: { deletedAt: new Date(), title: '[usunięto]', body: '[treść usunięta]' },
+      });
+      await cache?.bump(GROUPS_CACHE_NS);
+      return { id: postId };
+    },
+
+    async deleteComment(userId: string, commentId: string) {
+      const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+      if (!comment || comment.deletedAt) throw new NotFoundError('Komentarz nie istnieje');
+      if (comment.authorUserId !== userId) throw new ForbiddenError();
+      await prisma.comment.update({
+        where: { id: commentId },
+        data: { deletedAt: new Date(), body: '[treść usunięta]' },
+      });
+      return { id: commentId };
     },
   };
 }

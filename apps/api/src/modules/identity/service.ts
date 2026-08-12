@@ -14,6 +14,8 @@ export interface PublicUser {
   displayName: string;
   // Id pliku awatara (moduł files) — web buduje z niego /api/v1/files/:id/thumb.
   avatarFileId: string | null;
+  // Uchwyt @handle (moduł social) — null, dopóki nie wygenerowany.
+  handle: string | null;
 }
 
 export interface CompanySummary {
@@ -50,6 +52,10 @@ export interface IdentityService {
   getPublicUsers(userIds: string[]): Promise<Map<string, PublicUser>>;
   // Awatar (moduł files ustawia po walidacji własności pliku).
   setAvatar(userId: string, fileId: string | null): Promise<void>;
+  // Uchwyty @handle (moduł social): leniwe generowanie + wyszukiwanie.
+  ensureHandle(userId: string): Promise<string>;
+  getUserIdByHandle(handle: string): Promise<string | null>;
+  getUserIdsByHandles(handles: string[]): Promise<Map<string, string>>;
   // Adresy e-mail (dla digestu powiadomień) — pomija konta zanonimizowane.
   getUserEmails(userIds: string[]): Promise<Map<string, string>>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
@@ -199,12 +205,12 @@ export function createIdentityService(
       if (userIds.length === 0) return new Map();
       const users = await prisma.user.findMany({
         where: { id: { in: userIds } },
-        select: { id: true, displayName: true, avatarFileId: true },
+        select: { id: true, displayName: true, avatarFileId: true, handle: true },
       });
       return new Map(
         users.map((u) => [
           u.id,
-          { id: u.id, displayName: u.displayName, avatarFileId: u.avatarFileId },
+          { id: u.id, displayName: u.displayName, avatarFileId: u.avatarFileId, handle: u.handle },
         ]),
       );
     },
@@ -212,6 +218,55 @@ export function createIdentityService(
     async setAvatar(userId, fileId) {
       // Własność pliku waliduje moduł files (route) — tu tylko własna tabela (ADR-002).
       await prisma.user.update({ where: { id: userId }, data: { avatarFileId: fileId } });
+    },
+
+    // Leniwe generowanie uchwytu @handle z displayName (moduł social).
+    async ensureHandle(userId) {
+      const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { handle: true, displayName: true },
+      });
+      if (user.handle) return user.handle;
+      const map: Record<string, string> = {
+        ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
+      };
+      const base =
+        user.displayName
+          .toLowerCase()
+          .replace(/[ąćęłńóśźż]/g, (ch) => map[ch] ?? ch)
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 24) || 'user';
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const suffix = attempt === 0 ? '' : `-${Math.random().toString(36).slice(2, 6)}`;
+        const candidate = `${base}${suffix}`;
+        try {
+          await prisma.user.update({ where: { id: userId }, data: { handle: candidate } });
+          return candidate;
+        } catch (err: unknown) {
+          if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'P2002') {
+            continue; // kolizja — próbuj z sufiksem
+          }
+          throw err;
+        }
+      }
+      const fallback = `${base}-${userId.slice(-6)}`;
+      await prisma.user.update({ where: { id: userId }, data: { handle: fallback } });
+      return fallback;
+    },
+
+    async getUserIdByHandle(handle) {
+      const user = await prisma.user.findUnique({ where: { handle }, select: { id: true } });
+      return user?.id ?? null;
+    },
+
+    async getUserIdsByHandles(handles) {
+      if (handles.length === 0) return new Map();
+      const users = await prisma.user.findMany({
+        where: { handle: { in: handles }, anonymizedAt: null },
+        select: { id: true, handle: true },
+      });
+      return new Map(users.filter((u) => u.handle).map((u) => [u.handle!, u.id]));
     },
 
     async getUserEmails(userIds) {

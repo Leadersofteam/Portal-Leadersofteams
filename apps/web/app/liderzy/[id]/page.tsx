@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { FollowButton } from '@/app/profil/[handle]/follow-button';
 import { JsonLd } from '@/components/json-ld';
 import { Avatar } from '@/components/ui/avatar';
 import { LevelBadge } from '@/components/ui/level-badge';
@@ -11,6 +12,7 @@ import { serverApi } from '@/lib/server-api';
 interface PublicProfile {
   profile: {
     id: string;
+    userId: string;
     displayName: string;
     avatarFileId: string | null;
     headline: string;
@@ -79,6 +81,14 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
   const data = await getProfile(id);
   if (!data) notFound();
   const { profile } = data;
+  const me = await serverApi<{ user: { id: string } | null }>('/auth/me').catch(() => null);
+  const isSelf = me?.user?.id === profile.userId;
+  const initiallyFollowing =
+    me?.user && !isSelf
+      ? ((await serverApi<{ following: boolean }>(`/users/${profile.userId}/follow`).catch(
+          () => null,
+        ))?.following ?? false)
+      : false;
   const reviewsData =
     profile.reviewCount > 0
       ? await serverApi<LeaderReviews>(`/leaders/${id}/reviews`).catch(() => null)
@@ -98,7 +108,7 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
           industryName: profile.industry.name,
         })}
       />
-      <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <Avatar
           name={profile.displayName}
           size="lg"
@@ -119,6 +129,9 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
             )}
           </p>
         </div>
+        {me?.user && !isSelf && (
+          <FollowButton userId={profile.userId} initiallyFollowing={initiallyFollowing} />
+        )}
       </div>
       <p className="mt-2" style={{ fontSize: '1.1rem' }}>
         {profile.headline}

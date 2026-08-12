@@ -9,6 +9,7 @@ import { Queue, Worker } from 'bullmq';
 import { antifraudSubscriptions, createAntifraudService } from './modules/antifraud/index';
 import { createIdentityService } from './modules/identity/index';
 import { createLadderService, ladderSubscriptions } from './modules/ladder/index';
+import { createSocialService, socialSubscriptions } from './modules/social/index';
 import type { EventHandler } from './modules/ladder/index';
 import { createOrdersService, createReviewsService } from './modules/marketplace/index';
 import {
@@ -42,6 +43,7 @@ const ladder = createLadderService(prisma);
 const orders = createOrdersService({ prisma, identity, ladder });
 const reviews = createReviewsService({ prisma, identity });
 const antifraud = createAntifraudService({ prisma, ladder, marketplace: orders });
+const social = createSocialService({ prisma, identity, ladder });
 const notifications = createNotificationsService({
   prisma,
   identity,
@@ -81,6 +83,7 @@ const handlers: Record<string, EventHandler[]> = mergeSubscriptions(
   ladderSubscriptions(ladder),
   antifraudSubscriptions(antifraud),
   notificationsSubscriptions(notifications),
+  socialSubscriptions(social),
 );
 
 const eventsQueue = new Queue(EVENTS_QUEUE, { connection });

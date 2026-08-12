@@ -17,6 +17,8 @@ export function notificationsSubscriptions(
     'marketplace.review_published': (p) => service.onReviewPublished(p as never),
     'ladder.level_achieved': (p) => service.onLevelAchieved(p as never),
     'groups.comment_added': (p) => service.onCommentAdded(p as never),
+    'groups.user_mentioned': (p) => service.onUserMentioned(p as never),
+    'community.user_mentioned': (p) => service.onUserMentioned(p as never),
     'groups.membership_requested': (p) => service.onMembershipRequested(p as never),
     'groups.membership_accepted': (p) => service.onMembershipAccepted(p as never),
     'community.answer_created': (p) => service.onAnswerCreated(p as never),

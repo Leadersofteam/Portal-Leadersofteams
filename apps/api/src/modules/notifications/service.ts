@@ -61,6 +61,14 @@ interface InquiryMessagePayload {
   recipientUserId: string;
 }
 
+interface UserMentionedPayload {
+  mentionedUserId: string;
+  authorUserId: string;
+  groupId?: string;
+  postId?: string;
+  threadId?: string;
+}
+
 interface LevelAchievedPayload {
   achievementId: string;
   userId: string;
@@ -133,6 +141,17 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
           payload: { orderId: p.orderId, offerId: p.offerId },
         })),
       );
+    },
+
+    async onUserMentioned(p: UserMentionedPayload) {
+      return deliver([
+        {
+          userId: p.mentionedUserId,
+          type: 'user_mentioned',
+          dedupeKey: `user_mentioned:${p.postId ?? p.threadId ?? 'x'}:${p.authorUserId}`,
+          payload: { groupId: p.groupId, postId: p.postId, threadId: p.threadId },
+        },
+      ]);
     },
 
     async onInquiryCreated(p: InquiryCreatedPayload) {

@@ -7,6 +7,7 @@ import { serverApi } from '@/lib/server-api';
 
 import { ReactButton } from '../../group-actions';
 import { CommentForm } from './comment-form';
+import { OwnCommentDelete, OwnPostActions } from './own-actions';
 
 interface PostDetail {
   post: {
@@ -18,6 +19,8 @@ interface PostDetail {
     authorName: string;
     reactionsCount: number;
     viewerReacted: boolean;
+    isOwn: boolean;
+    editedAt: string | null;
     createdAt: string;
   };
   comments: Array<{
@@ -25,6 +28,8 @@ interface PostDetail {
     parentId: string | null;
     body: string;
     authorName: string;
+    isOwn: boolean;
+    deletedAt: string | null;
     createdAt: string;
   }>;
 }
@@ -82,6 +87,15 @@ export default async function PostPage({
           )}
           {canParticipate && <ReportButton subjectType="POST" subjectId={post.id} />}
         </div>
+        {post.isOwn && (
+          <OwnPostActions
+            postId={post.id}
+            groupId={post.groupId}
+            title={post.title}
+            body={post.body}
+          />
+        )}
+        {post.editedAt && <p className="muted mt-1">(edytowano)</p>}
       </article>
 
       <h2 className="mt-4">Komentarze ({comments.length})</h2>
@@ -92,7 +106,10 @@ export default async function PostPage({
       ) : (
         topLevel.map((comment) => (
           <div key={comment.id} className="card mt-2">
-            <div className="meta">{comment.authorName}</div>
+            <div className="meta" style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <span>{comment.authorName}</span>
+              {comment.isOwn && !comment.deletedAt && <OwnCommentDelete commentId={comment.id} />}
+            </div>
             <p className="pre-wrap">{comment.body}</p>
 
             {(repliesByParent.get(comment.id) ?? []).map((reply) => (

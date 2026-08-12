@@ -42,6 +42,7 @@ import type { Realtime } from './shared/realtime';
 import { createRedis } from './shared/redis';
 import type { Redis } from './shared/redis';
 import { createSessionStore } from './shared/session';
+import { createSocialAccountData, createSocialService, socialRoutes } from './modules/social/index';
 
 export interface AppContext {
   app: FastifyInstance;
@@ -141,6 +142,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
       createCommunityAccountData(prisma),
       createFilesAccountData(prisma, filesService),
       createListingsAccountData(prisma),
+      createSocialAccountData(prisma),
     ],
     mail,
     appBaseUrl: config.APP_BASE_URL,
@@ -174,6 +176,11 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
   const notificationsService = createNotificationsService({ prisma, identity: identityService });
+  const socialService = createSocialService({
+    prisma,
+    identity: identityService,
+    ladder: ladderService,
+  });
   const listingsService = createListingsService({
     prisma,
     identity: identityService,
@@ -209,6 +216,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   await app.register(filesRoutes({ files: filesService, auth, identity: identityService }), {
     prefix: '/api/v1',
   });
+  await app.register(socialRoutes({ social: socialService, auth }), { prefix: '/api/v1' });
   await app.register(
     listingsRoutes({
       listings: listingsService,
