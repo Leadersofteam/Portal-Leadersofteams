@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { FollowButton } from '@/app/profil/[handle]/follow-button';
 import { Avatar } from '@/components/ui/avatar';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
@@ -89,6 +90,12 @@ export default async function ListingDetailPage({
       })
     : { companies: [] };
   const isOwner = me?.user?.id === listing.leader.userId;
+  const initiallyFollowing =
+    me?.user && !isOwner
+      ? ((await serverApi<{ following: boolean }>(
+          `/users/${listing.leader.userId}/follow`,
+        ).catch(() => null))?.following ?? false)
+      : false;
 
   return (
     <main>
@@ -111,6 +118,9 @@ export default async function ListingDetailPage({
           <div className="meta">{listing.leader.headline}</div>
         </div>
         <LevelBadge level={listing.leader.level} />
+        {me?.user && !isOwner && (
+          <FollowButton userId={listing.leader.userId} initiallyFollowing={initiallyFollowing} />
+        )}
         {listing.leader.reviewCount > 0 && (
           <span className="badge">
             ★ {listing.leader.averageRating}/5 ({listing.leader.reviewCount})

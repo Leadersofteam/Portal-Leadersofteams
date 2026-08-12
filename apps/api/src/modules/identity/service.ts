@@ -117,6 +117,43 @@ export function createIdentityService(
     return raw;
   }
 
+  // Generowanie unikatowego @handle z displayName (transliteracja PL + kolizje).
+  // Wołane przy rejestracji (nowi userzy linkowalni od 1. dnia) i leniwie
+  // przez moduł social dla kont sprzed tej zmiany.
+  async function ensureHandleFor(userId: string): Promise<string> {
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { handle: true, displayName: true },
+    });
+    if (user.handle) return user.handle;
+    const map: Record<string, string> = {
+      ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
+    };
+    const base =
+      user.displayName
+        .toLowerCase()
+        .replace(/[ąćęłńóśźż]/g, (ch) => map[ch] ?? ch)
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 24) || 'user';
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const suffix = attempt === 0 ? '' : `-${Math.random().toString(36).slice(2, 6)}`;
+      const candidate = `${base}${suffix}`;
+      try {
+        await prisma.user.update({ where: { id: userId }, data: { handle: candidate } });
+        return candidate;
+      } catch (err: unknown) {
+        if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'P2002') {
+          continue; // kolizja — próbuj z sufiksem
+        }
+        throw err;
+      }
+    }
+    const fallback = `${base}-${userId.slice(-6)}`;
+    await prisma.user.update({ where: { id: userId }, data: { handle: fallback } });
+    return fallback;
+  }
+
   return {
     async register(input) {
       const passwordHash = await hashPassword(input.password);
@@ -128,6 +165,12 @@ export function createIdentityService(
             displayName: input.displayName,
           },
         });
+        // Nowi użytkownicy dostają @handle od razu (profil linkowalny od 1. dnia).
+        try {
+          await ensureHandleFor(user.id);
+        } catch {
+          /* best-effort — moduł social nada leniwie przy pierwszym follow */
+        }
         // Miękka weryfikacja (MVP): auto-login, a gdy wysyłka włączona — mail.
         if (mail?.enabled) {
           try {
@@ -220,39 +263,9 @@ export function createIdentityService(
       await prisma.user.update({ where: { id: userId }, data: { avatarFileId: fileId } });
     },
 
-    // Leniwe generowanie uchwytu @handle z displayName (moduł social).
+    // Leniwe generowanie uchwytu @handle (logika w ensureHandleFor wyżej).
     async ensureHandle(userId) {
-      const user = await prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { handle: true, displayName: true },
-      });
-      if (user.handle) return user.handle;
-      const map: Record<string, string> = {
-        ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
-      };
-      const base =
-        user.displayName
-          .toLowerCase()
-          .replace(/[ąćęłńóśźż]/g, (ch) => map[ch] ?? ch)
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .slice(0, 24) || 'user';
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        const suffix = attempt === 0 ? '' : `-${Math.random().toString(36).slice(2, 6)}`;
-        const candidate = `${base}${suffix}`;
-        try {
-          await prisma.user.update({ where: { id: userId }, data: { handle: candidate } });
-          return candidate;
-        } catch (err: unknown) {
-          if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'P2002') {
-            continue; // kolizja — próbuj z sufiksem
-          }
-          throw err;
-        }
-      }
-      const fallback = `${base}-${userId.slice(-6)}`;
-      await prisma.user.update({ where: { id: userId }, data: { handle: fallback } });
-      return fallback;
+      return ensureHandleFor(userId);
     },
 
     async getUserIdByHandle(handle) {
