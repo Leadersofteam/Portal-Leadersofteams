@@ -125,6 +125,7 @@ export default async function ListingsPage({
 
       {listings.length === 0 ? (
         <EmptyState
+          art="search"
           title="Brak usług spełniających kryteria"
           ctaHref="/uslugi/nowa"
           ctaLabel="Opublikuj pierwszą usługę"

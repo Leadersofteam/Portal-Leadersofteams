@@ -4,6 +4,7 @@ import {
   registerInputSchema,
   requestPasswordResetInputSchema,
   resetPasswordInputSchema,
+  updateOnboardingInputSchema,
   verifyEmailInputSchema,
 } from '@lot/contracts';
 import type { SessionUser } from '@lot/contracts';
@@ -106,6 +107,21 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
       const user = await auth.requireUser(request);
       const companies = await service.listCompanies(user.id);
       return reply.send({ companies });
+    });
+
+    // --- pierwsza mila (S10): stan kreatora i checklisty --------------------
+    // Świadomie NIE trzymamy tego w SessionUser: sesja siedzi w cache Redis,
+    // więc pole byłoby nieaktualne zaraz po PATCH aż do wygaśnięcia TTL.
+
+    app.get('/me/onboarding', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      return reply.send(await service.getOnboarding(user.id));
+    });
+
+    app.patch('/me/onboarding', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const input = parseBody(updateOnboardingInputSchema, request.body);
+      return reply.send(await service.updateOnboarding(user.id, input));
     });
 
     // --- E-mail (D4): weryfikacja adresu i reset hasła (za flagą) -----------

@@ -44,6 +44,16 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  // Pierwsza mila (S10). To CZYSTY stan UI: gdzie użytkownik jest w kreatorze
+  // i czy schował checklistę. ŻADNE z tych pól nie rodzi zdarzenia i nie ma
+  // drogi do Drabinki — onboarding to mapa, nie nagroda (ADR-004).
+  // Intencja trzymana jako String, nie enum: to pole wyłącznie prezentacyjne,
+  // a każdy enum w MySQL to kolejny ALTER przy najmniejszej zmianie.
+  onboardingStep        Int       @default(0)
+  onboardingIntent      String?
+  onboardingCompletedAt DateTime?
+  checklistDismissedAt  DateTime?
+
   avatarFile    UploadedFile?  @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   uploadedFiles UploadedFile[] @relation("FileOwner")
 

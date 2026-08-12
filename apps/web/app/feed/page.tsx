@@ -126,6 +126,7 @@ export default async function FeedPage({
       {items.length === 0 ? (
         scope === 'following' && followingCount === 0 ? (
           <EmptyState
+            art="ladder"
             title="Nie obserwujesz jeszcze nikogo"
             ctaHref="/feed?zakres=wszyscy"
             ctaLabel="Zobacz całą społeczność"
@@ -134,7 +135,7 @@ export default async function FeedPage({
             tutaj.
           </EmptyState>
         ) : (
-          <EmptyState title="Na razie cisza">
+          <EmptyState art="inbox" title="Na razie cisza">
             {scope === 'following'
               ? `Obserwowani (${followingCount}) nie opublikowali jeszcze nic nowego.`
               : 'Nikt jeszcze nic nie opublikował. Możesz być pierwszy.'}

@@ -35,7 +35,10 @@ export default function RegisterPage() {
           ...(turnstileToken ? { turnstileToken } : {}),
         }),
       });
-      router.push('/panel');
+      // Świeże konto trafia do kreatora, nie do pustego panelu — na pustym
+      // rynku pierwsze „co teraz?" kosztuje nas użytkownika. Kreator jest
+      // w całości pomijalny (patrz app/start/wizard.tsx).
+      router.push('/start');
       router.refresh();
     } catch (err) {
       setError(

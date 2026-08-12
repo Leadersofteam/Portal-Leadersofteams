@@ -14,6 +14,7 @@ import './globals.css';
 // nie ginie w pliku, który ma już ponad 1600 linii.
 import './styles/mobile-shell.css';
 import './styles/social.css';
+import './styles/climb.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({

@@ -1,6 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-import type { CreateCompanyInput, LoginInput, RegisterInput, SessionUser } from '@lot/contracts';
+import type {
+  CreateCompanyInput,
+  LoginInput,
+  RegisterInput,
+  SessionUser,
+  UpdateOnboardingInput,
+} from '@lot/contracts';
 
 import type { PrismaClient } from '../../shared/db';
 import { EmailTakenError, InvalidCredentialsError } from '../../shared/errors';
@@ -71,6 +77,16 @@ export interface IdentityService {
   verifyEmail(rawToken: string): Promise<{ verified: boolean }>;
   requestPasswordReset(email: string): Promise<{ rawToken: string | null }>;
   resetPassword(rawToken: string, newPassword: string): Promise<{ reset: boolean }>;
+  // Pierwsza mila (S10) — czysty stan UI, bez zdarzeń i bez punktów.
+  getOnboarding(userId: string): Promise<OnboardingState>;
+  updateOnboarding(userId: string, input: UpdateOnboardingInput): Promise<OnboardingState>;
+}
+
+export interface OnboardingState {
+  step: number;
+  intent: string | null;
+  completedAt: Date | null;
+  checklistDismissedAt: Date | null;
 }
 
 function toSessionUser(user: {
@@ -322,6 +338,74 @@ export function createIdentityService(
         select: { createdAt: true },
       });
       return user?.createdAt ?? null;
+    },
+
+    // --- pierwsza mila (S10) -------------------------------------------------
+
+    async getOnboarding(userId) {
+      const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          onboardingStep: true,
+          onboardingIntent: true,
+          onboardingCompletedAt: true,
+          checklistDismissedAt: true,
+        },
+      });
+      return {
+        step: user.onboardingStep,
+        intent: user.onboardingIntent,
+        completedAt: user.onboardingCompletedAt,
+        checklistDismissedAt: user.checklistDismissedAt,
+      };
+    },
+
+    /**
+     * ANTY-MLM Z ARCHITEKTURY, NIE Z REGULAMINU (ADR-004).
+     *
+     * Ta funkcja robi WYŁĄCZNIE `prisma.user.update` — ani jednego `emitEvent`.
+     * Brak zdarzenia oznacza, że nie istnieje żadna droga, którą ukończenie
+     * kreatora czy odhaczenie checklisty mogłoby dosypać punktów w Drabince:
+     * ladder konsumuje zdarzenia, a tutaj żadne nie powstaje. Jeśli kiedyś
+     * ktoś zechce „nagrodzić za onboarding" — to jest właśnie miejsce, w którym
+     * trzeba się zatrzymać i przeczytać brief §6.
+     *
+     * Kreator to mapa, nie nagroda.
+     */
+    async updateOnboarding(userId, input) {
+      const now = new Date();
+      const current = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { onboardingCompletedAt: true, checklistDismissedAt: true },
+      });
+
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(input.step !== undefined ? { onboardingStep: input.step } : {}),
+          ...(input.intent !== undefined ? { onboardingIntent: input.intent } : {}),
+          // Idempotentnie: raz ustawiony znacznik ukończenia się nie przesuwa.
+          ...(input.completed && !current.onboardingCompletedAt
+            ? { onboardingCompletedAt: now, onboardingStep: 4 }
+            : {}),
+          ...(input.dismissChecklist && !current.checklistDismissedAt
+            ? { checklistDismissedAt: now }
+            : {}),
+        },
+        select: {
+          onboardingStep: true,
+          onboardingIntent: true,
+          onboardingCompletedAt: true,
+          checklistDismissedAt: true,
+        },
+      });
+
+      return {
+        step: user.onboardingStep,
+        intent: user.onboardingIntent,
+        completedAt: user.onboardingCompletedAt,
+        checklistDismissedAt: user.checklistDismissedAt,
+      };
     },
 
     // --- RODO (D6) ----------------------------------------------------------

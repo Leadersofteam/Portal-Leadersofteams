@@ -1,0 +1,574 @@
+/* =============================================================================
+   Baza wspinacza i pierwsza mila (S9/S10) — panel, szyna postępu, kreator.
+   Doklejane PO globals.css. Ruch wygasza globalny blok prefers-reduced-motion.
+   ========================================================================== */
+
+/* ===================== Ilustracje pustych stanów ===================== */
+.art {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  color: var(--text-faint);
+}
+
+.empty-state .empty-art {
+  margin: 0 auto 0.75rem;
+  display: block;
+  opacity: 0.85;
+}
+
+/* ===================== Hero panelu ===================== */
+.climber-base {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem 2rem;
+  align-items: center;
+  margin: 1.5rem 0 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(99 102 241 / 0.1), transparent 60%), var(--surface);
+}
+
+.climber-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--primary-300);
+}
+
+.climber-base-head h1 {
+  margin: 0 0 0.35rem;
+}
+
+@media (max-width: 768px) {
+  .climber-base {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+}
+
+/* ===================== Szyna postępu ===================== */
+.progress-rail {
+  display: flex;
+  gap: 1.1rem;
+  align-items: stretch;
+}
+
+.progress-rail-art {
+  display: flex;
+  /* Komponent renderuje szczeble od 7 do 1, więc zwykła kolumna daje szczyt na
+     górze, a podnóże na dole. `column-reverse` odwracałoby to wbrew intuicji
+     wspinaczki (i tak właśnie wyglądało na pierwszym zrzucie). */
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  padding-right: 0.9rem;
+  border-right: 1px solid var(--border);
+}
+
+.rail-rung {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-direction: row-reverse;
+}
+
+/* Szczebel: kreska, która zapala się dopiero po zdobyciu poziomu. */
+.rail-rung i {
+  display: block;
+  width: 2.4rem;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  transition: background var(--dur) var(--ease);
+}
+
+.rail-rung.reached i {
+  background: var(--rung-color);
+  box-shadow: 0 0 10px -2px var(--rung-color);
+}
+
+/* Szczebel „w budowie": wypełniony proporcjonalnie do drogi, jaka za nami. */
+.rail-rung.building i {
+  background: linear-gradient(
+    90deg,
+    var(--rung-color) 0,
+    var(--rung-color) var(--rung-fill, 0%),
+    var(--border-strong) var(--rung-fill, 0%)
+  );
+  opacity: 0.85;
+}
+
+.rail-rung em {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.rail-rung.reached em {
+  color: var(--rung-color);
+  font-weight: 600;
+}
+
+.progress-rail-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.rail-standing {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text-strong);
+}
+
+.rail-standing strong {
+  color: var(--primary-300);
+}
+
+.rail-next {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-body);
+}
+
+/* Dwa paski = udział ścieżek (od poziomu 4 obie muszą mieć wkład). */
+.rail-paths {
+  display: flex;
+  gap: 2px;
+  margin-top: 0.6rem;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rail-path.market {
+  background: var(--primary-500);
+}
+
+.rail-path.community {
+  background: var(--violet-500);
+}
+
+/* ===================== „Zacznij tutaj" ===================== */
+.start-here {
+  margin: 0 0 2rem;
+  padding: 1.35rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary-500);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.start-here-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.start-here-head h2 {
+  margin: 0;
+}
+
+.start-here-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.start-here-note {
+  margin: 0.35rem 0 1rem;
+  font-size: 0.88rem;
+}
+
+.start-here-list {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.start-here-list li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.start-here-mark {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+}
+
+/* Odhaczony krok GAŚNIE — nie świętuje. Nagrodą jest realna praca, nie ptaszek. */
+.start-here-list li.done .start-here-mark {
+  border-color: var(--success);
+  background:
+    linear-gradient(
+      45deg,
+      transparent 45%,
+      var(--success) 45%,
+      var(--success) 55%,
+      transparent 55%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 45%,
+      var(--success) 45%,
+      var(--success) 55%,
+      transparent 55%
+    );
+}
+
+.start-here-list li.done strong {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.start-here-list li.done em {
+  color: var(--text-faint);
+}
+
+.start-here-list strong {
+  display: block;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.start-here-list em {
+  display: block;
+  margin-top: 0.1rem;
+  font-style: normal;
+  font-size: 0.87rem;
+  color: var(--text-muted);
+}
+
+/* ===================== Karty panelu: widmowe numery ===================== */
+.panel-cards .card {
+  position: relative;
+  overflow: hidden;
+}
+
+.panel-cards .card::after {
+  content: attr(data-ghost);
+  position: absolute;
+  right: 0.5rem;
+  bottom: -0.9rem;
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-strong);
+  opacity: 0.035;
+  pointer-events: none;
+}
+
+/* ===================== Kreator /start ===================== */
+.start-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  margin: 1rem 0 2rem;
+}
+
+@media (max-width: 900px) {
+  .start-hero {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.wizard {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.wizard h2 {
+  margin-top: 0;
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.wizard-steps li span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.wizard-steps li.active span {
+  border-color: var(--primary-500);
+  color: var(--primary-300);
+  background: rgb(99 102 241 / 0.12);
+}
+
+.wizard-steps li.done span {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.wizard-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.wizard-choice {
+  display: block;
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.wizard-choice:hover {
+  border-color: var(--primary-500);
+  background: var(--surface-hover);
+}
+
+.wizard-choice:active {
+  transform: scale(0.995);
+}
+
+.wizard-choice strong {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.wizard-choice em {
+  display: block;
+  margin-top: 0.2rem;
+  font-style: normal;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.wizard-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+.wizard-skip {
+  margin: 1.25rem 0 0;
+  text-align: center;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--text-strong);
+}
+
+@media (max-width: 640px) {
+  .wizard {
+    padding: 1.1rem;
+  }
+
+  .wizard-actions .btn {
+    flex: 1 1 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+/* ===================== Mikrointerakcje ===================== */
+/* Wejście kart panelu — jednorazowe, maks. 4 elementy, bez pętli. */
+.panel-cards .card {
+  animation: rise 0.35s var(--ease) both;
+}
+
+.panel-cards .card:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.panel-cards .card:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+/* Światło przebiegające szczeblem na hover głównego CTA. Bez @keyframes
+   w pętli — to pojedyncze przejście, nie migająca ozdoba. */
+.btn:not(.secondary) {
+  background-image: linear-gradient(
+    100deg,
+    transparent 40%,
+    rgb(255 255 255 / 0.14) 50%,
+    transparent 60%
+  );
+  background-size: 300% 100%;
+  background-position: 120% 0;
+  transition:
+    background-position 520ms var(--ease),
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.btn:not(.secondary):hover,
+.btn:not(.secondary):focus-visible {
+  background-position: -20% 0;
+}
+
+/* ===================== Profil jako credential ===================== */
+.credential-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.1rem;
+  align-items: center;
+  margin: 1rem 0 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(99 102 241 / 0.08), transparent 60%), var(--surface);
+}
+
+.credential-main {
+  min-width: 0;
+}
+
+.credential-main h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.credential-main .meta {
+  margin: 0.35rem 0 0;
+}
+
+.credential-headline {
+  margin: 0.5rem 0 0;
+  color: var(--text-body);
+}
+
+.credential-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+/* Duże światło poziomu — kolor bierzemy z tokenu --level-N, więc szczyt (7)
+   jest bursztynowy TYLKO wtedy, gdy naprawdę został zdobyty. */
+.credential-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.credential-level-num {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--level-1);
+}
+
+.credential-level[data-level='2'] .credential-level-num {
+  color: var(--level-2);
+}
+.credential-level[data-level='3'] .credential-level-num {
+  color: var(--level-3);
+}
+.credential-level[data-level='4'] .credential-level-num {
+  color: var(--level-4);
+}
+.credential-level[data-level='5'] .credential-level-num {
+  color: var(--level-5);
+}
+.credential-level[data-level='6'] .credential-level-num {
+  color: var(--level-6);
+}
+.credential-level[data-level='7'] .credential-level-num {
+  color: var(--level-7);
+}
+
+.credential-level-empty {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.credential-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .credential-header {
+    grid-template-columns: auto 1fr;
+    padding: 1.2rem;
+  }
+
+  /* Na telefonie poziom i akcje schodzą pod nagłówek, na pełną szerokość —
+     inaczej duża cyfra ściska nazwisko do dwóch znaków w linii. */
+  .credential-side {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .credential-level {
+    flex-direction: row;
+    gap: 0.6rem;
+  }
+
+  .credential-level-num {
+    font-size: 2.2rem;
+  }
+}

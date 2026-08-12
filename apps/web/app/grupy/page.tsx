@@ -83,7 +83,7 @@ export default async function GroupsPage({
       </form>
 
       {groups.length === 0 ? (
-        <EmptyState title="Brak grup spełniających kryteria">
+        <EmptyState art="ladder" title="Brak grup spełniających kryteria">
           Zmień filtry — grupy branżowe może zakładać każdy Lider od poziomu 2.
         </EmptyState>
       ) : (

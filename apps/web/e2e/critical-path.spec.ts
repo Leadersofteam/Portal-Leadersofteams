@@ -64,6 +64,10 @@ async function register(page: Page, displayName: string, email: string) {
   await page.getByLabel('E-mail', { exact: true }).fill(email);
   await page.getByLabel(/^Hasło/).fill(PASSWORD);
   await page.getByRole('button', { name: 'Utwórz konto' }).click();
+  // Po rejestracji ląduje się w kreatorze pierwszej mili (S10), nie od razu
+  // w panelu — pomijamy go, bo te testy sprawdzają co innego.
+  await page.waitForURL('**/start', { timeout: 30_000 });
+  await page.getByRole('button', { name: 'Pomiń kreator' }).click();
   await page.waitForURL('**/panel', { timeout: 30_000 });
 }
 

@@ -482,3 +482,26 @@ export const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 export type FeedQuery = z.infer<typeof feedQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Onboarding — pierwsza mila (S10)
+//
+// To WYŁĄCZNIE stan interfejsu: który krok kreatora, jaka intencja, czy
+// checklista schowana. Zero związku z punktacją — patrz komentarz nad
+// updateOnboarding w modules/identity/service.ts.
+// ---------------------------------------------------------------------------
+
+export const onboardingIntentSchema = z.enum(['LEADER', 'COMPANY', 'BOTH']);
+export type OnboardingIntent = z.infer<typeof onboardingIntentSchema>;
+
+export const updateOnboardingInputSchema = z
+  .object({
+    step: z.coerce.number().int().min(0).max(4).optional(),
+    intent: onboardingIntentSchema.optional(),
+    completed: z.boolean().optional(),
+    dismissChecklist: z.boolean().optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: 'Podaj co najmniej jedno pole',
+  });
+export type UpdateOnboardingInput = z.infer<typeof updateOnboardingInputSchema>;
