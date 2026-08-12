@@ -108,7 +108,7 @@ export default async function MyPointsPage() {
         </p>
       ) : (
         events.map((event) => (
-          <div key={event.id} className="list-row">
+          <div key={event.id} className="list-row list-row--stack">
             <div>
               <strong>{TYPE_LABELS[event.type] ?? event.type}</strong>
               <div className="meta">
@@ -116,7 +116,7 @@ export default async function MyPointsPage() {
                 {new Date(event.createdAt).toLocaleDateString('pl-PL')}
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right list-row-aside">
               <strong>{event.points > 0 ? `+${event.points}` : event.points} pkt</strong>{' '}
               <span className="badge">{STATUS_LABELS[event.status] ?? event.status}</span>
             </div>

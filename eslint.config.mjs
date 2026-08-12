@@ -36,6 +36,27 @@ export default tseslint.config(
     },
   },
   {
+    // Service worker żyje poza oknem przeglądarki — ma własne globalne API
+    // (self/caches/clients), których nie zna ani config przeglądarki, ani Node.
+    files: ['apps/web/public/sw.js'],
+    languageOptions: {
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        Response: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
+    // Skrypty narzędziowe uruchamiane ręcznie przez Node (generator ikon PWA).
+    files: ['**/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { Buffer: 'readonly', console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     files: ['apps/api/src/**/*.ts'],
     plugins: { import: importPlugin },
     rules: {

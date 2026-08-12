@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 // Ścieżka krytyczna marketplace end-to-end przez UI (ADR-008, D5):
 // rejestracja → firma → zlecenie → oferta → przyznanie → cykl realizacji →
@@ -21,16 +21,28 @@ async function clickUntil(page: Page, buttonName: string, expected: string | Reg
     const btn = page.getByRole('button', { name: buttonName });
     // W stanie „pending" etykieta zmienia się na „…", więc przycisk o tej nazwie
     // znika — nie klikamy wtedy ponownie, tylko czekamy na docelowy stan (tekst).
-    if (await btn.isVisible().catch(() => false)) await btn.click({ timeout: 1_500 }).catch(() => {});
-    await expect(page.getByText(expected, { exact: false }).first()).toBeVisible({ timeout: 2_000 });
+    if (await btn.isVisible().catch(() => false))
+      await btn.click({ timeout: 1_500 }).catch(() => {});
+    await expect(page.getByText(expected, { exact: false }).first()).toBeVisible({
+      timeout: 2_000,
+    });
   }).toPass({ timeout: 30_000 });
 }
 
-// Wysłanie oceny z ponowieniem (odporne na wyścig hydracji). SUKCES = formularz
-// zniknął (przycisk „Wyślij ocenę" niewidoczny po router.refresh). NIE opieramy
-// się na tekście „Oceny…", bo ten napis jest też w OPISIE samego formularza →
-// dałby fałszywie-pozytywny wynik zanim ocena faktycznie poleci.
-async function submitReview(page: Page) {
+// Wysłanie oceny z ponowieniem (odporne na wyścig hydracji).
+//
+// SUKCES = POZYTYWNY ślad zapisanej oceny na stronie, nigdy „zniknięcie
+// formularza". Nieobecność elementu jest prawdziwa także wtedy, gdy strona
+// jest w trakcie nawigacji albo jeszcze się nie wyrenderowała — na tym właśnie
+// łapał się poprzedni wariant: helper meldował sukces, choć ocena nie poleciała,
+// a test padał dopiero kilka kroków dalej, w miejscu niezwiązanym z przyczyną.
+//
+// `success` podaje wołający jako LOKATOR, bo ślad zależy od kolejności: pierwsza
+// oceniająca strona widzi „czeka na ocenę drugiej strony", druga — opublikowaną
+// sekcję ocen. Lokator, nie tekst: fraza „Oceny publikują się symultanicznie…"
+// stoi w opisie SAMEGO formularza, więc getByText(/Oceny/) meldowałby sukces,
+// zanim cokolwiek poleci (dokładnie ta pułapka wywróciła wcześniejszą wersję).
+async function submitReview(page: Page, success: Locator) {
   await expect(async () => {
     const select = page.getByLabel('Ocena');
     if (await select.isVisible().catch(() => false)) {
@@ -42,10 +54,7 @@ async function submitReview(page: Page) {
         .click({ timeout: 1_500 })
         .catch(() => {});
     }
-    // SUKCES = pole „Ocena" zniknęło (formularz usunięty PO zapisie i publikacji);
-    // nazwa selecta nie zmienia się w stanie pending, więc to wiarygodny sygnał.
-    // Dłuższy timeout, by pojedyncze wysłanie zdążyło się zapisać przed ponowieniem.
-    await expect(select).toBeHidden({ timeout: 6_000 });
+    await expect(success.first()).toBeVisible({ timeout: 6_000 });
   }).toPass({ timeout: 40_000 });
 }
 
@@ -87,7 +96,10 @@ test('ścieżka krytyczna: rejestracja → zlecenie → oferta → cykl → ocen
     if (await select.isVisible().catch(() => false)) return;
     const createBtn = companyPage.getByRole('button', { name: 'Utwórz firmę' });
     if (await createBtn.isVisible().catch(() => false)) {
-      await companyPage.getByLabel('Nazwa firmy').fill(companyName).catch(() => {});
+      await companyPage
+        .getByLabel('Nazwa firmy')
+        .fill(companyName)
+        .catch(() => {});
       await createBtn.click({ timeout: 1_500 }).catch(() => {});
     } else {
       await companyPage.goto('/zlecenia/nowe');
@@ -122,17 +134,34 @@ test('ścieżka krytyczna: rejestracja → zlecenie → oferta → cykl → ocen
   // 4) Lider: rejestracja + profil Lidera.
   await register(leaderPage, 'E2E Lider', uniq('lider'));
   await leaderPage.goto('/panel/profil');
-  await leaderPage.getByLabel('Branża / kompetencja').selectOption({ label: 'IT i programowanie' });
-  await leaderPage.getByLabel(/^Nagłówek/).fill('Fullstack developer (Next.js/Node)');
-  await leaderPage.getByRole('button', { name: 'Utwórz profil' }).click();
-  await expect(leaderPage.getByText('Zapisz zmiany')).toBeVisible({ timeout: 30_000 });
+  // Jedyne miejsce w tym pliku bez ponowienia — a formularz profilu jest tak samo
+  // podatny na wyścig hydracji jak akcje zlecenia (klik przed podpięciem onSubmit
+  // po prostu przepada). Ponawiamy w rytmie clickUntil: wypełnij → kliknij →
+  // sprawdź, czy przycisk zmienił etykietę na „Zapisz zmiany".
+  await expect(async () => {
+    const submit = leaderPage.getByRole('button', { name: 'Utwórz profil' });
+    if (await submit.isVisible().catch(() => false)) {
+      await leaderPage
+        .getByLabel('Branża / kompetencja')
+        .selectOption({ label: 'IT i programowanie' })
+        .catch(() => {});
+      await leaderPage
+        .getByLabel(/^Nagłówek/)
+        .fill('Fullstack developer (Next.js/Node)')
+        .catch(() => {});
+      await submit.click({ timeout: 1_500 }).catch(() => {});
+    }
+    await expect(leaderPage.getByText('Zapisz zmiany')).toBeVisible({ timeout: 2_500 });
+  }).toPass({ timeout: 30_000 });
 
   // 5) Lider: złożenie oferty na zlecenie (odporne na wyścig hydracji).
   await leaderPage.goto(orderUrl);
   await expect(async () => {
     const msg = leaderPage.getByLabel(/Wiadomość do firmy/);
     if (await msg.isVisible().catch(() => false)) {
-      await msg.fill('Zrealizuję ten panel — mam duże doświadczenie w Next.js i podobnych wdrożeniach.');
+      await msg.fill(
+        'Zrealizuję ten panel — mam duże doświadczenie w Next.js i podobnych wdrożeniach.',
+      );
       await leaderPage
         .getByRole('button', { name: 'Wyślij ofertę' })
         .click({ timeout: 1_500 })
@@ -156,15 +185,18 @@ test('ścieżka krytyczna: rejestracja → zlecenie → oferta → cykl → ocen
 
   // 8) Obustronna ocena (publikacja symultaniczna: druga strona publikuje obie).
   await companyPage.goto(orderUrl);
-  await submitReview(companyPage);
-  await expect(companyPage.getByText(/czeka na ocenę drugiej strony/)).toBeVisible();
+  await submitReview(companyPage, companyPage.getByText(/czeka na ocenę drugiej strony/));
 
+  // Druga ocena zamyka publikację symultaniczną → obie oceny stają się jawne,
+  // więc u Lidera sukcesem jest już NAGŁÓWEK sekcji ocen (nie tekst).
   await leaderPage.goto(orderUrl);
-  await submitReview(leaderPage);
+  await submitReview(leaderPage, leaderPage.getByRole('heading', { name: 'Oceny', exact: true }));
 
-  // Obie oceny opublikowane → sekcja „Oceny" (nagłówek) widoczna dla obu stron.
+  // Obie oceny opublikowane → sekcja „Oceny" widoczna także dla Firmy.
   await companyPage.goto(orderUrl);
-  await expect(companyPage.getByRole('heading', { name: 'Oceny' })).toBeVisible({ timeout: 30_000 });
+  await expect(companyPage.getByRole('heading', { name: 'Oceny', exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
 
   // 9) Punkty Drabinki naliczone Liderowi (worker przez outbox → ladder).
   //    Wpis pojawia się w karencji (PENDING → badge „Karencja (7 dni)"). Wartość

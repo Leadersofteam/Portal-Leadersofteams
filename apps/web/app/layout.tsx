@@ -1,12 +1,18 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
+import { BottomNav } from '@/components/bottom-nav';
+import { ServiceWorkerRegistrar } from '@/components/service-worker';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/ui/footer';
 import { SITE_DESCRIPTION, SITE_URL } from '@/lib/site';
 
 import './globals.css';
+// Warstwy stylów doklejane PO globals.css — kolejność importów jest kolejnością
+// kaskady, więc nowe reguły wygrywają bez wojny na !important, a diff sprintu
+// nie ginie w pliku, który ma już ponad 1600 linii.
+import './styles/mobile-shell.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({
@@ -30,6 +36,9 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: 'Leaders of Teams',
   alternates: { canonical: '/' },
+  manifest: '/manifest.webmanifest',
+  icons: { icon: '/icon.svg', apple: '/icons/apple-touch-icon-180.png' },
+  appleWebApp: { capable: true, title: 'Leaders', statusBarStyle: 'black-translucent' },
   openGraph: {
     type: 'website',
     locale: 'pl_PL',
@@ -41,16 +50,33 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image' },
 };
 
+// viewportFit: 'cover' + safe-area w CSS — bez tego dolny pasek chowa się pod
+// paskiem gestów iPhone'a. themeColor musi być TUTAJ (w metadata jest przestarzały).
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0a0b12',
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pl" className={`${inter.variable} ${bricolage.variable}`}>
       <body>
         <div className="climb-rail" aria-hidden="true">
-          <i /><i /><i /><i /><i /><i /><i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
         </div>
         <SiteHeader />
         {children}
         <SiteFooter />
+        <BottomNav />
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );

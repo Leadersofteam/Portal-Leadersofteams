@@ -1,0 +1,345 @@
+/* =============================================================================
+   Kieszonkowa Drabina — powłoka mobilna (S8)
+   Doklejane PO globals.css. Zasada: 390 px jest projektem, desktop rozszerzeniem.
+   Ruch jest wygaszany globalnym blokiem prefers-reduced-motion z globals.css
+   (selektor uniwersalny z !important — obejmuje też ten plik).
+   ========================================================================== */
+
+/* ===================== Dolny pasek nawigacji ===================== */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Ponad headerem (50) i ponad tłem strony — to ostatnia rzecz, którą
+       kciuk ma zawsze pod ręką. */
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: stretch;
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(140%) blur(14px);
+    border-top: 1px solid var(--border);
+  }
+
+  /* Treść strony nie może chować się pod paskiem. */
+  body {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+
+  /* Header chudnie: linki żyją w dolnym pasku i pod hamburgerem. */
+  .site-header {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+}
+
+.bottom-nav-item,
+.bottom-nav-create {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  /* Cel dotyku: nigdy mniej niż 44 px w pionie. */
+  min-height: 3.4rem;
+  padding: 0.45rem 0.25rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  color: var(--text-faint);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-create:hover {
+  color: var(--text-muted);
+}
+
+/* Aktywne miejsce świeci światłem marki — szczebel, na którym właśnie stoisz. */
+.bottom-nav-item.active {
+  color: var(--primary-300);
+}
+
+.bottom-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 1.75rem;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-400), transparent);
+}
+
+.bottom-nav-item {
+  position: relative;
+}
+
+.bottom-nav-icon {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Badge dzwonka w pasku — mniejszy niż w headerze, bo ikona też jest mniejsza. */
+.bottom-nav-icon .bell-badge {
+  top: -0.35rem;
+  right: -0.45rem;
+}
+
+/* ===================== Środkowy przycisk twórczy ===================== */
+.bottom-nav-create-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: var(--radius);
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-600), var(--violet-500));
+  box-shadow: var(--glow);
+  transition: transform var(--dur) var(--ease);
+}
+
+.bottom-nav-create:active .bottom-nav-create-mark {
+  transform: scale(0.94);
+}
+
+/* ===================== Arkusz akcji twórczych ===================== */
+.create-sheet {
+  width: 100%;
+  max-width: 32rem;
+  margin: auto auto 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+}
+
+.create-sheet::backdrop {
+  background: rgb(4 5 10 / 0.65);
+  backdrop-filter: blur(3px);
+}
+
+.create-sheet[open] {
+  animation: sheet-up 0.22s var(--ease) both;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.create-sheet-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.25rem 1.1rem calc(1.25rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-strong);
+}
+
+/* Uchwyt arkusza — sygnał „to wysuwa się od dołu". */
+.create-sheet-inner::before {
+  content: '';
+  align-self: center;
+  width: 2.5rem;
+  height: 4px;
+  margin-bottom: 0.5rem;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.create-sheet-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.create-sheet-action {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 3.5rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.create-sheet-action:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.create-sheet-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: none;
+  border-radius: var(--radius-sm);
+  color: var(--primary-300);
+  background: rgb(99 102 241 / 0.12);
+  border: 1px solid rgb(99 102 241 / 0.28);
+}
+
+.create-sheet-action strong {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.create-sheet-action em {
+  display: block;
+  margin-top: 0.1rem;
+  font-style: normal;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ===================== Cele dotyku ===================== */
+/* Tylko badge'e będące linkami (tagi, filtry). Statusy w listach zostają małe —
+   nie są klikalne, a rozdmuchane rozbiłyby rytm wierszy. */
+@media (pointer: coarse) {
+  a.badge {
+    min-height: 44px;
+    padding-inline: 0.85rem;
+  }
+
+  .site-header .brand {
+    min-height: 44px;
+  }
+}
+
+/* ===================== Tabela → karty (mobile) ===================== */
+/* Wariant kartowy istnieje w DOM równolegle z tabelą; przełączamy widoczność,
+   bo poziomy scroll tabeli na 390 px to obejście, nie rozwiązanie. */
+.rung-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .rung-cards {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.25rem 0;
+  }
+
+  .table-wrap.desktop-only,
+  .desktop-only {
+    display: none;
+  }
+}
+
+.rung-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.9rem;
+  padding: 0.95rem 1rem 0.95rem 0.85rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--rung-color, var(--border-strong));
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rung-card-level {
+  grid-row: 1 / span 3;
+  align-self: center;
+  min-width: 2.2rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  color: var(--rung-color, var(--text-muted));
+}
+
+.rung-card-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.rung-card-meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.rung-card-unlock {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+/* ===================== Listy: wariant kolumnowy na mobile ===================== */
+/* .list-row jest flexem justify-between — na 390 px prawa kolumna spada pod
+   lewą bez hierarchii. Ten modyfikator robi z tego świadomy stos. */
+@media (max-width: 640px) {
+  .list-row--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .list-row--stack .list-row-aside {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    text-align: left;
+  }
+
+  .list-row--stack .stat-number {
+    font-size: 1.35rem;
+  }
+}
+
+/* ===================== Oferty na zleceniu ===================== */
+.offer-card {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  /* ActionButton opakowuje przycisk w <span> — dlatego celujemy w sam .btn,
+     a span musi stać się blokiem, żeby szerokość 100% miała w czym się rozciągnąć. */
+  .offer-card > span {
+    display: block;
+  }
+
+  .offer-card .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}

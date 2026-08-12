@@ -19,6 +19,19 @@ const nextConfig: NextConfig = {
       { source: '/api/:path*', destination: `${apiUrl}/api/:path*` },
     ];
   },
+  async headers() {
+    // Service worker musi być zawsze świeży (inaczej stary SW zostaje na
+    // zawsze) i mieć prawo do zakresu '/' mimo serwowania z /sw.js.
+    return [
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

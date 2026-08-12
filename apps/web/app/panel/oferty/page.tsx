@@ -32,7 +32,7 @@ export default async function MyOffersPage() {
         </p>
       ) : (
         offers.map((offer) => (
-          <div key={offer.id} className="list-row">
+          <div key={offer.id} className="list-row list-row--stack">
             <div>
               <h3>
                 <Link href={`/zlecenia/${offer.order.id}`}>{offer.order.title}</Link>
@@ -42,7 +42,9 @@ export default async function MyOffersPage() {
                 {offer.proposedBudget ? ` · Twoja propozycja: ${offer.proposedBudget} zł` : ''}
               </div>
             </div>
-            <span className="badge">{OFFER_STATUS_LABELS[offer.status] ?? offer.status}</span>
+            <div className="list-row-aside">
+              <span className="badge">{OFFER_STATUS_LABELS[offer.status] ?? offer.status}</span>
+            </div>
           </div>
         ))
       )}
