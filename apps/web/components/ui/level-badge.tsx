@@ -12,6 +12,9 @@ export function LevelBadge({
   name?: string;
   title?: string;
 }) {
+  // Poziom 0 = jeszcze bez tytułu Lidera — odznaki nie pokazujemy (uczciwie,
+  // ale bez piętnowania świeżych kont etykietą „Poziom 0").
+  if (level < 1) return null;
   const clamped = Math.min(Math.max(level, 1), 7);
   return (
     <span className="level-badge" data-level={clamped} title={title ?? `Poziom ${level} w Drabince Lidera`}>
