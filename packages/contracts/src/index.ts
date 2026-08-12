@@ -442,3 +442,43 @@ export const notificationsReadInputSchema = z
     path: ['ids'],
   });
 export type NotificationsReadInput = z.infer<typeof notificationsReadInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Social — wpis portalowy (moduł social, X-lite wg ADR-010)
+//
+// Krótka notka bez tytułu: to nie jest post w grupie (tam jest tytuł, typ
+// i moderacja grupowa), tylko wpis „co u mnie" do obserwujących. Limit 600
+// znaków jest celowy — zmusza do konkretu i trzyma feed czytelnym na 390 px.
+// ZERO punktów za cokolwiek tutaj (ADR-004).
+// ---------------------------------------------------------------------------
+
+export const socialPostBodySchema = z
+  .string()
+  .trim()
+  .min(1, 'Wpis nie może być pusty')
+  .max(600, 'Wpis: maksymalnie 600 znaków');
+
+export const createSocialPostInputSchema = z.object({ body: socialPostBodySchema });
+export type CreateSocialPostInput = z.infer<typeof createSocialPostInputSchema>;
+
+export const updateSocialPostInputSchema = z.object({ body: socialPostBodySchema });
+export type UpdateSocialPostInput = z.infer<typeof updateSocialPostInputSchema>;
+
+export const createSocialCommentInputSchema = z.object({
+  body: z.string().trim().min(1, 'Komentarz nie może być pusty').max(2000),
+  // Wątkowanie 1 poziom — jak w grupach.
+  parentId: idSchema.optional(),
+});
+export type CreateSocialCommentInput = z.infer<typeof createSocialCommentInputSchema>;
+
+// Zakres feedu: obserwowani (wymaga sesji) albo cała społeczność (także dla
+// gościa — pusty rynek nie wybacza ekranu logowania jako pierwszego wrażenia).
+export const feedScopeSchema = z.enum(['following', 'all']).default('following');
+export type FeedScope = z.infer<typeof feedScopeSchema>;
+
+export const feedQuerySchema = z.object({
+  scope: feedScopeSchema,
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type FeedQuery = z.infer<typeof feedQuerySchema>;

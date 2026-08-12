@@ -499,9 +499,14 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
       const post = await prisma.post.findUnique({ where: { id: postId } });
       if (!post || post.deletedAt) throw new NotFoundError('Post nie istnieje');
       if (post.authorUserId !== userId) throw new ForbiddenError();
-      await prisma.post.update({
-        where: { id: postId },
-        data: { deletedAt: new Date(), title: '[usunięto]', body: '[treść usunięta]' },
+      await prisma.$transaction(async (tx) => {
+        await tx.post.update({
+          where: { id: postId },
+          data: { deletedAt: new Date(), title: '[usunięto]', body: '[treść usunięta]' },
+        });
+        // Feed jest projekcją w module social — bez tego zdarzenia usunięty post
+        // zostawał na osi aktywności z dawnym tytułem i linkiem prowadzącym w 404.
+        await emitEvent(tx, 'groups.post_deleted', { postId, groupId: post.groupId });
       });
       await cache?.bump(GROUPS_CACHE_NS);
       return { id: postId };

@@ -13,6 +13,7 @@ import './globals.css';
 // kaskady, więc nowe reguły wygrywają bez wojny na !important, a diff sprintu
 // nie ginie w pliku, który ma już ponad 1600 linii.
 import './styles/mobile-shell.css';
+import './styles/social.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({

@@ -1,0 +1,305 @@
+/* =============================================================================
+   Warstwa społecznościowa (S8) — feed, kompozytor, wpisy, komentarze.
+   Doklejane PO globals.css. Ruch wygasza globalny blok prefers-reduced-motion.
+   ========================================================================== */
+
+/* Etykieta czytana tylko przez czytniki ekranu (pola bez widocznego labelka). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===================== Zakładki feedu ===================== */
+.feed-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin: 1.25rem 0 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.feed-tabs a {
+  position: relative;
+  padding: 0.55rem 0.9rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+  font-weight: 550;
+  text-decoration: none;
+  transition:
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.feed-tabs a:hover {
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.feed-tabs a.active {
+  color: var(--text-strong);
+}
+
+/* Aktywna zakładka podświetlona szczeblem, nie ramką. */
+.feed-tabs a.active::after {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: -0.35rem;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--primary-500), var(--violet-500));
+}
+
+/* ===================== Kompozytor ===================== */
+.composer {
+  margin: 1rem 0 1.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.composer textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.composer-count {
+  font-size: 0.82rem;
+  color: var(--text-faint);
+}
+
+.composer-count.low {
+  color: var(--warning);
+}
+
+@media (max-width: 640px) {
+  .composer-foot .btn {
+    min-height: 44px;
+  }
+}
+
+/* ===================== Karty feedu ===================== */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.feed-card {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.feed-card:hover {
+  border-color: var(--border-strong);
+}
+
+/* Wpis na własnej stronie — mocniejszy, bez efektu hover listy. */
+.feed-card--solo {
+  padding: 1.35rem;
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+.feed-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.feed-card-head {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.feed-card-time {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.feed-card-text {
+  margin: 0.35rem 0 0;
+  color: var(--text-body);
+}
+
+.feed-post-body {
+  margin: 0.45rem 0 0;
+  color: var(--text);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.feed-post-body.large {
+  font-size: 1.08rem;
+}
+
+.feed-edited {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+}
+
+.mention {
+  color: var(--primary-300);
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.mention:hover {
+  text-decoration: underline;
+}
+
+/* ===================== Akcje pod wpisem ===================== */
+.feed-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+
+.appreciate,
+.share-btn,
+.feed-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.appreciate:hover,
+.share-btn:hover,
+.feed-action:hover {
+  color: var(--text-strong);
+  background: var(--surface-hover);
+}
+
+/* Docenienie jest zdobyte przez autora, nie kupione — świeci światłem marki,
+   nigdy bursztynem (ten należy wyłącznie do poziomu 7). */
+.appreciate.active {
+  color: var(--primary-300);
+  border-color: rgb(99 102 241 / 0.35);
+  background: rgb(99 102 241 / 0.1);
+}
+
+.appreciate:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .appreciate,
+  .share-btn,
+  .feed-action {
+    min-height: 44px;
+  }
+}
+
+/* Na 390 px trzy akcje muszą zmieścić się w JEDNYM rzędzie — złamanie do dwóch
+   linii rozbija rytm kart i sprawia, że „Udostępnij" wygląda na osierocone.
+   Zwężamy padding zamiast chować akcję: udostępnianie to nasz jedyny kanał
+   wirusowy za 0 zł, więc nie może znikać na telefonie. */
+@media (max-width: 420px) {
+  .feed-card {
+    padding: 0.9rem 0.8rem;
+    gap: 0.65rem;
+  }
+
+  .feed-card-actions {
+    gap: 0.1rem;
+  }
+
+  .appreciate,
+  .share-btn,
+  .feed-action {
+    padding-inline: 0.5rem;
+    font-size: 0.82rem;
+  }
+
+  /* Ostatnia rezerwa miejsca: udostępnianie zostaje jako sama ikona (znaczenie
+     niesie aria-label). Na stronie pojedynczego wpisu jest dość miejsca, więc
+     tam etykieta zostaje. */
+  .feed-list .share-btn span {
+    display: none;
+  }
+}
+
+/* ===================== Komentarze ===================== */
+.comment-block {
+  margin-top: 0.75rem;
+}
+
+.comment-block .feed-card {
+  background: var(--surface);
+}
+
+.comment-block .comment-reply {
+  margin: 0.5rem 0 0 1.5rem;
+  border-left: 2px solid var(--border-strong);
+}
+
+@media (max-width: 640px) {
+  .comment-block .comment-reply {
+    margin-left: 0.75rem;
+  }
+}
+
+.comment-form {
+  margin-top: 1rem;
+}
+
+.comment-form.nested {
+  margin-top: 0.5rem;
+}
+
+.comment-form textarea {
+  width: 100%;
+}
+
+.comment-delete {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+}

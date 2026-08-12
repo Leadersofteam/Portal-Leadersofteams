@@ -180,6 +180,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     prisma,
     identity: identityService,
     ladder: ladderService,
+    redis,
   });
   const listingsService = createListingsService({
     prisma,

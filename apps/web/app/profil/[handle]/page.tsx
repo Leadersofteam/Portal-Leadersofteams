@@ -53,6 +53,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   LISTING_PUBLISHED: 'Nowa usługa',
   ANSWER_ACCEPTED: 'Zaakceptowana odpowiedź',
   LEVEL_ACHIEVED: 'Awans w Drabince',
+  SOCIAL_POST_PUBLISHED: 'Wpis',
 };
 
 function activityHref(a: SocialProfile['activity'][number]): string | null {
@@ -60,6 +61,7 @@ function activityHref(a: SocialProfile['activity'][number]): string | null {
     return `/grupy/${a.meta.groupId}/post/${a.subjectId}`;
   if (a.type === 'LISTING_PUBLISHED' && a.meta.slug) return `/uslugi/${a.meta.slug}`;
   if (a.type === 'ANSWER_ACCEPTED' && a.meta.threadId) return `/watki/${a.meta.threadId}`;
+  if (a.type === 'SOCIAL_POST_PUBLISHED') return `/wpisy/${a.subjectId}`;
   return null;
 }
 
@@ -119,7 +121,7 @@ export default async function SocialProfilePage({
       ) : (
         data.activity.map((a) => {
           const href = activityHref(a);
-          const title = String(a.meta.title ?? a.meta.threadTitle ?? '');
+          const title = String(a.meta.title ?? a.meta.threadTitle ?? a.meta.excerpt ?? '');
           const label = `${ACTIVITY_LABELS[a.type] ?? a.type}${title ? `: ${title}` : ''}${
             a.type === 'LEVEL_ACHIEVED' ? ` — poziom ${String(a.meta.level ?? '')}` : ''
           }`;

@@ -140,4 +140,22 @@ describe.skipIf(!hasInfra)('social — follow, feed, profil', () => {
     });
     expect((feed.json() as { followingCount: number }).followingCount).toBe(0);
   });
+
+  // Zakres „cała społeczność" jest oknem wystawowym Portalu: gość ma zobaczyć
+  // żywe miejsce, a nie ekran logowania. Oś obserwowanych pozostaje prywatna —
+  // bez sesji nie ma czyjej osi pokazać.
+  it('feed: scope=all działa dla gościa, scope=following wymaga sesji', async () => {
+    const guest = await ctx.app.inject({ method: 'GET', url: '/api/v1/feed?scope=all' });
+    expect(guest.statusCode).toBe(200);
+    const body = guest.json() as { items: Array<{ actor: { id: string } }>; scope: string };
+    expect(body.scope).toBe('all');
+    // Aktywność obcego użytkownika jest widoczna mimo braku obserwowania.
+    expect(body.items.some((i) => i.actor.id === leaderId)).toBe(true);
+
+    const guestFollowing = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/v1/feed?scope=following',
+    });
+    expect(guestFollowing.statusCode).toBe(401);
+  });
 });

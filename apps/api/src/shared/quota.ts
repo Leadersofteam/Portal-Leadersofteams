@@ -22,6 +22,7 @@ export const FRESH_ACCOUNT_LIMITS = {
   qa_answer: { action: 'qa_answer', limit: 30, windowSeconds: 86_400 },
   listing_publish: { action: 'listing_publish', limit: 5, windowSeconds: 86_400 },
   inquiry_create: { action: 'inquiry_create', limit: 10, windowSeconds: 86_400 },
+  social_post: { action: 'social_post', limit: 20, windowSeconds: 86_400 },
 } as const satisfies Record<string, QuotaLimit>;
 
 export function isFreshAccount(createdAt: Date | null, now = new Date()): boolean {

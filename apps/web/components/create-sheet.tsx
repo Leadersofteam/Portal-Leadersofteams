@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
-import { IconOrders, IconPlus, IconServices } from '@/components/ui/icons';
+import { IconFeed, IconOrders, IconPlus, IconServices } from '@/components/ui/icons';
 
 /**
  * Arkusz akcji twórczych — środkowy slot dolnego paska.
@@ -13,6 +13,12 @@ import { IconOrders, IconPlus, IconServices } from '@/components/ui/icons';
  * zero własnego zarządzania fokusem, które i tak wyszłoby gorzej.
  */
 const ACTIONS = [
+  {
+    href: '/feed#composer',
+    title: 'Napisz wpis',
+    hint: 'Krótka notka do obserwujących',
+    Icon: IconFeed,
+  },
   {
     href: '/uslugi/nowa',
     title: 'Opublikuj usługę',
