@@ -3,14 +3,13 @@ export const metadata = {
   description: 'Regulamin platformy leadersofteams.pl.',
 };
 
-// SZKIC regulaminu (bloker launchowy R-10). Przed startem produkcyjnym treść
-// wymaga przeglądu właściciela — sekcje oznaczone [DO UZUPEŁNIENIA] muszą
-// zostać zatwierdzone (dane podmiotu, adres, tryb reklamacji).
+// Regulamin v1 (R-10). Dane operatora wg dokumentacji projektu; przy zmianie
+// formy prawnej działalności zaktualizować §1.
 export default function TermsPage() {
   return (
     <main>
       <h1>Regulamin platformy Leaders of Teams</h1>
-      <p className="muted">Wersja robocza — obowiązuje od dnia startu produkcyjnego.</p>
+      <p className="muted">Wersja 1.0 — obowiązuje od 12 sierpnia 2026 r.</p>
 
       <h2>§1. Postanowienia ogólne</h2>
       <ul>
@@ -18,7 +17,11 @@ export default function TermsPage() {
           Platforma leadersofteams.pl (dalej: „Portal") łączy specjalistów budujących reputację
           zawodową („Liderzy") z firmami poszukującymi wykonawców („Firmy").
         </li>
-        <li>Operatorem Portalu jest [DO UZUPEŁNIENIA: dane podmiotu, NIP, adres].</li>
+        <li>
+          Operatorem Portalu jest Maciej Kucharski, twórca Leaders of Teams. Kontakt we wszystkich
+          sprawach dotyczących Portalu:{' '}
+          <a href="mailto:kontakt@leadersofteams.com">kontakt@leadersofteams.com</a>.
+        </li>
         <li>Korzystanie z Portalu jest bezpłatne.</li>
       </ul>
 
@@ -68,7 +71,11 @@ export default function TermsPage() {
 
       <h2>§5. Reklamacje i odpowiedzialność</h2>
       <ul>
-        <li>Reklamacje: [DO UZUPEŁNIENIA: adres e-mail kontaktowy], termin odpowiedzi 14 dni.</li>
+        <li>
+          Reklamacje i zgłoszenia:{' '}
+          <a href="mailto:kontakt@leadersofteams.com">kontakt@leadersofteams.com</a> — odpowiadamy
+          w terminie 14 dni.
+        </li>
         <li>
           Portal nie jest stroną umów zawieranych między Firmą a Liderem i nie odpowiada za ich
           wykonanie.

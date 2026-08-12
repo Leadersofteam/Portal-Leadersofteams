@@ -3,18 +3,19 @@ export const metadata = {
   description: 'Polityka prywatności platformy leadersofteams.pl.',
 };
 
-// SZKIC polityki prywatności (bloker launchowy R-10). Sekcje [DO UZUPEŁNIENIA]
-// wymagają decyzji właściciela przed startem produkcyjnym.
+// Polityka prywatności v1 (R-10). Odbiorcy zewnętrzni: sekcja 4 aktualizowana
+// przy włączaniu Brevo/Turnstile (na dziś oba wyłączone — zero odbiorców).
 export default function PrivacyPage() {
   return (
     <main>
       <h1>Polityka prywatności</h1>
-      <p className="muted">Wersja robocza — obowiązuje od dnia startu produkcyjnego.</p>
+      <p className="muted">Wersja 1.0 — obowiązuje od 12 sierpnia 2026 r.</p>
 
       <h2>1. Administrator danych</h2>
       <p>
-        Administratorem danych osobowych jest [DO UZUPEŁNIENIA: dane podmiotu, adres, e-mail
-        kontaktowy].
+        Administratorem danych osobowych jest Maciej Kucharski, operator platformy Leaders of
+        Teams. Kontakt w sprawach danych osobowych:{' '}
+        <a href="mailto:kontakt@leadersofteams.com">kontakt@leadersofteams.com</a>.
       </p>
 
       <h2>2. Jakie dane przetwarzamy i po co</h2>
@@ -47,9 +48,11 @@ export default function PrivacyPage() {
 
       <h2>4. Odbiorcy danych</h2>
       <p>
-        Dane przechowywane są na serwerze w Unii Europejskiej. Zewnętrzni odbiorcy ograniczają się
-        do: [DO UZUPEŁNIENIA po włączeniu: dostawca e-mail transakcyjnych (Brevo), anty-bot
-        Cloudflare Turnstile].
+        Dane przechowywane są wyłącznie na serwerze Portalu w Unii Europejskiej. Obecnie nie
+        korzystamy z żadnych zewnętrznych odbiorców danych — nie używamy zewnętrznej analityki,
+        narzędzi marketingowych ani zewnętrznych dostawców poczty. Jeśli w przyszłości włączymy
+        wysyłkę e-maili transakcyjnych (Brevo) lub ochronę anty-botową (Cloudflare Turnstile),
+        zaktualizujemy tę sekcję przed ich uruchomieniem.
       </p>
 
       <h2>5. Twoje prawa</h2>

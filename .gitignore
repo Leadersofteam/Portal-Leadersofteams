@@ -17,3 +17,4 @@ infra/staging.override.yml
 test-results/
 playwright-report/
 .last-run.json
+infra/prod.override.yml

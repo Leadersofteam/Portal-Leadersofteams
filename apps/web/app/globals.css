@@ -93,7 +93,9 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Atmosfera: przyklejone warstwy poświaty indigo + subtelna siatka. */
+/* Atmosfera: poświaty indigo + BURSZTYNOWE światło szczytu z prawego górnego
+   rogu (kierunek marki: „im wyżej, tym cieplejsze światło"). Zamiast
+   szablonowej siatki — ziarno szumu i wznoszący się szlak szczebli. */
 body::before {
   content: '';
   position: fixed;
@@ -101,23 +103,62 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 15% -10%, rgb(99 102 241 / 0.16), transparent 60%),
-    radial-gradient(50rem 36rem at 100% 0%, rgb(139 92 246 / 0.12), transparent 55%),
+    radial-gradient(46rem 34rem at 108% -6%, rgb(251 191 36 / 0.07), transparent 62%),
+    radial-gradient(60rem 40rem at 12% -10%, rgb(99 102 241 / 0.17), transparent 60%),
+    radial-gradient(50rem 36rem at 85% 8%, rgb(139 92 246 / 0.1), transparent 55%),
     radial-gradient(40rem 40rem at 50% 120%, rgb(79 70 229 / 0.1), transparent 60%);
 }
 
+/* Ziarno (SVG feTurbulence w data-URI, 0 zł) — zdejmuje „plastikową" gładkość. */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.5;
-  background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.02) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(70% 50% at 50% 0%, #000, transparent 80%);
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Szlak wspinaczki: pionowa kolumna szczebli przy prawej krawędzi ekranu,
+   ocieplających się ku górze — drabina jako architektura strony. */
+.climb-rail {
+  position: fixed;
+  top: 0;
+  right: clamp(0.6rem, 2.2vw, 2.4rem);
+  bottom: 0;
+  width: 2.4rem;
+  z-index: -1;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  padding: 12vh 0 8vh;
+}
+
+.climb-rail i {
+  display: block;
+  height: 3px;
+  border-radius: 3px;
+}
+
+.climb-rail i:nth-child(1) { background: var(--level-1); opacity: 0.14; width: 58%; }
+.climb-rail i:nth-child(2) { background: var(--level-2); opacity: 0.16; width: 66%; }
+.climb-rail i:nth-child(3) { background: var(--level-3); opacity: 0.18; width: 74%; }
+.climb-rail i:nth-child(4) { background: var(--level-4); opacity: 0.2; width: 82%; }
+.climb-rail i:nth-child(5) { background: var(--level-5); opacity: 0.24; width: 90%; }
+.climb-rail i:nth-child(6) { background: var(--level-6); opacity: 0.3; width: 96%; }
+.climb-rail i:nth-child(7) {
+  background: var(--level-7);
+  opacity: 0.55;
+  width: 100%;
+  box-shadow: 0 0 12px rgb(251 191 36 / 0.35);
+}
+
+@media (max-width: 900px) {
+  .climb-rail {
+    display: none;
+  }
 }
 
 a {
@@ -225,6 +266,53 @@ main {
   max-width: 46rem;
 }
 
+/* Landing: asymetryczny hero z artem drabiny po prawej. */
+.hero-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: 2rem;
+  align-items: center;
+  max-width: none;
+}
+
+.hero-split .hero-copy {
+  max-width: 46rem;
+}
+
+.hero-art-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ladder-art {
+  width: min(21rem, 100%);
+  height: auto;
+  transform: rotate(4deg);
+  filter: drop-shadow(0 24px 60px rgb(79 70 229 / 0.25));
+  animation: ladder-float 7s ease-in-out infinite;
+}
+
+@keyframes ladder-float {
+  0%, 100% { transform: rotate(4deg) translateY(0); }
+  50% { transform: rotate(4deg) translateY(-10px); }
+}
+
+@media (max-width: 900px) {
+  .hero-split {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-art-wrap {
+    order: -1;
+    margin-top: 1rem;
+  }
+
+  .ladder-art {
+    width: min(11rem, 60%);
+  }
+}
+
 .hero-eyebrow {
   display: inline-flex;
   align-items: center;
@@ -250,9 +338,9 @@ main {
 
 .hero h1 {
   font-family: var(--font-display);
-  font-size: clamp(2.1rem, 4.5vw + 1rem, 3.6rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.3rem, 4.8vw + 1rem, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
   margin: 0 0 1.2rem;
   font-weight: 800;
   color: var(--text-strong);
@@ -353,6 +441,36 @@ main {
   font-weight: 700;
   font-size: 0.95rem;
 }
+
+/* Karty funkcji landingu: widmowy numer zamiast szablonowego kwadracika,
+   akcent w kolorze poziomu na lewej krawędzi. */
+.feature-card {
+  position: relative;
+  overflow: hidden;
+  padding-left: 1.6rem;
+}
+
+.feature-card::after {
+  content: attr(data-num);
+  position: absolute;
+  top: -1.4rem;
+  right: -0.4rem;
+  font-family: var(--font-display);
+  font-size: 6.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: color-mix(in srgb, var(--lv, var(--primary-500)) 11%, transparent);
+  pointer-events: none;
+}
+
+.feature-card {
+  border-left: 3px solid color-mix(in srgb, var(--lv, var(--primary-500)) 55%, transparent);
+}
+
+.feature-card[data-num='01'] { --lv: var(--level-2); }
+.feature-card[data-num='02'] { --lv: var(--level-4); }
+.feature-card[data-num='03'] { --lv: var(--level-6); }
+.feature-card[data-num='04'] { --lv: var(--level-7); }
 
 /* ========================== Formularze ========================== */
 .form-card {
@@ -1122,13 +1240,58 @@ main tbody tr:hover {
 }
 
 .section-eyebrow {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--primary-400);
   margin-bottom: 0.4rem;
+}
+
+/* Glif szczebli przed eyebrow — sygnaturka zamiast gołej etykiety. */
+.section-eyebrow::before {
+  content: '';
+  width: 1.1rem;
+  height: 0.85rem;
+  background:
+    linear-gradient(180deg, var(--level-7) 0 2px, transparent 2px 5px, var(--primary-400) 5px 7px, transparent 7px 10px, var(--primary-600) 10px 12px, transparent 12px);
+  border-radius: 1px;
+}
+
+/* Sekcje landingu: większa skala nagłówków + oddech. */
+.landing section {
+  margin-top: 4.5rem;
+}
+
+.landing section > h2 {
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+  margin-top: 0;
+}
+
+.landing .feature-card h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+/* Widmowy napis nad stopką — podpis marki zamiast pustki. */
+.watermark {
+  display: block;
+  margin: 5rem 0 -1rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 8vw, 6.4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-align: center;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--primary-400) 26%, transparent);
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 /* „Jak to działa" — trzy kroki połączone linią wznoszenia. */

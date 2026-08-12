@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/json-ld';
+import { LadderArt } from '@/components/ui/ladder-art';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
 import { serverApi } from '@/lib/server-api';
@@ -26,34 +27,39 @@ export default async function HomePage() {
   const topLeaders = (leadersData?.leaders ?? []).filter((l) => l.level >= 1).slice(0, 3);
 
   return (
-    <main>
+    <main className="landing">
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={websiteJsonLd()} />
 
-      <section className="hero">
-        <span className="hero-eyebrow">Marketplace B2B + społeczność Liderów</span>
-        <h1>
-          Status, którego nie da się kupić —{' '}
-          <span className="gradient-text">tylko zapracować</span>
-        </h1>
-        <p>
-          Liderzy zdobywają pozycję wyłącznie realną pracą ocenianą przez Firmy i mentoringiem
-          docenianym przez innych Liderów. Bez punktów za zapraszanie. Bez sztucznych mechanik.
-          Każdy punkt w Drabince ma jawne źródło.
-        </p>
-        <div className="hero-cta">
-          <Link className="btn" href="/rejestracja">
-            Dołącz jako Lider
-          </Link>
-          <Link className="btn secondary" href="/zlecenia/nowe">
-            Dodaj zlecenie jako Firma
-          </Link>
+      <section className="hero hero-split">
+        <div className="hero-copy">
+          <span className="hero-eyebrow">Marketplace B2B + społeczność Liderów</span>
+          <h1>
+            Status, którego nie da się kupić —{' '}
+            <span className="gradient-text">tylko zapracować</span>
+          </h1>
+          <p>
+            Liderzy zdobywają pozycję wyłącznie realną pracą ocenianą przez Firmy i mentoringiem
+            docenianym przez innych Liderów. Bez punktów za zapraszanie. Bez sztucznych mechanik.
+            Każdy punkt w Drabince ma jawne źródło.
+          </p>
+          <div className="hero-cta">
+            <Link className="btn" href="/rejestracja">
+              Dołącz jako Lider
+            </Link>
+            <Link className="btn secondary" href="/zlecenia/nowe">
+              Dodaj zlecenie jako Firma
+            </Link>
+          </div>
+        </div>
+        <div className="hero-art-wrap">
+          <LadderArt />
         </div>
       </section>
 
       <section>
         <span className="section-eyebrow">Jak to działa</span>
-        <h2 style={{ marginTop: 0 }}>Ucz się → Udowodnij → Wspinaj się</h2>
+        <h2>Ucz się → Udowodnij → Wspinaj się</h2>
         <div className="steps">
           <div className="step">
             <h3>Zacznij od mniejszych zleceń</h3>
@@ -81,7 +87,7 @@ export default async function HomePage() {
 
       <section>
         <span className="section-eyebrow">Drabinka Lidera</span>
-        <h2 style={{ marginTop: 0 }}>7 poziomów. Im wyżej, tym cieplejsze światło.</h2>
+        <h2>7 poziomów. Im wyżej, tym cieplejsze światło.</h2>
         <div className="ladder-visual" aria-hidden="true">
           {LEVEL_NAMES.map((name, i) => (
             <div key={name} className="rung">
@@ -97,32 +103,28 @@ export default async function HomePage() {
       </section>
 
       <section className="feature-grid">
-        <div className="card">
-          <span className="card-eyebrow">01</span>
+        <div className="card feature-card" data-num="01">
           <h2>Marketplace zleceń</h2>
           <p>
             Firmy publikują potrzeby, Liderzy odpowiadają ofertą. Nowi zaczynają od mniejszych
             zleceń — zaufanie rośnie z poziomem.
           </p>
         </div>
-        <div className="card">
-          <span className="card-eyebrow">02</span>
+        <div className="card feature-card" data-num="02">
           <h2>Grupy branżowe</h2>
           <p>
             Społeczność podzielona na sektory biznesu: dyskusje, pomysły, case studies oraz pytania
             i odpowiedzi, w których mentoring nagradzają sami Liderzy.
           </p>
         </div>
-        <div className="card">
-          <span className="card-eyebrow">03</span>
+        <div className="card feature-card" data-num="03">
           <h2>Drabinka Lidera</h2>
           <p>
             7 poziomów. Punkty wyłącznie za ocenioną pracę i uznany mentoring. Zawsze widzisz, za co
             i ile — oraz ile brakuje do awansu.
           </p>
         </div>
-        <div className="card">
-          <span className="card-eyebrow">04</span>
+        <div className="card feature-card" data-num="04">
           <h2>Zespoły</h2>
           <p>
             Docelowo Liderzy z poziomem 7 będą budować w Portalu własne zespoły i rekrutować w
@@ -134,7 +136,7 @@ export default async function HomePage() {
       {topLeaders.length > 0 && (
         <section>
           <span className="section-eyebrow">Liderzy na platformie</span>
-          <h2 style={{ marginTop: 0 }}>Poziom to dowód, nie deklaracja</h2>
+          <h2>Poziom to dowód, nie deklaracja</h2>
           <div className="feature-grid">
             {topLeaders.map((leader) => (
               <Link key={leader.id} href={`/liderzy/${leader.id}`} className="card">
@@ -156,7 +158,7 @@ export default async function HomePage() {
 
       <section>
         <span className="section-eyebrow">FAQ</span>
-        <h2 style={{ marginTop: 0 }}>Najczęstsze pytania</h2>
+        <h2>Najczęstsze pytania</h2>
         <div className="faq">
           <details>
             <summary>Czym to się różni od Fiverr czy Oferteo?</summary>
@@ -198,6 +200,9 @@ export default async function HomePage() {
           </details>
         </div>
       </section>
+      <span className="watermark" aria-hidden="true">
+        LEADERS OF TEAMS
+      </span>
     </main>
   );
 }
