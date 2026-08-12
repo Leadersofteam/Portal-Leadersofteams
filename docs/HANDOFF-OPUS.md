@@ -1,7 +1,7 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-08-12 · **Branch tej sesji:** `feat/s7-produkt`
-**Wykonawca:** Fable 5 (sesja S7) · **Stan:** ✅ Sprinty 1–6 + S7 (produkt/design) na `feat/s7-produkt`, wdrożone na staging
+**Ostatnia aktualizacja:** 2026-08-12 · **Branch tej sesji:** `feat/s7-produkt` (zmergowany do `main`)
+**Wykonawca:** Fable 5 (sesja S7 + go-live) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl (certy LE, backup cron 03:45); następne sprinty: **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)** (mobile-first + rozwinięcie języka wizualnego)
 
 > **✅ SESJA S7 (2026-08-11/12): „Marketplace + Społeczność + Tożsamość".** Cztery przyrosty
 > na gałęzi `feat/s7-produkt` (PR do main po stronie właściciela), wszystkie wdrożone i
