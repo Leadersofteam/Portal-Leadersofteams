@@ -65,7 +65,9 @@ export async function generateMetadata({
   if (!data) return { title: 'Zlecenie nie znalezione' };
   const { order } = data;
   const title = `${order.title} — zlecenie ${order.industry.name} | Leaders of Teams`;
-  const description = clip(`${order.companyName} · budżet ${order.budgetMin}–${order.budgetMax} zł. ${order.description}`);
+  const description = clip(
+    `${order.companyName} · budżet ${order.budgetMin}–${order.budgetMax} zł. ${order.description}`,
+  );
   return {
     title,
     description,
@@ -161,7 +163,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <section>
           <h2>Oferty ({offers.length})</h2>
           {offers.map((offer) => (
-            <div key={offer.id} className="card" style={{ marginBottom: '1rem' }}>
+            <div key={offer.id} className="card offer-card">
               <h3>
                 <Link href={`/liderzy/${offer.leader.profileId}`}>{offer.leader.displayName}</Link>{' '}
                 <span className="badge">{OFFER_STATUS_LABELS[offer.status] ?? offer.status}</span>

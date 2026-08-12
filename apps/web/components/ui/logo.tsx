@@ -15,7 +15,14 @@ export function LogoMark({ size = 26 }: { size?: number }) {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="lot-mark-bg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="lot-mark-bg"
+          x1="0"
+          y1="0"
+          x2="32"
+          y2="32"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#6366f1" />
           <stop offset="1" stopColor="#8b5cf6" />
         </linearGradient>

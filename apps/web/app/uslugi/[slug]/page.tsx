@@ -71,11 +71,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function ListingDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function ListingDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = await getListing(slug);
   if (!data) notFound();
@@ -92,9 +88,11 @@ export default async function ListingDetailPage({
   const isOwner = me?.user?.id === listing.leader.userId;
   const initiallyFollowing =
     me?.user && !isOwner
-      ? ((await serverApi<{ following: boolean }>(
-          `/users/${listing.leader.userId}/follow`,
-        ).catch(() => null))?.following ?? false)
+      ? ((
+          await serverApi<{ following: boolean }>(`/users/${listing.leader.userId}/follow`).catch(
+            () => null,
+          )
+        )?.following ?? false)
       : false;
 
   return (
@@ -104,7 +102,10 @@ export default async function ListingDetailPage({
       </div>
 
       <h1>{listing.title}</h1>
-      <div className="mt-1" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div
+        className="mt-1"
+        style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}
+      >
         <Avatar
           name={listing.leader.displayName}
           src={
@@ -141,7 +142,11 @@ export default async function ListingDetailPage({
               key={fileId}
               src={`/api/v1/files/${fileId}/full`}
               alt=""
-              style={{ width: '100%', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+              style={{
+                width: '100%',
+                borderRadius: 'var(--radius)',
+                border: '1px solid var(--border)',
+              }}
               loading="lazy"
             />
           ))}
@@ -158,7 +163,10 @@ export default async function ListingDetailPage({
       </p>
       <div className="package-grid">
         {listing.packages.map((pkg) => (
-          <div key={pkg.tier} className={pkg.tier === 'PREMIUM' ? 'package-card premium' : 'package-card'}>
+          <div
+            key={pkg.tier}
+            className={pkg.tier === 'PREMIUM' ? 'package-card premium' : 'package-card'}
+          >
             <span className="tier">{TIER_LABELS[pkg.tier] ?? pkg.tier}</span>
             <strong>{pkg.name}</strong>
             <span className="price">{plnFormat.format(pkg.priceDeclared)} zł</span>

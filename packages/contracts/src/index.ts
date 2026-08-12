@@ -198,9 +198,7 @@ export type UpdateListingInput = z.infer<typeof updateListingInputSchema>;
 
 // Sortowanie tylko po polach SQL-owalnych z kursorem (rating liczy się per
 // Lider poza tym modułem — świadomie poza enum, żeby nie kłamać paginacją).
-export const listingSortSchema = z
-  .enum(['newest', 'price_asc', 'price_desc'])
-  .default('newest');
+export const listingSortSchema = z.enum(['newest', 'price_asc', 'price_desc']).default('newest');
 export type ListingSort = z.infer<typeof listingSortSchema>;
 
 export const listingFiltersSchema = z.object({

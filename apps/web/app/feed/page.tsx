@@ -108,7 +108,14 @@ export default async function FeedPage({
                     }
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                      }}
+                    >
                       {item.actor.handle ? (
                         <Link href={`/profil/${item.actor.handle}`}>
                           <strong>{item.actor.displayName}</strong>
@@ -134,7 +141,10 @@ export default async function FeedPage({
 
       {data?.nextCursor && (
         <p className="mt-2">
-          <Link className="btn secondary" href={`/feed?cursor=${encodeURIComponent(data.nextCursor)}`}>
+          <Link
+            className="btn secondary"
+            href={`/feed?cursor=${encodeURIComponent(data.nextCursor)}`}
+          >
             Wczytaj więcej
           </Link>
         </p>

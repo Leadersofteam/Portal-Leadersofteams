@@ -22,12 +22,12 @@ i możliwość założenia własnego zespołu**. Twarde ustalenia:
 
 ## Punkt wyjścia (stan obu systemów)
 
-| | Portal | App |
-|---|---|---|
-| Auth | cookie sesyjny (Redis), Fastify | **JWT** (jsonwebtoken), Express |
-| Model | `User`, `LadderState`, `LevelDefinition`, `LevelAchievement` | `User`, `Team`/`TeamMember` (multi-tenant, `currentTeamId`), `Subscription` (Stripe) |
-| Zdarzenia | **transactional outbox** (`OutboxEvent`) + worker BullMQ | konsumenci wewnętrzni, webhooki Stripe |
-| Progi (`ladder/rules.ts`) | L5 „Mentor" (3000) → `unlocksAppAccess`; L7 „Architekt Zespołów" (12000) → `unlocksTeamCreation` | — |
+|                           | Portal                                                                                           | App                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Auth                      | cookie sesyjny (Redis), Fastify                                                                  | **JWT** (jsonwebtoken), Express                                                      |
+| Model                     | `User`, `LadderState`, `LevelDefinition`, `LevelAchievement`                                     | `User`, `Team`/`TeamMember` (multi-tenant, `currentTeamId`), `Subscription` (Stripe) |
+| Zdarzenia                 | **transactional outbox** (`OutboxEvent`) + worker BullMQ                                         | konsumenci wewnętrzni, webhooki Stripe                                               |
+| Progi (`ladder/rules.ts`) | L5 „Mentor" (3000) → `unlocksAppAccess`; L7 „Architekt Zespołów" (12000) → `unlocksTeamCreation` | —                                                                                    |
 
 ## Rozwiązanie — trzy filary
 
@@ -44,6 +44,7 @@ i możliwość założenia własnego zespołu**. Twarde ustalenia:
 ```
 
 ### [A] SSO — Portal jako OIDC Provider
+
 - **Dlaczego OIDC, nie własny podpisany JWT:** ekosystem LoT ma więcej marek (HydroSpark, Zodiamo,
   Transforme) — prawdziwy IdP zwraca się przy 3.–4. kliencie; standard + sprawdzone biblioteki.
   Bierzemy **lean subset**: authorization code + PKCE, **statyczna** rejestracja 2–3 klientów
@@ -58,6 +59,7 @@ i możliwość założenia własnego zespołu**. Twarde ustalenia:
   tokenu, `middleware/auth.middleware.ts`). Logowanie hasłem zostaje równolegle.
 
 ### [B] Sync poziomów — push (real-time) na istniejącym outboxie
+
 - Na zmianę poziomu (`LevelAchievement`) Portal zapisuje `OutboxEvent` `level.changed`
   `{eventId, sub, level, unlocks, occurredAt}` w TEJ SAMEJ transakcji (wzorzec już w kodzie).
 - Worker dostarcza **webhook z podpisem HMAC** → App `POST /internal/lot/level-changed`; **retry z
@@ -66,6 +68,7 @@ i możliwość założenia własnego zespołu**. Twarde ustalenia:
   cofnie nowszego stanu).
 
 ### [C] Rekoncyliacja — pull (usuwa rozjazdy; odpowiedź na „co, jeśli webhook nie dotrze")
+
 - **Nocny job na App** woła Portal `GET /api/v1/internal/entitlements?sub=…` (lub bulk), zabezpieczony
   kluczem API + allowlist IP / siecią wewnętrzną dockera, i koryguje dryf.
 - **Login = naturalny punkt rekoncyliacji:** `lot_level`/`lot_unlocks` w ID tokenie odświeżają się
@@ -74,6 +77,7 @@ i możliwość założenia własnego zespołu**. Twarde ustalenia:
 Trzy niezależne kanały (login-refresh + webhook + nocny pull) dają odporność bez pojedynczego punktu awarii.
 
 ## Egzekucja uprawnień po stronie App
+
 - Migracja Prisma: `User.portalSub` (unikat), `lotLevel`, `lotAppAccessGrantedAt`,
   `lotTeamCreationUnlocked` (lub osobna tabela `LotEntitlement`).
 - **„Darmowy dostęp"** = programowa `Subscription` w planie `LOT_LADDER` (z pominięciem Stripe;
@@ -83,11 +87,13 @@ Trzy niezależne kanały (login-refresh + webhook + nocny pull) dają odpornoś�
   case studies `Post.teamId` linkują do zespołu App; deep-linki w obie strony.
 
 ## Bezpieczeństwo / RODO
+
 - HMAC na webhookach, PKCE na OIDC, krótki TTL ID tokenu, rotacja JWKS, endpointy `internal/*` na sieci
   wewnętrznej VPS (niepubliczne). Propagacja **usunięcia konta (RODO)** tym samym kanałem zdarzeń
   (`account.deleted` → App anonimizuje/odbiera dostęp).
 
 ## Pliki/moduły do stworzenia lub dotknięcia
+
 - **Portal:** nowy `apps/api/src/modules/oidc`; rozszerzenie outboxu o `level.changed`; `WebhookDelivery`
   w `apps/api/prisma/schema.prisma`; route `internal/entitlements`; delivery w workerze.
 - **App:** `modules/auth` (openid-client + callback + mapowanie `portalSub`); `modules/billing` (grant
@@ -95,6 +101,7 @@ Trzy niezależne kanały (login-refresh + webhook + nocny pull) dają odpornoś�
   (pola entitlement); nocny job rekoncyliacji.
 
 ## Weryfikacja (E2E na obu stagingach)
+
 - S7: „Zaloguj przez leadersofteams.pl" → sesja App zmapowana po `sub` (nowy user i user istniejący).
 - S8: awans na Portalu → webhook widoczny w `WebhookDelivery` → App nadaje plan `LOT_LADDER`; symulacja
   utraconego webhooka → nocna rekoncyliacja koryguje stan.

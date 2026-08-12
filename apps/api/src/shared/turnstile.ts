@@ -19,7 +19,10 @@ export interface TurnstileVerifier {
 
 export type TurnstileLogger = (event: string, data: Record<string, unknown>) => void;
 
-function createCloudflareVerifier(config: TurnstileConfig, log?: TurnstileLogger): TurnstileVerifier {
+function createCloudflareVerifier(
+  config: TurnstileConfig,
+  log?: TurnstileLogger,
+): TurnstileVerifier {
   return {
     enabled: true,
     async verify(token, remoteIp) {

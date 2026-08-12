@@ -76,9 +76,9 @@ export default async function SocialProfilePage({
   const isSelf = me?.user?.id === data.user.id;
   const initiallyFollowing =
     me?.user && !isSelf
-      ? ((await serverApi<{ following: boolean }>(`/users/${data.user.id}/follow`).catch(
-          () => null,
-        ))?.following ?? false)
+      ? ((
+          await serverApi<{ following: boolean }>(`/users/${data.user.id}/follow`).catch(() => null)
+        )?.following ?? false)
       : false;
 
   return (
@@ -98,8 +98,8 @@ export default async function SocialProfilePage({
                 {' '}
                 · <LevelBadge level={data.user.level} />
               </>
-            )}
-            {' '}· {data.followers} obserwujących · {data.following} obserwowanych
+            )}{' '}
+            · {data.followers} obserwujących · {data.following} obserwowanych
           </p>
           {data.leaderProfile && (
             <p style={{ margin: '0.4rem 0 0' }}>

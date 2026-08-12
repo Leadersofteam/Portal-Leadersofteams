@@ -36,7 +36,11 @@ async function uploadListingImage(file: File): Promise<string> {
   return res.file.id;
 }
 
-export function NewListingForm({ industries }: { industries: Array<{ id: string; name: string }> }) {
+export function NewListingForm({
+  industries,
+}: {
+  industries: Array<{ id: string; name: string }>;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -219,13 +223,24 @@ export function NewListingForm({ industries }: { industries: Array<{ id: string;
               <img
                 src={`/api/v1/files/${id}/thumb`}
                 alt=""
-                style={{ width: '5.5rem', height: '5.5rem', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}
+                style={{
+                  width: '5.5rem',
+                  height: '5.5rem',
+                  objectFit: 'cover',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)',
+                }}
               />
               <button
                 type="button"
                 aria-label="Usuń zdjęcie"
                 className="fav-star"
-                style={{ position: 'absolute', top: '-0.4rem', right: '-0.4rem', color: 'var(--danger)' }}
+                style={{
+                  position: 'absolute',
+                  top: '-0.4rem',
+                  right: '-0.4rem',
+                  color: 'var(--danger)',
+                }}
                 onClick={() => setImageIds((prev) => prev.filter((x) => x !== id))}
               >
                 ×

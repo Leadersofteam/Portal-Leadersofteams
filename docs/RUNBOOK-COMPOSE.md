@@ -4,11 +4,11 @@ Który plik compose do czego. Repo: `Portal-Leadersofteams`, katalog na VPS: `/d
 
 ## Przegląd
 
-| Plik                             | Rola                    | Kontenery                        | Stan          |
-| -------------------------------- | ----------------------- | -------------------------------- | ------------- |
-| `infra/docker-compose.staging.yml` | **STAGING** (za basic-auth) | `portal-staging-{web,api,worker,mysql,redis}` | **AKTYWNY**   |
-| `infra/docker-compose.yml`       | **PROD** `leadersofteams.pl` | `portal-{web,api,worker,mysql,redis}` | **nieaktywny** (reguły Traefik gotowe, go-live w osobnym sprincie) |
-| `infra/docker-compose.dev.yml`   | lokalne zależności dev/testy | `portal-dev-{mysql,redis}` (porty 3306/6379) | wg potrzeb    |
+| Plik                               | Rola                         | Kontenery                                     | Stan                                                               |
+| ---------------------------------- | ---------------------------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| `infra/docker-compose.staging.yml` | **STAGING** (za basic-auth)  | `portal-staging-{web,api,worker,mysql,redis}` | **AKTYWNY**                                                        |
+| `infra/docker-compose.yml`         | **PROD** `leadersofteams.pl` | `portal-{web,api,worker,mysql,redis}`         | **nieaktywny** (reguły Traefik gotowe, go-live w osobnym sprincie) |
+| `infra/docker-compose.dev.yml`     | lokalne zależności dev/testy | `portal-dev-{mysql,redis}` (porty 3306/6379)  | wg potrzeb                                                         |
 
 ## Staging — `infra/docker-compose.staging.yml`
 

@@ -63,7 +63,9 @@ describe.skipIf(!hasInfra)('social — follow, feed, profil', () => {
 
   afterAll(async () => {
     if (!ctx) return;
-    await ctx.prisma.activityItem.deleteMany({ where: { actorId: { in: [leaderId, followerId] } } });
+    await ctx.prisma.activityItem.deleteMany({
+      where: { actorId: { in: [leaderId, followerId] } },
+    });
     await ctx.prisma.user.deleteMany({ where: { email: { in: emails } } });
     await ctx.close();
   });

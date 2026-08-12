@@ -31,7 +31,12 @@ export function createListingsAccountData(prisma: PrismaClient): AccountDataModu
         prisma.inquiryMessage.findMany({ where: { authorId: userId } }),
         prisma.listingFavorite.findMany({ where: { userId } }),
       ]);
-      return { serviceListings: listings, inquiries, inquiryMessages: messages, listingFavorites: favorites };
+      return {
+        serviceListings: listings,
+        inquiries,
+        inquiryMessages: messages,
+        listingFavorites: favorites,
+      };
     },
   };
 }

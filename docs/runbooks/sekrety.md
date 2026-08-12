@@ -24,13 +24,13 @@ SSH — CI (`ci.yml`) działa bez żadnych sekretów.
 Aplikacja startuje i działa BEZ tych sekretów (0 zł, ADR-009) — funkcje są wtedy
 w trybie no-op. Ustawia się je w `/opt/portal/.env` (nie w GitHub Secrets).
 
-| Zmienna         | Funkcja                           | Bez wartości                                  |
-| --------------- | --------------------------------- | --------------------------------------------- |
-| `BREVO_API_KEY` | Wysyłka e-mail (Brevo, 300/dzień) | Brak wysyłki; reset zwraca devToken poza prod |
-| `MAIL_FROM`     | Adres nadawcy                     | `no-reply@leadersofteams.pl`                  |
-| `APP_BASE_URL`  | Bazowy URL w linkach e-mail       | `https://leadersofteams.pl`                   |
-| `TURNSTILE_SECRET_KEY` | Antybot Turnstile na rejestracji (ZAIMPLEMENTOWANE, flag-gated) | Ochrona OFF (rejestracja przepuszcza) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Klucz publiczny widgetu (BUILD-time obrazu web) | Brak widgetu na `/rejestracja` |
+| Zmienna                          | Funkcja                                                         | Bez wartości                                  |
+| -------------------------------- | --------------------------------------------------------------- | --------------------------------------------- |
+| `BREVO_API_KEY`                  | Wysyłka e-mail (Brevo, 300/dzień)                               | Brak wysyłki; reset zwraca devToken poza prod |
+| `MAIL_FROM`                      | Adres nadawcy                                                   | `no-reply@leadersofteams.pl`                  |
+| `APP_BASE_URL`                   | Bazowy URL w linkach e-mail                                     | `https://leadersofteams.pl`                   |
+| `TURNSTILE_SECRET_KEY`           | Antybot Turnstile na rejestracji (ZAIMPLEMENTOWANE, flag-gated) | Ochrona OFF (rejestracja przepuszcza)         |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Klucz publiczny widgetu (BUILD-time obrazu web)                 | Brak widgetu na `/rejestracja`                |
 
 ## Checklista podłączenia SSH (co dostarcza właściciel)
 

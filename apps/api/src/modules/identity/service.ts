@@ -127,7 +127,15 @@ export function createIdentityService(
     });
     if (user.handle) return user.handle;
     const map: Record<string, string> = {
-      ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
+      ą: 'a',
+      ć: 'c',
+      ę: 'e',
+      ł: 'l',
+      ń: 'n',
+      ó: 'o',
+      ś: 's',
+      ź: 'z',
+      ż: 'z',
     };
     const base =
       user.displayName

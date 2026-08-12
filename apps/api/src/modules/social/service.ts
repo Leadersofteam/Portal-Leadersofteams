@@ -11,17 +11,11 @@ import type { LadderService } from '../ladder/index';
 // zero DM (kontakt przez zapytania o usługi / wątki ofert).
 
 export type ActivityType =
-  | 'POST_PUBLISHED'
-  | 'LISTING_PUBLISHED'
-  | 'ANSWER_ACCEPTED'
-  | 'LEVEL_ACHIEVED';
+  'POST_PUBLISHED' | 'LISTING_PUBLISHED' | 'ANSWER_ACCEPTED' | 'LEVEL_ACHIEVED';
 
 export interface SocialDeps {
   prisma: PrismaClient;
-  identity: Pick<
-    IdentityService,
-    'getPublicUsers' | 'ensureHandle' | 'getUserIdByHandle'
-  >;
+  identity: Pick<IdentityService, 'getPublicUsers' | 'ensureHandle' | 'getUserIdByHandle'>;
   ladder: Pick<LadderService, 'getLevels'>;
 }
 

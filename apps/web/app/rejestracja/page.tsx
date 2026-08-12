@@ -77,11 +77,7 @@ export default function RegisterPage() {
           </div>
           {TURNSTILE_SITE_KEY && (
             <>
-              <Script
-                src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-                async
-                defer
-              />
+              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
               <div className="cf-turnstile field" data-sitekey={TURNSTILE_SITE_KEY} />
             </>
           )}

@@ -2,13 +2,7 @@
  * Szkielety ładowania (shimmer). SkeletonList odwzorowuje rytm .list-row,
  * więc przejście loading → treść nie skacze.
  */
-export function Skeleton({
-  width,
-  height = '1rem',
-}: {
-  width?: string;
-  height?: string;
-}) {
+export function Skeleton({ width, height = '1rem' }: { width?: string; height?: string }) {
   return <span className="skeleton" style={{ display: 'block', width: width ?? '100%', height }} />;
 }
 

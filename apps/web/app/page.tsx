@@ -17,7 +17,15 @@ interface LeaderRow {
 }
 
 // Nazwy poziomów — lustro apps/api/src/modules/ladder/rules.ts (ruleset v1).
-const LEVEL_NAMES = ['Adept', 'Praktyk', 'Specjalista', 'Ekspert', 'Mentor', 'Autorytet', 'Architekt Zespołów'];
+const LEVEL_NAMES = [
+  'Adept',
+  'Praktyk',
+  'Specjalista',
+  'Ekspert',
+  'Mentor',
+  'Autorytet',
+  'Architekt Zespołów',
+];
 
 export default async function HomePage() {
   // Social proof: najlepsi realni Liderzy z katalogu (sekcja znika, gdy pusto).
@@ -78,8 +86,8 @@ export default async function HomePage() {
           <div className="step">
             <h3>Odblokowuj kolejne poziomy</h3>
             <p>
-              Wyższy poziom to większe zlecenia, pierwszeństwo w katalogu, prawo zakładania grup —
-              a na szczycie własny zespół w Portalu.
+              Wyższy poziom to większe zlecenia, pierwszeństwo w katalogu, prawo zakładania grup — a
+              na szczycie własny zespół w Portalu.
             </p>
           </div>
         </div>
@@ -194,8 +202,8 @@ export default async function HomePage() {
             <summary>Co daje wyższy poziom w Drabince?</summary>
             <p>
               Dostęp do większych zleceń, pierwszeństwo i wyróżnienie w katalogu Liderów, prawo
-              zakładania grup branżowych (od poziomu 2), a docelowo — własny zespół w Portalu (poziom
-              7). Poziom raz zdobyty nie wygasa.
+              zakładania grup branżowych (od poziomu 2), a docelowo — własny zespół w Portalu
+              (poziom 7). Poziom raz zdobyty nie wygasa.
             </p>
           </details>
         </div>

@@ -41,7 +41,15 @@ export interface ListingsDeps {
 
 function slugify(title: string): string {
   const map: Record<string, string> = {
-    ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
+    ą: 'a',
+    ć: 'c',
+    ę: 'e',
+    ł: 'l',
+    ń: 'n',
+    ó: 'o',
+    ś: 's',
+    ź: 'z',
+    ż: 'z',
   };
   const base = title
     .toLowerCase()

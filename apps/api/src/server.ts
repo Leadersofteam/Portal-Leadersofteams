@@ -189,9 +189,12 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
 
-  await app.register(identityRoutes({ service: identityService, sessions, auth, turnstile, config }), {
-    prefix: '/api/v1',
-  });
+  await app.register(
+    identityRoutes({ service: identityService, sessions, auth, turnstile, config }),
+    {
+      prefix: '/api/v1',
+    },
+  );
   await app.register(
     marketplaceRoutes({
       profiles: profilesService,
