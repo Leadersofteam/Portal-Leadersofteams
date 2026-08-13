@@ -32,8 +32,8 @@ starszy o obie gałęzie).
 >      społeczna, więc to tam skoncentruje się nadużycie,
 >    - `ORDER` → **świadomie BEZ ukrywania**: zlecenie to umowa dwóch stron, nie publiczna treść.
 >      Ukrycie zerwałoby pracę ludziom, którzy nie są przedmiotem zgłoszenia.
->      Akcje rozdzielone: `RELEASE`/`REJECT` (punkty) i `HIDE`/`DISMISS` (treść); akcja punktowa
->      na sprawie bez punktu daje teraz 400 zamiast po cichu zamykać sprawę.
+>    Akcje rozdzielone: `RELEASE`/`REJECT` (punkty) i `HIDE`/`DISMISS` (treść); akcja punktowa
+>    na sprawie bez punktu daje teraz 400 zamiast po cichu zamykać sprawę.
 > 2. **Puls workera.** `portal:worker:heartbeat` + healthcheck w compose prod i staging.
 >    **Puls jest odnawiany TYLKO gdy obraca się pętla dispatchera** (`lastLoopAt`) — zwykły
 >    `setInterval` dowodziłby jedynie, że proces istnieje, i świeciłby na zielono przy
@@ -48,7 +48,29 @@ starszy o obie gałęzie).
 >    to bariera pamięciowa, nie kosmetyka: bez niej bot skanujący tysiąc adresów tworzy tysiąc
 >    pól w dobowym hashu. Podgląd `/panel/analityka`. Zweryfikowane na prodzie przez Traefika.
 >    Świadomie bez unikalnych użytkowników (wymagałyby haszowania IP).
-> 4. **Turnstile — nadal czeka na klucze**, ale przelot jest gotowy (patrz „Czego brakuje").
+> 4. **Anty-bot — WŁASNA bramka zamiast Cloudflare** (`747b180`, dodane po decyzji właściciela
+>    w trakcie sesji: „Wykluczam Cloudflare, minimalizujemy dostawców po API").
+>    `shared/humancheck.ts` — proof-of-work na naszym Redisie, **włączony domyślnie**
+>    (Turnstile bez kluczy stał wyłączony, więc de facto nigdy nie chronił produkcji).
+>    Mechanizm: serwer losuje sekretną liczbę i podaje `sha256(salt+n)`, przeglądarka
+>    szuka `n` licząc od zera, serwer porównuje liczbę i KASUJE wyzwanie (`GETDEL`, atomowo).
+>    - **Wariant „zgadnij liczbę", nie „N zer z przodu"** — praca jest ograniczona z góry.
+>      Przy zerach czas rozwiązania ma długi ogon, a za pechowe losowanie płaci CZŁOWIEK
+>      ze słabym telefonem, nie atakujący z serwerownią.
+>    - **Parametry z pomiaru:** `crypto.subtle` w Chromium na tym VPS robi ~112 tys. hashy/s
+>      (ręcznie napisany synchroniczny SHA-256 ~143 tys./s — 28% szybciej, ale nie warto
+>      utrzymywać własnego prymitywu kryptograficznego dla ułamka sekundy). `maxNumber`
+>      40 000 → ~0,2 s na laptopie, ~1,3 s na słabym telefonie, liczone W TLE podczas
+>      wypełniania formularza, więc użytkownik czeka 0 s.
+>    - Warstwy poza samym PoW: jednorazowość wyzwania, minimalny czas wypełniania (2 s),
+>      pole-pułapka, **eskalacja kosztu po IP** (×2/×4/×16 w oknie godziny — tego Turnstile
+>      nie dawał nam wcale, bo licznik był po jego stronie).
+>    - **Uczciwie o skuteczności:** PoW nie rozpoznaje człowieka, tylko podnosi koszt próby.
+>      Zatrzyma pętlę curl-a i gotowy skrypt, nie zatrzyma solvera w C. Realną barierą
+>      pozostają limity świeżego konta, weryfikacja e-maila i moderacja treści.
+>    **Przy okazji usunięte Brevo** — martwy kod drugiego dostawcy po API (SMTP zawsze miał
+>    pierwszeństwo). **Portal nie odpytuje już ŻADNEGO zewnętrznego API** poza SMTP własnej
+>    skrzynki, którego zastąpić się nie da (własny serwer pocztowy = świeże IP = spam-folder).
 >
 > **Naprawione po drodze — wszystko ZASTANE, potwierdzone przed zmianą:**
 >
@@ -64,8 +86,11 @@ starszy o obie gałęzie).
 >   Hostinger jako procesor + opis własnej statystyki. ⚠️ To copy prawne: warto, żeby przeczytał
 >   je prawnik razem z resztą R-10/R-15.
 > - **`Dockerfile.web` nie miał `ARG` na `NEXT_PUBLIC_TURNSTILE_SITE_KEY`** — backend Turnstile
->   był gotowy, ale klucz publiczny NIE MIAŁ JAK trafić do obrazu. Dodany ARG + `build.args`
->   w obu compose; GO-LIVE-CHECKLIST §2 sprostowany (site-key wymaga `build web`, nie restartu).
+>   był gotowy, ale klucz publiczny NIE MIAŁ JAK trafić do obrazu, więc „kod gotowy, brakuje
+>   tylko kluczy" było nieprawdą. Dodałem przelot, a kilka godzin później **usunąłem go razem
+>   z całym Turnstile** (decyzja właściciela o wykluczeniu Cloudflare). Zostawiam ten wpis,
+>   bo wnioskiem nie jest ARG, tylko to, że deklaracja gotowości nie została nigdy sprawdzona
+>   końcem-końca. Własna bramka nie ma klucza publicznego, więc problem zniknął u źródła.
 > - **Prod `web` nie miał healthchecku** (staging miał) — dodany, prod ma komplet `(healthy)`.
 >
 > **⚠️ PUŁAPKA, na którą wpadłem i którą trzeba znać:** rola użytkownika jest ZAMROŻONA

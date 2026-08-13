@@ -38,7 +38,8 @@ gdy coś pójdzie nie tak. To jedyny sprint, który ma sens przed seedingiem.
    przez **własną skrzynkę** (`smtp.hostinger.com`, `kontakt@leadersofteams.com`) — tę samą,
    której od dawna używa App. Zero nowego vendora, zero nowego kosztu (skrzynka jest opłacona
    w ramach hostingu domeny), zero powierzania adresów e-mail trzeciej stronie.
-   Brevo zostaje jako alternatywa, gdyby kiedyś doszedł masowy digest.
+   (Brevo, wymieniane tu wcześniej jako alternatywa, zostało USUNIĘTE 2026-08-13 —
+   martwy kod zewnętrznego dostawcy.)
    Zweryfikowane na produkcji: rejestracja i **reset hasła** realnie wychodzą (`mail.sent`,
    `transport: smtp`). ⚠️ `MAIL_FROM` musi być adresem uwierzytelnionej skrzynki — nadawca
    z innej domeny nie przejdzie SPF/DMARC.
@@ -67,10 +68,13 @@ gdy coś pójdzie nie tak. To jedyny sprint, który ma sens przed seedingiem.
    w Redisie byłby drugim, gorszym źródłem prawdy (ginie przy flushu, nie liczy wstecz).
    Podgląd: `/panel/analityka` dla MODERATOR/ADMIN. Bez cookies, bez zewnętrznego skryptu,
    bez unikalnych użytkowników (te wymagałyby haszowania IP — nie wchodzimy w to).
-5. ⏸ **Turnstile — CZEKA NA KLUCZE właściciela.** Zrobione wszystko poza aktywacją:
-   dodany brakujący przelot `NEXT_PUBLIC_TURNSTILE_SITE_KEY` do obrazu web (do S12 klucz
-   publiczny **nie miał jak** trafić do buildu, więc „kod gotowy" był prawdą tylko po
-   stronie backendu). Włączyć **przed** publiczną promocją, nie przed zaproszeniami imiennymi.
+5. ✅ **Anty-bot — ZROBIONE 2026-08-13, WŁASNĄ BRAMKĄ.** Cloudflare wykluczony decyzją
+   właściciela; zamiast czekać na czyjeś klucze mamy proof-of-work na własnym Redisie
+   (`shared/humancheck.ts`), **włączony domyślnie na produkcji**. Warstwy: jednorazowe
+   wyzwanie, minimalny czas wypełniania formularza, pole-pułapka, eskalacja kosztu po IP.
+   Uczciwie: to podnosi koszt próby, a nie rozpoznaje człowieka — realną barierą pozostają
+   limity świeżego konta, weryfikacja e-maila i moderacja. Przy okazji usunięte Brevo:
+   Portal nie odpytuje już ŻADNEGO zewnętrznego API (poza SMTP własnej skrzynki).
 
 **Świadomie NIE w tym sprincie:** k6. Test obciążeniowy pustego portalu mierzy hałas — wchodzi
 w S15, gdy będzie znany realny kształt ruchu.

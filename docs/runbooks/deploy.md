@@ -93,6 +93,26 @@ docker compose -p portal-prod exec mysql \
 # → powiedz tej osobie, żeby się przelogowała
 ```
 
+### Bramka anty-bot (S12)
+
+Rejestracja wymaga rozwiązania zagadki proof-of-work liczonej na naszym Redisie —
+bez Cloudflare i bez żadnego klucza. Jeśli ktoś zgłasza, że **nie może założyć konta**:
+
+```bash
+# Czy bramka w ogóle jest włączona (powinna być):
+docker compose -p portal-prod exec api node -e "console.log(process.env.HUMANCHECK ?? '(domyślnie on)')"
+# Powody odmów z ostatniej godziny — pokazuje, KTÓRA warstwa odrzuca:
+docker compose -p portal-prod logs api --since 1h | grep humancheck.rejected
+```
+
+Znaczenie powodów: `MISSING` — front nie dołączył rozwiązania (błąd JS albo bot);
+`UNKNOWN_OR_USED` — wyzwanie wygasło (>15 min) albo ktoś próbuje powtórki;
+`WRONG_NUMBER` — złe rozwiązanie; `TOO_FAST` — formularz wysłany szybciej niż w 2 s;
+`HONEYPOT` — wypełnione ukryte pole `nazwaFirmy`, czyli automat.
+
+⚠️ **`HUMANCHECK=off` to wyłącznik awaryjny na czas diagnozy, nie ustawienie docelowe.**
+Zostawiony na produkcji otwiera rejestrację dla botów.
+
 ### Analityka (S12)
 
 ```bash

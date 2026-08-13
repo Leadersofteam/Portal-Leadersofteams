@@ -24,7 +24,10 @@ uzupełnienie po sesji S7: 2026-08-12.
 - [x] **E-mail transakcyjny — ZROBIONE 2026-08-13**: własna skrzynka przez SMTP
       (`SMTP_HOST`/`SMTP_USER`/`SMTP_PASS`, `MAIL_FROM` = adres skrzynki), a nie Brevo.
       Rejestracja i reset hasła zweryfikowane na produkcji. Szczegóły: `runbooks/sekrety.md`.
-- [ ] Klucze **Cloudflare Turnstile** (prod site key + secret) — aktywacja anty-bota (R-13).
+- [x] ~~Klucze **Cloudflare Turnstile**~~ — ✅ **NIEPOTRZEBNE od 2026-08-13.** Właściciel
+      wykluczył Cloudflare; anty-bot jest teraz WŁASNY (`apps/api/src/shared/humancheck.ts`),
+      działa na naszym Redisie, jest **włączony domyślnie** i nie wymaga niczyich kluczy.
+      Ta pozycja przestała być blokerem launchu — nie ma na co czekać.
 - [ ] **Regulamin + polityka prywatności** — wsad prawny właściciela/prawnika (R-10/R-15).
 - [ ] Decyzja o **seedingu**: dane **demo / testowe** (nie realne zaproszenia) — zakres i źródło (R-06).
 - [ ] Backup baz + potwierdzony test restore przed cutover (R-07).
@@ -49,15 +52,10 @@ uzupełnienie po sesji S7: 2026-08-12.
 - [ ] Bull Board (opcjonalnie) — podgląd kolejek.
 - [ ] `docker compose -f infra/docker-compose.yml up -d --build` — start prod (nadal za basic-auth).
 - [ ] Migracje prod: profil `tools` → `prisma migrate deploy`.
-- [ ] Env prod aktywne (Turnstile — poczta już aktywna).
-      ⚠️ **SPROSTOWANIE (S12): dla Turnstile „runtime, bez rebuildu" jest NIEPRAWDĄ.**
-      `TURNSTILE_SECRET_KEY` (backend) faktycznie wystarczy podać w `.env` i zrestartować
-      `api`. Ale `NEXT_PUBLIC_TURNSTILE_SITE_KEY` jest zmienną `NEXT_PUBLIC_*`, czyli
-      **zapiekaną w bundlu klienta** — bez `docker compose build web` widget się nie
-      pojawi, a przy WŁĄCZONYM backendzie rejestracja zacznie odrzucać wszystkich
-      (fail-closed bez tokenu). Kolejność: najpierw `build web` z site-keyem, potem
-      sekret w `api`. Przelot build-arg dodany w S12 (`infra/Dockerfile.web` + `build.args`
-      w obu compose) — do S12 nie istniał, więc kluczy nie dało się wpiąć w ogóle.
+- [x] Env prod aktywne — poczta (SMTP własnej skrzynki) i anty-bot działają.
+      Anty-bot nie ma ŻADNEJ zmiennej do ustawienia: jest włączony domyślnie.
+      `HUMANCHECK=off` istnieje wyłącznie jako wyłącznik awaryjny na czas
+      diagnozowania rejestracji — nie zostawiaj go włączonego.
 - [ ] Smoke test za basic-auth: rejestracja, logowanie, marketplace, Drabinka.
 
 ## 3. Seeding (GATE — dane demo/testowe)
@@ -67,7 +65,9 @@ uzupełnienie po sesji S7: 2026-08-12.
 ## 4. Otwarcie publiczne (GATE — nieodwracalne)
 
 - [ ] **Zdjęcie basic-auth** z routera prod w Traefiku — osobne potwierdzenie.
-- [ ] Weryfikacja aktywnego Turnstile na formularzach publicznych.
+- [x] Weryfikacja bramki anty-bot na formularzu rejestracji — ✅ zrobiona na produkcji
+      13.08 ścieżką przeglądarki: rejestracja bez rozwiązania odrzucona (`HUMANCHECK_FAILED`),
+      z rozwiązaniem przechodzi, powtórka tego samego rozwiązania odrzucona.
 
 ## 5. DNS cutover (wykonuje WŁAŚCICIEL u rejestratora)
 
@@ -83,4 +83,5 @@ uzupełnienie po sesji S7: 2026-08-12.
 
 ## Blokery (z RISKS.md, przegląd 2026-07-20)
 
-R-04 (k6), R-06 (seeding), R-10 (regulamin/RODO), R-13 (aktywacja Turnstile) — muszą być domknięte przed krokiem 4/5.
+R-04 (k6), R-06 (seeding), R-10 (regulamin/RODO) — muszą być domknięte przed krokiem 4/5.
+R-13 (anty-bot) DOMKNIĘTY 2026-08-13 własną bramką, bez zewnętrznego dostawcy.
