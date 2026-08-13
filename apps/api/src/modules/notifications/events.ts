@@ -21,6 +21,9 @@ export function notificationsSubscriptions(
     'community.user_mentioned': (p) => service.onUserMentioned(p as never),
     'social.user_mentioned': (p) => service.onUserMentioned(p as never),
     'social.comment_added': (p) => service.onCommentAdded(p as never),
+    // GRANICA ANTY-MLM: to zdarzenie konsumuje WYŁĄCZNIE notifications.
+    // Cytowanie nie daje punktów — pilnuje tego strukturalny test w social.
+    'social.post_quoted': (p) => service.onPostQuoted(p as never),
     'groups.membership_requested': (p) => service.onMembershipRequested(p as never),
     'groups.membership_accepted': (p) => service.onMembershipAccepted(p as never),
     'community.answer_created': (p) => service.onAnswerCreated(p as never),

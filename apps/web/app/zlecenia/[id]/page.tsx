@@ -33,6 +33,7 @@ interface OrderDetail {
     budgetMax: number;
     minLevel: number;
     status: string;
+    companyId: string;
     companyName: string;
   };
   viewer: {
@@ -119,8 +120,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
       <h1>{order.title}</h1>
       <p className="meta muted">
-        {order.companyName} · {order.industry.name} ·{' '}
-        <span className="badge">{ORDER_STATUS_LABELS[order.status] ?? order.status}</span>{' '}
+        {/* Nazwa firmy jest LINKIEM do jej profilu. Bez tego Lider czytający
+            zlecenie widział samą nazwę i decydował w ciemno, czy warto poświęcić
+            godziny na ofertę — to był powód powstania /firmy/[id]. */}
+        <Link href={`/firmy/${order.companyId}`}>{order.companyName}</Link> · {order.industry.name}{' '}
+        · <span className="badge">{ORDER_STATUS_LABELS[order.status] ?? order.status}</span>{' '}
         {order.minLevel > 0 && (
           <span className="badge accent">wymagany poziom {order.minLevel}+</span>
         )}

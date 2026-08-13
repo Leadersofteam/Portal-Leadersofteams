@@ -242,6 +242,75 @@ export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
       }
       return map;
     },
+
+    /**
+     * Publiczny obraz Firmy: co zrobiła na rynku i jak jest oceniana.
+     *
+     * Pokazujemy OBIE strony — oceny otrzymane od Liderów i wystawione Liderom.
+     * Dwustronność jest tu celowa i wynika z briefu: Lider decydujący, czy złożyć
+     * ofertę, powinien widzieć nie tylko „ile gwiazdek ma Firma", ale też jak sama
+     * ocenia współpracowników. Jednostronna karta zachęcałaby do wybielania.
+     */
+    async getCompanyPublicStats(companyId: string) {
+      const [received, given, ordersTotal, ordersCompleted] = await Promise.all([
+        prisma.review.aggregate({
+          where: {
+            subjectCompanyId: companyId,
+            direction: 'LEADER_TO_COMPANY',
+            publishedAt: { not: null },
+          },
+          _avg: { rating: true },
+          _count: { _all: true },
+        }),
+        prisma.review.aggregate({
+          where: {
+            order: { companyId },
+            direction: 'COMPANY_TO_LEADER',
+            publishedAt: { not: null },
+          },
+          _avg: { rating: true },
+          _count: { _all: true },
+        }),
+        prisma.order.count({ where: { companyId, publishedAt: { not: null } } }),
+        // CONFIRMED, nie „COMPLETED" — w tym cyklu życia to Firma potwierdza
+        // odbiór i dopiero wtedy zlecenie jest zrealizowane (patrz OrderStatus).
+        prisma.order.count({ where: { companyId, status: 'CONFIRMED' } }),
+      ]);
+      return {
+        received: {
+          averageRating: received._avg.rating ? Math.round(received._avg.rating * 10) / 10 : null,
+          reviewCount: received._count._all,
+        },
+        given: {
+          averageRating: given._avg.rating ? Math.round(given._avg.rating * 10) / 10 : null,
+          reviewCount: given._count._all,
+        },
+        ordersPublished: ordersTotal,
+        ordersCompleted,
+      };
+    },
+
+    /** Ostatnie OPUBLIKOWANE oceny Firmy — treść, nie tylko liczba gwiazdek. */
+    async getCompanyReviews(companyId: string, limit = 10) {
+      const rows = await prisma.review.findMany({
+        where: {
+          subjectCompanyId: companyId,
+          direction: 'LEADER_TO_COMPANY',
+          publishedAt: { not: null },
+        },
+        orderBy: [{ publishedAt: 'desc' }],
+        take: limit,
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          publishedAt: true,
+          authorUserId: true,
+          order: { select: { id: true, title: true } },
+        },
+      });
+      return rows;
+    },
   };
 }
 

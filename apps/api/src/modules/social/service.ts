@@ -39,10 +39,29 @@ export interface SocialDeps {
     | 'getUserCreatedAt'
   >;
   ladder: Pick<LadderService, 'getLevels'>;
+  // Walidacja własności obrazów przy wpisie — ten sam wzorzec co w listings.
+  // Opcjonalna, bo worker buduje ten sam serwis bez warstwy uploadów.
+  files?: { assertOwned(fileId: string, ownerId: string, kind?: string): Promise<void> };
   redis?: Redis;
 }
 
 const FEED_LIMIT = 20;
+
+/** Podgląd cytowanego wpisu w karcie. `available: false` = treść zniknęła. */
+export type QuotedPost =
+  | { id: string; available: false }
+  | {
+      id: string;
+      available: true;
+      body: string;
+      createdAt: Date;
+      author: {
+        id: string;
+        displayName: string;
+        handle: string | null;
+        avatarFileId: string | null;
+      };
+    };
 
 /**
  * Zdjęcie wpisu portalowego z obiegu. Wspólne dla usunięcia przez autora
@@ -63,7 +82,7 @@ export async function takeDownSocialPost(prisma: PrismaClient, postId: string): 
   });
 }
 
-export function createSocialService({ prisma, identity, ladder, redis }: SocialDeps) {
+export function createSocialService({ prisma, identity, ladder, files, redis }: SocialDeps) {
   // Wzmianki @handle w treści wpisu/komentarza → powiadomienie dla wymienionego.
   // Payload niesie socialPostId (a nie groupId), więc powiadomienie linkuje
   // do permalinku wpisu zamiast lądować w ogólnej liście.
@@ -84,6 +103,73 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
         socialPostId,
       });
     }
+  }
+
+  /**
+   * Obrazy i cytowane wpisy dla PARTII wpisów naraz. Feed renderuje do 20 pozycji,
+   * więc pojedyncze zapytanie na wpis byłoby N+1 na najczęściej otwieranym widoku
+   * w całym Portalu.
+   *
+   * Cytat renderujemy PŁASKO — cytowany wpis nie niesie swojego cytatu. Inaczej
+   * łańcuch „cytat cytatu cytatu" rozjechałby kartę na 390 px, a przy okazji
+   * dawałby nieograniczoną głębokość zapytań.
+   */
+  async function loadPostExtras(postIds: string[]) {
+    if (postIds.length === 0) {
+      return { imagesBy: new Map<string, string[]>(), quotedBy: new Map<string, QuotedPost>() };
+    }
+    const [images, roots] = await Promise.all([
+      prisma.socialPostImage.findMany({
+        where: { postId: { in: postIds } },
+        orderBy: [{ position: 'asc' }],
+        select: { postId: true, fileId: true },
+      }),
+      prisma.socialPost.findMany({
+        where: { id: { in: postIds } },
+        select: { id: true, quotedPostId: true },
+      }),
+    ]);
+
+    const imagesBy = new Map<string, string[]>();
+    for (const img of images) {
+      imagesBy.set(img.postId, [...(imagesBy.get(img.postId) ?? []), img.fileId]);
+    }
+
+    const quotedIds = [
+      ...new Set(roots.map((r) => r.quotedPostId).filter((id): id is string => Boolean(id))),
+    ];
+    const quotedBy = new Map<string, QuotedPost>();
+    if (quotedIds.length > 0) {
+      const quoted = await prisma.socialPost.findMany({
+        where: { id: { in: quotedIds } },
+        select: { id: true, body: true, authorUserId: true, deletedAt: true, createdAt: true },
+      });
+      const quotedAuthors = await identity.getPublicUsers(quoted.map((q) => q.authorUserId));
+      const quotedById = new Map(quoted.map((q) => [q.id, q]));
+      for (const root of roots) {
+        if (!root.quotedPostId) continue;
+        const q = quotedById.get(root.quotedPostId);
+        // Cytowany wpis skasowany albo ukryty przez moderatora: zamiast znikać
+        // po cichu (co zmieniłoby sens cudzej wypowiedzi), mówimy wprost.
+        if (!q || q.deletedAt) {
+          quotedBy.set(root.id, { id: root.quotedPostId, available: false });
+          continue;
+        }
+        quotedBy.set(root.id, {
+          id: q.id,
+          available: true,
+          body: q.body,
+          createdAt: q.createdAt,
+          author: {
+            id: q.authorUserId,
+            displayName: quotedAuthors.get(q.authorUserId)?.displayName ?? 'Użytkownik',
+            handle: quotedAuthors.get(q.authorUserId)?.handle ?? null,
+            avatarFileId: quotedAuthors.get(q.authorUserId)?.avatarFileId ?? null,
+          },
+        });
+      }
+    }
+    return { imagesBy, quotedBy };
   }
 
   async function requireOwnPost(postId: string, userId: string) {
@@ -140,11 +226,61 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
         userId,
         FRESH_ACCOUNT_LIMITS.social_post,
       );
+
+      const imageFileIds = input.imageFileIds ?? [];
+      // Własność pliku sprawdzamy PRZED transakcją: cudzy identyfikator pliku
+      // ma odbić się od walidacji, a nie wylądować w bazie i wyciec w feedzie.
+      if (imageFileIds.length > 0 && files) {
+        for (const fileId of imageFileIds) await files.assertOwned(fileId, userId, 'SOCIAL');
+      }
+
+      // Wpis bez treści ma sens tylko wtedy, gdy niesie go obraz albo cytat.
+      if (input.body.length === 0 && imageFileIds.length === 0 && !input.quotedPostId) {
+        throw new DomainError('EMPTY_POST', 'Wpis nie może być pusty', 400);
+      }
+
+      let quotedPostId: string | null = null;
+      if (input.quotedPostId) {
+        if (input.quotedPostId === userId) {
+          throw new DomainError('INVALID_QUOTE', 'Nieprawidłowy cytowany wpis', 400);
+        }
+        const quoted = await prisma.socialPost.findFirst({
+          where: { id: input.quotedPostId, deletedAt: null },
+          select: { id: true, authorUserId: true, quotedPostId: true },
+        });
+        if (!quoted) throw new NotFoundError('Cytowany wpis nie istnieje');
+        // Cytowanie cytatu spłaszczamy do ORYGINAŁU. Inaczej po kilku podaniach
+        // dalej karta byłaby matrioszką, a użytkownik i tak chce zobaczyć źródło.
+        quotedPostId = quoted.quotedPostId ?? quoted.id;
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         const post = await tx.socialPost.create({
-          data: { authorUserId: userId, body: input.body },
+          data: { authorUserId: userId, body: input.body, quotedPostId },
         });
+        if (imageFileIds.length > 0) {
+          await tx.socialPostImage.createMany({
+            data: imageFileIds.map((fileId, position) => ({ postId: post.id, fileId, position })),
+          });
+        }
         await emitEvent(tx, 'social.post_published', { postId: post.id, authorUserId: userId });
+        if (quotedPostId) {
+          const quotedAuthor = await tx.socialPost.findUnique({
+            where: { id: quotedPostId },
+            select: { authorUserId: true },
+          });
+          // Powiadomienie dla cytowanego — ZERO punktów (ADR-004). Zdarzenie
+          // konsumuje wyłącznie `notifications`; ladder go nie subskrybuje
+          // i pilnuje tego strukturalny test anty-MLM.
+          if (quotedAuthor && quotedAuthor.authorUserId !== userId) {
+            await emitEvent(tx, 'social.post_quoted', {
+              postId: post.id,
+              quotedPostId,
+              quotedAuthorUserId: quotedAuthor.authorUserId,
+              actorUserId: userId,
+            });
+          }
+        }
         await emitMentions(tx, input.body, userId, post.id);
         return { id: post.id };
       });
@@ -273,7 +409,7 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
       });
 
       const userIds = [...new Set([post.authorUserId, ...comments.map((c) => c.authorUserId)])];
-      const [users, levels, appreciations, mine] = await Promise.all([
+      const [users, levels, appreciations, mine, extras] = await Promise.all([
         identity.getPublicUsers(userIds),
         ladder.getLevels(userIds),
         prisma.socialReaction.count({ where: { postId } }),
@@ -282,6 +418,7 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
               where: { postId_userId: { postId, userId: viewerId } },
             })
           : Promise.resolve(null),
+        loadPostExtras([postId]),
       ]);
 
       const person = (id: string) => ({
@@ -302,6 +439,8 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
           isOwn: viewerId === post.authorUserId,
           appreciations,
           viewerAppreciated: Boolean(mine),
+          imageFileIds: extras.imagesBy.get(postId) ?? [],
+          quoted: extras.quotedBy.get(postId) ?? null,
         },
         comments: comments.map((c) => ({
           id: c.id,
@@ -386,6 +525,7 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
           : Promise.resolve([]),
       ]);
 
+      const extras = await loadPostExtras(postIds);
       const postById = new Map(posts.map((p) => [p.id, p]));
       const reactionsBy = new Map(reactionCounts.map((r) => [r.postId, r._count.postId]));
       const commentsBy = new Map(commentCounts.map((c) => [c.postId, c._count.postId]));
@@ -407,6 +547,8 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
                     post: {
                       body: post.body,
                       editedAt: post.editedAt,
+                      imageFileIds: extras.imagesBy.get(post.id) ?? [],
+                      quoted: extras.quotedBy.get(post.id) ?? null,
                       appreciations: reactionsBy.get(post.id) ?? 0,
                       comments: commentsBy.get(post.id) ?? 0,
                     },

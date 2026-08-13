@@ -600,6 +600,40 @@ export function createListingsService({ prisma, identity, orders, files, redis }
       return { orderId: order.id };
     },
 
+    /**
+     * Najczęściej używane tagi opublikowanych usług.
+     *
+     * To NIE jest ozdoba katalogu. `innodb_ft_min_token_size` wynosi domyślnie 3,
+     * więc frazy „HR", „IT", „AI" NIGDY nie trafią do indeksu FULLTEXT i nie da
+     * się ich wyszukać — tagi są jedyną drogą do tych kategorii.
+     *
+     * Ranking po liczbie użyć jest tu dopuszczalny mimo ADR-010: to podpowiedź
+     * NAWIGACYJNA w katalogu usług, a nie kolejność treści w feedzie. Feed
+     * pozostaje chronologiczny.
+     */
+    async getPopularTags(limit = 12) {
+      const grouped = await prisma.listingTagLink.groupBy({
+        by: ['tagId'],
+        where: { listing: { status: 'PUBLISHED' } },
+        _count: { tagId: true },
+        orderBy: { _count: { tagId: 'desc' } },
+        take: limit,
+      });
+      if (grouped.length === 0) return [];
+      const tags = await prisma.tag.findMany({
+        where: { id: { in: grouped.map((g) => g.tagId) } },
+        select: { id: true, name: true, slug: true },
+      });
+      const byId = new Map(tags.map((t) => [t.id, t]));
+      // Kolejność z groupBy jest tą właściwą — findMany jej nie zachowuje.
+      return grouped
+        .map((g) => {
+          const tag = byId.get(g.tagId);
+          return tag ? { name: tag.name, slug: tag.slug, count: g._count.tagId } : null;
+        })
+        .filter((t): t is { name: string; slug: string; count: number } => t !== null);
+    },
+
     // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
     // Po `publishedAt`, nie `createdAt`: szkic, którego nikt nie opublikował,
     // nie jest zdarzeniem na rynku i zawyżałby obraz aktywności.

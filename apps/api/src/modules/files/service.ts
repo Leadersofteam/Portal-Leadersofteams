@@ -21,7 +21,7 @@ export type FileVariant = keyof typeof FILE_VARIANTS;
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-export type FileKind = 'AVATAR' | 'PORTFOLIO' | 'LISTING';
+export type FileKind = 'AVATAR' | 'PORTFOLIO' | 'LISTING' | 'SOCIAL';
 
 export interface FilesDeps {
   uploadsDir: string;

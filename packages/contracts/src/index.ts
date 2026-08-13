@@ -159,7 +159,7 @@ export type PortfolioItemInput = z.infer<typeof portfolioItemInputSchema>;
 // Files — upload obrazów (awatary, portfolio, galerie usług)
 // ---------------------------------------------------------------------------
 
-export const fileKindSchema = z.enum(['AVATAR', 'PORTFOLIO', 'LISTING']);
+export const fileKindSchema = z.enum(['AVATAR', 'PORTFOLIO', 'LISTING', 'SOCIAL']);
 export type FileKind = z.infer<typeof fileKindSchema>;
 
 export const uploadedFileSchema = z.object({
@@ -524,7 +524,28 @@ export const socialPostBodySchema = z
   .min(1, 'Wpis nie może być pusty')
   .max(600, 'Wpis: maksymalnie 600 znaków');
 
-export const createSocialPostInputSchema = z.object({ body: socialPostBodySchema });
+// Treść wpisu, gdy niesie go obraz albo cytat — wtedy sam tekst może być pusty
+// (udostępnienie czyjegoś wpisu bez komentarza to normalny gest, nie błąd).
+export const socialPostBodyOptionalSchema = z
+  .string()
+  .trim()
+  .max(600, 'Wpis: maksymalnie 600 znaków');
+
+// Do 4 obrazów, jak w X. Limit jest świadomy: więcej nie mieści się w siatce
+// na 390 px bez zamiany feedu w galerię, a feed ma zostać czytelny.
+export const SOCIAL_POST_MAX_IMAGES = 4;
+
+export const createSocialPostInputSchema = z.object({
+  // Tekst może być pusty, JEŚLI wpis niesie obraz albo cytat — udostępnienie
+  // czyjegoś wpisu bez własnego komentarza to normalny gest. Warunek „coś musi
+  // być" egzekwuje serwis, bo zod nie widzi tu relacji między polami czytelnie.
+  body: socialPostBodyOptionalSchema,
+  imageFileIds: z.array(idSchema).max(SOCIAL_POST_MAX_IMAGES).optional(),
+  // „Podaj dalej z komentarzem" — cytowany wpis. Cytowanie NIE DAJE PUNKTÓW
+  // (ADR-004): to sposób, żeby dwadzieścia osób mogło się nawzajem wzmacniać
+  // bez DM-ów, a nie kolejna waluta do farmienia.
+  quotedPostId: idSchema.optional(),
+});
 export type CreateSocialPostInput = z.infer<typeof createSocialPostInputSchema>;
 
 export const updateSocialPostInputSchema = z.object({ body: socialPostBodySchema });

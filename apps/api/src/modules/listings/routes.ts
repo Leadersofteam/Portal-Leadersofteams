@@ -66,6 +66,13 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
       });
     });
 
+    // UWAGA na kolejność tras: `/listings/tags/popular` MUSI być zadeklarowane
+    // przed ewentualnym `/listings/:id`, inaczej „tags" zostałoby potraktowane
+    // jako identyfikator usługi.
+    app.get('/listings/tags/popular', async (_request, reply) => {
+      return reply.send({ tags: await listings.getPopularTags() });
+    });
+
     app.get<{ Params: { slug: string } }>('/listings/slug/:slug', async (request, reply) => {
       const listing = await listings.getBySlug(request.params.slug);
       const [enriched] = await withLeaderMeta([listing]);

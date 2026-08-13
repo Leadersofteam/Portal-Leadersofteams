@@ -108,9 +108,13 @@ model VerificationToken {
 model Company {
   id          String   @id @default(cuid())
   name        String
-  // NIP opcjonalny — brak weryfikacji Firm na starcie (brief 3.4),
-  // pole gotowe pod przyszłą weryfikację-odznakę.
+  // NIP opcjonalny — brak weryfikacji Firm na starcie (brief 3.4).
   nip         String?
+  // Znacznik POPRAWNOŚCI FORMALNEJ numeru (suma kontrolna mod 11), a NIE
+  // potwierdzenie istnienia firmy w rejestrze. Trwały ślad zamiast liczenia
+  // sumy przy każdym renderze — i miejsce, w którym kiedyś stanie data
+  // weryfikacji w Białej Liście MF, gdy potwierdzimy limity darmowego API.
+  nipVerifiedAt DateTime?
   description String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -200,6 +204,10 @@ enum FileKind {
   AVATAR
   PORTFOLIO
   LISTING
+  // Obrazy przy wpisach portalowych. Dopisane NA KOŃCU: MySQL trzyma ENUM jako
+  // liczbę porządkową, więc wstawienie w środek po cichu przemapowałoby
+  // istniejące pliki na sąsiednie rodzaje.
+  SOCIAL
 }
 
 model UploadedFile {
@@ -219,6 +227,7 @@ model UploadedFile {
   avatarOfUser   User?           @relation("UserAvatar")
   portfolioItems PortfolioItem[]
   listingImages  ListingImage[]
+  socialImages   SocialPostImage[]
 
   @@index([ownerId, kind])
   @@map("uploaded_files")
@@ -954,18 +963,41 @@ model SocialPost {
   id           String    @id @default(cuid())
   authorUserId String
   body         String    @db.Text
+  // Cytowany wpis („podaj dalej z komentarzem"). NULL = zwykły wpis.
+  // Świadomie BEZ kaskady: usunięcie cytowanego wpisu nie może skasować cudzej
+  // wypowiedzi, która go komentuje — pokazujemy wtedy „wpis niedostępny".
+  quotedPostId String?
   editedAt     DateTime?
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
 
-  author    User             @relation("SocialAuthor", fields: [authorUserId], references: [id])
-  comments  SocialComment[]
-  reactions SocialReaction[]
+  author     User              @relation("SocialAuthor", fields: [authorUserId], references: [id])
+  comments   SocialComment[]
+  reactions  SocialReaction[]
+  images     SocialPostImage[]
+  quotedPost SocialPost?       @relation("SocialQuote", fields: [quotedPostId], references: [id], onDelete: SetNull)
+  quotedBy   SocialPost[]      @relation("SocialQuote")
 
   @@index([authorUserId, createdAt])
   @@index([createdAt])
+  @@index([quotedPostId])
   @@fulltext([body])
   @@map("social_posts")
+}
+
+// Obrazy przy wpisie portalowym (do 4, jak w X). Wzorzec ListingImage.
+model SocialPostImage {
+  id       String @id @default(cuid())
+  postId   String
+  fileId   String
+  position Int    @default(0)
+
+  post SocialPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  file UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, fileId])
+  @@index([postId, position])
+  @@map("social_post_images")
 }
 
 model SocialComment {

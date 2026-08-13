@@ -32,8 +32,8 @@ starszy o obie gałęzie).
 >      społeczna, więc to tam skoncentruje się nadużycie,
 >    - `ORDER` → **świadomie BEZ ukrywania**: zlecenie to umowa dwóch stron, nie publiczna treść.
 >      Ukrycie zerwałoby pracę ludziom, którzy nie są przedmiotem zgłoszenia.
->    Akcje rozdzielone: `RELEASE`/`REJECT` (punkty) i `HIDE`/`DISMISS` (treść); akcja punktowa
->    na sprawie bez punktu daje teraz 400 zamiast po cichu zamykać sprawę.
+>      Akcje rozdzielone: `RELEASE`/`REJECT` (punkty) i `HIDE`/`DISMISS` (treść); akcja punktowa
+>      na sprawie bez punktu daje teraz 400 zamiast po cichu zamykać sprawę.
 > 2. **Puls workera.** `portal:worker:heartbeat` + healthcheck w compose prod i staging.
 >    **Puls jest odnawiany TYLKO gdy obraca się pętla dispatchera** (`lastLoopAt`) — zwykły
 >    `setInterval` dowodziłby jedynie, że proces istnieje, i świeciłby na zielono przy
@@ -68,9 +68,9 @@ starszy o obie gałęzie).
 >    - **Uczciwie o skuteczności:** PoW nie rozpoznaje człowieka, tylko podnosi koszt próby.
 >      Zatrzyma pętlę curl-a i gotowy skrypt, nie zatrzyma solvera w C. Realną barierą
 >      pozostają limity świeżego konta, weryfikacja e-maila i moderacja treści.
->    **Przy okazji usunięte Brevo** — martwy kod drugiego dostawcy po API (SMTP zawsze miał
->    pierwszeństwo). **Portal nie odpytuje już ŻADNEGO zewnętrznego API** poza SMTP własnej
->    skrzynki, którego zastąpić się nie da (własny serwer pocztowy = świeże IP = spam-folder).
+>      **Przy okazji usunięte Brevo** — martwy kod drugiego dostawcy po API (SMTP zawsze miał
+>      pierwszeństwo). **Portal nie odpytuje już ŻADNEGO zewnętrznego API** poza SMTP własnej
+>      skrzynki, którego zastąpić się nie da (własny serwer pocztowy = świeże IP = spam-folder).
 >
 > **Naprawione po drodze — wszystko ZASTANE, potwierdzone przed zmianą:**
 >

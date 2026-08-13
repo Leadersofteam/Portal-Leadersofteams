@@ -5,6 +5,9 @@ import { cache } from 'react';
 
 import { AppreciateButton } from '@/components/appreciate-button';
 import { MentionText } from '@/components/mention-text';
+import { PostMedia } from '@/components/post-media';
+import { QuotedPost } from '@/components/quoted-post';
+import type { QuotedPostView } from '@/components/quoted-post';
 import { ReportButton } from '@/components/report-button';
 import { ShareButton } from '@/components/share-button';
 import { Avatar } from '@/components/ui/avatar';
@@ -33,6 +36,8 @@ interface PostDetail {
     isOwn: boolean;
     appreciations: number;
     viewerAppreciated: boolean;
+    imageFileIds: string[];
+    quoted: QuotedPostView | null;
   };
   comments: Array<{
     id: string;
@@ -111,9 +116,16 @@ export default async function SocialPostPage({ params }: { params: Promise<{ id:
         />
         <div className="feed-card-body">
           <PersonLine person={post.author} at={post.createdAt} />
-          <p className="feed-post-body large">
-            <MentionText>{post.body}</MentionText>
-          </p>
+          {post.body && (
+            <p className="feed-post-body large">
+              <MentionText>{post.body}</MentionText>
+            </p>
+          )}
+          {post.quoted && <QuotedPost quoted={post.quoted} />}
+          <PostMedia
+            fileIds={post.imageFileIds}
+            alt={`Obraz do wpisu — ${post.author.displayName}`}
+          />
           {post.editedAt && <p className="muted feed-edited">(edytowano)</p>}
 
           <div className="feed-card-actions">
@@ -122,6 +134,11 @@ export default async function SocialPostPage({ params }: { params: Promise<{ id:
               initialCount={post.appreciations}
               initialActive={post.viewerAppreciated}
             />
+            {isLoggedIn && (
+              <Link className="feed-action" href={`/feed?cytuj=${post.id}#composer`}>
+                Podaj dalej
+              </Link>
+            )}
             <ShareButton
               url={`/wpisy/${post.id}`}
               title={`Wpis ${post.author.displayName} — Leaders of Teams`}

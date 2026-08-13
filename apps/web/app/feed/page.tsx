@@ -7,6 +7,9 @@ import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { formatFeedTime } from '@/lib/labels';
+import { PostMedia } from '@/components/post-media';
+import { QuotedPost } from '@/components/quoted-post';
+import type { QuotedPostView } from '@/components/quoted-post';
 import { serverApi } from '@/lib/server-api';
 
 import { Composer } from './composer';
@@ -26,7 +29,14 @@ interface FeedItem {
   subjectId: string;
   meta: Record<string, unknown>;
   createdAt: string;
-  post?: { body: string; editedAt: string | null; appreciations: number; comments: number };
+  post?: {
+    body: string;
+    editedAt: string | null;
+    imageFileIds: string[];
+    quoted: QuotedPostView | null;
+    appreciations: number;
+    comments: number;
+  };
   actor: {
     id: string;
     displayName: string;
@@ -89,6 +99,18 @@ export default async function FeedPage({
     followingCount: number;
   }>(`/feed?${query.toString()}`);
 
+  // „Podaj dalej" prowadzi na /feed?cytuj=<id> — cytowany wpis pobieramy po
+  // stronie serwera, żeby kompozytor od razu pokazał, CO właściwie podajesz
+  // dalej. Bez tego użytkownik widziałby samo „podajesz dalej wybrany wpis"
+  // i musiał wierzyć na słowo.
+  const quotedPostId = typeof params.cytuj === 'string' ? params.cytuj : undefined;
+  const quotedPreview = quotedPostId
+    ? await serverApi<{ post: { body: string } }>(`/social/posts/${quotedPostId}`)
+    : null;
+  const quotedLabel = quotedPreview?.post.body
+    ? quotedPreview.post.body.slice(0, 60) + (quotedPreview.post.body.length > 60 ? '…' : '')
+    : undefined;
+
   const items = data?.items ?? [];
   const followingCount = data?.followingCount ?? 0;
   const hrefFor = (s: FeedScope) => (s === 'all' ? '/feed?zakres=wszyscy' : '/feed');
@@ -113,7 +135,7 @@ export default async function FeedPage({
       )}
 
       {isLoggedIn ? (
-        <Composer />
+        <Composer quotedPostId={quotedPostId} quotedLabel={quotedLabel} />
       ) : (
         <div className="card mt-2">
           <p className="mt-0">
@@ -174,9 +196,16 @@ export default async function FeedPage({
 
                   {isPost ? (
                     <>
-                      <p className="feed-post-body">
-                        <MentionText>{item.post!.body}</MentionText>
-                      </p>
+                      {item.post!.body && (
+                        <p className="feed-post-body">
+                          <MentionText>{item.post!.body}</MentionText>
+                        </p>
+                      )}
+                      {item.post!.quoted && <QuotedPost quoted={item.post!.quoted} />}
+                      <PostMedia
+                        fileIds={item.post!.imageFileIds}
+                        alt={`Obraz do wpisu — ${item.actor.displayName}`}
+                      />
                       <div className="feed-card-actions">
                         <AppreciateButton
                           postId={item.subjectId}
@@ -188,6 +217,14 @@ export default async function FeedPage({
                             ? `Komentarze (${item.post!.comments})`
                             : 'Skomentuj'}
                         </Link>
+                        {isLoggedIn && (
+                          <Link
+                            className="feed-action"
+                            href={`/feed?cytuj=${item.subjectId}#composer`}
+                          >
+                            Podaj dalej
+                          </Link>
+                        )}
                         <ShareButton
                           url={`/wpisy/${item.subjectId}`}
                           title={`Wpis ${item.actor.displayName} — Leaders of Teams`}

@@ -14,7 +14,10 @@ export interface FilesRoutesDeps {
 
 const setAvatarSchema = z.object({ fileId: z.string().min(1).nullable() });
 
-const KINDS: ReadonlySet<string> = new Set(['AVATAR', 'PORTFOLIO', 'LISTING']);
+// Lista rodzajów MUSI iść w parze z enumem FileKind w schemacie i z
+// `fileKindSchema` w kontraktach — rozjazd objawia się 400 przy uploadzie,
+// mimo poprawnie zmigrowanej bazy.
+const KINDS: ReadonlySet<string> = new Set(['AVATAR', 'PORTFOLIO', 'LISTING', 'SOCIAL']);
 
 export function filesRoutes({ files, auth, identity }: FilesRoutesDeps) {
   return async function plugin(app: FastifyInstance) {
@@ -27,7 +30,7 @@ export function filesRoutes({ files, auth, identity }: FilesRoutesDeps) {
       }
       const kindRaw = (part.fields.kind as { value?: string } | undefined)?.value ?? 'PORTFOLIO';
       if (!KINDS.has(kindRaw)) {
-        throw new DomainError('BAD_KIND', 'kind: AVATAR | PORTFOLIO | LISTING', 400);
+        throw new DomainError('BAD_KIND', 'kind: AVATAR | PORTFOLIO | LISTING | SOCIAL', 400);
       }
 
       // @fastify/multipart dekoduje filename jako utf8 (defParamCharset) —

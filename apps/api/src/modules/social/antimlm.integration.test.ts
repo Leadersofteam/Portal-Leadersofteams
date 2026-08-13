@@ -101,6 +101,21 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
     });
     expect(appreciate.statusCode).toBe(200);
 
+    // A PODAJE DALEJ wpis B z własnym komentarzem. Ten krok MUSI tu być: bez
+    // niego zdarzenie `social.post_quoted` nigdy nie trafiłoby do zebranej listy
+    // i test strzegłby ścieżki sprzed dodania cytowania, zieleniąc się przez
+    // pominięcie nowej funkcji zamiast przez jej sprawdzenie.
+    const quote = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/social/posts',
+      headers: { cookie: aCookie },
+      payload: {
+        body: 'Warto przeczytać — dokładnie ten problem mieliśmy u siebie.',
+        quotedPostId: postId,
+      },
+    });
+    expect(quote.statusCode).toBe(201);
+
     // Zbierz WSZYSTKIE zdarzenia wypuszczone przez tę ścieżkę.
     const events = await ctx.prisma.outboxEvent.findMany({
       where: { createdAt: { gte: startedAt } },
@@ -111,6 +126,11 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
       types.length,
       'ścieżka społeczna nie wypuściła ŻADNEGO zdarzenia — test zieleniłby się z niewłaściwego powodu',
     ).toBeGreaterThan(0);
+
+    // Kontrola pokrycia: skoro ścieżka zawiera cytowanie, jego zdarzenie MUSI
+    // być na liście. Gdyby kiedyś zniknęło, chcemy czerwonego testu tutaj,
+    // a nie cichego zawężenia tego, czego pilnujemy.
+    expect(types).toContain('social.post_quoted');
 
     // Żadne z nich nie może być konsumowane przez ladder.
     const ladderTypes = Object.keys(ladderSubscriptions({} as LadderService));

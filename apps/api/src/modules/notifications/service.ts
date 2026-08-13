@@ -163,6 +163,25 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
       ]);
     },
 
+    // Ktoś podał dalej Twój wpis z własnym komentarzem. Powiadomienie prowadzi
+    // do NOWEGO wpisu (tego z cytatem), nie do oryginału — inaczej autor nie
+    // zobaczyłby tego, co ktoś o nim napisał.
+    async onPostQuoted(p: {
+      postId: string;
+      quotedPostId: string;
+      quotedAuthorUserId: string;
+      actorUserId: string;
+    }) {
+      return deliver([
+        {
+          userId: p.quotedAuthorUserId,
+          type: 'post_quoted',
+          dedupeKey: `post_quoted:${p.postId}`,
+          payload: { socialPostId: p.postId, quotedPostId: p.quotedPostId },
+        },
+      ]);
+    },
+
     async onInquiryCreated(p: InquiryCreatedPayload) {
       return deliver([
         {

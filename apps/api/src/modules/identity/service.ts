@@ -27,6 +27,9 @@ export interface PublicUser {
 export interface CompanySummary {
   id: string;
   name: string;
+  // Ustawione, gdy NIP przeszedł sumę kontrolną. UWAGA na copy w UI: to jest
+  // poprawność FORMALNA, nie potwierdzenie istnienia firmy w rejestrze.
+  nipVerifiedAt?: Date | null;
 }
 
 // Kontrakt modułu na potrzeby RODO (D6): każdy moduł czyści/eksportuje WYŁĄCZNIE
@@ -234,6 +237,10 @@ export function createIdentityService(
           data: {
             name: input.name,
             nip: input.nip ?? null,
+            // Kontrakt (`createCompanyInputSchema`) już odrzucił numer z błędną
+            // sumą kontrolną, więc obecność NIP-u tutaj ZNACZY, że przeszedł.
+            // Zapisujemy znacznik, zamiast przeliczać sumę przy każdym renderze.
+            nipVerifiedAt: input.nip ? new Date() : null,
             description: input.description ?? null,
             members: { create: { userId: ownerId, role: 'OWNER' } },
           },
@@ -246,10 +253,15 @@ export function createIdentityService(
     async listCompanies(userId) {
       const memberships = await prisma.companyMember.findMany({
         where: { userId },
-        include: { company: { select: { id: true, name: true } } },
+        include: { company: { select: { id: true, name: true, nipVerifiedAt: true } } },
         orderBy: { createdAt: 'asc' },
       });
-      return memberships.map((m) => ({ id: m.company.id, name: m.company.name, role: m.role }));
+      return memberships.map((m) => ({
+        id: m.company.id,
+        name: m.company.name,
+        nipVerifiedAt: m.company.nipVerifiedAt,
+        role: m.role,
+      }));
     },
 
     async isCompanyMember(userId, companyId) {
@@ -321,15 +333,17 @@ export function createIdentityService(
       if (companyIds.length === 0) return new Map();
       const companies = await prisma.company.findMany({
         where: { id: { in: companyIds } },
-        select: { id: true, name: true },
+        select: { id: true, name: true, nipVerifiedAt: true },
       });
-      return new Map(companies.map((c) => [c.id, { id: c.id, name: c.name }]));
+      return new Map(
+        companies.map((c) => [c.id, { id: c.id, name: c.name, nipVerifiedAt: c.nipVerifiedAt }]),
+      );
     },
 
     async getCompanyMeta(companyId) {
       const company = await prisma.company.findUnique({
         where: { id: companyId },
-        select: { id: true, name: true, createdAt: true },
+        select: { id: true, name: true, createdAt: true, nipVerifiedAt: true },
       });
       return company;
     },

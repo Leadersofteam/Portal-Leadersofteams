@@ -60,6 +60,8 @@ export function notificationMessage(type: string, payload: Record<string, unknow
       return 'Nowy komentarz do Twojego posta.';
     case 'user_mentioned':
       return 'Ktoś wspomniał o Tobie.';
+    case 'post_quoted':
+      return 'Ktoś podał dalej Twój wpis z własnym komentarzem.';
     case 'membership_requested':
       return 'Nowa prośba o dołączenie do Twojej grupy.';
     case 'membership_accepted':

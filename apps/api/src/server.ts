@@ -201,6 +201,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     prisma,
     identity: identityService,
     ladder: ladderService,
+    files: filesService,
     redis,
   });
   const listingsService = createListingsService({
@@ -235,6 +236,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   );
   await app.register(
     marketplaceRoutes({
+      identity: identityService,
       profiles: profilesService,
       orders: ordersService,
       reviews: reviewsService,
