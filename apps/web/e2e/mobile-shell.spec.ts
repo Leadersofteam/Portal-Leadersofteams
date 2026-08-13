@@ -86,3 +86,19 @@ test.describe('tabele na telefonie', () => {
     await expect(page.locator('.rung-cards')).toBeHidden();
   });
 });
+
+test.describe('szukanie i pakiety', () => {
+  test('globalne pole prowadzi na /szukaj z zakładkami', async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto('/uslugi');
+    await page.getByPlaceholder('Szukaj usług, Liderów, zleceń…').fill('rekrutacja');
+    await page.keyboard.press('Enter');
+    await page.waitForURL('**/szukaj?q=rekrutacja');
+    await expect(page.getByRole('heading', { name: 'Szukaj w Portalu' })).toBeVisible();
+  });
+
+  test('zbyt krótka fraza nie wywala strony, tylko prosi o więcej', async ({ page }) => {
+    await page.goto('/szukaj?q=a');
+    await expect(page.getByRole('heading', { name: 'Wpisz, czego szukasz' })).toBeVisible();
+  });
+});

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import { GlobalSearch } from '@/components/global-search';
 import { NotificationBell } from '@/components/notification-bell';
 import { LogoMark } from '@/components/ui/logo';
 
@@ -31,6 +32,8 @@ export function SiteHeader() {
         <LogoMark />
         Leaders of Teams
       </Link>
+
+      <GlobalSearch />
 
       <button
         type="button"

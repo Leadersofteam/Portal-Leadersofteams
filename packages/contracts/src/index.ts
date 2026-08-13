@@ -79,6 +79,28 @@ export type SessionUser = z.infer<typeof sessionUserSchema>;
 // Firma
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// NIP — walidacja sumy kontrolnej (offline, 0 zł — ADR-009)
+//
+// UWAGA CO DOKŁADNIE SPRAWDZAMY: to jest wyłącznie poprawność FORMALNA numeru
+// (algorytm wagowy mod 11), a NIE potwierdzenie, że firma istnieje i jest
+// czynnym podatnikiem. Dlatego etykieta w UI musi brzmieć „NIP — suma kontrolna
+// OK", nigdy „NIP zweryfikowany": marka Portalu stoi na „dowód, nie deklaracja",
+// więc nie wolno nam sugerować weryfikacji rejestrowej, której nie robimy.
+// Weryfikacja w Białej Liście MF dojdzie, gdy potwierdzimy limity darmowego API.
+// ---------------------------------------------------------------------------
+
+const NIP_WEIGHTS = [6, 5, 7, 2, 3, 4, 5, 6, 7] as const;
+
+export function isValidNip(nip: string): boolean {
+  const digits = nip.replace(/[\s-]/g, '');
+  if (!/^\d{10}$/.test(digits)) return false;
+  const sum = NIP_WEIGHTS.reduce((acc, weight, i) => acc + weight * Number(digits[i]), 0);
+  const check = sum % 11;
+  // Reszta 10 nie ma reprezentacji jako cyfra kontrolna — taki numer jest błędny.
+  return check !== 10 && check === Number(digits[9]);
+}
+
 export const createCompanyInputSchema = z.object({
   name: z.string().trim().min(2).max(120),
   // NIP opcjonalny na starcie (brak weryfikacji Firm — brief 3.4);
@@ -87,6 +109,7 @@ export const createCompanyInputSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{10}$/, 'NIP musi składać się z 10 cyfr')
+    .refine(isValidNip, 'Nieprawidłowy NIP — błędna suma kontrolna')
     .optional(),
   description: z.string().trim().max(2000).optional(),
 });

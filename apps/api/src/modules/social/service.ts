@@ -9,6 +9,7 @@ import type { Prisma } from '@prisma/client';
 import type { PrismaClient } from '../../shared/db';
 import { DomainError, ForbiddenError, NotFoundError } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
+import { toBooleanQuery } from '../../shared/fulltext';
 import { extractMentions } from '../../shared/mentions';
 import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
 import type { Redis } from '../../shared/redis';
@@ -413,6 +414,36 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
         followingCount: followedIds.length,
         scope,
       };
+    },
+
+    // Wyszukiwanie wpisów portalowych (dla modułu search) — korzysta z indeksu
+    // FULLTEXT social_posts(body) dodanego razem z encją.
+    async searchPosts(q: string, limit = 10) {
+      const expr = toBooleanQuery(q);
+      const ids = expr
+        ? (
+            await prisma.$queryRaw<Array<{ id: string }>>`
+              SELECT id FROM social_posts
+              WHERE MATCH(body) AGAINST(${expr} IN BOOLEAN MODE)
+                AND deletedAt IS NULL
+              LIMIT 50`
+          ).map((r) => r.id)
+        : null;
+
+      const rows = await prisma.socialPost.findMany({
+        where: ids
+          ? { id: { in: ids }, deletedAt: null }
+          : { body: { contains: q }, deletedAt: null },
+        select: { id: true, body: true, authorUserId: true, createdAt: true },
+        orderBy: [{ createdAt: 'desc' }],
+        take: limit,
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        excerpt: r.body.slice(0, 160),
+        authorUserId: r.authorUserId,
+        createdAt: r.createdAt,
+      }));
     },
 
     // Publiczny profil społecznościowy: oś aktywności + liczniki obserwujących.

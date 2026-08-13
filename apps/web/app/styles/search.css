@@ -1,0 +1,250 @@
+/* =============================================================================
+   Szukanie i zaufanie (S11) — pole globalne, strona wyników, porównywarka,
+   odznaka NIP. Doklejane PO globals.css.
+   ========================================================================== */
+
+/* ===================== Pole w nagłówku ===================== */
+.global-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 14rem;
+  max-width: 24rem;
+  min-width: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-faint);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.global-search:focus-within {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.2);
+}
+
+.global-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.global-search input:focus {
+  outline: none;
+}
+
+.global-search input::placeholder {
+  color: var(--text-faint);
+}
+
+/* Na telefonie pole idzie do własnego wiersza pod logo — nie zjada slotu
+   w dolnym pasku (tam jest 5 stałych miejsc pod kciuk). */
+@media (max-width: 768px) {
+  .global-search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    min-height: 44px;
+  }
+}
+
+/* ===================== Strona wyników ===================== */
+.search-page-form {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.95rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-faint);
+}
+
+.search-field:focus-within {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.25);
+}
+
+.search-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.search-field input:focus {
+  outline: none;
+}
+
+.search-tabs {
+  display: flex;
+  gap: 0.3rem;
+  overflow-x: auto;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+
+.search-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 550;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.search-tabs a:hover {
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.search-tabs a.active {
+  color: var(--text-strong);
+  background: var(--surface-raised);
+}
+
+.search-tab-count {
+  min-width: 1.4rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.search-tabs a.active .search-tab-count {
+  background: rgb(99 102 241 / 0.18);
+  color: var(--primary-300);
+}
+
+@media (max-width: 640px) {
+  .search-page-form {
+    flex-wrap: wrap;
+  }
+
+  .search-page-form .btn {
+    flex: 1 1 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+/* ===================== Porównywarka pakietów ===================== */
+.package-switch {
+  display: none;
+}
+
+.package-scope {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 768px) {
+  /* Trzy kolumny na 390 px są nieczytelne — pakiety stają się przełącznikiem.
+     Cały mechanizm to ukryte radio + :has(), zero JavaScriptu. */
+  .package-switch {
+    display: flex;
+    gap: 0.3rem;
+    margin: 0 0 0.9rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+  }
+
+  .package-switch-item {
+    flex: 1;
+  }
+
+  .package-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .package-switch label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    font-weight: 550;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+      background var(--dur) var(--ease),
+      color var(--dur) var(--ease);
+  }
+
+  .package-switch input:checked + label {
+    background: var(--surface-raised);
+    color: var(--text-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .package-switch input:focus-visible + label {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  .package-compare .package-card {
+    display: none;
+  }
+
+  .package-compare:has(#pkg-BASIC:checked) .package-card[data-tier='BASIC'],
+  .package-compare:has(#pkg-STANDARD:checked) .package-card[data-tier='STANDARD'],
+  .package-compare:has(#pkg-PREMIUM:checked) .package-card[data-tier='PREMIUM'] {
+    display: flex;
+  }
+
+  /* Stary WebView bez :has() — pokazujemy wszystko stosem. Gorzej wygląda,
+     ale nic nie znika bezpowrotnie. */
+  @supports not (selector(:has(*))) {
+    .package-switch {
+      display: none;
+    }
+
+    .package-compare .package-card {
+      display: flex;
+    }
+  }
+}
+
+/* ===================== Odznaka NIP ===================== */
+/* Copy jest tu istotne prawnie: sprawdzamy WYŁĄCZNIE sumę kontrolną, więc
+   etykieta nie może sugerować weryfikacji w rejestrze (patrz isValidNip). */
+.nip-badge {
+  border-color: rgb(16 185 129 / 0.35);
+  color: #6ee7b7;
+  background: rgb(16 185 129 / 0.1);
+  cursor: help;
+}

@@ -9,6 +9,7 @@ import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
 
 import { InquiryForm } from './inquiry-form';
+import { PackageCompare } from './package-compare';
 
 interface ListingDetail {
   listing: {
@@ -39,18 +40,11 @@ interface ListingDetail {
   };
 }
 
-const TIER_LABELS: Record<string, string> = {
-  BASIC: 'Podstawowy',
-  STANDARD: 'Standard',
-  PREMIUM: 'Premium',
-};
-
 const getListing = cache((slug: string) =>
   serverApi<ListingDetail>(`/listings/slug/${encodeURIComponent(slug)}`),
 );
 
 const clip = (s: string, n = 155) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
-const plnFormat = new Intl.NumberFormat('pl-PL');
 
 export async function generateMetadata({
   params,
@@ -161,22 +155,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         Ceny są deklaracją Lidera — rozliczenie następuje bezpośrednio między stronami, a formalny
         przebieg zapewnia zlecenie utworzone z zapytania.
       </p>
-      <div className="package-grid">
-        {listing.packages.map((pkg) => (
-          <div
-            key={pkg.tier}
-            className={pkg.tier === 'PREMIUM' ? 'package-card premium' : 'package-card'}
-          >
-            <span className="tier">{TIER_LABELS[pkg.tier] ?? pkg.tier}</span>
-            <strong>{pkg.name}</strong>
-            <span className="price">{plnFormat.format(pkg.priceDeclared)} zł</span>
-            <span className="muted">do {pkg.deliveryDays} dni</span>
-            <p className="pre-wrap" style={{ margin: 0, fontSize: '0.92rem' }}>
-              {pkg.scope}
-            </p>
-          </div>
-        ))}
-      </div>
+      <PackageCompare packages={listing.packages} />
 
       {!isOwner && (
         <>

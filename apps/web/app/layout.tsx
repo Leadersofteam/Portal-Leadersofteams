@@ -15,6 +15,7 @@ import './globals.css';
 import './styles/mobile-shell.css';
 import './styles/social.css';
 import './styles/climb.css';
+import './styles/search.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({

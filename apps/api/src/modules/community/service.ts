@@ -2,6 +2,7 @@ import type { CreateAnswerInput, CreateThreadInput, ThreadFilters } from '@lot/c
 import type { Prisma } from '@prisma/client';
 
 import type { PrismaClient } from '../../shared/db';
+import { toBooleanQuery } from '../../shared/fulltext';
 import { DomainError, ForbiddenError, NotFoundError } from '../../shared/errors';
 import { emitEvent } from '../../shared/outbox';
 import { extractMentions } from '../../shared/mentions';
@@ -211,6 +212,29 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
     },
 
     // --- odczyty --------------------------------------------------------------
+    // Wyszukiwanie pytań w CAŁYM Portalu (dla modułu search).
+    // Ożywia indeks FULLTEXT threads(title, body), który do tej pory istniał
+    // w schemacie, ale nie był użyty w żadnym zapytaniu.
+    async searchThreads(q: string, limit = 10) {
+      const expr = toBooleanQuery(q);
+      const ids = expr
+        ? (
+            await prisma.$queryRaw<Array<{ id: string }>>`
+              SELECT id FROM threads
+              WHERE MATCH(title, body) AGAINST(${expr} IN BOOLEAN MODE)
+              LIMIT 50`
+          ).map((r) => r.id)
+        : null;
+
+      const rows = await prisma.thread.findMany({
+        where: ids ? { id: { in: ids } } : { title: { contains: q } },
+        select: { id: true, title: true, status: true, groupId: true },
+        orderBy: [{ createdAt: 'desc' }],
+        take: limit,
+      });
+      return rows;
+    },
+
     async listThreads(groupId: string, filters: ThreadFilters) {
       const limit = filters.limit ?? PAGE_DEFAULT;
       const where: Prisma.ThreadWhereInput = {

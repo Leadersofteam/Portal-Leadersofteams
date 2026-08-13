@@ -15,6 +15,13 @@ const API_MODULES = [
   'antifraud',
   'notifications',
   'integration',
+  // Dopisane w S11: te moduły powstały po ustaleniu listy i przez pewien czas
+  // NIE były pilnowane przez import/no-restricted-paths — czyli granica ADR-002
+  // istniała dla nich wyłącznie w dobrych intencjach.
+  'social',
+  'listings',
+  'files',
+  'search',
 ];
 
 export default tseslint.config(

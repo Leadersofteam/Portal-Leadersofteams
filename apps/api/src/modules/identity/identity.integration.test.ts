@@ -84,7 +84,8 @@ describe.skipIf(!hasInfra)('identity — przepływ end-to-end', () => {
       method: 'POST',
       url: '/api/v1/companies',
       headers: { cookie: sessionCookie },
-      payload: { name: 'Testowa Sp. z o.o.', nip: '1234567890' },
+      // NIP musi mieć poprawną sumę kontrolną (S11) — „1234567890" jej nie ma.
+      payload: { name: 'Testowa Sp. z o.o.', nip: '5252248481' },
     });
     expect(res.statusCode).toBe(201);
     const companyId = res.json().company.id;
@@ -95,6 +96,16 @@ describe.skipIf(!hasInfra)('identity — przepływ end-to-end', () => {
     });
     expect(outbox).not.toBeNull();
     expect(outbox?.payload).toMatchObject({ companyId });
+  });
+
+  it('odrzuca NIP o błędnej sumie kontrolnej (walidacja offline, 0 zł)', async () => {
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/companies',
+      headers: { cookie: sessionCookie },
+      payload: { name: 'Firma z literówką w NIP', nip: '5252248482' },
+    });
+    expect(res.statusCode).toBe(400);
   });
 
   it('wymaga zalogowania do utworzenia firmy (401)', async () => {
