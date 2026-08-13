@@ -113,6 +113,22 @@ Znaczenie powodów: `MISSING` — front nie dołączył rozwiązania (błąd JS 
 ⚠️ **`HUMANCHECK=off` to wyłącznik awaryjny na czas diagnozy, nie ustawienie docelowe.**
 Zostawiony na produkcji otwiera rejestrację dla botów.
 
+### Uploady plików (awarie 500 przy wgrywaniu zdjęć)
+
+`/healthz` zwraca pole `uploads`. `"fail"` oznacza, że proces api NIE MOŻE pisać
+do wolumenu — wtedy każdy upload kończy się 500, a reszta Portalu działa normalnie.
+
+Najczęstsza przyczyna (zdarzyła się na produkcji 13.08): podkatalog miesięczny
+w wolumenie należy do `root`, a api działa jako `node`.
+
+```bash
+docker exec portal-prod-api-1 sh -c 'id; ls -ld /app/uploads /app/uploads/*'
+# naprawa:
+docker exec -u root portal-prod-api-1 chown -R node:node /app/uploads
+```
+
+Po naprawie `uploads` w `/healthz` wraca na `"ok"` bez restartu kontenera.
+
 ### Analityka (S12)
 
 ```bash

@@ -88,6 +88,14 @@ treść jednym kliknięciem ✅; zamrożenie workera zapala healthcheck ✅; pan
 
 Cel: domknąć to, co z S11 zostało, i dać Firmie powód do zaufania w 10 sekund.
 
+> **✅ Punkty 1 i 3 ZROBIONE 2026-08-13** (poza sprintem, na życzenie właściciela).
+> `Company.nipVerifiedAt` + odznaka i `GET /listings/tags/popular` + chipy weszły.
+> Punkt 3 („ślad zaufania na kartach") okazał się w większości JUŻ ZROBIONY —
+> średnia ocen i liczba opinii renderują się na `/liderzy` i `/uslugi` od dawna.
+> Brakuje tam wyłącznie liczby ZREALIZOWANYCH ZLECEŃ przy Liderze (mamy ją już
+> policzoną dla Firmy w `getCompanyPublicStats`) oraz ocen w wynikach `/szukaj`.
+> Doszedł też publiczny profil Firmy (punkt 2) — patrz baner S14 w HANDOFF.
+
 1. **Dług z S11 (świadomie nieukończony — nie zapomniany):**
    - `Company.nipVerifiedAt` + odznaka **„NIP — suma kontrolna OK"**. Walidacja sumy kontrolnej
      już DZIAŁA i odrzuca błędne numery przy tworzeniu firmy (`isValidNip`, testy w

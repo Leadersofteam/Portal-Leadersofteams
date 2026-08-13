@@ -1,5 +1,51 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **✅ PRZYROST S14 (2026-08-13, po S12): „Obrazy, cytowanie i twarz Firmy"**
+> (`105c907`, `883975b`). Wdrożone na staging i **produkcję**, przejrzane na żywo.
+> Właściciel poprosił o funkcje z X i marketplace'u; wybrałem takie, które pracują
+> na wąskie gardło (pusty portal ma wyglądać żywo, Firma ma dać się sprawdzić),
+> a nie tylko wydłużają listę.
+>
+> **Warstwa X:** obrazy przy wpisie (do 4) i „podaj dalej z komentarzem".
+>
+> - `FileKind.SOCIAL` dopisany NA KOŃCU enuma (MySQL trzyma enum jako liczbę
+>   porządkową — wstawienie w środek przemapowałoby istniejące pliki).
+> - Cytat cytatu SPŁASZCZA się do oryginału; usunięcie oryginału NIE kasuje
+>   cudzego komentarza (`onDelete: SetNull` + jawne „wpis niedostępny").
+> - Własność obrazu sprawdzana PRZED transakcją — cudzy identyfikator pliku
+>   odbija się od walidacji, zamiast wyciec w feedzie (jest na to test).
+> - **ANTY-MLM:** rozszerzyłem ścieżkę w `antimlm.integration.test.ts` o krok
+>   cytowania i dodałem `expect(types).toContain('social.post_quoted')`. Bez tego
+>   test byłby zielony przez POMINIĘCIE nowej funkcji.
+>
+> **Marketplace (dług z S11):** publiczny profil Firmy `/firmy/[id]` (staż,
+> historia zleceń, oceny z OBU stron — jednostronna karta zachęcałaby do
+> wybielania), `Company.nipVerifiedAt` + odznaka „NIP — suma kontrolna OK"
+> (copy istotne prawnie: NIE „zweryfikowany"), `GET /listings/tags/popular`
+>
+> - chipy. Nazwa firmy na stronie zlecenia jest teraz LINKIEM.
+>
+> **🔴 ZASTANY BŁĄD ZNALEZIONY PRZY PRZECHODZENIU NA ŻYWO: uploady na produkcji
+> zwracały 500.** Podkatalog miesięczny w wolumenie należał do `root`, a API
+> działa jako `node` → EACCES. Dotyczyło WSZYSTKICH uploadów (awatary, portfolio),
+> nie tylko nowych obrazów. Na stagingu ten sam katalog należy do `node`, więc
+> rozjazd był wyłącznie produkcyjny i niewidoczny do pierwszej próby wgrania
+> zdjęcia. Naprawione (chown) + dołożony SYGNAŁ: `filesService.checkWritable()`
+> (realny zapis, nie `access()`), głośny log przy starcie i pole `uploads`
+> w `/healthz` — informacyjne, poza `checks`, z tego samego powodu co puls workera.
+>
+> **⚠️ KOREKTA WCZEŚNIEJSZEGO WPISU: produkcja NIE MIAŁA 3 realnych kont.**
+> Wszystkie trzy (`s8-test-…`, `final-…`, plus moje) to były konta testowe
+> z poprzednich sesji, których nikt nie posprzątał. Usunięte razem z treściami.
+> Zostało JEDNO konto: `asfsaf@gmail.com` (nazwa „HydroSpark Maps API Key") —
+> prawdziwy gmail, wygląda na pomyłkową rejestrację właściciela. **Nie usuwam go
+> bez decyzji.** Realnych użytkowników: zero. To nie zmienia diagnozy z roadmapy,
+> tylko ją zaostrza.
+>
+> Bramki: 157/157 testów API na realnym MySQL/Redis (było 145), 12/12 e2e, lint,
+> typecheck, build. Dwie migracje, obie expand-only. Backup prod przed migracją
+> (`portal-20260813-132123.sql.gz`).
+
 **Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s12-widziec-i-reagowac`
 (oparty na `feat/s8-s11-kieszonkowa-drabina` — oba czekają na PR właściciela, `main` jest
 starszy o obie gałęzie).
