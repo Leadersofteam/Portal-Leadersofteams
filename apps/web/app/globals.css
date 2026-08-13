@@ -1942,3 +1942,17 @@ a.quoted-post:hover {
   border-color: var(--accent);
   color: var(--text-strong);
 }
+
+/* Uchwyt w nagłówku cytatu bywa długi (generujemy go z imienia i nazwiska
+   plus sufiks kolizyjny). Na 390 px łamał nagłówek na dwie linie i rozjeżdżał
+   kartę — widoczne WYŁĄCZNIE na zrzucie, nie w asercji tekstowej. */
+.quoted-post-handle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.quoted-post-head strong {
+  white-space: nowrap;
+}

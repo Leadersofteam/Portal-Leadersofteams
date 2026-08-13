@@ -112,6 +112,20 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
       .send({ error: { code, message: error.message, details: error.details } });
   });
 
+  const filesService = createFilesService(prisma, {
+    uploadsDir: config.UPLOADS_DIR,
+    maxUploadBytes: config.MAX_UPLOAD_BYTES,
+  });
+  // Głośno przy starcie: łatwiej zauważyć w logach deployu niż w /healthz.
+  void filesService.checkWritable().then((ok) => {
+    if (!ok) {
+      logger.error(
+        { uploadsDir: config.UPLOADS_DIR },
+        'Katalog uploadów NIE JEST zapisywalny — wgrywanie zdjęć będzie zwracać 500',
+      );
+    }
+  });
+
   app.get('/healthz', async (_request, reply) => {
     const checks: Record<string, 'ok' | 'fail'> = { mysql: 'fail', redis: 'fail' };
     try {
@@ -132,9 +146,14 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     // a Traefik wyrzucałby je z puli — awaria kolejki zamieniłaby się w awarię
     // portalu. Worker ma własny healthcheck oparty na tym samym kluczu.
     const worker = await readWorkerHeartbeat(redis);
+    // Zapisywalność uploadów też jest INFORMACYJNA, nie w `checks`: gdy wolumen
+    // ma złe prawa, cała reszta Portalu działa i nie ma powodu wyrzucać api
+    // z puli Traefika. Ale MUSI być widoczna — awaria z 13.08 objawiała się
+    // wyłącznie błędem 500 w chwili, gdy ktoś próbował wgrać zdjęcie.
+    const uploads = (await filesService.checkWritable()) ? 'ok' : 'fail';
     return reply
       .code(healthy ? 200 : 503)
-      .send({ status: healthy ? 'ok' : 'degraded', checks, worker });
+      .send({ status: healthy ? 'ok' : 'degraded', checks, worker, uploads });
   });
 
   const auth = createAuthHelpers(sessions, config);
@@ -155,10 +174,6 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   // Bramka człowieka na naszym Redisie — bez Cloudflare i bez żadnego innego
   // dostawcy po API (decyzja właściciela 2026-08-13).
   const humancheck = createHumancheck(redis, config.humancheckEnabled);
-  const filesService = createFilesService(prisma, {
-    uploadsDir: config.UPLOADS_DIR,
-    maxUploadBytes: config.MAX_UPLOAD_BYTES,
-  });
   const identityService = createIdentityService(prisma, {
     sessions,
     // RODO (D6): każdy moduł anonimizuje/eksportuje własne tabele (ADR-002).

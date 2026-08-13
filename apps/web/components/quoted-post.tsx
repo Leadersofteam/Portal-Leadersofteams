@@ -45,7 +45,9 @@ export function QuotedPost({ quoted }: { quoted: QuotedPostView }) {
           }
         />
         <strong>{quoted.author?.displayName ?? 'Użytkownik'}</strong>
-        {quoted.author?.handle && <span className="muted">@{quoted.author.handle}</span>}
+        {quoted.author?.handle && (
+          <span className="muted quoted-post-handle">@{quoted.author.handle}</span>
+        )}
       </div>
       <p className="quoted-post-body">
         <MentionText>{quoted.body ?? ''}</MentionText>

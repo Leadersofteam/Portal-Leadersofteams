@@ -29,17 +29,23 @@ interface CompanyProfile {
   }>;
 }
 
-function monthsSince(iso: string): string {
+/**
+ * Staż Firmy w DOPEŁNIACZU, bo wchodzi w zdanie „Na Portalu od …".
+ * Mianownik dawał tu „od 3 miesiące" i „od mniej niż miesiąc" — na polskim
+ * portalu dla profesjonalistów błąd gramatyczny na wizytówce firmy kosztuje
+ * wiarygodność bardziej niż brakująca funkcja.
+ */
+function tenureSince(iso: string): string {
   const months = Math.max(
     0,
     Math.round((Date.now() - new Date(iso).getTime()) / (30 * 24 * 60 * 60 * 1000)),
   );
-  if (months < 1) return 'mniej niż miesiąc';
-  if (months === 1) return 'miesiąc';
-  if (months < 5) return `${months} miesiące`;
+  if (months < 1) return 'mniej niż miesiąca';
+  if (months === 1) return 'miesiąca';
+  // Po „od" liczebnik zawsze łączy się z dopełniaczem liczby mnogiej.
   if (months < 12) return `${months} miesięcy`;
   const years = Math.floor(months / 12);
-  return years === 1 ? 'ponad rok' : `ponad ${years} lata`;
+  return years === 1 ? 'ponad roku' : `ponad ${years} lat`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -77,7 +83,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
       <header className="company-head">
         <h1>{company.name}</h1>
         <p className="muted">
-          Na Portalu od {monthsSince(company.createdAt)}
+          Na Portalu od {tenureSince(company.createdAt)}
           {company.nipVerifiedAt && (
             <>
               {' · '}
