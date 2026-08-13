@@ -129,6 +129,37 @@ docker exec -u root portal-prod-api-1 chown -R node:node /app/uploads
 
 Po naprawie `uploads` w `/healthz` wraca na `"ok"` bez restartu kontenera.
 
+### Dane demo na produkcji (S16)
+
+Produkcja ma dane przykładowe — DECYZJA WŁAŚCICIELA z 13.08 (ryzyko R-16 w `RISKS.md`).
+Markery w bazie: konta w domenie `@demo.leadersofteams.pl`, firmy z `nip = 'DEMO-SEED'`.
+
+`tsx` NIE MA w obrazie produkcyjnym (to `pnpm --prod deploy`), więc seed uruchamiamy
+z repozytorium na hoście, celując w IP kontenera bazy:
+
+```bash
+cd /docker/portal-staging/apps/api
+MYSQL_PW=$(grep '^MYSQL_PASSWORD=' ../../infra/.env.prod | cut -d= -f2-)
+IP=$(docker inspect portal-prod-mysql-1 --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' | awk '{print $1}')
+VOL=$(docker volume inspect portal-prod_portal_uploads --format '{{.Mountpoint}}')
+
+NODE_ENV=production SEED_DEMO=1 SEED_DEMO_ALLOW_PRODUCTION=1   DATABASE_URL="mysql://portal:${MYSQL_PW}@${IP}:3306/portal" UPLOADS_DIR="$VOL"   pnpm exec tsx prisma/seed-demo.ts
+
+# ⚠️ OBOWIĄZKOWO PO SEEDZIE: pliki zapisane z hosta są root-owned, a api działa
+# jako `node` → każdy późniejszy upload kończyłby się 500 (EACCES).
+docker exec -u root portal-prod-api-1 chown -R node:node /app/uploads
+curl -fsS https://api.leadersofteams.pl/healthz   # uploads musi być "ok"
+```
+
+Zdjęcie KOMPLETU danych demo jedną komendą (bez `NODE_ENV`, bo `--purge` tylko kasuje):
+
+```bash
+SEED_DEMO=1 DATABASE_URL="mysql://portal:${MYSQL_PW}@${IP}:3306/portal"   pnpm exec tsx prisma/seed-demo.ts --purge
+```
+
+Dwie flagi (`SEED_DEMO` + `SEED_DEMO_ALLOW_PRODUCTION`) są celowe: zasianie produkcji
+nigdy nie ma się zdarzyć przypadkiem.
+
 ### Analityka (S12)
 
 ```bash

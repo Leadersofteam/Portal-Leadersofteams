@@ -1,5 +1,55 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **✅ SESJA S15 + S16 (2026-08-13, wieczór): „Pierwsza mila i portal pełen życia"**
+> (`5c03258`, `e30e05b`, `5e18ed5`). Wdrożone na staging i **produkcję**.
+> **▶ NASTĘPNY KROK: S17 w [SPRINTY-S15-S19.md](SPRINTY-S15-S19.md)**, prompt startowy:
+> [PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md).
+>
+> **🔴 SPROSTOWANIE, KTÓRE MUSI TU STAĆ NA WIERZCHU.** Ten dokument twierdził, że poczta
+> jest „ZROBIONA 13.08, zweryfikowane na produkcji dla rejestracji i resetu". Zweryfikowane
+> było WYŁĄCZNIE to, że e-mail wychodzi (`mail.sent` w logu). **Nikt nie kliknął linku.**
+> Właściciel kliknął — i dostał 404. Okazało się, że nie istniały ANI `/weryfikacja`,
+> ANI `/reset-hasla`, a `/logowanie` nie miało nawet linku „nie pamiętam hasła".
+> Front nie wołał ŻADNEGO z trzech gotowych endpointów auth. „Martwy reset hasła",
+> odhaczony jako zamknięty bloker pierwszej mili, był otwarty przez cały czas — przesunął
+> się z „mail nie wychodzi" na „mail prowadzi donikąd".
+> **Lekcja do zapamiętania: „backend gotowy" ≠ „funkcja działa". Jeśli funkcja ma ścieżkę
+> użytkownika, trzeba ją PRZEJŚĆ.**
+>
+> **S15 — pierwsza mila.** Dodane `/weryfikacja`, `/reset-hasla`, `/nie-pamietam-hasla`,
+> link na logowaniu, baner potwierdzenia adresu + `POST /auth/resend-verification`
+> (bez tego po wygaśnięciu tokenu jedyną drogą było drugie konto na ten sam adres).
+> Nowy `e2e/email-flows.spec.ts` przechodzi obie ścieżki końcem-końcem.
+> Stan potwierdzenia czytamy z BAZY, nie z migawki sesji — sesja jest zamrożona przy
+> logowaniu, więc baner oparty na sesji wisiałby po kliknięciu w link.
+> **Błąd złapany przez ten nowy test, dotyczący też realnych użytkowników:** bramka
+> anty-botowa odrzucała rejestracje z `TOO_FAST`, bo klient odliczał minimalny czas
+> wypełniania formularza od WYSŁANIA żądania o wyzwanie, a serwer od jego UTWORZENIA —
+> o całą latencję sieci później.
+>
+> **S16 — dane demo z warstwą społecznościową.** `seed-demo.ts` powstał przed modułem
+> `social`, więc siał marketplace i Q&A, ale feed oraz grupy zostawały puste nawet na
+> stagingu. Nowy `prisma/seed-demo-social.ts`: 13 wpisów (5 z obrazami, 2 z cytowaniem),
+> 4 dyskusje w grupach, 18 obserwowań, reakcje. Obrazy rysowane u nas w SVG.
+> Przechodzimy PRAWDZIWĄ ŚCIEŻKĄ KODU: obrazy przez `filesService.store()`, oś aktywności
+> przez `socialService.onSocialPostPublished` (ten sam konsument co w workerze).
+>
+> **DECYZJA WŁAŚCICIELA: dane demo są na PRODUKCJI.** Zgłosiłem ryzyko (fikcyjni Liderzy
+> z punktami vs obietnica ADR-004) — decyzja podtrzymana. Bezpieczniki: druga flaga
+> `SEED_DEMO_ALLOW_PRODUCTION=1` i `--purge` zdejmujący komplet jedną komendą.
+> Ryzyko zapisane jako **R-16** w [RISKS.md](RISKS.md).
+>
+> **🔴 ZASTANY BŁĄD INFRASTRUKTURY: staging pokazywał dane PRODUKCJI.** Staging i prod
+> dzielą sieć Traefika `n8n_default`, a compose nadaje alias równy nazwie usługi — nazwa
+> `api` istniała w obu projektach naraz i `portal-staging-web` rozwiązywał ją na kontener
+> produkcyjny. Każda weryfikacja „na stagingu" mogła być weryfikacją produkcji.
+> Naprawione aliasem `api-staging` + `ARG API_INTERNAL_URL` w `Dockerfile.web`
+> (cel rewrite'u jest zapiekany w buildzie, więc sam runtime env by nie wystarczył).
+> Produkcja była bezpieczna — tam `api` wskazuje jej własny kontener.
+>
+> **Stan produkcji:** 2 realne konta (właściciel + jedno pomyłkowe) + komplet danych demo.
+> Bramki: 157/157 testów API, 15/15 e2e (było 12), lint, typecheck, build.
+
 > **✅ PRZYROST S14 (2026-08-13, po S12): „Obrazy, cytowanie i twarz Firmy"**
 > (`105c907`, `883975b`). Wdrożone na staging i **produkcję**, przejrzane na żywo.
 > Właściciel poprosił o funkcje z X i marketplace'u; wybrałem takie, które pracują

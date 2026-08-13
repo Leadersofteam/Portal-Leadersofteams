@@ -1,5 +1,9 @@
 # Roadmapa S12–S15 — „Pierwszych dwudziestu"
 
+> **⚠️ TEN DOKUMENT JEST HISTORYCZNY.** S12 zamknięty 2026-08-13, S13 częściowo wchłonięty
+> przez przyrost S14. Aktualny plan: **[SPRINTY-S15-S19.md](SPRINTY-S15-S19.md)**.
+> Zostawiony dla zapisu decyzji i uzasadnień, nie jako lista zadań.
+
 **Data:** 2026-08-13 · **Autor:** Opus 5 (po sesji S8–S11) · **Status:** do zatwierdzenia przez właściciela
 **Punkt startowy:** [HANDOFF-OPUS.md](HANDOFF-OPUS.md) · poprzednia roadmapa: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)
 

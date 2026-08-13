@@ -21,6 +21,11 @@ uzupełnienie po sesji S7: 2026-08-12.
 
 ## 0. Warunki wstępne (wejścia właściciela — wymagane przed startem)
 
+- [x] **Przepływ mailowy PRZEKLIKANY końcem-końcem — 2026-08-13 (S15).** Osobna pozycja,
+      bo „mail wychodzi" okazało się NIEWYSTARCZAJĄCE: przez tydzień link aktywacyjny
+      i link resetu prowadziły w 404, mimo zielonego `mail.sent` w logach. Wymagany dowód:
+      rejestracja → klik w link z maila → potwierdzenie; reset → klik → nowe hasło →
+      logowanie NOWYM hasłem. Pilnuje tego `apps/web/e2e/email-flows.spec.ts`.
 - [x] **E-mail transakcyjny — ZROBIONE 2026-08-13**: własna skrzynka przez SMTP
       (`SMTP_HOST`/`SMTP_USER`/`SMTP_PASS`, `MAIL_FROM` = adres skrzynki), a nie Brevo.
       Rejestracja i reset hasła zweryfikowane na produkcji. Szczegóły: `runbooks/sekrety.md`.
