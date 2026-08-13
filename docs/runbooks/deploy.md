@@ -49,10 +49,57 @@ Migracje projektujemy w trybie **expand/contract** (ADR-008) — poprzednia wers
 
 ## Diagnostyka po deployu
 
+> **Uwaga o nazwach projektów compose na TYM serwerze:** prod działa jako `portal-prod`
+> (nie `portal`), staging jako `portal-staging`, oba z katalogu `/docker/portal-staging`
+> z lokalnymi nakładkami `prod.override.yml` / `staging.override.yml` (Traefik siedzi na
+> sieci `n8n_default`, resolver `mytlschallenge`). Polecenia niżej używają realnych nazw.
+
 ```bash
-docker compose -p portal ps
-docker compose -p portal logs api --since 10m
+docker compose -p portal-prod ps
+docker compose -p portal-prod logs api --since 10m
 curl -fsS https://api.leadersofteams.pl/healthz
+# Zdarzenie bez konsumenta = ktoś dodał typ zdarzenia i nie podpiął handlera:
+docker compose -p portal-prod logs worker --since 10m | grep "bez konsumenta"
 ```
 
-`/healthz` zwraca `{status, checks:{mysql,redis}}` — `503 degraded` wskazuje, która zależność leży.
+`/healthz` zwraca `{status, checks:{mysql,redis}, worker:{alive,lastBeatAt}}`.
+`503 degraded` wskazuje, która zależność leży.
+
+### Puls workera (S12)
+
+`worker` nie ma portu HTTP, więc jego healthcheck czyta klucz `portal:worker:heartbeat`
+w Redisie. Klucz jest odnawiany co 15 s **tylko wtedy, gdy obraca się pętla dispatchera**
+(TTL 60 s) — dzięki temu wykrywa nie tylko martwy proces, ale i zakleszczony, czyli ten
+przypadek, w którym `docker ps` pokazuje „Up", a wpisy nie pojawiają się w feedzie,
+powiadomienia nie przychodzą i punkty nie dojrzewają.
+
+```bash
+docker exec portal-prod-redis-1 redis-cli ttl portal:worker:heartbeat   # -2 = worker nie pracuje
+docker inspect portal-prod-worker-1 --format '{{.State.Health.Status}}'
+```
+
+Kontener przechodzi w `unhealthy` po ok. 2,5 min ciszy (TTL 60 s + 3 × interval 30 s).
+
+### Nadanie roli MODERATOR / ADMIN
+
+⚠️ **Rola jest zamrożona w migawce sesji w Redisie, nie czytana z bazy przy każdym żądaniu.**
+Sam `UPDATE` NIE WYSTARCZY — osoba musi się **wylogować i zalogować ponownie**, inaczej
+dalej dostaje 403 na `/panel/moderacja` i `/panel/analityka`.
+
+```bash
+docker compose -p portal-prod exec mysql \
+  mysql -uportal -p"$MYSQL_PASSWORD" portal \
+  -e "UPDATE users SET role='MODERATOR' WHERE email='osoba@example.com'"
+# → powiedz tej osobie, żeby się przelogowała
+```
+
+### Analityka (S12)
+
+```bash
+docker exec portal-prod-redis-1 redis-cli hgetall "portal:analytics:v1:views:$(date -u +%F)"
+```
+
+Klucze muszą być znormalizowane (`/wpisy/:id`, `/inne`) — **surowy identyfikator w kluczu
+oznacza dziurę w białej liście** w `apps/api/src/shared/analytics.ts` i ryzyko rozdęcia
+pamięci Redisa przez skanery. Liczby są poglądowe: filtr botów opiera się na User-Agencie,
+a endpoint `/analytics/hit` jest publiczny (świadomie — patrz komentarz w `analytics/routes.ts`).

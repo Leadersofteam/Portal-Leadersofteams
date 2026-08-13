@@ -1,10 +1,88 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s8-s11-kieszonkowa-drabina`
-**Wykonawca:** Opus 5 (sesja S8–S11) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
-(certy LE, backup cron 03:45). **▶ NASTĘPNY KROK: [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)**
-(„Pierwszych dwudziestu"), start sesji: **[PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md)**.
-Poprzednia roadmapa S8–S12 jest zrealizowana poza S12: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md).
+**Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s12-widziec-i-reagowac`
+(oparty na `feat/s8-s11-kieszonkowa-drabina` — oba czekają na PR właściciela, `main` jest
+starszy o obie gałęzie).
+**Wykonawca:** Opus 5 (sesja S12) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
+(certy LE, backup cron 03:45). **▶ NASTĘPNY KROK: S13 w [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)**
+(dług z S11 + pierwsze wrażenie Firmy). Poprzednia roadmapa S8–S12: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md).
+
+> **✅ SESJA S12 (2026-08-13): „Widzieć i reagować".** Jeden commit (`c4ec600`), wdrożony
+> na staging **i na produkcję**, przeklikany na żywo kontami testowymi (usunięte po sobie
+> — na prodzie zostały 3 realne konta, tyle co przed sesją).
+>
+> **Kolejność wdrożeń była INNA niż w roadmapie i to było celowe:** najpierw puls workera
+> (bo przez resztę dnia wielokrotnie wdrażałem — martwy worker objawia się CISZĄ i kosztowałby
+> godziny diagnozowania nie tego, co trzeba), potem analityka (jedyna rzecz, której nie da się
+> nadrobić wstecz: niepoliczona odsłona przepada na zawsze), na końcu moderacja (największa,
+> ale jej wartość jest „na żądanie", a przy ~0 kontach jest ~0 zgłoszeń).
+>
+> 1. **Moderacja przestała być ślepa** (bloker nr 1). `/panel/moderacja` pokazuje typ
+>    zgłoszenia, fragment treści, autora, link „Otwórz zgłoszoną treść ↗" i akcję
+>    **„Ukryj treść"**. Wzorzec `ModerationSubjectModule` (`modules/antifraud/subjects.ts`)
+>    jest LUSTREM `AccountDataModule` z RODO — antifraud nie czyta cudzych tabel (ADR-002),
+>    każdy moduł wnosi `moderation.ts` dla swojego typu.
+>    - `SOCIAL_POST` → wspólny `takeDownSocialPost` (jedna implementacja dla usunięcia przez
+>      autora i ukrycia przez moderatora; dwie kopie rozjechałyby się i zostawiły sierotę w feedzie),
+>    - `POST` → `moderationStatus=HIDDEN` + **istniejące** zdarzenie `groups.post_deleted`,
+>      które `social` już konsumuje (zero nowych typów zdarzeń),
+>    - `THREAD` → nowe `hiddenAt` (jedyna migracja, expand-only). Ukrycie odcina TAKŻE
+>      akceptację odpowiedzi i głosowanie — inaczej moderator zdejmowałby treść, a farmienie
+>      punktów szłoby dalej, czyli akcja byłaby kosmetyką. Q&A to jedyna punktowana ścieżka
+>      społeczna, więc to tam skoncentruje się nadużycie,
+>    - `ORDER` → **świadomie BEZ ukrywania**: zlecenie to umowa dwóch stron, nie publiczna treść.
+>      Ukrycie zerwałoby pracę ludziom, którzy nie są przedmiotem zgłoszenia.
+>      Akcje rozdzielone: `RELEASE`/`REJECT` (punkty) i `HIDE`/`DISMISS` (treść); akcja punktowa
+>      na sprawie bez punktu daje teraz 400 zamiast po cichu zamykać sprawę.
+> 2. **Puls workera.** `portal:worker:heartbeat` + healthcheck w compose prod i staging.
+>    **Puls jest odnawiany TYLKO gdy obraca się pętla dispatchera** (`lastLoopAt`) — zwykły
+>    `setInterval` dowodziłby jedynie, że proces istnieje, i świeciłby na zielono przy
+>    zakleszczeniu, czyli przy dokładnie tej awarii, którą ma łapać. `/healthz` raportuje puls
+>    INFORMACYJNIE, bez wpływu na 200/503: gdyby śmierć workera czerwieniła api, Traefik
+>    wyrzuciłby zdrowe api z puli i awaria kolejki stałaby się awarią portalu.
+>    Zweryfikowane próbą awarii na stagingu (SIGSTOP z hosta → `unhealthy` po ~170 s → `kill -CONT`
+>    → `healthy` w < 45 s).
+> 3. **Analityka za 0 zł**, bez cookies i bez danych osobowych. Odsłony w Redisie (35 dni),
+>    ale **rejestracje i publikacje liczone z BAZY** po `createdAt` — odejście od planu, bo
+>    licznik byłby drugim, gorszym źródłem prawdy. Biała lista ścieżek w `shared/analytics.ts`
+>    to bariera pamięciowa, nie kosmetyka: bez niej bot skanujący tysiąc adresów tworzy tysiąc
+>    pól w dobowym hashu. Podgląd `/panel/analityka`. Zweryfikowane na prodzie przez Traefika.
+>    Świadomie bez unikalnych użytkowników (wymagałyby haszowania IP).
+> 4. **Turnstile — nadal czeka na klucze**, ale przelot jest gotowy (patrz „Czego brakuje").
+>
+> **Naprawione po drodze — wszystko ZASTANE, potwierdzone przed zmianą:**
+>
+> - **W całej aplikacji nie było ANI JEDNEGO linku do `/panel/moderacja`.** Moderator musiał
+>   znać adres na pamięć, więc zgłoszenie mogło czekać tygodniami nie dlatego, że ktoś je
+>   zignorował, tylko dlatego, że nie miał jak się o nim dowiedzieć. Panel ma teraz sekcję
+>   „Moderacja" z licznikiem otwartych spraw (widoczną tylko dla MODERATOR/ADMIN).
+> - **Moduł `antifraud` nie miał ANI JEDNEGO testu** — jedyny taki moduł. Ma 6.
+> - **Staging: `worker` nie dostawał zmiennych SMTP**, choć `api` ma je od dawna. Dokładnie
+>   ta pułapka, przed którą ostrzega runbook: „działa przy rejestracji, milczy w tle" (digest).
+> - **`/prywatnosc` §4 twierdziła, że nie korzystamy z zewnętrznych dostawców poczty** i obiecywała
+>   aktualizację PRZED włączeniem. SMTP ruszył 13.08 i sekcja została nieaktualna — dopisany
+>   Hostinger jako procesor + opis własnej statystyki. ⚠️ To copy prawne: warto, żeby przeczytał
+>   je prawnik razem z resztą R-10/R-15.
+> - **`Dockerfile.web` nie miał `ARG` na `NEXT_PUBLIC_TURNSTILE_SITE_KEY`** — backend Turnstile
+>   był gotowy, ale klucz publiczny NIE MIAŁ JAK trafić do obrazu. Dodany ARG + `build.args`
+>   w obu compose; GO-LIVE-CHECKLIST §2 sprostowany (site-key wymaga `build web`, nie restartu).
+> - **Prod `web` nie miał healthchecku** (staging miał) — dodany, prod ma komplet `(healthy)`.
+>
+> **⚠️ PUŁAPKA, na którą wpadłem i którą trzeba znać:** rola użytkownika jest ZAMROŻONA
+> w migawce sesji w Redisie, nie czytana z bazy przy żądaniu. Nadanie komuś roli MODERATOR
+> `UPDATE`-em **nie działa, dopóki ta osoba się nie przeloguje** — do tego czasu widzi 403.
+> Kosztowało mnie 5 czerwonych testów, zanim to zrozumiałem.
+>
+> **⚠️ ZNALEZIONE, ŚWIADOMIE NIETKNIĘTE (kandydat na S13):** `SiteHeader` **nigdy** nie czyta
+> sesji — zalogowany użytkownik na każdej stronie widzi w nagłówku „Zaloguj się / Dołącz".
+> Widać to na zrzutach z tej sesji. Nie ruszałem, bo to globalny komponent poza zakresem S12,
+> ale dla pierwszych dwudziestu osób to bardzo mylący papierek.
+>
+> **Bramki:** 149/149 testów API na realnym MySQL/Redis (było 132 — liczba WYKONANYCH, nie
+> pominiętych), 12/12 e2e, lint z granicami modułów (`analytics` dopisany do `API_MODULES`
+> razem z modułem, nie po fakcie), typecheck, build. Jedna migracja, expand-only. Zrzuty
+> 390 i 1440 px trzech widoków. Backup bazy prod zrobiony PRZED migracją
+> (`portal-20260813-091331.sql.gz`).
 
 > **✅ SESJA S8–S11 (2026-08-13): „Kieszonkowa Drabina".** Cztery przyrosty, każdy osobno
 > zweryfikowany bramkami, wdrożony na staging i **na produkcję**, i przeklikany na żywo
@@ -220,7 +298,9 @@ wtedy twarde limity pamięci prod-MySQL w compose + pilnowanie swapu (4 G).
 | ~~D7~~  | ✅ **ZROBIONE** — rate-limity świeżych kont (`shared/quota.ts`) + „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + **Turnstile flag-gated** (`shared/turnstile.ts`, wpięty w `/auth/register`, widget na `/rejestracja`; OFF bez kluczy). Aktywacja = klucze Cloudflare przy launchu                                                                                                                                         | — (aktywacja: launch) |
 | D8      | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu                                                                                                                                                                                                                                                                                                                                    | niski priorytet       |
 | ~~D9~~  | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: **launch** — prod (decyzja: zostajemy na 8 GB z limitami RAM) + zdjęcie basic-auth                                                                                                                                                                                                                                                            | Launch                |
-| **D10** | ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony                                                                                                                                                                                                                                                                                                                                                                      | Sprint 6, opcjonalnie |
+| **D10** | ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony. **Po S12:** najostrzejszą potrzebę (czy worker w ogóle żyje) zaspokaja już puls + healthcheck, więc Bull Board zjechał w priorytecie                                                                                                                                                                                                                                | Sprint 6, opcjonalnie |
+| ~~D11~~ | ✅ **ZROBIONE (S12)** — moderacja zgłoszeń z podglądem treści, linkiem i akcją „ukryj"; puls workera; analityka 0 zł (baner sesji S12 na górze)                                                                                                                                                                                                                                                                                               | —                     |
+| **D12** | ❌ **NOWY (znaleziony w S12, nietknięty)** — `SiteHeader` nie czyta sesji: zalogowany użytkownik widzi „Zaloguj się / Dołącz" na KAŻDEJ stronie                                                                                                                                                                                                                                                                                               | S13                   |
 
 > **Audyt stanu kodu vs docs (2026-07-12):** przy wejściu w Sprint 6 potwierdzono, że backend Sprintu 6
 > jest w większości ZROBIONY i zielony (73 testy): cache-aside (D3), e-mail flag-gated + weryfikacja/reset

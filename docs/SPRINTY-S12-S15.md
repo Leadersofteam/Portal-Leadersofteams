@@ -44,27 +44,39 @@ gdy coś pójdzie nie tak. To jedyny sprint, który ma sens przed seedingiem.
    z innej domeny nie przejdzie SPF/DMARC.
    **Pozostaje do rozważenia:** osobna skrzynka `portal@leadersofteams.pl` (rozdzieli reputację
    od poczty transakcyjnej App i wyrówna domenę nadawcy z domeną Portalu).
-2. **🔴 Moderacja zgłoszeń jest ślepa.** `POST /reports` działa i tworzy `ModerationCase`,
-   ale `/panel/moderacja` renderuje wyłącznie notatkę — **nie pokazuje `subjectType`/`subjectId`
-   ani linku do zgłoszonej treści**. Moderator widzi, że „coś" zgłoszono, i nie ma jak tego
-   otworzyć. Do zrobienia: kolumna typu, link do treści (`/wpisy/:id`, `/grupy/:g/post/:id`,
-   `/watki/:id`, `/zlecenia/:id`), podgląd fragmentu, akcja „ukryj treść" (usunięcie
-   `ActivityItem` + soft delete) obok istniejących „zwolnij/odrzuć".
-3. **Worker heartbeat** (dług z GO-LIVE-CHECKLIST §1): `SET portal:worker:heartbeat EX 60`
-   plus healthcheck w compose. Dziś **cicha śmierć workera nie daje żadnego sygnału** — wpisy nie
-   pojawiają się w feedzie, powiadomienia nie przychodzą, punkty się nie naliczają, a `docker ps`
-   pokazuje „Up". To najgroźniejsza awaria, jaką ten system może mieć.
-4. **Analityka za 0 zł, bez cookies i bez danych osobowych:** dzienne agregaty w Redis
-   (odsłony ścieżek, rejestracje, publikacje) + prosty podgląd w panelu moderatora.
-   Żadnego zewnętrznego skryptu — zgodnie z naszą własną polityką prywatności.
-5. **Turnstile** — klucze od właściciela; kod flag-gated jest gotowy. Włączyć **przed** publiczną
-   promocją, nie przed zaproszeniami imiennymi.
+2. ✅ **Moderacja zgłoszeń — ZROBIONE 2026-08-13** (`c4ec600`). Sprawa niesie teraz typ,
+   fragment treści, autora i link (`/wpisy/:id`, `/grupy/:g/post/:id`, `/watki/:id`,
+   `/zlecenia/:id`) plus akcję **„Ukryj treść"**. Wzorzec `ModerationSubjectModule` jest
+   lustrem `AccountDataModule` z RODO: antifraud nie czyta cudzych tabel (ADR-002), każdy
+   moduł wnosi podgląd i ukrywanie własnej treści.
+   **Rozstrzygnięcia warte zapamiętania:** akcje rozdzielone na punktowe (`RELEASE`/`REJECT`)
+   i treściowe (`HIDE`/`DISMISS`) — wcześniej jedna para obsługiwała oba światy i przy
+   zgłoszeniu proponowała „zwolnij punkty", których nie było. `THREAD` dostał `hiddenAt`,
+   bo Q&A to jedyna punktowana ścieżka społeczna i ukrycie MUSI też odciąć akceptację
+   odpowiedzi oraz głosowanie — inaczej treść znika, a farmienie punktów trwa.
+   `ORDER` świadomie BEZ ukrywania: zlecenie to umowa dwóch stron, nie publiczna treść.
+3. ✅ **Worker heartbeat — ZROBIONE 2026-08-13.** `portal:worker:heartbeat` + healthcheck
+   w compose prod i staging. Kluczowy szczegół: puls jest odnawiany **tylko gdy obraca się
+   pętla dispatchera**, więc łapie także workera żywego, ale zakleszczonego. Zwykły
+   `setInterval` dowodziłby jedynie, że proces istnieje, i świeciłby na zielono przy
+   dokładnie tej awarii, którą ma wykrywać. Zweryfikowane próbą awarii (patrz
+   GO-LIVE-CHECKLIST §1).
+4. ✅ **Analityka za 0 zł — ZROBIONE 2026-08-13.** Odsłony ścieżek w Redisie (35 dni,
+   biała lista ścieżek jako bariera pamięciowa, id zwijane do `:id`), ale **rejestracje
+   i publikacje liczone z BAZY** po `createdAt` — odejście od pierwotnego planu, bo licznik
+   w Redisie byłby drugim, gorszym źródłem prawdy (ginie przy flushu, nie liczy wstecz).
+   Podgląd: `/panel/analityka` dla MODERATOR/ADMIN. Bez cookies, bez zewnętrznego skryptu,
+   bez unikalnych użytkowników (te wymagałyby haszowania IP — nie wchodzimy w to).
+5. ⏸ **Turnstile — CZEKA NA KLUCZE właściciela.** Zrobione wszystko poza aktywacją:
+   dodany brakujący przelot `NEXT_PUBLIC_TURNSTILE_SITE_KEY` do obrazu web (do S12 klucz
+   publiczny **nie miał jak** trafić do buildu, więc „kod gotowy" był prawdą tylko po
+   stronie backendu). Włączyć **przed** publiczną promocją, nie przed zaproszeniami imiennymi.
 
 **Świadomie NIE w tym sprincie:** k6. Test obciążeniowy pustego portalu mierzy hałas — wchodzi
 w S15, gdy będzie znany realny kształt ruchu.
 
-**DoD:** reset hasła działa na realnej skrzynce; moderator otwiera zgłoszoną treść jednym
-kliknięciem; zabicie workera zapala healthcheck; panel pokazuje wczorajszy ruch.
+**DoD — spełnione:** reset hasła działa na realnej skrzynce ✅; moderator otwiera zgłoszoną
+treść jednym kliknięciem ✅; zamrożenie workera zapala healthcheck ✅; panel pokazuje ruch ✅.
 
 ---
 
@@ -86,8 +98,14 @@ Cel: domknąć to, co z S11 zostało, i dać Firmie powód do zaufania w 10 seku
    wyłącznie nazwę — czyli decyduje w ciemno.
 3. **Ślad zaufania na kartach:** liczba zrealizowanych zleceń i średnia ocena przy Liderze
    w katalogu i w wynikach wyszukiwania (dane już są — `getLeaderReviewStatsMany`).
-4. **Digest e-mail powiadomień** (job w workerze, za tą samą flagą co reszta poczty) — dzienny,
-   wyłącznie o rzeczach wymagających reakcji. Bez „wróć do nas", bez sztucznego zaangażowania.
+4. ~~**Digest e-mail powiadomień**~~ — ⚠️ **JUŻ ISTNIEJE** (kolejny dryf dok↔kod, wykryty
+   w S12): `notifications.sendDailyDigests` + timer w `apps/api/src/worker.ts`. Zamiast
+   pisać go od nowa, do rozstrzygnięcia są dwie rzeczy:
+   - `setInterval(24 h)` odlicza od STARTU PROCESU, więc przy częstych wdrożeniach digest
+     może nie odpalić się nigdy. Do zmiany na „najbliższa godzina X".
+   - treść („Masz N nieprzeczytanych powiadomień") ociera się o „wróć do nas" z ADR-010.
+     Decyzja o copy należy do właściciela — proponowany kierunek: wysyłać wyłącznie wtedy,
+     gdy jest coś WYMAGAJĄCEGO REAKCJI, i pisać co to jest, zamiast podawać licznik.
 
 ---
 

@@ -29,12 +29,18 @@ uzupełnienie po sesji S7: 2026-08-12.
 - [ ] Decyzja o **seedingu**: dane **demo / testowe** (nie realne zaproszenia) — zakres i źródło (R-06).
 - [ ] Backup baz + potwierdzony test restore przed cutover (R-07).
 
-## 1. Zdrowie kontenerów staging (GATE — recreate staging, nie prod)
+## 1. Zdrowie kontenerów staging — ✅ ZROBIONE 2026-08-13 (S12)
 
-- [ ] Healthcheck `web` (Next.js :3000) i `worker` dodane do `infra/docker-compose.staging.yml`.
-      **`worker` nie ma portu HTTP** → healthcheck procesowy/Redis-owy, nie `fetch`.
-- [ ] Recreate obu kontenerów staging; wszystkie usługi `(healthy)` w `docker ps`.
-- [ ] Analogiczne healthchecki przeniesione do `infra/docker-compose.yml` (prod) przed startem prod.
+- [x] Healthcheck `web` (Next.js :3000) i `worker` w `infra/docker-compose.staging.yml`.
+      `worker` nie ma portu HTTP → sonda czyta **puls w Redisie**
+      (`portal:worker:heartbeat`, `apps/api/src/shared/heartbeat.ts`), nie `fetch`.
+- [x] Recreate staging: `api`, `web`, `worker`, `mysql`, `redis` — wszystkie `(healthy)`.
+- [x] Te same healthchecki w `infra/docker-compose.yml` (prod) — prod ma komplet `(healthy)`.
+- [x] **Próba awarii wykonana na stagingu:** zamrożenie procesu workera (SIGSTOP z hosta)
+      → po ~170 s kontener `unhealthy` (FailingStreak 4), klucz pulsu wygasł (TTL -2);
+      po `kill -CONT` powrót do `healthy` w < 45 s. Uwaga: puls jest odnawiany **tylko
+      gdy obraca się pętla dispatchera**, więc łapie także workera ŻYWEGO, ale zakleszczonego —
+      to jest ten przypadek, w którym `docker ps` pokazuje „Up", a portal po cichu stoi.
 
 ## 2. Start prod (GATE — nieodwracalne uruchomienie obok App)
 
@@ -43,7 +49,15 @@ uzupełnienie po sesji S7: 2026-08-12.
 - [ ] Bull Board (opcjonalnie) — podgląd kolejek.
 - [ ] `docker compose -f infra/docker-compose.yml up -d --build` — start prod (nadal za basic-auth).
 - [ ] Migracje prod: profil `tools` → `prisma migrate deploy`.
-- [ ] Env prod aktywne (Turnstile — poczta już aktywna) — runtime, bez rebuildu na same klucze.
+- [ ] Env prod aktywne (Turnstile — poczta już aktywna).
+      ⚠️ **SPROSTOWANIE (S12): dla Turnstile „runtime, bez rebuildu" jest NIEPRAWDĄ.**
+      `TURNSTILE_SECRET_KEY` (backend) faktycznie wystarczy podać w `.env` i zrestartować
+      `api`. Ale `NEXT_PUBLIC_TURNSTILE_SITE_KEY` jest zmienną `NEXT_PUBLIC_*`, czyli
+      **zapiekaną w bundlu klienta** — bez `docker compose build web` widget się nie
+      pojawi, a przy WŁĄCZONYM backendzie rejestracja zacznie odrzucać wszystkich
+      (fail-closed bez tokenu). Kolejność: najpierw `build web` z site-keyem, potem
+      sekret w `api`. Przelot build-arg dodany w S12 (`infra/Dockerfile.web` + `build.args`
+      w obu compose) — do S12 nie istniał, więc kluczy nie dało się wpiąć w ogóle.
 - [ ] Smoke test za basic-auth: rejestracja, logowanie, marketplace, Drabinka.
 
 ## 3. Seeding (GATE — dane demo/testowe)
