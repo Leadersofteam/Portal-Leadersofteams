@@ -8,3 +8,4 @@ export type { ReviewsService, ReviewsServiceDeps } from './reviews.service';
 export { marketplaceRoutes } from './routes';
 export type { MarketplaceRoutesDeps } from './routes';
 export { createMarketplaceAccountData } from './account';
+export { createMarketplaceModerationSubject } from './moderation';

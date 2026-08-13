@@ -18,6 +18,7 @@ import {
 } from './modules/notifications/index';
 import { loadConfig } from './shared/config';
 import { createPrisma } from './shared/db';
+import { createWorkerHeartbeat, WORKER_LOOP_STALE_MS } from './shared/heartbeat';
 import { createLogger } from './shared/logger';
 import { createMailService } from './shared/mail';
 import { REALTIME_CHANNEL } from './shared/realtime';
@@ -124,6 +125,16 @@ eventsWorker.on('failed', (job, err) => {
 });
 
 let running = true;
+// Czas ostatniego obrotu pętli dispatchera. Startowo „teraz", żeby pierwszy puls
+// poszedł od razu, zanim pętla zdąży wykonać pierwszy obrót.
+let lastLoopAt = Date.now();
+
+// Puls (GO-LIVE-CHECKLIST §1) — warunkiem jest ŻYWA PĘTLA, nie żywy proces.
+const heartbeat = createWorkerHeartbeat(
+  redisPub,
+  () => running && Date.now() - lastLoopAt < WORKER_LOOP_STALE_MS,
+  (event, data) => logger.warn(data, event),
+);
 
 async function dispatchOutboxBatch(): Promise<number> {
   const events = await prisma.outboxEvent.findMany({
@@ -152,6 +163,10 @@ async function dispatchOutboxBatch(): Promise<number> {
 async function dispatcherLoop() {
   logger.info('Dispatcher outbox uruchomiony');
   while (running) {
+    // Znacznik obrotu pętli — to JEGO świeżość jest warunkiem bicia pulsu
+    // (patrz shared/heartbeat.ts). Ustawiany na początku obrotu, także na
+    // ścieżce błędu niżej: pętla łapiąca wyjątki i śpiąca 5 s nadal pracuje.
+    lastLoopAt = Date.now();
     try {
       const published = await dispatchOutboxBatch();
       // Pełny batch ⇒ są zaległości, nie czekamy.
@@ -200,6 +215,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, async () => {
     logger.info({ signal }, 'Zamykanie workera');
     running = false;
+    heartbeat.stop();
     clearInterval(maintenanceTimer);
     if (digestTimer) clearInterval(digestTimer);
     await eventsWorker.close();

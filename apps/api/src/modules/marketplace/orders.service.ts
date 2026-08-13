@@ -489,6 +489,12 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
         createdAt: o.createdAt,
       }));
     },
+
+    // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
+    // Po `publishedAt`: zlecenie w szkicu nie jest jeszcze popytem na rynku.
+    async countOrdersPublishedBetween(from: Date, to: Date): Promise<number> {
+      return prisma.order.count({ where: { publishedAt: { gte: from, lt: to } } });
+    },
   };
 }
 

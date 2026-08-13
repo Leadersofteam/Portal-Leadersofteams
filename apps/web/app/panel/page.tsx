@@ -41,6 +41,17 @@ export default async function PanelPage() {
     serverApi<{ checklistDismissedAt: string | null }>('/me/onboarding'),
   ]);
 
+  // Do S12 NIE BYŁO w całej aplikacji ani jednego linku do /panel/moderacja —
+  // moderator musiał znać adres na pamięć. Zgłoszenie mogło więc czekać
+  // tygodniami nie dlatego, że ktoś je zignorował, tylko dlatego, że nie miał
+  // jak się o nim dowiedzieć. Licznik otwartych spraw jest tu po to, żeby
+  // wejście do moderacji było widoczne BEZ wchodzenia w moderację.
+  const isModerator = ['MODERATOR', 'ADMIN'].includes(user.role);
+  const moderation = isModerator
+    ? await serverApi<{ cases: Array<{ id: string }> }>('/moderation/cases?status=OPEN')
+    : null;
+  const openCases = moderation?.cases?.length ?? 0;
+
   const hasProfile = Boolean(profile?.profile);
   const hasCompany = Boolean(companies?.companies?.length);
   const hasListing = Boolean(listings?.listings?.length);
@@ -157,6 +168,25 @@ export default async function PanelPage() {
           </p>
         </div>
       </section>
+
+      {isModerator && (
+        <section className="card" style={{ marginTop: '1.5rem' }}>
+          <h3>Moderacja</h3>
+          <p className="muted">
+            {openCases === 0
+              ? 'Brak otwartych spraw.'
+              : `Otwarte sprawy: ${openCases} — czekają na decyzję człowieka.`}
+          </p>
+          <nav className="actions-row">
+            <Link className={openCases > 0 ? 'btn' : 'btn secondary'} href="/panel/moderacja">
+              Zgłoszenia i sygnały{openCases > 0 ? ` (${openCases})` : ''}
+            </Link>
+            <Link className="btn secondary" href="/panel/analityka">
+              Ruch w portalu
+            </Link>
+          </nav>
+        </section>
+      )}
 
       <p className="mt-4">
         <LogoutButton />

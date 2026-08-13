@@ -69,6 +69,8 @@ export interface IdentityService {
   // Wiek konta użytkownika — dla progu dojrzałości głosu Q&A i limitów świeżych
   // kont (kwalifikacja/limit rozstrzygana w modułach; identity tylko dostarcza datę).
   getUserCreatedAt(userId: string): Promise<Date | null>;
+  // Analityka (S12): sama LICZBA rejestracji w oknie — bez żadnych danych osoby.
+  countRegistrationsBetween(from: Date, to: Date): Promise<number>;
   // RODO (D6): anonimizacja W MIEJSCU (ledger zachowany) + eksport danych.
   anonymizeAccount(userId: string): Promise<void>;
   exportAccount(userId: string): Promise<Record<string, unknown>>;
@@ -338,6 +340,13 @@ export function createIdentityService(
         select: { createdAt: true },
       });
       return user?.createdAt ?? null;
+    },
+
+    // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
+    // Konta zanonimizowane (RODO, D6) zostają w liczniku: rejestracja się wydarzyła,
+    // a licznik nie mówi KTO ani nie pozwala nikogo wskazać.
+    async countRegistrationsBetween(from, to) {
+      return prisma.user.count({ where: { createdAt: { gte: from, lt: to } } });
     },
 
     // --- pierwsza mila (S10) -------------------------------------------------

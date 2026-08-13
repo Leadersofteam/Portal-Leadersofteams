@@ -1,8 +1,13 @@
-import type { ModerationResolveInput } from '@lot/contracts';
+import type {
+  ModerationResolveInput,
+  ModerationSubjectView,
+  ReportSubjectType,
+} from '@lot/contracts';
 
 import type { PrismaClient } from '../../shared/db';
-import { NotFoundError } from '../../shared/errors';
+import { DomainError, NotFoundError } from '../../shared/errors';
 import type { LadderService } from '../ladder/index';
+import type { ModerationSubjectModule } from './subjects';
 
 export interface PointPendingPayload {
   pointEventId: string;
@@ -20,6 +25,9 @@ export interface AntifraudDeps {
   marketplace: {
     hasReciprocalRelationship(leaderUserId: string, companyId: string): Promise<boolean>;
   };
+  // Moduły wnoszące podgląd/ukrycie zgłoszonej treści (S12). Opcjonalne, bo
+  // worker buduje ten sam serwis bez warstwy HTTP i moderacji nie obsługuje.
+  subjects?: ModerationSubjectModule[];
 }
 
 // Typy punktowe ścieżki community — do detektorów (globalne wartości enum
@@ -31,7 +39,28 @@ const COMMUNITY_DAILY_LIMIT = 5;
 // Okno wykrywania wzajemnej adoracji A↔B w Q&A.
 const RECIPROCITY_QA_WINDOW_DAYS = 7;
 
-export function createAntifraudService({ prisma, ladder, marketplace }: AntifraudDeps) {
+export function createAntifraudService({
+  prisma,
+  ladder,
+  marketplace,
+  subjects = [],
+}: AntifraudDeps) {
+  const subjectsByType = new Map<ReportSubjectType, ModerationSubjectModule>(
+    subjects.map((s) => [s.subjectType, s]),
+  );
+
+  // Treść, której moduł nie znalazł u siebie, została usunięta (przez autora
+  // albo przez RODO). Panel MUSI to pokazać wprost — moderator, który widzi
+  // pustą kartę, nie wie, czy treść zniknęła, czy panel jest zepsuty.
+  const MISSING: ModerationSubjectView = {
+    exists: false,
+    hidden: true,
+    title: null,
+    excerpt: null,
+    authorUserId: null,
+    authorDisplayName: null,
+    canHide: false,
+  };
   // Wspólny zapis flagi: FraudSignal → HOLD punktu → sprawa moderacyjna.
   async function flagAndHold(
     payload: PointPendingPayload,
@@ -163,28 +192,92 @@ export function createAntifraudService({ prisma, ladder, marketplace }: Antifrau
       return { id: created.id, duplicate: false };
     },
 
+    // Sprawy WRAZ ze zgłoszoną treścią (S12). Do S12 zwracaliśmy same wiersze,
+    // przez co panel pokazywał notatkę bez żadnego sposobu dotarcia do treści.
     async listCases(status: 'OPEN' | 'RESOLVED') {
-      return prisma.moderationCase.findMany({
+      const cases = await prisma.moderationCase.findMany({
         where: { status },
         orderBy: { createdAt: 'asc' },
         take: 100,
       });
+
+      // Grupujemy po typie i pytamy każdy moduł RAZ o wszystkie swoje id.
+      // Pojedyncze zapytanie na sprawę byłoby N+1 na widoku, który przy
+      // pierwszej fali zgłoszeń jest dokładnie tym, co ktoś odświeża co minutę.
+      const idsByType = new Map<ReportSubjectType, string[]>();
+      for (const c of cases) {
+        if (!c.subjectType || !c.subjectId) continue;
+        const type = c.subjectType as ReportSubjectType;
+        if (!subjectsByType.has(type)) continue;
+        idsByType.set(type, [...(idsByType.get(type) ?? []), c.subjectId]);
+      }
+
+      const loaded = new Map<string, ModerationSubjectView>();
+      await Promise.all(
+        [...idsByType.entries()].map(async ([type, ids]) => {
+          const module = subjectsByType.get(type);
+          if (!module) return;
+          const canHide = typeof module.hide === 'function';
+          const previews = await module.loadMany([...new Set(ids)]);
+          for (const [id, preview] of previews) {
+            // canHide łączy dwa warunki: czy typ w ogóle da się ukryć i czy
+            // treść nie jest już ukryta. Panel nie pokaże wtedy martwego przycisku.
+            loaded.set(`${type}:${id}`, { ...preview, canHide: canHide && !preview.hidden });
+          }
+        }),
+      );
+
+      return cases.map((c) => ({
+        ...c,
+        subject:
+          c.subjectType && c.subjectId
+            ? (loaded.get(`${c.subjectType}:${c.subjectId}`) ?? MISSING)
+            : null,
+      }));
     },
 
-    // Człowiek rozstrzyga (ADR-004): RELEASE przywraca punkt do karencji,
-    // REJECT trwale go cofa (REVERSED / korekta ujemna).
+    // Człowiek rozstrzyga (ADR-004). Dwa światy, dwa zestawy akcji:
+    //  - RELEASE/REJECT dotyczą PUNKTU (sprawy z sygnału antyfraudowego),
+    //  - HIDE/DISMISS dotyczą TREŚCI (zgłoszenia użytkowników).
+    // Do S12 istniały tylko dwie pierwsze i „rozstrzygały" także zgłoszenia,
+    // nie robiąc z treścią absolutnie nic — sprawa znikała z listy, problem nie.
     async resolveCase(moderatorId: string, caseId: string, input: ModerationResolveInput) {
       const moderationCase = await prisma.moderationCase.findUnique({ where: { id: caseId } });
       if (!moderationCase || moderationCase.status !== 'OPEN') {
         throw new NotFoundError('Sprawa nie istnieje lub jest już rozstrzygnięta');
       }
-      if (moderationCase.pointEventId) {
+
+      if (input.action === 'RELEASE' || input.action === 'REJECT') {
+        // Twardo, zamiast po cichu zamknąć: kliknięcie „zwolnij punkty" na
+        // sprawie bez punktu zawsze było nieporozumieniem, a interfejs to
+        // nieporozumienie podpowiadał.
+        if (!moderationCase.pointEventId) {
+          throw new DomainError(
+            'NO_POINT_EVENT',
+            'Ta sprawa nie dotyczy punktów. Użyj „Ukryj treść" albo „Odrzuć zgłoszenie".',
+            400,
+          );
+        }
         if (input.action === 'RELEASE') {
           await ladder.releasePointEvent(moderationCase.pointEventId);
         } else {
           await ladder.reversePointEvent(moderationCase.pointEventId, moderatorId, input.note);
         }
       }
+
+      if (input.action === 'HIDE') {
+        const type = moderationCase.subjectType as ReportSubjectType | null;
+        const module = type ? subjectsByType.get(type) : undefined;
+        if (!moderationCase.subjectId || !module?.hide) {
+          throw new DomainError(
+            'CANNOT_HIDE',
+            'Tej treści nie da się ukryć z panelu. Zlecenie jest umową dwóch stron — zajmij się sprawą poza systemem.',
+            400,
+          );
+        }
+        await module.hide(moderationCase.subjectId, moderatorId);
+      }
+
       await prisma.moderationCase.update({
         where: { id: caseId },
         data: {

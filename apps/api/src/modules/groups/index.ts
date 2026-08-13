@@ -9,3 +9,4 @@ export type { GroupsService, GroupsServiceDeps } from './service';
 export { groupsRoutes } from './routes';
 export type { GroupsRoutesDeps } from './routes';
 export { createGroupsAccountData } from './account';
+export { createGroupsModerationSubject } from './moderation';

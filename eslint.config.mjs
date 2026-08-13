@@ -22,6 +22,9 @@ const API_MODULES = [
   'listings',
   'files',
   'search',
+  // Dopisany w S12 RAZEM z modułem, nie po fakcie — patrz notka wyżej: moduł
+  // spoza tej listy ma granicę ADR-002 wyłącznie w dobrych intencjach.
+  'analytics',
 ];
 
 export default tseslint.config(

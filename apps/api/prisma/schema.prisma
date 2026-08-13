@@ -655,6 +655,11 @@ model Thread {
   status           ThreadStatus @default(OPEN)
   // Wskaźnik na zaakceptowaną odpowiedź (jedna na wątek — egzekwowane w domenie).
   acceptedAnswerId String?
+  // Ukrycie przez moderatora (S12). Osobne od `status`: CLOSED to decyzja
+  // autora o zamknięciu dyskusji, a to jest decyzja moderatora o zdjęciu treści.
+  // Nullable i bez domyślnej wartości — migracja expand-only, rollback aplikacji
+  // nie wymaga cofania schematu.
+  hiddenAt         DateTime?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 

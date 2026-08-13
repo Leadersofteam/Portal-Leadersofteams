@@ -5,3 +5,4 @@ export { socialSubscriptions } from './events';
 export { socialRoutes } from './routes';
 export type { SocialRoutesDeps } from './routes';
 export { createSocialAccountData } from './account';
+export { createSocialModerationSubject } from './moderation';

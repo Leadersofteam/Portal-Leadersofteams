@@ -13,6 +13,10 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
+      args:
+        # Zapiekane w buildzie (NEXT_PUBLIC_*) — zmiana klucza wymaga
+        # `docker compose build web`, sam restart nic nie da.
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://api:3001
@@ -125,6 +129,21 @@ services:
         limits:
           cpus: '1'
           memory: 768M
+    # Worker nie ma portu HTTP, więc sonda `fetch` jak w api/web nie ma zastosowania.
+    # Dowodem życia jest świeży klucz w Redisie, odnawiany TYLKO gdy pętla dispatchera
+    # faktycznie się obraca (patrz apps/api/src/shared/heartbeat.ts). Bez tego cicha
+    # śmierć workera nie dawała ŻADNEGO sygnału: `docker ps` pokazywał „Up", a wpisy
+    # przestawały pojawiać się w feedzie i punkty przestawały dojrzewać.
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "const R=require(''ioredis'');const r=new R(process.env.REDIS_URL);r.get(''portal:worker:heartbeat'').then(v=>{r.disconnect();process.exit(v?0:1)}).catch(()=>{r.disconnect();process.exit(1)})"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   # Jednorazowe migracje (krok release'u, ADR-008):
   # docker compose -p portal run --rm migrate

@@ -5,14 +5,21 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyError, FastifyInstance } from 'fastify';
 
+import { analyticsRoutes, createAnalyticsService } from './modules/analytics/index';
 import { antifraudRoutes, createAntifraudService } from './modules/antifraud/index';
 import {
   communityRoutes,
   createCommunityAccountData,
+  createCommunityModerationSubject,
   createCommunityService,
 } from './modules/community/index';
 import { createFilesAccountData, createFilesService, filesRoutes } from './modules/files/index';
-import { createGroupsAccountData, createGroupsService, groupsRoutes } from './modules/groups/index';
+import {
+  createGroupsAccountData,
+  createGroupsModerationSubject,
+  createGroupsService,
+  groupsRoutes,
+} from './modules/groups/index';
 import { createIdentityService, identityRoutes } from './modules/identity/index';
 import { createLadderService, ladderRoutes } from './modules/ladder/index';
 import {
@@ -22,6 +29,7 @@ import {
 } from './modules/listings/index';
 import {
   createMarketplaceAccountData,
+  createMarketplaceModerationSubject,
   createOrdersService,
   createProfilesService,
   createReviewsService,
@@ -34,6 +42,7 @@ import type { AppConfig } from './shared/config';
 import { createPrisma } from './shared/db';
 import type { PrismaClient } from './shared/db';
 import { DomainError } from './shared/errors';
+import { readWorkerHeartbeat } from './shared/heartbeat';
 import { createLogger } from './shared/logger';
 import { createMailService } from './shared/mail';
 import { createTurnstileVerifier } from './shared/turnstile';
@@ -43,7 +52,12 @@ import { createRedis } from './shared/redis';
 import type { Redis } from './shared/redis';
 import { createSessionStore } from './shared/session';
 import { createSearchService, searchRoutes } from './modules/search/index';
-import { createSocialAccountData, createSocialService, socialRoutes } from './modules/social/index';
+import {
+  createSocialAccountData,
+  createSocialModerationSubject,
+  createSocialService,
+  socialRoutes,
+} from './modules/social/index';
 
 export interface AppContext {
   app: FastifyInstance;
@@ -112,7 +126,15 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
       /* raportowane statusem */
     }
     const healthy = Object.values(checks).every((c) => c === 'ok');
-    return reply.code(healthy ? 200 : 503).send({ status: healthy ? 'ok' : 'degraded', checks });
+    // Puls workera jest INFORMACYJNY i świadomie NIE wchodzi do `checks`,
+    // bo `checks` decyduje o kodzie 200/503, który czyta healthcheck kontenera.
+    // Gdyby śmierć workera czerwieniła /healthz, Docker restartowałby ZDROWE api,
+    // a Traefik wyrzucałby je z puli — awaria kolejki zamieniłaby się w awarię
+    // portalu. Worker ma własny healthcheck oparty na tym samym kluczu.
+    const worker = await readWorkerHeartbeat(redis);
+    return reply
+      .code(healthy ? 200 : 503)
+      .send({ status: healthy ? 'ok' : 'degraded', checks, worker });
   });
 
   const auth = createAuthHelpers(sessions, config);
@@ -163,11 +185,6 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
   const reviewsService = createReviewsService({ prisma, identity: identityService });
-  const antifraudService = createAntifraudService({
-    prisma,
-    ladder: ladderService,
-    marketplace: ordersService,
-  });
   const groupsService = createGroupsService({
     prisma,
     identity: identityService,
@@ -194,6 +211,22 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     orders: ordersService,
     files: filesService,
     redis,
+  });
+
+  // Antifraud budowany PO modułach treści: dostaje od nich podgląd i ukrywanie
+  // zgłoszonych rzeczy (S12), bo sam nie ma prawa czytać ich tabel (ADR-002).
+  // Wzorzec jak accountModules w RODO wyżej.
+  const antifraudService = createAntifraudService({
+    prisma,
+    ladder: ladderService,
+    marketplace: ordersService,
+    subjects: [
+      createSocialModerationSubject(prisma, identityService),
+      createGroupsModerationSubject(prisma, identityService),
+      createCommunityModerationSubject(prisma, identityService),
+      // ORDER celowo bez akcji „ukryj" — patrz marketplace/moderation.ts.
+      createMarketplaceModerationSubject(prisma, identityService),
+    ],
   });
 
   await app.register(
@@ -253,6 +286,45 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   await app.register(searchRoutes({ search: searchService, isTest: config.NODE_ENV === 'test' }), {
     prefix: '/api/v1',
   });
+
+  // Analityka (S12): komponuje publiczne API modułów, nie dotyka ich tabel
+  // (ADR-002) — dokładnie jak `search` wyżej. Kolejność źródeł = kolejność kolumn
+  // w panelu, od „ilu przyszło" do „co zrobili".
+  const analyticsService = createAnalyticsService({
+    redis,
+    sources: [
+      {
+        key: 'registrations',
+        label: 'Rejestracje',
+        countCreatedBetween: identityService.countRegistrationsBetween,
+      },
+      {
+        key: 'orders',
+        label: 'Zlecenia',
+        countCreatedBetween: ordersService.countOrdersPublishedBetween,
+      },
+      {
+        key: 'listings',
+        label: 'Usługi',
+        countCreatedBetween: listingsService.countListingsPublishedBetween,
+      },
+      { key: 'posts', label: 'Wpisy', countCreatedBetween: socialService.countPostsBetween },
+      {
+        key: 'threads',
+        label: 'Pytania',
+        countCreatedBetween: communityService.countThreadsBetween,
+      },
+    ],
+  });
+  await app.register(
+    analyticsRoutes({
+      analytics: analyticsService,
+      redis,
+      auth,
+      isTest: config.NODE_ENV === 'test',
+    }),
+    { prefix: '/api/v1' },
+  );
 
   // Socket.IO musi być podpięty po gotowości serwera HTTP (app.server istnieje
   // po app.ready()). Realtime to tylko sygnał (ADR-007) — patrz shared/realtime.

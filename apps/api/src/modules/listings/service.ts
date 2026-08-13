@@ -599,6 +599,13 @@ export function createListingsService({ prisma, identity, orders, files, redis }
       });
       return { orderId: order.id };
     },
+
+    // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
+    // Po `publishedAt`, nie `createdAt`: szkic, którego nikt nie opublikował,
+    // nie jest zdarzeniem na rynku i zawyżałby obraz aktywności.
+    async countListingsPublishedBetween(from: Date, to: Date): Promise<number> {
+      return prisma.serviceListing.count({ where: { publishedAt: { gte: from, lt: to } } });
+    },
   };
 }
 

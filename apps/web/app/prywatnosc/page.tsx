@@ -40,19 +40,34 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h2>3. Cookies</h2>
+      <h2>3. Cookies i statystyki</h2>
       <p>
         Portal używa wyłącznie niezbędnych plików cookie (sesja logowania). Nie używamy cookies
         marketingowych ani zewnętrznych narzędzi analitycznych.
       </p>
+      <p>
+        Prowadzimy własną, zanonimizowaną statystykę ruchu: zliczamy wyłącznie liczbę otwarć
+        poszczególnych <strong>rodzajów stron</strong> w danej dobie. Nie zapisujemy adresów IP, nie
+        tworzymy profilu przeglądania, nie rozpoznajemy powracających osób i nie da się na podstawie
+        tych liczb wskazać konkretnego użytkownika. Identyfikatory treści są przed zapisem usuwane.
+        Dane te przechowujemy nie dłużej niż 35 dni i nie udostępniamy ich nikomu.
+      </p>
 
       <h2>4. Odbiorcy danych</h2>
       <p>
-        Dane przechowywane są wyłącznie na serwerze Portalu w Unii Europejskiej. Obecnie nie
-        korzystamy z żadnych zewnętrznych odbiorców danych — nie używamy zewnętrznej analityki,
-        narzędzi marketingowych ani zewnętrznych dostawców poczty. Jeśli w przyszłości włączymy
-        wysyłkę e-maili transakcyjnych (Brevo) lub ochronę anty-botową (Cloudflare Turnstile),
-        zaktualizujemy tę sekcję przed ich uruchomieniem.
+        Dane przechowywane są wyłącznie na serwerze Portalu w Unii Europejskiej. Nie korzystamy z
+        zewnętrznej analityki ani z narzędzi marketingowych.
+      </p>
+      <p>
+        <strong>Poczta:</strong> e-maile transakcyjne (potwierdzenie rejestracji, reset hasła,
+        powiadomienia) wysyłamy przez serwer poczty naszego dostawcy hostingu, Hostinger
+        International Ltd. Oznacza to, że Twój adres e-mail i treść takiej wiadomości przechodzą
+        przez jego infrastrukturę. Nie przekazujemy mu żadnych innych danych i nie wykorzystujemy go
+        do wysyłek marketingowych.
+      </p>
+      <p>
+        Jeśli w przyszłości włączymy ochronę anty-botową (Cloudflare Turnstile), zaktualizujemy tę
+        sekcję przed jej uruchomieniem.
       </p>
 
       <h2>5. Twoje prawa</h2>

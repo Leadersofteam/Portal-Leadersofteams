@@ -343,11 +343,35 @@ export type ReviewInput = z.infer<typeof reviewInputSchema>;
 export const pointEventStatusSchema = z.enum(['PENDING', 'CONFIRMED', 'HOLD', 'REVERSED']);
 export type PointEventStatus = z.infer<typeof pointEventStatusSchema>;
 
+// Sprawy moderacyjne mają DWA różne światy i do S12 obsługiwała je jedna para
+// akcji, przez co panel oferował „Zwolnij punkty"/„Odrzuć punkty" także przy
+// zgłoszeniu treści, w którym żadnych punktów nie ma. Etykieta kłamała, a akcja
+// po cichu zamykała sprawę nie robiąc nic z treścią.
+//
+//  - RELEASE / REJECT — sprawy punktowe (źródło FRAUD_SIGNAL): zwolnienie punktu
+//    do karencji albo trwałe cofnięcie. Wymagają `pointEventId`.
+//  - HIDE / DISMISS   — zgłoszenia treści (źródło REPORT): ukrycie zgłoszonej
+//    treści albo zamknięcie sprawy bez działania.
 export const moderationResolveInputSchema = z.object({
-  action: z.enum(['RELEASE', 'REJECT']),
+  action: z.enum(['RELEASE', 'REJECT', 'HIDE', 'DISMISS']),
   note: z.string().trim().min(5, 'Uzasadnienie: min. 5 znaków').max(2000),
 });
 export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;
+export type ModerationAction = ModerationResolveInput['action'];
+
+// Podgląd zgłoszonej treści dołączany do sprawy (S12) — front buduje z tego
+// link do treści i pokazuje fragment, żeby moderator nie decydował w ciemno.
+export interface ModerationSubjectView {
+  exists: boolean;
+  hidden: boolean;
+  title: string | null;
+  excerpt: string | null;
+  authorUserId: string | null;
+  authorDisplayName: string | null;
+  context?: { groupId?: string };
+  /** Czy dla tego typu treści w ogóle istnieje akcja „ukryj". */
+  canHide: boolean;
+}
 
 // Zgłoszenie treści przez użytkownika (D7) → ModerationCase źródło REPORT.
 // SOCIAL_POST jest osobnym typem, a nie POST: id wpisu portalowego wskazuje

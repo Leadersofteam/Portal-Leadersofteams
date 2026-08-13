@@ -44,6 +44,25 @@ export interface SocialDeps {
 
 const FEED_LIMIT = 20;
 
+/**
+ * Zdjęcie wpisu portalowego z obiegu. Wspólne dla usunięcia przez autora
+ * i dla ukrycia przez moderatora (S12) — celowo JEDNA implementacja, bo dwie
+ * kopie tej operacji rozjechałyby się przy pierwszej zmianie i zostawiłyby
+ * sierotę w feedzie w jednej ze ścieżek.
+ *
+ * Feed jest projekcją: bez skasowania `ActivityItem` po ukrytym wpisie zostaje
+ * kafelek linkujący w 404.
+ */
+export async function takeDownSocialPost(prisma: PrismaClient, postId: string): Promise<void> {
+  await prisma.socialPost.update({
+    where: { id: postId },
+    data: { deletedAt: new Date(), body: '' },
+  });
+  await prisma.activityItem.deleteMany({
+    where: { type: 'SOCIAL_POST_PUBLISHED', subjectId: postId },
+  });
+}
+
 export function createSocialService({ prisma, identity, ladder, redis }: SocialDeps) {
   // Wzmianki @handle w treści wpisu/komentarza → powiadomienie dla wymienionego.
   // Payload niesie socialPostId (a nie groupId), więc powiadomienie linkuje
@@ -146,15 +165,7 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
 
     async deletePost(userId: string, postId: string) {
       await requireOwnPost(postId, userId);
-      await prisma.socialPost.update({
-        where: { id: postId },
-        data: { deletedAt: new Date(), body: '' },
-      });
-      // Feed jest projekcją — usunięcie treści MUSI zabrać też wpis z osi
-      // aktywności, inaczej zostaje kafelek linkujący w 404.
-      await prisma.activityItem.deleteMany({
-        where: { type: 'SOCIAL_POST_PUBLISHED', subjectId: postId },
-      });
+      await takeDownSocialPost(prisma, postId);
       return { id: postId };
     },
 
@@ -588,6 +599,15 @@ export function createSocialService({ prisma, identity, ladder, redis }: SocialD
         type: 'LEVEL_ACHIEVED',
         subjectId: p.achievementId,
         meta: { level: p.level },
+      });
+    },
+
+    // Analityka (S12): moduł liczy WŁASNĄ tabelę i oddaje samą liczbę (ADR-002).
+    // Liczymy z bazy, a nie z licznika w Redisie — dane już tu są, więc licznik
+    // byłby drugim, gorszym źródłem prawdy (ginie przy flushu, nie liczy wstecz).
+    async countPostsBetween(from: Date, to: Date): Promise<number> {
+      return prisma.socialPost.count({
+        where: { createdAt: { gte: from, lt: to }, deletedAt: null },
       });
     },
   };

@@ -11,3 +11,4 @@ export type { CommunityService, CommunityServiceDeps } from './service';
 export { communityRoutes } from './routes';
 export type { CommunityRoutesDeps } from './routes';
 export { createCommunityAccountData } from './account';
+export { createCommunityModerationSubject } from './moderation';
