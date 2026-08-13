@@ -148,6 +148,29 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
       return reply.send(await service.verifyEmail(input.token));
     });
 
+    app.get('/me/verification', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      return reply.send(await service.getVerificationStatus(user.id));
+    });
+
+    // Ponowna wysyłka linku aktywacyjnego. Bez tego jedyną drogą po wygaśnięciu
+    // tokenu (doba) było założenie DRUGIEGO konta na ten sam adres — czyli
+    // ślepy zaułek w pierwszej mili.
+    app.post('/auth/resend-verification', { config: authRateLimit }, async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const status = await service.getVerificationStatus(user.id);
+      // Cicho OK dla już potwierdzonych: to nie błąd użytkownika, a wysyłanie
+      // kolejnych maili na potwierdzony adres byłoby tylko hałasem.
+      let rawToken: string | null = null;
+      if (status && !status.verified) {
+        rawToken = await service.sendEmailVerification(user.id, status.email);
+      }
+      // Poza produkcją oddajemy token — tą samą konwencją co reset hasła.
+      // Bez tego ścieżki aktywacji NIE DA SIĘ przejść w e2e (poczta jest tam
+      // no-opem), a właśnie brak takiego testu pozwolił 404 dożyć produkcji.
+      return reply.send({ ok: true, ...(config.isProduction ? {} : { devToken: rawToken }) });
+    });
+
     app.post('/auth/request-password-reset', { config: authRateLimit }, async (request, reply) => {
       const input = parseBody(requestPasswordResetInputSchema, request.body);
       const { rawToken } = await service.requestPasswordReset(input.email);

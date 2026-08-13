@@ -8,6 +8,7 @@ import { StartHere, type StartStep } from '@/components/ui/start-here';
 import { serverApi } from '@/lib/server-api';
 
 import { LogoutButton } from './logout-button';
+import { VerifyBanner } from './verify-banner';
 
 export const metadata = { title: 'Baza wspinacza — Leaders of Teams' };
 
@@ -107,6 +108,8 @@ export default async function PanelPage() {
           />
         )}
       </section>
+
+      <VerifyBanner />
 
       {showChecklist && <StartHere steps={steps} />}
 

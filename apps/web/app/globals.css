@@ -1956,3 +1956,15 @@ a.quoted-post:hover {
 .quoted-post-head strong {
   white-space: nowrap;
 }
+
+/* Baner potwierdzenia adresu e-mail (pierwsza mila). Ciepły, nie alarmowy:
+   konto DZIAŁA bez potwierdzenia, więc czerwień byłaby kłamstwem o wadze sprawy. */
+.verify-banner {
+  border-color: color-mix(in srgb, var(--level-5) 40%, var(--border));
+  background: color-mix(in srgb, var(--level-5) 8%, transparent);
+  margin-bottom: 1.25rem;
+}
+
+.verify-banner h3 {
+  margin-top: 0;
+}

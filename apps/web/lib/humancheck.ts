@@ -45,6 +45,14 @@ export async function solveChallenge(
 // tu ten sam próg z zapasem, żeby KLIENT DOCZEKAŁ resztę zamiast dostać błąd.
 // Bez tego szybkie wysłanie formularza (autouzupełnianie, Enter, test e2e)
 // kończyłoby się komunikatem „to nie automat?" dla najzupełniej realnej osoby.
+//
+// ⚠️ ODLICZAMY OD ODPOWIEDZI SERWERA, NIE OD WYSŁANIA ŻĄDANIA. Serwer mierzy
+// czas od chwili, w której UTWORZYŁ wyzwanie — a to jest PÓŹNIEJ niż moment,
+// w którym przeglądarka wysłała zapytanie. Licząc od wysłania, oddawaliśmy
+// serwerowi o całą latencję sieci za mało i przy wolniejszym łączu dostawaliśmy
+// TOO_FAST mimo poprawnego rozwiązania (złapane przez e2e na obciążonym VPS).
+// Chwila odebrania odpowiedzi jest zawsze PO utworzeniu wyzwania, więc liczenie
+// od niej jest bezpieczne w drugą stronę.
 const MIN_ELAPSED_MS = 2_300;
 
 export interface PreparedHumancheck {
@@ -73,8 +81,8 @@ export async function fetchChallenge(): Promise<HumancheckChallenge | null> {
  * dla niego niewidoczny.
  */
 export async function prepareHumancheck(): Promise<PreparedHumancheck | null> {
-  const issuedAt = Date.now();
   const challenge = await fetchChallenge();
   if (!challenge) return null; // bramka wyłączona po stronie serwera
-  return { solution: await solveChallenge(challenge), notBefore: issuedAt + MIN_ELAPSED_MS };
+  const receivedAt = Date.now();
+  return { solution: await solveChallenge(challenge), notBefore: receivedAt + MIN_ELAPSED_MS };
 }

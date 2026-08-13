@@ -79,6 +79,12 @@ export interface IdentityService {
   exportAccount(userId: string): Promise<Record<string, unknown>>;
   // E-mail (D4): weryfikacja adresu i reset hasła (za flagą; wysyłka no-op gdy off).
   sendEmailVerification(userId: string, email: string): Promise<string>;
+  /**
+   * Stan potwierdzenia adresu — czytany Z BAZY, nie z migawki sesji.
+   * Sesja jest zamrożona przy logowaniu (ta sama pułapka co z rolą MODERATOR),
+   * więc gdyby baner zależał od sesji, nie zniknąłby po kliknięciu w link.
+   */
+  getVerificationStatus(userId: string): Promise<{ email: string; verified: boolean } | null>;
   verifyEmail(rawToken: string): Promise<{ verified: boolean }>;
   requestPasswordReset(email: string): Promise<{ rawToken: string | null }>;
   resetPassword(rawToken: string, newPassword: string): Promise<{ reset: boolean }>;
@@ -478,6 +484,15 @@ export function createIdentityService(
     },
 
     // --- E-mail (D4) --------------------------------------------------------
+    async getVerificationStatus(userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, emailVerifiedAt: true },
+      });
+      if (!user) return null;
+      return { email: user.email, verified: user.emailVerifiedAt !== null };
+    },
+
     sendEmailVerification(userId, email) {
       return sendVerification(userId, email);
     },
