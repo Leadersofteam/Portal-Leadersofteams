@@ -34,11 +34,16 @@ weszło, zostało i zostawiło ślad, który umiemy odczytać.
 Cel: zanim przyjdzie pierwszy realny człowiek, musimy **widzieć ruch** i **móc zareagować**,
 gdy coś pójdzie nie tak. To jedyny sprint, który ma sens przed seedingiem.
 
-1. **🔴 Aktywacja e-maila (bloker realnych kont).** Dziś `shared/mail.ts` jest no-opem bez
-   `BREVO_API_KEY`: weryfikacja adresu nie dochodzi, a **reset hasła po cichu nic nie robi**.
-   Osoba, która zapomni hasła, nie ma dziś ŻADNEJ drogi powrotu — to najpoważniejsza pułapka
-   pierwszej mili. Wymaga klucza od właściciela; kod jest gotowy i czeka za flagą.
-   Po aktywacji: smoke rejestracji i resetu na realnej skrzynce.
+1. ✅ **Aktywacja e-maila — ZROBIONE 2026-08-13, BEZ zewnętrznego dostawcy.** Portal wysyła
+   przez **własną skrzynkę** (`smtp.hostinger.com`, `kontakt@leadersofteams.com`) — tę samą,
+   której od dawna używa App. Zero nowego vendora, zero nowego kosztu (skrzynka jest opłacona
+   w ramach hostingu domeny), zero powierzania adresów e-mail trzeciej stronie.
+   Brevo zostaje jako alternatywa, gdyby kiedyś doszedł masowy digest.
+   Zweryfikowane na produkcji: rejestracja i **reset hasła** realnie wychodzą (`mail.sent`,
+   `transport: smtp`). ⚠️ `MAIL_FROM` musi być adresem uwierzytelnionej skrzynki — nadawca
+   z innej domeny nie przejdzie SPF/DMARC.
+   **Pozostaje do rozważenia:** osobna skrzynka `portal@leadersofteams.pl` (rozdzieli reputację
+   od poczty transakcyjnej App i wyrówna domenę nadawcy z domeną Portalu).
 2. **🔴 Moderacja zgłoszeń jest ślepa.** `POST /reports` działa i tworzy `ModerationCase`,
    ale `/panel/moderacja` renderuje wyłącznie notatkę — **nie pokazuje `subjectType`/`subjectId`
    ani linku do zgłoszonej treści**. Moderator widzi, że „coś" zgłoszono, i nie ma jak tego

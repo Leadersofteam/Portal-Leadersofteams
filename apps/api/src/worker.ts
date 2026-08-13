@@ -51,10 +51,18 @@ const notifications = createNotificationsService({
     await redisPub.publish(REALTIME_CHANNEL, JSON.stringify({ userId, kind: 'notification' }));
   },
 });
-// Warstwa e-mail (D4) — no-op dopóki brak klucza Brevo (0 zł, ADR-009).
+// Warstwa e-mail (D4) — własna skrzynka przez SMTP, alternatywnie Brevo,
+// a bez żadnej z nich no-op (0 zł, ADR-009). Konfiguracja MUSI być identyczna
+// jak w server.ts: worker wysyła własne maile (digest), więc rozjazd oznaczałby
+// „działa przy rejestracji, milczy w tle" — najgorszy możliwy rodzaj usterki.
 const mail = createMailService(
   {
     mailEnabled: config.mailEnabled,
+    smtpHost: config.SMTP_HOST,
+    smtpPort: config.SMTP_PORT,
+    smtpUser: config.SMTP_USER,
+    smtpPass: config.SMTP_PASS,
+    smtpSecure: config.SMTP_SECURE,
     brevoApiKey: config.BREVO_API_KEY,
     mailFrom: config.MAIL_FROM,
     mailFromName: config.MAIL_FROM_NAME,

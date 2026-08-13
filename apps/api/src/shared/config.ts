@@ -16,8 +16,20 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   // Publiczny adres bazowy (linki w e-mailach weryfikacji/resetu).
   APP_BASE_URL: z.string().url().default('http://localhost:3000'),
-  // E-mail (D4) — opcjonalny sekret. Brak klucza = tryb no-op (0 zł, ADR-009),
-  // wysyłka wyłączona; scaffolding gotowy do włączenia po podaniu klucza Brevo.
+  // E-mail (D4). Dwie drogi, obie 0 zł (ADR-009):
+  //  1. WŁASNA SKRZYNKA przez SMTP — ta sama, której używa App
+  //     (smtp.hostinger.com, kontakt@leadersofteams.com). Zero nowego dostawcy,
+  //     zero nowego kosztu, bo skrzynka jest już opłacona w ramach hostingu.
+  //  2. Brevo (darmowy tier 300/dzień) — zostaje jako alternatywa.
+  // Brak obu = tryb no-op (log zamiast wysyłki), bezpieczny domyślny stan.
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z
+    .string()
+    .optional()
+    .transform((v) => v !== 'false'),
   BREVO_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().email().default('no-reply@leadersofteams.pl'),
   MAIL_FROM_NAME: z.string().default('Leaders of Teams'),
@@ -53,7 +65,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     ...parsed.data,
     isProduction,
     cookieSecure: isProduction,
-    mailEnabled: Boolean(parsed.data.BREVO_API_KEY),
+    // Wysyłka działa, gdy jest KOMPLETNY zestaw SMTP albo klucz Brevo.
+    // Sam SMTP_HOST bez użytkownika/hasła to najczęstsza połowiczna konfiguracja,
+    // która kończy się cichym „connection refused" zamiast jawnego no-opu.
+    mailEnabled: Boolean(
+      (parsed.data.SMTP_HOST && parsed.data.SMTP_USER && parsed.data.SMTP_PASS) ||
+      parsed.data.BREVO_API_KEY,
+    ),
     turnstileEnabled: Boolean(parsed.data.TURNSTILE_SECRET_KEY),
   };
 }
