@@ -46,9 +46,9 @@ gdy coś pójdzie nie tak. To jedyny sprint, który ma sens przed seedingiem.
    `/watki/:id`, `/zlecenia/:id`), podgląd fragmentu, akcja „ukryj treść" (usunięcie
    `ActivityItem` + soft delete) obok istniejących „zwolnij/odrzuć".
 3. **Worker heartbeat** (dług z GO-LIVE-CHECKLIST §1): `SET portal:worker:heartbeat EX 60`
-   - healthcheck w compose. Dziś **cicha śmierć workera nie daje żadnego sygnału** — wpisy nie
-     pojawiają się w feedzie, powiadomienia nie przychodzą, punkty się nie naliczają, a `docker ps`
-     pokazuje „Up". To najgroźniejsza awaria, jaką ten system może mieć.
+   plus healthcheck w compose. Dziś **cicha śmierć workera nie daje żadnego sygnału** — wpisy nie
+   pojawiają się w feedzie, powiadomienia nie przychodzą, punkty się nie naliczają, a `docker ps`
+   pokazuje „Up". To najgroźniejsza awaria, jaką ten system może mieć.
 4. **Analityka za 0 zł, bez cookies i bez danych osobowych:** dzienne agregaty w Redis
    (odsłony ścieżek, rejestracje, publikacje) + prosty podgląd w panelu moderatora.
    Żadnego zewnętrznego skryptu — zgodnie z naszą własną polityką prywatności.
