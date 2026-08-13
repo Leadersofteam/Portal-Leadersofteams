@@ -1,7 +1,61 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-08-12 · **Branch tej sesji:** `feat/s7-produkt` (zmergowany do `main`)
-**Wykonawca:** Fable 5 (sesja S7 + go-live) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl (certy LE, backup cron 03:45); następne sprinty: **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)** (mobile-first + rozwinięcie języka wizualnego)
+**Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s8-s11-kieszonkowa-drabina`
+**Wykonawca:** Opus 5 (sesja S8–S11) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
+(certy LE, backup cron 03:45). Pozostało z roadmapy: **S12** (k6, worker heartbeat, analityka Redis) —
+patrz **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)**.
+
+> **✅ SESJA S8–S11 (2026-08-13): „Kieszonkowa Drabina".** Cztery przyrosty, każdy osobno
+> zweryfikowany bramkami, wdrożony na staging i **na produkcję**, i przeklikany na żywo
+> kontem testowym. Gałąź `feat/s8-s11-kieszonkowa-drabina` (PR tworzy właściciel — brak `gh`).
+>
+> 1. **S8 mobile/PWA** (`9e7de16`) — dolny pasek 5 slotów pod kciuk (Feed · Usługi · [+] ·
+>    Powiadomienia · Panel), arkusz akcji twórczych na natywnym `<dialog>`, własna rodzina ikon
+>    SVG (koniec z emoji w headerze), `manifest.webmanifest` + ikony maskable + service worker
+>    + `/offline`, tabela progów Drabinki jako karty na mobile, cele dotyku ≥ 44 px.
+>    **SW świadomie minimalny:** `/api/*` NIGDY nie trafia do cache, nawigacje network-only —
+>    każda strona jest SSR-owana z ciasteczkiem sesji, więc cache HTML = czyjś panel u kogoś innego.
+> 2. **S8 społeczność X-lite** (`b1580dd`) — wpis portalowy (`SocialPost/Comment/Reaction`),
+>    kompozytor na `/feed`, zakładki „Obserwowani | Cała społeczność" (ta druga **publiczna dla
+>    gościa**), „Doceniam", komentarze 1 poziom, permalink `/wpisy/[id]` z kartą OG, wzmianki
+>    `@handle` prowadzące do wpisu, udostępnianie przez Web Share API.
+> 3. **S9+S10 wnętrze i pierwsza mila** (`a57fad9`) — panel jako „baza wspinacza" z pionową
+>    szyną 7 szczebli, checklist „Zacznij tutaj" (odhaczony krok GAŚNIE), profil jako credential
+>    + „Udostępnij swój poziom", 5 własnych ilustracji SVG w pustych stanach, kreator `/start`
+>    (3 kroki, pomijalny; rejestracja przekierowuje tam zamiast do panelu).
+> 4. **S11 szukanie i zaufanie** (`e4013cc`) — globalna wyszukiwarka (`/szukaj` z zakładkami
+>    i licznikami, pole w headerze działa bez JS), `shared/fulltext.ts` przenosi MATCH…AGAINST
+>    na BOOLEAN MODE z prefiksami i **ożywia dwa martwe indeksy** (`threads`, `social_posts`),
+>    walidacja sumy kontrolnej NIP offline, porównywarka pakietów bez JS (`:has()`).
+>
+> **ANTY-MLM — dowód, nie deklaracja.** Cała nowa warstwa (wpisy, komentarze, doceniam,
+> obserwowanie, wzmianki, onboarding, wyszukiwanie) jest poza punktacją, a pilnują tego testy
+> STRUKTURALNE: `social/antimlm.integration.test.ts` przechodzi pełną ścieżkę społeczną, zbiera
+> WSZYSTKIE zdarzenia z outboxa, asertuje że lista jest niepusta (inaczej test zieleniłby się
+> z niewłaściwego powodu) i że żadne z nich nie jest kluczem w `ladderSubscriptions`.
+> `identity.updateOnboarding` nie emituje ANI JEDNEGO zdarzenia — brak zdarzenia to brak drogi
+> do laddera, czyli zabezpieczenie z architektury, nie z regulaminu.
+>
+> **Naprawione po drodze (wszystko zastane, potwierdzone na czystym `main`):**
+> - **e2e ścieżki krytycznej było CZERWONE.** Helper `submitReview` uznawał sukces po ZNIKNIĘCIU
+>   pola oceny, a element nieobecny w trakcie nawigacji też jest „ukryty" — meldował sukces, choć
+>   ocena nie poleciała, i test padał kilka kroków dalej, w miejscu niezwiązanym z przyczyną.
+>   Sygnałem sukcesu jest teraz LOKATOR pozytywnego śladu. Uwaga: fraza „Oceny publikują się
+>   symultanicznie" stoi w opisie samego formularza, więc `getByText(/Oceny/)` to ta sama pułapka.
+> - **`infra/e2e.sh` zostawiał sieroty.** Trap zabijał opakowanie `pnpm`, ale nie `next-server`;
+>   proces zostawał na porcie 3000, a kolejny przebieg — nic o tym nie wiedząc — testował
+>   POPRZEDNI build. Objaw: lawina niezrozumiałych czerwonych testów. Teraz procesy startują
+>   przez `setsid`, giną całymi grupami, a skrypt sprawdza porty na wejściu i staje z komunikatem.
+> - **`groups.deletePost` zostawiał sierotę w feedzie** (usunięty post wisiał na osi aktywności
+>   z dawnym tytułem i linkiem w 404) → zdarzenie `groups.post_deleted` konsumowane przez `social`.
+> - **Bramka `format:check` była czerwona na `main`** (42 pliki) — wyprostowane osobnym commitem
+>   `894cf00`, żeby diff sprintu został czytelny.
+>
+> **Bramki na koniec:** 132/132 testów API, 12/12 e2e, lint (z zaostrzonymi granicami modułów:
+> `API_MODULES` uzupełnione o social/listings/files/search), typecheck, build. Trzy migracje,
+> wszystkie **expand-only**. Weryfikacja na żywo na produkcji: rejestracja → kreator → panel →
+> publikacja wpisu → materializacja przez workera → wyszukanie po prefiksie.
+
 
 > **✅ SESJA S7 (2026-08-11/12): „Marketplace + Społeczność + Tożsamość".** Cztery przyrosty
 > na gałęzi `feat/s7-produkt` (PR do main po stronie właściciela), wszystkie wdrożone i

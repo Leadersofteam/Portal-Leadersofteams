@@ -1,6 +1,11 @@
 # Roadmapa S8–S12 — „Kieszonkowa Drabina": mobile-first + wyjątkowy design
 
-**Data:** 2026-08-12 · **Autor:** Fable 5 (sesja S7/go-live) · **Status:** plan zatwierdzany przez właściciela
+**Data:** 2026-08-12 · **Autor:** Fable 5 (sesja S7/go-live)
+**Status (2026-08-13, Opus 5):** ✅ **S8, S9, S10 i S11 ZREALIZOWANE i WDROŻONE NA PRODUKCJĘ**
+(szczegóły i commity w [HANDOFF-OPUS.md](HANDOFF-OPUS.md)). Otwarty pozostaje **S12**.
+Świadomie NIE zrobione z S11: publiczny profil Firmy (`/firmy/[id]`) i digest e-mail —
+oba mają sens dopiero przy realnym ruchu i realnych Firmach.
+Świadomie odłożone z S10: seeding rynku (R-06) — to decyzja i działanie właściciela.
 **Kontekst:** Portal jest publicznie żywy (leadersofteams.pl), rynek pusty (0 kont realnych),
 moduły S7 wdrożone (files/listings/social), design v2 „drabina jako architektura" objął
 na razie landing. Ograniczenia niezmienne: 0 zł za klik (ADR-009), anty-MLM (ADR-004),
