@@ -350,7 +350,10 @@ export const moderationResolveInputSchema = z.object({
 export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;
 
 // Zgłoszenie treści przez użytkownika (D7) → ModerationCase źródło REPORT.
-export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER']);
+// SOCIAL_POST jest osobnym typem, a nie POST: id wpisu portalowego wskazuje
+// tabelę social_posts, więc wrzucenie go pod „POST" kierowałoby moderatora do
+// nieistniejącego posta w grupie.
+export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER', 'SOCIAL_POST']);
 export type ReportSubjectType = z.infer<typeof reportSubjectTypeSchema>;
 
 export const reportInputSchema = z.object({

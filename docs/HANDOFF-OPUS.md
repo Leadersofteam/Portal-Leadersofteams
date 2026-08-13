@@ -2,8 +2,9 @@
 
 **Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s8-s11-kieszonkowa-drabina`
 **Wykonawca:** Opus 5 (sesja S8–S11) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
-(certy LE, backup cron 03:45). Pozostało z roadmapy: **S12** (k6, worker heartbeat, analityka Redis) —
-patrz **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)**.
+(certy LE, backup cron 03:45). **▶ NASTĘPNY KROK: [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)**
+(„Pierwszych dwudziestu"), start sesji: **[PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md)**.
+Poprzednia roadmapa S8–S12 jest zrealizowana poza S12: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md).
 
 > **✅ SESJA S8–S11 (2026-08-13): „Kieszonkowa Drabina".** Cztery przyrosty, każdy osobno
 > zweryfikowany bramkami, wdrożony na staging i **na produkcję**, i przeklikany na żywo
@@ -12,17 +13,17 @@ patrz **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)**.
 > 1. **S8 mobile/PWA** (`9e7de16`) — dolny pasek 5 slotów pod kciuk (Feed · Usługi · [+] ·
 >    Powiadomienia · Panel), arkusz akcji twórczych na natywnym `<dialog>`, własna rodzina ikon
 >    SVG (koniec z emoji w headerze), `manifest.webmanifest` + ikony maskable + service worker
->    + `/offline`, tabela progów Drabinki jako karty na mobile, cele dotyku ≥ 44 px.
->    **SW świadomie minimalny:** `/api/*` NIGDY nie trafia do cache, nawigacje network-only —
->    każda strona jest SSR-owana z ciasteczkiem sesji, więc cache HTML = czyjś panel u kogoś innego.
+>    - `/offline`, tabela progów Drabinki jako karty na mobile, cele dotyku ≥ 44 px.
+>      **SW świadomie minimalny:** `/api/*` NIGDY nie trafia do cache, nawigacje network-only —
+>      każda strona jest SSR-owana z ciasteczkiem sesji, więc cache HTML = czyjś panel u kogoś innego.
 > 2. **S8 społeczność X-lite** (`b1580dd`) — wpis portalowy (`SocialPost/Comment/Reaction`),
 >    kompozytor na `/feed`, zakładki „Obserwowani | Cała społeczność" (ta druga **publiczna dla
 >    gościa**), „Doceniam", komentarze 1 poziom, permalink `/wpisy/[id]` z kartą OG, wzmianki
 >    `@handle` prowadzące do wpisu, udostępnianie przez Web Share API.
 > 3. **S9+S10 wnętrze i pierwsza mila** (`a57fad9`) — panel jako „baza wspinacza" z pionową
 >    szyną 7 szczebli, checklist „Zacznij tutaj" (odhaczony krok GAŚNIE), profil jako credential
->    + „Udostępnij swój poziom", 5 własnych ilustracji SVG w pustych stanach, kreator `/start`
->    (3 kroki, pomijalny; rejestracja przekierowuje tam zamiast do panelu).
+>    - „Udostępnij swój poziom", 5 własnych ilustracji SVG w pustych stanach, kreator `/start`
+>      (3 kroki, pomijalny; rejestracja przekierowuje tam zamiast do panelu).
 > 4. **S11 szukanie i zaufanie** (`e4013cc`) — globalna wyszukiwarka (`/szukaj` z zakładkami
 >    i licznikami, pole w headerze działa bez JS), `shared/fulltext.ts` przenosi MATCH…AGAINST
 >    na BOOLEAN MODE z prefiksami i **ożywia dwa martwe indeksy** (`threads`, `social_posts`),
@@ -37,6 +38,7 @@ patrz **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)**.
 > do laddera, czyli zabezpieczenie z architektury, nie z regulaminu.
 >
 > **Naprawione po drodze (wszystko zastane, potwierdzone na czystym `main`):**
+>
 > - **e2e ścieżki krytycznej było CZERWONE.** Helper `submitReview` uznawał sukces po ZNIKNIĘCIU
 >   pola oceny, a element nieobecny w trakcie nawigacji też jest „ukryty" — meldował sukces, choć
 >   ocena nie poleciała, i test padał kilka kroków dalej, w miejscu niezwiązanym z przyczyną.
@@ -51,11 +53,25 @@ patrz **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)**.
 > - **Bramka `format:check` była czerwona na `main`** (42 pliki) — wyprostowane osobnym commitem
 >   `894cf00`, żeby diff sprintu został czytelny.
 >
+> **⚠️ DŁUG Z TEJ SESJI — świadomie nieukończony, nie zapomniany (do S13):**
+>
+> - `Company.nipVerifiedAt` i odznaka „NIP — suma kontrolna OK" NIE weszły. Sama walidacja
+>   DZIAŁA (błędny NIP → 400 przy tworzeniu firmy, testy w `shared/nip.test.ts`), ale nie ma
+>   trwałego znacznika ani odznaki w UI — styl `.nip-badge` czeka nieużywany w `styles/search.css`.
+> - `GET /listings/tags/popular` i chipy popularnych tagów NIE weszły. To nie kosmetyka:
+>   frazy krótsze niż 3 znaki („HR", „IT", „AI") nigdy nie trafią do FULLTEXT, więc tagi są
+>   jedyną drogą do tych kategorii.
+> - **Panel moderacji jest ślepy na zgłoszenia** (dług zastany po D7, nie z tej sesji):
+>   `/panel/moderacja` renderuje samą notatkę, bez `subjectType`, `subjectId` i linku do treści.
+>   Moderator wie, że coś zgłoszono, i nie ma jak tego otworzyć. Naprawa: S12.
+> - Poprawione tuż po sesji (`bd2f0e1`): zgłoszenie wpisu portalowego szło jako `POST`, czyli typ
+>   posta w grupie → dodany osobny `SOCIAL_POST`; JSON-LD `SearchAction` wskazywał `/liderzy?q=`
+>   zamiast `/szukaj?q=`.
+>
 > **Bramki na koniec:** 132/132 testów API, 12/12 e2e, lint (z zaostrzonymi granicami modułów:
 > `API_MODULES` uzupełnione o social/listings/files/search), typecheck, build. Trzy migracje,
 > wszystkie **expand-only**. Weryfikacja na żywo na produkcji: rejestracja → kreator → panel →
 > publikacja wpisu → materializacja przez workera → wyszukanie po prefiksie.
-
 
 > **✅ SESJA S7 (2026-08-11/12): „Marketplace + Społeczność + Tożsamość".** Cztery przyrosty
 > na gałęzi `feat/s7-produkt` (PR do main po stronie właściciela), wszystkie wdrożone i

@@ -126,7 +126,9 @@ export default async function SocialPostPage({ params }: { params: Promise<{ id:
               url={`/wpisy/${post.id}`}
               title={`Wpis ${post.author.displayName} — Leaders of Teams`}
             />
-            {isLoggedIn && !post.isOwn && <ReportButton subjectType="POST" subjectId={post.id} />}
+            {isLoggedIn && !post.isOwn && (
+              <ReportButton subjectType="SOCIAL_POST" subjectId={post.id} />
+            )}
           </div>
 
           {post.isOwn && <OwnPostActions postId={post.id} body={post.body} />}

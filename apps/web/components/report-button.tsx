@@ -10,7 +10,7 @@ export function ReportButton({
   subjectType,
   subjectId,
 }: {
-  subjectType: 'POST' | 'THREAD' | 'ORDER';
+  subjectType: 'POST' | 'THREAD' | 'ORDER' | 'SOCIAL_POST';
   subjectId: string;
 }) {
   const [open, setOpen] = useState(false);

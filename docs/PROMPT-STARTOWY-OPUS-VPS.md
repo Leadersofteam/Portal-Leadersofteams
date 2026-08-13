@@ -1,5 +1,9 @@
 # Prompt startowy — sesja Claude Code Opus 4.8 (deploy na VPS)
 
+> ⛔ **NIEAKTUALNE (2026-08-13).** Ten prompt pochodzi z ery Sprintu 4.5 / Opus 4.8 i opisuje
+> stan sprzed go-live. Aktualny punkt startowy nowej sesji: **[PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md)**.
+> Zostawiony wyłącznie jako zapis historyczny.
+
 Ten dokument odtwarza kontekst dla NOWEJ sesji Claude Code (Opus 4.8) podłączonej do
 VPS przez SSH. Skopiuj sekcję „PROMPT" jako pierwszą wiadomość do agenta.
 

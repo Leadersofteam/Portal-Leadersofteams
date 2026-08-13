@@ -134,7 +134,11 @@ export function createAntifraudService({ prisma, ladder, marketplace }: Antifrau
     // Soft-dedup: to samo zgłoszenie (ten sam zgłaszający + encja) nie mnoży spraw.
     async createReport(
       reporterUserId: string,
-      input: { subjectType: 'POST' | 'THREAD' | 'ORDER'; subjectId: string; reason: string },
+      input: {
+        subjectType: 'POST' | 'THREAD' | 'ORDER' | 'SOCIAL_POST';
+        subjectId: string;
+        reason: string;
+      },
     ) {
       const existing = await prisma.moderationCase.findFirst({
         where: {

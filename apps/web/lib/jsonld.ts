@@ -24,7 +24,7 @@ export function websiteJsonLd(): Json {
     url: SITE_URL,
     potentialAction: {
       '@type': 'SearchAction',
-      target: `${SITE_URL}/liderzy?q={query}`,
+      target: `${SITE_URL}/szukaj?q={query}`,
       'query-input': 'required name=query',
     },
   };
