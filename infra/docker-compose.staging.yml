@@ -10,9 +10,13 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
+      args:
+        # Jednoznaczny cel: patrz komentarz w Dockerfile.web. Sama nazwa `api`
+        # jest na tym serwerze DWUZNACZNA (staging + prod w sieci n8n_default).
+        API_INTERNAL_URL: http://api-staging:3001
     restart: unless-stopped
     environment:
-      API_INTERNAL_URL: http://api:3001
+      API_INTERNAL_URL: http://api-staging:3001
     depends_on:
       api:
         condition: service_healthy
@@ -51,6 +55,11 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.api
     restart: unless-stopped
+    # Alias jednoznaczny w skali CAŁEGO serwera — `api` koliduje z produkcją
+    # w sieci Traefika i staging trafiał do produkcyjnego API.
+    networks:
+      internal:
+        aliases: [api-staging]
     environment:
       NODE_ENV: production
       PORT: '3001'
@@ -75,7 +84,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [internal]
     deploy:
       resources:
         limits:

@@ -10,9 +10,16 @@ COPY packages ./packages
 COPY apps/web ./apps/web
 RUN pnpm install --frozen-lockfile --filter @lot/web...
 # Cel rewrite'u /api/* w next.config jest ZAPIEKANY w build-time (routes-manifest.json),
-# a nie czytany z env w runtime. W obrazie (compose) api jest zawsze pod http://api:3001,
-# więc pieczemy tę wartość tu. Dev (pnpm dev poza Dockerem) używa fallbacku localhost:3001.
-ENV API_INTERNAL_URL=http://api:3001
+# a nie czytany z env w runtime — dlatego to ARG, nie tylko zmienna uruchomieniowa.
+#
+# ⚠️ DLACZEGO TO JEST PARAMETR, A NIE STAŁA „http://api:3001":
+# na tym VPS staging i produkcja dzielą sieć Traefika (`n8n_default`), a compose
+# nadaje każdej usłudze alias równy jej nazwie. Nazwa `api` istniała więc W OBU
+# projektach naraz i kontener `portal-staging-web` rozwiązywał ją na API
+# PRODUKCYJNE — staging po cichu pokazywał dane produkcji. Staging przekazuje
+# tu jednoznaczny alias (`api-staging`), produkcja zostaje przy `api`.
+ARG API_INTERNAL_URL=http://api:3001
+ENV API_INTERNAL_URL=${API_INTERNAL_URL}
 # Bramka anty-bot NIE potrzebuje tu żadnego klucza: po wykluczeniu Cloudflare
 # liczy się w całości u nas (patrz apps/api/src/shared/humancheck.ts). Zniknął
 # przez to cały problem `NEXT_PUBLIC_*` zapiekanego w buildzie — włączenie
