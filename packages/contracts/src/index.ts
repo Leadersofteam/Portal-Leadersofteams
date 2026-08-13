@@ -377,6 +377,22 @@ export interface ModerationSubjectView {
 // SOCIAL_POST jest osobnym typem, a nie POST: id wpisu portalowego wskazuje
 // tabelę social_posts, więc wrzucenie go pod „POST" kierowałoby moderatora do
 // nieistniejącego posta w grupie.
+// Bramka człowieka (własna, po wykluczeniu Cloudflare) — rozwiązanie zagadki
+// proof-of-work dołączane do rejestracji. `id` wskazuje wyzwanie w Redisie,
+// `number` to znaleziona liczba. Szczegóły: apps/api/src/shared/humancheck.ts.
+export const humancheckSolutionSchema = z.object({
+  id: z.string().min(1).max(64),
+  number: z.number().int().min(0),
+});
+export type HumancheckSolution = z.infer<typeof humancheckSolutionSchema>;
+
+export interface HumancheckChallenge {
+  id: string;
+  salt: string;
+  target: string;
+  maxNumber: number;
+}
+
 export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER', 'SOCIAL_POST']);
 export type ReportSubjectType = z.infer<typeof reportSubjectTypeSchema>;
 

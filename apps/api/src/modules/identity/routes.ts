@@ -14,7 +14,7 @@ import type { AuthHelpers } from '../../shared/auth';
 import type { AppConfig } from '../../shared/config';
 import { DomainError } from '../../shared/errors';
 import type { SessionStore } from '../../shared/session';
-import type { TurnstileVerifier } from '../../shared/turnstile';
+import type { Humancheck } from '../../shared/humancheck';
 import { parseBody } from '../../shared/validation';
 import type { IdentityService } from './service';
 
@@ -22,7 +22,7 @@ export interface IdentityRoutesDeps {
   service: IdentityService;
   sessions: SessionStore;
   auth: AuthHelpers;
-  turnstile: TurnstileVerifier;
+  humancheck: Humancheck;
   config: Pick<
     AppConfig,
     'SESSION_COOKIE_NAME' | 'SESSION_TTL_SECONDS' | 'cookieSecure' | 'NODE_ENV' | 'isProduction'
@@ -30,7 +30,7 @@ export interface IdentityRoutesDeps {
 }
 
 export function identityRoutes(deps: IdentityRoutesDeps) {
-  const { service, sessions, auth, turnstile, config } = deps;
+  const { service, sessions, auth, humancheck, config } = deps;
 
   const cookieOptions = {
     path: '/',
@@ -53,19 +53,37 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
       rateLimit: { max: config.NODE_ENV === 'test' ? 10_000 : 10, timeWindow: '1 minute' },
     };
 
+    // Wyzwanie bramki człowieka. Front pobiera je przy wejściu na /rejestracja
+    // i rozwiązuje W TLE, gdy użytkownik wypełnia formularz — dzięki temu czeka
+    // zero sekund. Limit jest tu ostrzejszy niż zwykły: samo wydawanie wyzwań
+    // to jedyna operacja, którą da się wołać bez żadnego kosztu po stronie klienta.
+    app.get(
+      '/auth/challenge',
+      {
+        config: {
+          rateLimit: { max: config.NODE_ENV === 'test' ? 10_000 : 30, timeWindow: '1 minute' },
+        },
+      },
+      async (request, reply) => {
+        if (!humancheck.enabled) return reply.send({ challenge: null });
+        return reply.send({ challenge: await humancheck.issue(request.ip) });
+      },
+    );
+
     app.post('/auth/register', { config: authRateLimit }, async (request, reply) => {
-      // Anty-bot (R-03/R-13): przy WŁĄCZONYM Turnstile wymagamy ważnego tokenu
-      // z widgetu. Gdy ochrona OFF (brak sekretu) — verify() przepuszcza.
-      if (turnstile.enabled) {
-        const token = (request.body as { turnstileToken?: unknown } | undefined)?.turnstileToken;
-        const ok = await turnstile.verify(
-          typeof token === 'string' ? token : undefined,
-          request.ip,
-        );
-        if (!ok) {
+      // Anty-bot (R-03/R-13) — WŁASNA bramka, bez zewnętrznego dostawcy.
+      // Fail-closed przy włączonej ochronie: brak albo złe rozwiązanie = odmowa.
+      if (humancheck.enabled) {
+        const body = request.body as { humancheck?: unknown; nazwaFirmy?: unknown } | undefined;
+        // `nazwaFirmy` to POLE-PUŁAPKA (honeypot): w formularzu jest ukryte
+        // i puste, więc każda wartość oznacza automat wypełniający wszystko.
+        // Nazwa jest celowo wiarygodna — „honeypot" w atrybucie zdradzałby ją.
+        const result = await humancheck.verify(body?.humancheck, body?.nazwaFirmy);
+        if (!result.ok) {
+          request.log.info({ reason: result.reason, ip: request.ip }, 'humancheck.rejected');
           throw new DomainError(
-            'TURNSTILE_FAILED',
-            'Weryfikacja anty-bot nie powiodła się. Odśwież stronę i spróbuj ponownie.',
+            'HUMANCHECK_FAILED',
+            'Nie udało się potwierdzić, że to nie automat. Odśwież stronę i spróbuj ponownie.',
             400,
           );
         }

@@ -43,9 +43,9 @@ import { createPrisma } from './shared/db';
 import type { PrismaClient } from './shared/db';
 import { DomainError } from './shared/errors';
 import { readWorkerHeartbeat } from './shared/heartbeat';
+import { createHumancheck } from './shared/humancheck';
 import { createLogger } from './shared/logger';
 import { createMailService } from './shared/mail';
-import { createTurnstileVerifier } from './shared/turnstile';
 import { createRealtime } from './shared/realtime';
 import type { Realtime } from './shared/realtime';
 import { createRedis } from './shared/redis';
@@ -147,16 +147,14 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
       smtpUser: config.SMTP_USER,
       smtpPass: config.SMTP_PASS,
       smtpSecure: config.SMTP_SECURE,
-      brevoApiKey: config.BREVO_API_KEY,
       mailFrom: config.MAIL_FROM,
       mailFromName: config.MAIL_FROM_NAME,
     },
     (event, data) => logger.info(data, event),
   );
-  const turnstile = createTurnstileVerifier(
-    { turnstileEnabled: config.turnstileEnabled, secretKey: config.TURNSTILE_SECRET_KEY },
-    (event, data) => logger.info(data, event),
-  );
+  // Bramka człowieka na naszym Redisie — bez Cloudflare i bez żadnego innego
+  // dostawcy po API (decyzja właściciela 2026-08-13).
+  const humancheck = createHumancheck(redis, config.humancheckEnabled);
   const filesService = createFilesService(prisma, {
     uploadsDir: config.UPLOADS_DIR,
     maxUploadBytes: config.MAX_UPLOAD_BYTES,
@@ -230,7 +228,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   });
 
   await app.register(
-    identityRoutes({ service: identityService, sessions, auth, turnstile, config }),
+    identityRoutes({ service: identityService, sessions, auth, humancheck, config }),
     {
       prefix: '/api/v1',
     },

@@ -345,7 +345,7 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
     },
 
     // Dzienny digest (D4, ADR-009): jeden zbiorczy e-mail zamiast wielu — trzyma
-    // wolumen poniżej darmowego limitu Brevo. No-op gdy wysyłka wyłączona.
+    // wolumen w zasięgu zwykłej skrzynki pocztowej. No-op gdy wysyłka wyłączona.
     async sendDailyDigests(
       mail: MailService,
       getEmails: (userIds: string[]) => Promise<Map<string, string>>,

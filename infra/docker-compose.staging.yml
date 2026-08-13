@@ -10,10 +10,6 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
-      args:
-        # Zapiekane w buildzie (NEXT_PUBLIC_*) — zmiana klucza wymaga
-        # `docker compose build web`, sam restart nic nie da.
-        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://api:3001

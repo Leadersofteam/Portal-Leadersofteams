@@ -64,7 +64,6 @@ const mail = createMailService(
     smtpUser: config.SMTP_USER,
     smtpPass: config.SMTP_PASS,
     smtpSecure: config.SMTP_SECURE,
-    brevoApiKey: config.BREVO_API_KEY,
     mailFrom: config.MAIL_FROM,
     mailFromName: config.MAIL_FROM_NAME,
   },

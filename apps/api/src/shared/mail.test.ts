@@ -9,19 +9,14 @@ import { createMailService } from './mail';
 const BASE = { mailEnabled: true, mailFrom: 'no-reply@leadersofteams.pl', mailFromName: 'LoT' };
 
 describe('createMailService — wybór transportu', () => {
-  it('własna skrzynka (SMTP) ma pierwszeństwo przed zewnętrznym dostawcą', () => {
+  it('komplet danych własnej skrzynki (SMTP) włącza wysyłkę', () => {
     const mail = createMailService({
       ...BASE,
       smtpHost: 'smtp.hostinger.com',
       smtpUser: 'kontakt@leadersofteams.com',
       smtpPass: 'x',
-      brevoApiKey: 'klucz-brevo',
     });
     expect(mail.enabled).toBe(true);
-  });
-
-  it('sam Brevo też włącza wysyłkę', () => {
-    expect(createMailService({ ...BASE, brevoApiKey: 'klucz' }).enabled).toBe(true);
   });
 
   it('POŁOWICZNY SMTP (host bez hasła) NIE udaje działającej poczty', () => {

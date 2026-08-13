@@ -1735,3 +1735,13 @@ main tbody tr:hover {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ===================== Pole-pułapka bramki człowieka ===================== */
+/* Ukrywamy `display: none`, a nie sztuczką z clip/position: pole ma zniknąć
+   również z drzewa dostępności. Klasyczne „visually hidden" zostawia je dla
+   czytników ekranu — a wtedy osoba niewidoma usłyszałaby polecenie wypełnienia
+   pułapki i zablokowała sobie rejestrację. Boty, które ją wypełnią, i tak
+   czytają HTML, nie CSS. */
+.hp-field {
+  display: none;
+}

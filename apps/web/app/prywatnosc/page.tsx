@@ -3,8 +3,10 @@ export const metadata = {
   description: 'Polityka prywatności platformy leadersofteams.pl.',
 };
 
-// Polityka prywatności v1 (R-10). Odbiorcy zewnętrzni: sekcja 4 aktualizowana
-// przy włączaniu Brevo/Turnstile (na dziś oba wyłączone — zero odbiorców).
+// Polityka prywatności v1 (R-10). Sekcja 4 wymienia JEDYNEGO odbiorcę zewnętrznego:
+// dostawcę poczty (Hostinger). Brevo i Cloudflare Turnstile usunięte 2026-08-13 —
+// decyzja właściciela o minimalizowaniu dostawców po API. Jeśli kiedykolwiek
+// dojdzie nowy odbiorca, ta sekcja MUSI zostać zaktualizowana PRZED włączeniem.
 export default function PrivacyPage() {
   return (
     <main>
@@ -66,8 +68,15 @@ export default function PrivacyPage() {
         do wysyłek marketingowych.
       </p>
       <p>
-        Jeśli w przyszłości włączymy ochronę anty-botową (Cloudflare Turnstile), zaktualizujemy tę
-        sekcję przed jej uruchomieniem.
+        <strong>Ochrona przed automatami:</strong> formularz rejestracji chroni nasz własny
+        mechanizm, działający w całości na naszym serwerze. Nie używamy do tego zewnętrznej usługi
+        (np. reCAPTCHA czy Cloudflare Turnstile), więc{' '}
+        <strong>
+          przy zakładaniu konta Twoja przeglądarka nie łączy się z żadną firmą trzecią
+        </strong>{' '}
+        i nikt poza nami nie dowiaduje się, że odwiedziłeś tę stronę. Mechanizm polega na krótkim
+        obliczeniu wykonywanym automatycznie przez przeglądarkę — nie wymaga rozwiązywania zagadek,
+        nie zapisuje żadnych plików na Twoim urządzeniu i nie profiluje Twojego zachowania.
       </p>
 
       <h2>5. Twoje prawa</h2>

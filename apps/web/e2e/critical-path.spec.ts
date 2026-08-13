@@ -6,8 +6,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // kontekstach (własne sesje). Zakłada zaseedowane branże (base seed) i
 // URUCHOMIONY worker (punkty naliczają się przez outbox → konsument ladder).
 //
-// Turnstile jest OFF (brak sekretu) — rejestracja bez tokenu, zgodnie z
-// domyślnym stanem. Selektory: role/label (brak data-testid w UI).
+// Bramka człowieka jest WŁĄCZONA także w e2e: formularz sam pobiera i liczy
+// zagadkę, a klient doczekuje próg minimalnego czasu wypełniania. Dzięki temu
+// test przechodzi TĘ SAMĄ ścieżkę co realny użytkownik.
+// Selektory: role/label (brak data-testid w UI).
 
 const PASSWORD = 'super-tajne-haslo-1';
 const stamp = Date.now();
