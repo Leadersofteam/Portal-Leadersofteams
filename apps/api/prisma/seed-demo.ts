@@ -22,6 +22,7 @@ import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '../src/modules/identity/password';
 import type { ReviewPublishedPayload } from '../src/modules/ladder/service';
 import { createLadderService } from '../src/modules/ladder/service';
+import { seedSocialLayer } from './seed-demo-social';
 
 const prisma = new PrismaClient();
 const ladder = createLadderService(prisma);
@@ -137,13 +138,23 @@ const LEADERS: LeaderSpec[] = [
 ];
 
 async function guard() {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'seed-demo: ODMOWA — NODE_ENV=production. Dane demo nie trafiają na produkcję.',
-    );
-  }
   if (process.env.SEED_DEMO !== '1') {
     throw new Error('seed-demo: ustaw SEED_DEMO=1, aby zasiać dane demo (bezpiecznik).');
+  }
+  if (process.env.NODE_ENV === 'production' && process.env.SEED_DEMO_ALLOW_PRODUCTION !== '1') {
+    throw new Error(
+      'seed-demo: ODMOWA na produkcji. Świadome uruchomienie wymaga DRUGIEJ flagi: ' +
+        'SEED_DEMO_ALLOW_PRODUCTION=1.',
+    );
+  }
+  if (process.env.NODE_ENV === 'production') {
+    // DECYZJA WŁAŚCICIELA 2026-08-13: dane demo lądują także na produkcji, żeby
+    // portal nie wyglądał na pusty przed pierwszymi realnymi ludźmi. Zgłoszone
+    // ryzyko: fikcyjni Liderzy z punktami podważają obietnicę ADR-004 („status
+    // trzeba zapracować"), jeśli ktoś to odkryje. Dlatego istnieje `--purge`:
+    // decyzja jest w każdej chwili odwracalna jedną komendą.
+    console.warn('⚠ seed-demo: PRODUKCJA. Dane demo będą publicznie widoczne.');
+    console.warn('  Zdjęcie danych: SEED_DEMO=1 … tsx prisma/seed-demo.ts --purge');
   }
 }
 
@@ -169,6 +180,23 @@ async function cleanupPreviousDemo(demoUserIds: string[], demoCompanyIds: string
     if (toDelete.length) await prisma.outboxEvent.deleteMany({ where: { id: { in: toDelete } } });
   }
 
+  // Warstwa społecznościowa (dodana w S16) — PRZED usunięciem kont, bo część
+  // relacji nie ma kaskady, a osierocony wpis w feedzie linkowałby w 404.
+  await prisma.activityItem.deleteMany({ where: { actorId: { in: demoUserIds } } });
+  await prisma.socialComment.deleteMany({ where: { authorUserId: { in: demoUserIds } } });
+  await prisma.socialReaction.deleteMany({ where: { userId: { in: demoUserIds } } });
+  // Cytaty: zdejmujemy wskazanie, zanim skasujemy cytowane wpisy.
+  await prisma.socialPost.updateMany({
+    where: { quotedPostId: { not: null }, authorUserId: { in: demoUserIds } },
+    data: { quotedPostId: null },
+  });
+  await prisma.socialPost.deleteMany({ where: { authorUserId: { in: demoUserIds } } });
+  await prisma.follow.deleteMany({
+    where: { OR: [{ followerId: { in: demoUserIds } }, { followedId: { in: demoUserIds } }] },
+  });
+  await prisma.post.deleteMany({ where: { authorUserId: { in: demoUserIds } } }); // → comments, reactions
+  await prisma.notification.deleteMany({ where: { userId: { in: demoUserIds } } });
+
   await prisma.thread.deleteMany({ where: { authorUserId: { in: demoUserIds } } }); // → answers, votes
   await prisma.order.deleteMany({
     where: { OR: [{ createdById: { in: demoUserIds } }, { companyId: { in: demoCompanyIds } }] },
@@ -180,6 +208,27 @@ async function cleanupPreviousDemo(demoUserIds: string[], demoCompanyIds: string
 
 async function main() {
   await guard();
+
+  // --- Tryb czyszczenia -----------------------------------------------------
+  // Jedna komenda zdejmuje KOMPLET danych demo (markery: domena e-mail + NIP
+  // firmy). Istnieje po to, żeby decyzja o danych demo na produkcji była
+  // odwracalna w sekundę, a nie żeby ktoś kiedyś kasował je ręcznie po tabelach.
+  if (process.argv.includes('--purge')) {
+    const users = await prisma.user.findMany({
+      where: { email: { endsWith: `@${DEMO_EMAIL_DOMAIN}` } },
+      select: { id: true },
+    });
+    const companies = await prisma.company.findMany({
+      where: { nip: DEMO_COMPANY_NIP },
+      select: { id: true },
+    });
+    await cleanupPreviousDemo(
+      users.map((u) => u.id),
+      companies.map((c) => c.id),
+    );
+    console.log(`— DANE DEMO USUNIĘTE — konta: ${users.length}, firmy: ${companies.length}`);
+    return;
+  }
 
   // Wymagane słowniki/grupy z produkcyjnego seedu.
   const industries = await prisma.industry.findMany();
@@ -884,6 +933,25 @@ async function main() {
     }
   }
   console.log(`Usługi demo: ${DEMO_LISTINGS.length}`);
+
+  // --- Warstwa społecznościowa (S16) ---------------------------------------
+  // Wpisy, posty w grupach, obserwowanie i obrazy. Bez tego feed i grupy
+  // zostawały puste nawet przy „pełnych" danych demo, bo ten seed powstał
+  // przed modułem `social`.
+  const socialStats = await seedSocialLayer(
+    prisma,
+    [...leaderByKey.entries()].map(([key, l]) => ({
+      key,
+      userId: l.userId,
+      displayName: nameByUserId.get(l.userId) ?? key,
+      industrySlug: l.industrySlug,
+    })),
+    { uploadsDir: process.env.UPLOADS_DIR ?? './uploads' },
+  );
+  console.log(
+    `Wpisy portalowe: ${socialStats.posts} (obrazy: ${socialStats.images}) · ` +
+      `posty w grupach: ${socialStats.groupPosts} · obserwowania: ${socialStats.follows}`,
+  );
 
   console.log(`Zlecenia otwarte: ${OPEN_ORDERS.length} · zakończone: ${DONE_ORDERS.length}`);
   console.log(
