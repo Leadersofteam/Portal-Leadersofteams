@@ -53,6 +53,20 @@ Poprzednia roadmapa S8–S12 jest zrealizowana poza S12: [SPRINTY-S8-S12.md](SPR
 > - **Bramka `format:check` była czerwona na `main`** (42 pliki) — wyprostowane osobnym commitem
 >   `894cf00`, żeby diff sprintu został czytelny.
 >
+> 5. **✅ S12 częściowo: POCZTA NA WŁASNEJ SKRZYNCE** (`d4c9230`) — nie było potrzeby
+>    zewnętrznego dostawcy. Portal wysyła przez `smtp.hostinger.com` na koncie
+>    `kontakt@leadersofteams.com`, czyli tę samą skrzynkę, której od dawna używa App;
+>    jest opłacona w ramach hostingu domeny. `shared/mail.ts` ma transport SMTP
+>    (nodemailer) z PIERWSZEŃSTWEM przed Brevo, który zostaje jako opcja pod przyszły
+>    masowy digest. **To zamknęło najpoważniejszy bloker pierwszej mili:** do 13.08
+>    reset hasła po cichu nic nie robił, więc osoba, która zapomniała hasła, nie miała
+>    żadnej drogi powrotu. Zweryfikowane na produkcji (`mail.sent`, `transport: smtp`)
+>    dla rejestracji i resetu; konto testowe usunięte.
+>    ⚠️ `MAIL_FROM` musi równać się `SMTP_USER` — nadawca z innej domeny nie przejdzie
+>    SPF/DMARC. Dlatego prod ma `kontakt@leadersofteams.com`, nie `no-reply@leadersofteams.pl`.
+>    ⛔ Świadomie NIE stawiamy serwera pocztowego na VPS (port 25 blokowany, świeże IP = spam).
+>    Szczegóły i zmienne: [runbooks/sekrety.md](runbooks/sekrety.md).
+>
 > **⚠️ DŁUG Z TEJ SESJI — świadomie nieukończony, nie zapomniany (do S13):**
 >
 > - `Company.nipVerifiedAt` i odznaka „NIP — suma kontrolna OK" NIE weszły. Sama walidacja
@@ -200,7 +214,7 @@ wtedy twarde limity pamięci prod-MySQL w compose + pilnowanie swapu (4 G).
 | ~~D1~~  | ✅ **ZROBIONE (Sprint 4)** — moduł `notifications` konsumuje zdarzenia → wpisy in-app + sygnał realtime                                                                                                                                                                                                                                                                                                                                       | —                     |
 | ~~D2~~  | ✅ **ZROBIONE (Sprint 4)** — Socket.IO sygnał-only (pokój `user:{id}`, handshake sesyjnym cookie, Redis pub/sub)                                                                                                                                                                                                                                                                                                                              | —                     |
 | ~~D3~~  | ✅ **ZROBIONE** — cache-aside Redis (`shared/cache.ts`, inwalidacja przez wersję namespace; `/me/ladder` NIGDY nie cache'owany). Test w `hardening.integration.test.ts`                                                                                                                                                                                                                                                                       | —                     |
-| ~~D4~~  | ✅ **ZROBIONE (scaffolding)** — warstwa e-mail (`shared/mail.ts`): realny transport Brevo + fallback no-op; weryfikacja adresu, reset hasła (flow `verify-email`/`request-password-reset`/`reset-password`). **Aktywacja wysyłki = podanie `BREVO_API_KEY` przez właściciela** (do launchu). Digest powiadomień: do dołożenia                                                                                                                 | Aktywacja: launch     |
+| ~~D4~~  | ✅ **ZROBIONE (scaffolding)** — warstwa e-mail (`shared/mail.ts`): realny transport Brevo + fallback no-op; weryfikacja adresu, reset hasła (flow `verify-email`/`request-password-reset`/`reset-password`). **AKTYWOWANE 2026-08-13** — własna skrzynka SMTP, nie Brevo (patrz sesja S8–S11 pkt 5 i `runbooks/sekrety.md`). Digest powiadomień: do dołożenia (S13)                                                                           | ✅ aktywne            |
 | ~~D5~~  | ✅ **ZROBIONE** — e2e Playwright ścieżki krytycznej (ADR-008): rejestracja→firma→zlecenie→oferta→przyznanie→cykl→obustronna ocena→punkty, 2 aktorów, przeglądarkowo (`apps/web/e2e/critical-path.spec.ts`, runner `infra/e2e.sh`). **Złapał realny bug prod:** `apiFetch` słał `content-type: application/json` przy pustym body → Fastify odrzucał WSZYSTKIE akcje bez body (publikuj/akceptuj/start/…) — naprawione w `apps/web/lib/api.ts` | —                     |
 | ~~D6~~  | ✅ **ZROBIONE** — RODO: `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, treści `[treść usunięta]`, profil ukryty, sesja unieważniona) + `GET /me/export`. Test w `hardening`                                                                                                                                                                                                                                                         | —                     |
 | ~~D7~~  | ✅ **ZROBIONE** — rate-limity świeżych kont (`shared/quota.ts`) + „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + **Turnstile flag-gated** (`shared/turnstile.ts`, wpięty w `/auth/register`, widget na `/rejestracja`; OFF bez kluczy). Aktywacja = klucze Cloudflare przy launchu                                                                                                                                         | — (aktywacja: launch) |
@@ -255,7 +269,7 @@ DoD: użytkownik może realnie awansować oboma ścieżkami; testy obu ścieżek
 
 Stan po audycie 2026-07-12 (patrz §2). Backend hardeningu jest w większości dostarczony i zielony.
 
-1. ✅ **E-mail (Brevo, ADR-009)** — weryfikacja adresu, reset hasła (`shared/mail.ts` + flow); realny transport + no-op fallback. **Otwarte:** dzienny digest (job w workerze) + aktywacja `BREVO_API_KEY` (właściciel, przy launchu).
+1. ✅ **E-mail (ADR-009)** — weryfikacja adresu i reset hasła (`shared/mail.ts` + flow). **Aktywne od 2026-08-13 przez WŁASNĄ skrzynkę SMTP** (`kontakt@leadersofteams.com`), a nie przez Brevo — zero nowego dostawcy i kosztu; Brevo zostaje jako alternatywa. **Otwarte:** dzienny digest (job w workerze, S13).
 2. **Antybot/antyspam (R-03/R-13):** ✅ rate-limity świeżych kont (`shared/quota.ts`) + ✅ „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + ✅ **Cloudflare Turnstile flag-gated** (`shared/turnstile.ts`, fail-closed przy ON; `/auth/register` wymaga tokenu; widget na `/rejestracja` gdy `NEXT_PUBLIC_TURNSTILE_SITE_KEY`). Aktywacja: klucze Cloudflare przy launchu (`docs/runbooks/sekrety.md`).
 3. ✅ **RODO (R-10)** — `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, `anonymizedAt`, treści `[treść usunięta]`, profil ukryty, sesja unieważniona); `GET /me/export`.
 4. ✅ **Cache (ADR-007, D3)** — cache-aside Redis (`shared/cache.ts`) z inwalidacją przez wersję namespace; `/me/ladder` NIGDY nie cache'owany.

@@ -45,7 +45,8 @@ Do MVP wchodzi wszystko, co jest potrzebne, żeby **pętla wartości Drabinki dz
 - ✅ Cloudflare Turnstile (anty-bot, flag-gated) + ✅ e2e Playwright ścieżki krytycznej (ADR-008, `apps/web/e2e`, runner `infra/e2e.sh`). ❌ Otwarte: test obciążeniowy k6 (uwaga: współdzielony 8 GB VPS — planować ostrożnie), Bull Board (opcj.), aktywacja kluczy Turnstile przy launchu.
 - Regulamin + polityka prywatności (wsad prawny po stronie właściciela).
 - Seeding rynku: import startowych zleceń/treści (decyzja operacyjna właściciela — patrz RISKS R-06).
-- **Launch publiczny** (aktywacja `BREVO_API_KEY`, prod za flagą, zdjęcie basic-auth).
+- **Launch publiczny** — ZROBIONY 2026-08-12/13 (prod żyje; poczta na własnej skrzynce SMTP,
+  nie Brevo — patrz `runbooks/sekrety.md`). Dalszy plan: [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md).
 
 **Poza MVP świadomie:** płatności, moduł Zespołów (patrz faza 2 — wymaga realnie istniejących poziomów 3+/7), czat 1:1 (kontakt przy zleceniu przez wątek ofertowy), zaawansowany search (Meilisearch), publiczne rankingi, aplikacja mobilna, webinary/artykuły jako źródła punktów.
 
