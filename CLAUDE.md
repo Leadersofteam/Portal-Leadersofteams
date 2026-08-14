@@ -6,7 +6,7 @@ Monorepo pnpm: Next.js 15 + Fastify + Prisma + MySQL + Redis + BullMQ. Wdrożeni
 > Ten plik czyta się przed każdą sesją. Trzy dokumenty to komplet startu:
 > **[docs/MINY.md](docs/MINY.md)** (pułapki, które już kosztowały czas),
 > **[docs/HANDOFF-OPUS.md](docs/HANDOFF-OPUS.md)** (stan i mechanizmy),
-> **[docs/SPRINTY-S15-S19.md](docs/SPRINTY-S15-S19.md)** (kierunek).
+> **[docs/SPRINTY-S18-S21.md](docs/SPRINTY-S18-S21.md)** (kierunek; S15–S19 zamknięte).
 > Gotowy prompt do wklejenia: **[docs/PROMPT-STARTOWY-OPUS.md](docs/PROMPT-STARTOWY-OPUS.md)**.
 > Procesy powtarzalne są w Skillach (`.claude/skills/`) — patrz [docs/SKILLE.md](docs/SKILLE.md).
 

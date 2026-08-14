@@ -11,6 +11,15 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **▶ NASTĘPNY KROK: S18 „Prawda o Portalu"** w [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md),
+> prompt startowy: [PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md).
+> Roadmapa powstała z **pomiarów na żywej produkcji 14.08**, nie z listy życzeń:
+> analityka liczy własny healthcheck jako 3857 odsłon `/` na dobę (realne strony mają 2–3),
+> baza ma 2,3 MB i TTFB 57–101 ms (wydajność NIE jest problemem), a cztery trasy API nie
+> mają żadnego wejścia w UI: `GET /me/export`, `DELETE /me` (oba RODO!), `GET /me/favorites`,
+> `GET /me/social`. Moduł `analytics` jest jedynym bez testów. W `RISKS.md` dwa różne
+> ryzyka mają numer R-16.
+
 > **✅ S17 DOMKNIĘTY — punkty 3–4 (2026-08-14): „Zakładki i moderatorzy grup"**
 > (`3cdf582`, `c69e64f`). Wdrożone na staging i **produkcję**, przejrzane na żywo
 > kontami testowymi (skasowane po sobie).

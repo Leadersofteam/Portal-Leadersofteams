@@ -1,11 +1,10 @@
-# Prompt startowy — Portal Leaders of Teams (sesja S17+)
+# Prompt startowy — Portal Leaders of Teams (sesja S18+)
 
 Skopiuj blok poniżej jako pierwszą wiadomość w nowej sesji Claude Code (Opus 5) na VPS.
 
-**Ten prompt jest teraz KRÓTKI i to jest celowe.** Od 2026-08-14 repo ma
-[`CLAUDE.md`](../CLAUDE.md) (wczytywany automatycznie), [`docs/MINY.md`](MINY.md) (pułapki)
-i **siedem Skilli** w `.claude/skills/`, które włączają się same, gdy zadanie do nich pasuje.
-Prompt ma już tylko ustawić zadanie i kierunek — reszta jest w repo i nie wymaga kopiowania.
+**Ten prompt jest KRÓTKI i to jest celowe.** Repo ma [`CLAUDE.md`](../CLAUDE.md) (wczytywany
+automatycznie), [`docs/MINY.md`](MINY.md) (pułapki) i **siedem Skilli** w `.claude/skills/`,
+które włączają się same. Prompt ustawia tylko zadanie i kierunek — reszta żyje w repo.
 
 ---
 
@@ -19,39 +18,52 @@ Repo: /docker/portal-staging. Wdrożenia ręczne, nigdy CI.
 1. CLAUDE.md — zasady nienaruszalne i kryterium akceptacji zmiany.
 2. docs/MINY.md — pułapki, które w tym repo już kosztowały czas.
 3. docs/HANDOFF-OPUS.md — stan, mechanizmy i sprostowania.
-4. docs/SPRINTY-S15-S19.md — kierunek i to, co zostało z S17.
+4. docs/SPRINTY-S18-S21.md — kierunek (S15–S19 jest już zamknięte/przenumerowane).
 5. `git log --oneline -15` i `git status`.
 
-Masz do dyspozycji Skille projektowe (.claude/skills/, mapa w docs/SKILLE.md).
-Włączają się same; przy wdrożeniu, migracji, bramkach, danych demo, zrzutach
-i funkcjach społecznych KORZYSTAJ Z NICH zamiast odtwarzać procedurę z pamięci.
+Skille projektowe (.claude/skills/, mapa w docs/SKILLE.md) włączają się same.
+Przy wdrożeniu, migracji, bramkach, danych demo, zrzutach i funkcjach społecznych
+KORZYSTAJ Z NICH zamiast odtwarzać procedurę z pamięci.
 
-## Dwie zasady, które w tym repo łamano najczęściej
+## Trzy zasady, które w tym repo łamano najczęściej
 
-1. **„Backend gotowy" ≠ „funkcja działa".** Reset hasła był odhaczony na podstawie
-   logu `mail.sent` i przez tydzień prowadził w 404, bo strony docelowej nie było.
-   Jeśli funkcja ma ścieżkę użytkownika — PRZEJDŹ JĄ.
-2. **Dokumentacja bywa za kodem.** W jednej sesji zdarzyło się to trzy razy.
-   Zanim uznasz coś za zrobione ALBO za brakujące — potwierdź w kodzie.
-   Dotyczy też list „✅".
+1. „Backend gotowy" ≠ „funkcja działa". Reset hasła prowadził w 404 przez tydzień
+   przy zielonych testach backendu. Jeśli funkcja ma ścieżkę użytkownika — PRZEJDŹ JĄ.
+2. Trasa API bez wejścia w UI to funkcja, której nie ma. Zdarzyło się TRZY RAZY:
+   POST /groups (4 sprinty), eksport i usunięcie konta (RODO), lista ulubionych.
+3. Dokumentacja bywa za kodem. Zanim uznasz coś za zrobione ALBO za brakujące —
+   potwierdź w kodzie. Dotyczy też list „✅".
 
-## Zadanie na tę sesję
+## Zadanie na tę sesję: S18 „Prawda o Portalu"
 
-Domknij S17 z docs/SPRINTY-S15-S19.md — zostały dwa punkty:
+Sprint higieniczny, zero nowych funkcji — chodzi o to, żeby to, co Portal twierdzi,
+było prawdą. Kolejność moja, zmień ją, jeśli po przeczytaniu kodu uznasz inaczej:
 
-  3. **Zakładki** — prywatne zapisywanie wpisów. BEZ publicznego licznika, żeby
-     nie zrobić z tego kolejnej waluty popularności (ADR-010).
-  4. **Przypięty wątek w grupie + moderatorzy grup** jako pierwsza linia.
-     RBAC już istnieje (`GroupMembership.role`) — brakuje UI i uprawnień w serwisie.
+1. ANALITYKA KŁAMIE. Healthcheck kontenera `web` uderza w `/` co 15 s i jest liczony
+   jako odsłona: 3857 „wejść" na dobę przy 2–3 na każdej innej stronie. Przepnij
+   healthcheck na osobną ścieżkę spoza białej listy w shared/analytics.ts.
+2. Moduł `analytics` nie ma ANI JEDNEGO testu (jedyny taki). Dopisz.
+3. RODO bez ścieżki użytkownika: GET /me/export i DELETE /me działają od D6, ale nie
+   mają żadnego wejścia w UI. Zrób /panel/konto — pobranie danych i usunięcie konta
+   z realnym potwierdzeniem. To obowiązek prawny (R-10), nie funkcja.
+4. GET /me/favorites bez strony — gwiazdka w /uslugi działa, ale ulubionych nie da się
+   nigdzie zobaczyć. Wzorzec gotowy w /panel/zapisane.
+5. STRAŻNIK: test porównujący trasy API z wywołaniami w apps/web, z jawną listą
+   wyjątków. Ta mina wystąpiła trzy razy — ma nie wrócić czwarty.
+6. docs/RISKS.md: dwa różne ryzyka mają numer R-16 (dane demo i jakość kursów).
 
-Jeśli po lekturze uznasz, że priorytet powinien być inny — powiedz to wprost,
-uzasadnij i zaproponuj swój. Plan sprzed sprintu bywa gorszy niż osąd po
-przeczytaniu kodu; tak powstały najlepsze decyzje w tym projekcie.
+## Stan, który warto znać przed startem
+
+- Produkcja: 10 kont (9 demo + kuchar21ski@gmail.com „Macix" — NIE moje, NIE demo),
+  14 zleceń, 6 usług, 2,3 MB bazy, TTFB 57–101 ms. Serwer się nudzi.
+- Bramki po S17: 182 testy API, 16 e2e. Spadek liczby = sygnał, nie sukces.
+- Branch feat/s12-widziec-i-reagowac, wypchnięty; PR do main tworzy właściciel.
 
 ## Czego oczekuje właściciel
 
 Działania z osądem, nie pytań o zakres. Decyduj sam, zapisuj uzasadnienie w kodzie
-i w commicie, jedź dalej. Pytaj tylko o to, czego nie da się rozstrzygnąć z kodu.
+i w commicie, jedź dalej. Pytaj tylko o to, czego nie da się rozstrzygnąć z kodu —
+np. czy dane demo zostają na produkcji (to decyzja na wejściu do S19, nie do S18).
 Konta testowe na produkcji są dozwolone — sprzątaj je po sobie.
 Zastany błąd: napraw i powiedz wprost, że był zastany.
 
@@ -61,14 +73,10 @@ a na koniec wypisz jednym akapitem, czego potrzebujesz.
 
 ---
 
-## Stan na 2026-08-14 (dla piszącego prompt, nie do wklejania)
+## Dlaczego S18 jest higieniczny, a nie „rozwojowy"
 
-- **Produkcja:** 1 realne konto (właściciel) + komplet danych demo. Wszystkie kontenery
-  `healthy`, `worker.alive` i `uploads` zielone.
-- **Zamknięte w ostatnich sesjach:** moderacja z podglądem treści, puls workera, analityka
-  0 zł, własna bramka anty-bot (Cloudflare wykluczony), obrazy i cytowanie wpisów, publiczny
-  profil Firmy, przepływy mailowe, dane demo z warstwą społecznościową, tematy (#hashtagi),
-  obrazy w postach grupowych.
-- **Otwarte decyzje właściciela:** kogo zapraszamy jako pierwszych realnych Liderów oraz
-  czy dane demo zostają na produkcji, gdy oni przyjdą (ryzyko R-16).
-- **Gałąź:** `feat/s12-widziec-i-reagowac` — PR tworzy właściciel, na VPS nie ma `gh`.
+Bo pomiary z 14.08 mówią, że Portal ma komplet funkcji i **zero realnego ruchu**, ale
+trzy rzeczy, które twierdzi, nie są prawdą: analityka liczy własny healthcheck, RODO
+istnieje tylko w backendzie, a część tras nie ma wejścia w interfejsie. Każda z nich
+uderzy dokładnie w dniu, w którym przyjdą pierwsi ludzie. Pełne uzasadnienie i kolejne
+sprinty: [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md).

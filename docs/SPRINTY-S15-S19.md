@@ -1,5 +1,11 @@
 # Roadmapa S15–S19 — „Portal, w którym da się zostać"
 
+> **⛔ S15–S17 ZROBIONE, S18/S19 SUPERSEDED (2026-08-14).** Aktualny kierunek:
+> **[SPRINTY-S18-S21.md](SPRINTY-S18-S21.md)** — powstał z pomiarów na produkcji po S17
+> i przenumerowuje plan: stare S18 (marketplace) → S21, stare S19 (mobile) → S20, a przed
+> nimi wchodzi sprint higieniczny S18 („Prawda o Portalu"). Ten plik zostaje jako zapis
+> tego, co i dlaczego zrobiono w S15–S17.
+
 **Data:** 2026-08-13 · **Autor:** Opus 5 (po sesji S12 + S14 + S15/S16) · **Status:** w realizacji
 **Punkt startowy:** [HANDOFF-OPUS.md](HANDOFF-OPUS.md) · poprzednia roadmapa: [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)
 
