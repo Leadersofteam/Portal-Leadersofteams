@@ -206,6 +206,35 @@ describe('analityka nadąża za stronami', () => {
   });
 });
 
+describe('katalog public nie przesłania tras generowanych', () => {
+  // ZASTANY BŁĄD znaleziony przy wdrożeniu S18, przy okazji dokładania `/healthz`
+  // do robots: `apps/web/public/robots.txt` (trzy linijki, jeszcze sprzed
+  // Sprintu G1) PRZESŁANIAŁ generowany `app/robots.ts`. Next serwuje pliki
+  // statyczne przed trasami aplikacji, więc produkcja przez cały czas oddawała
+  // starą treść: `/powiadomienia`, `/logowanie` i `/rejestracja` NIE były
+  // wyłączone z indeksacji, a linia `Sitemap:` nigdy nie trafiła do crawlerów —
+  // choć kod od G1 twierdzi inaczej i nic tego nie sprawdzało.
+  const generated = readdirSync(join(WEB_DIR, 'app'))
+    .filter((name) => /^(robots|sitemap|manifest)\.ts$/.test(name))
+    .map((name) => name.replace(/\.ts$/, ''));
+
+  it('znaleziono trasy metadanych', () => {
+    expect(generated.length).toBeGreaterThan(0);
+  });
+
+  it('żaden plik w public/ nie ma tej samej nazwy co trasa metadanych', () => {
+    const publicFiles = readdirSync(join(WEB_DIR, 'public'));
+    const shadowed = publicFiles.filter((file) =>
+      generated.some((route) => file === route || file.startsWith(`${route}.`)),
+    );
+    expect(
+      shadowed,
+      'Plik w public/ wygrywa z trasą w app/ — aplikacja oddaje starą treść, ' +
+        'a kod twierdzi coś innego. Usuń plik statyczny.',
+    ).toEqual([]);
+  });
+});
+
 describe('sonda zdrowia nie jest liczona jako odsłona', () => {
   // 14.08 na produkcji `/` miało 3926 „odsłon" na dobę, a każda inna strona 2–3:
   // healthcheck kontenera `web` uderzał w `/` co 15 s, a filtr botów go nie

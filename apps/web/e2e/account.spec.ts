@@ -43,7 +43,9 @@ test('konto: panel → eksport danych → usunięcie konta z potwierdzeniem', as
   const downloadPromise = page.waitForEvent('download', { timeout: 30_000 });
   await page.getByRole('button', { name: /Pobierz swoje dane/ }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/^leaders-of-teams-moje-dane-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(
+    /^leaders-of-teams-moje-dane-\d{4}-\d{2}-\d{2}\.json$/,
+  );
 
   // Plik ma zawierać realne dane, a nie pustą skorupę.
   const path = await download.path();
