@@ -441,15 +441,22 @@
 
 /* Światło przebiegające szczeblem na hover głównego CTA. Bez @keyframes
    w pętli — to pojedyncze przejście, nie migająca ozdoba. */
+/* ⚠️ Połysk to DRUGA warstwa nad wypełnieniem `--btn-fill`, nigdy zamiast niego.
+   Do S18 ta reguła miała jeden `background-image` i — mając wyższą swoistość
+   niż `.btn` — kasowała gradient marki ustawiony skrótem `background`.
+   Zmierzony skutek na produkcji: KAŻDY główny przycisk Portalu („Filtruj",
+   „Utwórz konto", „Zaloguj się") miał `background-color: rgba(0,0,0,0)`
+   i wyglądał jak sam napis. Testy tego nie widzą — złapał to dopiero zrzut. */
 .btn:not(.secondary) {
-  background-image: linear-gradient(
-    100deg,
-    transparent 40%,
-    rgb(255 255 255 / 0.14) 50%,
-    transparent 60%
-  );
-  background-size: 300% 100%;
-  background-position: 120% 0;
+  background-image:
+    linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.14) 50%, transparent 60%),
+    var(--btn-fill);
+  background-size:
+    300% 100%,
+    100% 100%;
+  background-position:
+    120% 0,
+    0 0;
   transition:
     background-position 520ms var(--ease),
     transform var(--dur) var(--ease),
@@ -458,7 +465,10 @@
 
 .btn:not(.secondary):hover,
 .btn:not(.secondary):focus-visible {
-  background-position: -20% 0;
+  /* Rusza się WYŁĄCZNIE warstwa połysku — wypełnienie stoi. */
+  background-position:
+    -20% 0,
+    0 0;
 }
 
 /* ===================== Profil jako credential ===================== */
