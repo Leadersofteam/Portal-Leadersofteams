@@ -80,11 +80,18 @@ przemilczeć albo przypisać sobie.
 Komentuj **DLACZEGO, nie CO**. Najwięcej warte są komentarze przy pułapkach: następna osoba
 ma nie wdepnąć w to samo. Ten styl jest w repo konsekwentny — trzymaj go.
 
-## Stan produkcji (2026-08-14)
+## Stan produkcji (2026-08-15)
 
-- **1 realne konto** (właściciel) + komplet danych demo, zasianych świadomą decyzją
-  właściciela. Markery: `@demo.leadersofteams.pl`, `nip = 'DEMO-SEED'`.
-  Zdjęcie jedną komendą — skill `portal-dane-demo`. Ryzyko zapisane jako R-16 w `docs/RISKS.md`.
+- **1 konto spoza demo** (`kuchar21ski@gmail.com`, „Macix" — do potwierdzenia przez
+  właściciela) + komplet danych demo, zasianych świadomą decyzją właściciela.
+  Markery: `@demo.leadersofteams.pl`, `nip = 'DEMO-SEED'`.
+  Zdjęcie jedną komendą — skill `portal-dane-demo`. Ryzyko zapisane jako R-17 w `docs/RISKS.md`.
+- **Licząc realnych użytkowników odfiltruj DWIE domeny:** `@demo.leadersofteams.pl`
+  ORAZ `deleted-*@deleted.invalid`. Usunięcie konta anonimizuje W MIEJSCU (wiersz zostaje,
+  PII znika), więc każde przejście ścieżki RODO kontem testowym zostawia ślad z definicji.
+- **Analityka mówi prawdę dopiero od 2026-08-15.** Do S18 sonda kontenera `web` uderzała
+  w `/` co 15 s i była liczona jako odsłona (3926/dobę przy 2–3 na realnych stronach),
+  a biała lista ścieżek była za kodem o dwa sprinty. **Liczby sprzed tej daty są bezużyteczne.**
 - **Funkcje nie są wąskim gardłem — ludzie są.** Portal ma marketplace, usługi, Drabinkę,
   społeczność, grupy, Q&A, moderację, analitykę i PWA. Kolejna funkcja przed pierwszymi
   realnymi Liderami to budowanie w ciemno.

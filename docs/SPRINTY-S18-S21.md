@@ -27,38 +27,48 @@ użytkownika i funkcje bez wejścia w interfejsie.
 
 ---
 
-## S18 — „Prawda o Portalu" (higiena, zero nowych funkcji dla użytkownika)
+## S18 — „Prawda o Portalu" ✅ DOMKNIĘTY 2026-08-15
 
-Sprint o tym, żeby to, co Portal **twierdzi**, było prawdą.
+Sprint o tym, żeby to, co Portal **twierdzi**, było prawdą. Wszystkie sześć punktów
+wykonane i wdrożone na produkcję — szczegóły i dowody w [HANDOFF-OPUS.md](HANDOFF-OPUS.md).
+Sprint znalazł po drodze **cztery zastane błędy**, których nie było w planie: dwie martwe
+trasy API (`POST /offers/:id/withdraw`, `PATCH /listings/:id`), `public/robots.txt`
+przesłaniający `app/robots.ts` oraz przezroczyste tło WSZYSTKICH głównych przycisków.
 
-1. **Analityka przestaje kłamać.** Healthcheck `web` (`infra/docker-compose.yml`
-   i staging) uderza w `/` co 15 s → 5760 sztucznych odsłon na dobę. Dodać po stronie web
-   osobną trasę zdrowia i przepiąć healthcheck; ścieżka **poza** białą listą
-   w `apps/api/src/shared/analytics.ts`. Bez tego pierwszy realny ruch utonie w szumie.
-2. **Pierwsze testy modułu `analytics`** — jedyny moduł bez testów (antifraud miał ten sam
-   problem do S12). Minimum: biała lista odsiewa śmieci, healthcheck się nie liczy,
-   rejestracje/publikacje idą Z BAZY, nie z licznika.
-3. **RODO dostaje ścieżkę użytkownika.** `GET /me/export` i `DELETE /me` działają od D6
-   i nie mają ANI JEDNEGO wejścia w UI. Nowa strona `/panel/konto` z dwoma akcjami:
-   „Pobierz swoje dane" oraz „Usuń konto" — z realnym potwierdzeniem i opisem, co zostaje
-   (ledger zanonimizowany, treści `[treść usunięta]`). To **R-10 — obowiązek prawny**,
-   dziś żyjący wyłącznie w backendzie.
-4. **„Moje ulubione"** — `GET /me/favorites` bez strony. Gwiazdka w `/uslugi` działa, ale
-   ulubionych nie da się nigdzie zobaczyć. Wzorzec gotowy: `/panel/zapisane` (S17).
-5. **Strażnik „trasa bez wejścia w UI" jako TEST.** Porównuje trasy z
-   `apps/api/src/modules/*/routes.ts` z wywołaniami `apiFetch`/`serverApi` w `apps/web`,
-   z jawną, komentowaną listą wyjątków (np. `/auth/challenge` z bramki anty-bot).
-   Ta mina wystąpiła trzy razy — bez strażnika wróci czwarty.
-6. **Porządek w [RISKS.md](RISKS.md)** — dane demo na produkcji dostają własny numer (R-17).
+1. ✅ **Analityka przestaje kłamać.** Sonda celuje w nową trasę `/healthz` (`force-dynamic`,
+   żeby dalej dowodziła renderowania), wykluczoną z matchera middleware — nie z białej listy,
+   bo wtedy kłamstwo przeniosłoby się z `/` na `/inne`.
+   **Zmierzone po zmianie: 0 przyrostu licznika `/` w oknie 4 minut** przy kontenerze
+   `healthy` (przed zmianą byłoby +16).
+   ➕ **Poza planem:** biała lista `KNOWN_PATHS` była za kodem o dwa sprinty (7 stron
+   w `/inne`), a heurystyka identyfikatorów gubiła `/profil/<uchwyt>`, `/tematy/<hashtag>`
+   i `/uslugi/<slug>` — realne uchwyty są KRÓTSZE niż próg długości, a istniejący test
+   przechodził tylko dzięki 27-znakowej atrapie.
+2. ✅ **Pierwsze testy modułu `analytics`.** Sprostowanie: `shared/analytics.test.ts`
+   istniał — brakowało testów SERWISU modułu (doby bez dziur, liczby ZE ŹRÓDEŁ a nie
+   z Redisa, `topPaths`).
+3. ✅ **RODO dostaje ścieżkę użytkownika** — `/panel/konto` z eksportem (blob + `<a download>`)
+   i usunięciem konta potwierdzanym wpisaniem słowa. Opis „co zostaje" pisany z kodu
+   anonimizacji. Linki z panelu i z `/prywatnosc` §5, która tę funkcję obiecywała.
+4. ✅ **„Moje ulubione"** — `/panel/ulubione`. Przy okazji `GET /me/social`: panel pokazuje
+   własny uchwyt z linkiem do publicznego profilu.
+5. ✅ **Strażnik „trasa bez wejścia w UI"** — `shared/web-contract.test.ts`. Porównuje trasy
+   z **literałami ścieżek** w `apps/web` (nie tylko z argumentami `apiFetch`: strona zlecenia
+   podaje ścieżkę propsem), z jawną listą wyjątków, bezpiecznikiem na minimalną liczbę
+   znalezionych tras i zakazem martwych wyjątków.
+6. ✅ **Porządek w [RISKS.md](RISKS.md)** — dane demo to dziś R-17.
 
-**Kryterium końca:** licznik `/` po dobie pokazuje liczbę zbliżoną do realnych wejść;
-`/panel/konto` przechodzi eksport i usunięcie konta na koncie testowym (na produkcji,
-ze sprzątaniem); strażnik z pkt 5 czerwienieje po usunięciu linku do `/panel/zapisane`.
+**Kryterium końca — spełnione:** licznik `/` przestał rosnąć od sondy (0 w oknie 4 min);
+`/panel/konto` przeszedł eksport i usunięcie konta na produkcji kontem testowym; strażnik
+sczerwieniał w próbie kontrolnej po usunięciu `/panel/ulubione`.
+
+**Dług świadomie zostawiony (do S21):** `PATCH /listings/:id` — opublikowanej usługi nie da
+się edytować. Trasa jest na liście wyjątków strażnika z uzasadnieniem.
 
 ## S19 — „Pierwszych dwudziestu" (wymaga decyzji właściciela na wejściu)
 
 ⚠️ **Decyzja, której nie da się rozstrzygnąć z kodu: czy dane demo zostają na produkcji,
-gdy przyjdą realni Liderzy** (R-16/R-17) i **kogo zapraszamy**. Na produkcji jest już konto
+gdy przyjdą realni Liderzy** (R-17) i **kogo zapraszamy**. Na produkcji jest już konto
 `kuchar21ski@gmail.com` („Macix", 13.08, profil Lidera, adres niepotwierdzony) — jeśli to
 nie właściciel, pytanie przestało być hipotetyczne.
 
@@ -94,6 +104,12 @@ przed i po jest zgadywaniem.
 
 ## S21 — „Marketplace i dopasowanie" (dawne S18)
 
+0. **Edycja opublikowanej usługi** (dług z S18, znaleziony przez strażnika kontraktu).
+   `PATCH /listings/:id` istnieje z walidacją i testami, ale panel ma wyłącznie
+   publikuj/wstrzymaj/archiwizuj — **zmiana ceny albo opisu wymaga dziś zarchiwizowania
+   usługi i wystawienia jej od nowa**, co kasuje jej adres i historię. To pierwszy punkt
+   tego sprintu, bo dotyka pracy zarobkowej Lidera, a nie wygody.
+   Po dodaniu UI **usuń wpis z `EXCEPTIONS`** w `shared/web-contract.test.ts`.
 1. **Licznik zrealizowanych zleceń przy Liderze** — odbicie logiki policzonej dla Firmy.
 2. **„Nowe zlecenie w Twojej branży"** — powiadomienie **opt-in**. Dopasowanie, nie przynęta.
 3. **Zapisane wyszukiwania** — przedłużenie zakładek z S17 (prywatne, bez licznika).

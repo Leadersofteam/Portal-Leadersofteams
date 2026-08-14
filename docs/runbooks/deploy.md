@@ -131,7 +131,7 @@ Po naprawie `uploads` w `/healthz` wraca na `"ok"` bez restartu kontenera.
 
 ### Dane demo na produkcji (S16)
 
-Produkcja ma dane przykładowe — DECYZJA WŁAŚCICIELA z 13.08 (ryzyko R-16 w `RISKS.md`).
+Produkcja ma dane przykładowe — DECYZJA WŁAŚCICIELA z 13.08 (ryzyko R-17 w `RISKS.md`).
 Markery w bazie: konta w domenie `@demo.leadersofteams.pl`, firmy z `nip = 'DEMO-SEED'`.
 
 `tsx` NIE MA w obrazie produkcyjnym (to `pnpm --prod deploy`), więc seed uruchamiamy

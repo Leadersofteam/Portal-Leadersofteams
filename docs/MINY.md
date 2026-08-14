@@ -96,6 +96,29 @@ Kontrola: pole `uploads` w `/healthz`.
 Usługa stoi za `profiles: [tools]` i nie startuje sama. Objaw pominięcia: `P2022 column
 does not exist` w logach api po wdrożeniu.
 
+### Sonda kontenera liczona jako odsłona
+
+Healthcheck `web` uderzał w `/` co 15 s i **był liczony jako wejście użytkownika**:
+na produkcji `/` miało **3926 odsłon na dobę**, a każda inna strona 2–3. Filtr botów
+w middleware go nie odsiewał, bo `fetch` z Node przedstawia się jako `node`, a nie jako
+crawler. **Objaw:** jedna strona ma trzycyfrową przewagę nad wszystkimi pozostałymi,
+a liczba dzieli się mniej więcej przez interwał sondy (86 400 / 15 = 5760).
+
+Sonda celuje dziś w `/healthz`, **wykluczone z matchera middleware** — nie z białej listy
+ścieżek, bo wtedy kłamstwo przeniosłoby się z `/` na wiadro `/inne`. Trasa jest
+`force-dynamic`: statyczna odpowiedź dowodziłaby tylko, że serwer oddaje plik, a poprzednia
+sonda dowodziła, że Next RENDERUJE.
+
+### Plik w `public/` przesłania trasę z `app/`
+
+`apps/web/public/robots.txt` (trzy linijki sprzed Sprintu G1) wygrywał z generowanym
+`app/robots.ts` — Next serwuje statyki przed trasami. Przez miesiąc produkcja twierdziła
+co innego niż kod: `/logowanie` i `/rejestracja` NIE były wyłączone z indeksacji, a linia
+`Sitemap:` nigdy nie trafiła do crawlerów, choć cała praca nad odkrywalnością zakładała,
+że trafia. **Objaw:** `robots.txt` z produkcji ma „User-agent" małą literą (tak pisze
+człowiek) i **nie ma linii `Host:` ani `Sitemap:`** — generator Next zawsze je dokłada
+i pisze „User-Agent". Pilnuje tego test w `shared/web-contract.test.ts`.
+
 ### Cicha śmierć workera
 
 Zdarzenie bez konsumenta kończy się „sukcesem", więc objawem jest CISZA: wpisy nie pojawiają
@@ -145,6 +168,21 @@ w kompozytorze (`textarea` poza `.field` nie dziedziczy fontu), obcięty link pr
 na 390 px, łamiący się uchwyt w karcie cytatu, błąd gramatyczny „na Portalu od 3 miesiące".
 `innerText` nie widzi obcięcia przez CSS.
 
+### Skrót `background` kontra późniejsza warstwa stylów
+
+`globals.css` ustawiał wypełnienie przycisku skrótem `background: linear-gradient(…)`,
+a warstwa `climb.css` dokładała „połysk" regułą `.btn:not(.secondary) { background-image: … }`
+o **wyższej swoistości**. `background-image` skasował obrazek ze skrótu, a skrót wcześniej
+wyzerował `background-color` — więc **KAŻDY główny przycisk Portalu był przezroczysty**
+(zmierzone: `rgba(0, 0, 0, 0)`). „Filtruj", „Utwórz konto" i „Zaloguj się" renderowały się
+jako sam biały napis. Nikt tego nie zgłosił, bo biały tekst na ciemnym tle nadal się czyta.
+
+**Zasada:** wypełnienie trzymaj w zmiennej (`--btn-fill`) i dokładaj efekty JAKO KOLEJNĄ
+WARSTWĘ (`background-image: shine, var(--btn-fill)`), nigdy zamiast poprzedniej. Dodatkowo
+ustaw `background-color` jako siatkę bezpieczeństwa. **Objaw:** przycisk wygląda jak zwykły
+pogrubiony tekst. Sprawdzenie to jedna linia w konsoli — `getComputedStyle(el).backgroundColor` —
+i tylko zrzut albo pomiar to złapie, żaden test.
+
 ### `const` nie jest hoistowany
 
 `SOCIAL_POST_MAX_IMAGES` było zdefiniowane niżej niż jego pierwsze użycie w tym samym module
@@ -187,6 +225,14 @@ sprinty NIE MIAŁA w całej aplikacji ani jednego linku. Grupę dało się zało
 curl-em, więc na produkcji były same grupy systemowe z seeda: bez założyciela, czyli bez
 ani jednego moderatora. **Nowa trasa bez wejścia w UI to funkcja, której nie ma.**
 Ten sam wzorzec co martwy reset hasła — tylko cichszy, bo nikt nie dostaje 404.
+
+**Od S18 pilnuje tego test:** `shared/web-contract.test.ts` porównuje trasy z
+`modules/*/routes.ts` z literałami ścieżek w `apps/web`. Przy pierwszym uruchomieniu
+znalazł SZEŚĆ martwych tras — cztery znane (`/me/export`, `DELETE /me`, `/me/favorites`,
+`/me/social`) i **dwie, o których nikt nie wiedział**: `POST /offers/:id/withdraw`
+(złożonej oferty nie dało się wycofać) oraz `PATCH /listings/:id` (opublikowanej usługi
+nie da się edytować — otwarte, w S21). Dopisując wyjątek, dopisz też uzasadnienie:
+test wywala się na wyjątku wskazującym trasę, która już nie istnieje.
 
 ### Dokumentacja bywa za kodem
 

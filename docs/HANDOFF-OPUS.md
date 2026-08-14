@@ -11,14 +11,87 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
-> **▶ NASTĘPNY KROK: S18 „Prawda o Portalu"** w [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md),
-> prompt startowy: [PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md).
-> Roadmapa powstała z **pomiarów na żywej produkcji 14.08**, nie z listy życzeń:
-> analityka liczy własny healthcheck jako 3857 odsłon `/` na dobę (realne strony mają 2–3),
-> baza ma 2,3 MB i TTFB 57–101 ms (wydajność NIE jest problemem), a cztery trasy API nie
-> mają żadnego wejścia w UI: `GET /me/export`, `DELETE /me` (oba RODO!), `GET /me/favorites`,
-> `GET /me/social`. Moduł `analytics` jest jedynym bez testów. W `RISKS.md` dwa różne
-> ryzyka mają numer R-16.
+> **▶ NASTĘPNY KROK: S19 „Pierwszych dwudziestu"** w [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md).
+> ⚠️ Ten sprint **zaczyna się od decyzji właściciela**, której nie da się rozstrzygnąć z kodu:
+> czy dane demo zostają na produkcji, gdy przyjdą realni Liderzy (R-17), i kogo zapraszamy.
+
+> **✅ S18 DOMKNIĘTY (2026-08-15): „Prawda o Portalu"** (`0af32c3`, `5012178`, `f0f1a1f`).
+> Wdrożone na staging **i produkcję**, przejście ścieżki wykonane NA ŻYWO kontem testowym
+> (skasowanym własnym przyciskiem „Usuń konto" — testowana funkcja była jednocześnie
+> sprzątaniem). Sprint higieniczny: zero nowych funkcji, wszystko o zgodność deklaracji
+> ze stanem faktycznym. **Bez migracji** — zero zmian w Prismie.
+>
+> **1. Analityka przestała liczyć samą siebie.** Sonda kontenera `web` uderzała w `/` co 15 s
+> i była liczona jako odsłona. Sonda celuje dziś w `/healthz` (nowa trasa `force-dynamic`,
+> żeby dalej dowodziła RENDEROWANIA), wykluczoną z matchera middleware — nie z białej listy,
+> bo wtedy kłamstwo przeniosłoby się z `/` na `/inne`.
+> **Dowód z produkcji:** przed zmianą `/` = 3926/dobę przy 2–3 na każdej innej stronie;
+> po zmianie **0 przyrostu w kontrolowanym oknie 4 minut** przy kontenerze `healthy`
+> (gdyby sonda dalej liczyła, byłoby +16).
+>
+> **2. DRUGI POWÓD, dla którego analityka kłamała — nieopisany w roadmapie.** Biała lista
+> `KNOWN_PATHS` była za kodem o dwa sprinty: siedem istniejących stron wpadało do `/inne`,
+> w tym `/reset-hasla` i `/weryfikacja`, czyli dokładnie te sygnały, których szukamy przy
+> pierwszej mili. Gorzej: heurystyka identyfikatorów milczała przy `/profil/<uchwyt>` —
+> uchwyt to `displayName` przycięty do 24 znaków **bez sufiksu**, więc realny uchwyt jest
+> zwykle KRÓTSZY niż próg długości. Istniejący test przechodził wyłącznie dlatego, że użyto
+> w nim 27-znakowej atrapy. To samo dotyczyło `/tematy/<hashtag>` i `/uslugi/<slug>`.
+> **Wniosek do zapamiętania: atrapa dobrana pod implementację potrafi zazielenić test
+> na dane, które w produkcji nie występują.**
+>
+> **3. RODO dostało ścieżkę użytkownika (R-10).** `GET /me/export` i `DELETE /me` działały
+> od D6 bez ANI JEDNEGO wywołania w aplikacji, a `/prywatnosc` §5 twierdziła, że „w panelu
+> konta możesz pobrać komplet swoich danych". Nowe `/panel/konto`: eksport (blob +
+> `<a download>`, NIE `window.open` — w PWA nowa karta nie pobiera pliku) i usunięcie konta
+> z potwierdzeniem przez WPISANIE słowa (natywnego `confirm()` nie da się uczciwie przejść
+> w e2e, a odruchowe „OK" nie jest decyzją). Opis „co zostaje" napisany z kodu
+> `anonymizeAccount` i `anonymizeUserContent` każdego modułu — deklaracja prawna rozjeżdżająca
+> się z implementacją jest gorsza niż jej brak.
+>
+> **4. `/panel/ulubione`** — `GET /me/favorites` istniało od Sprintu 7 bez strony.
+> **`/me/social`** też nie miało wejścia: wzmianki `@handle` działały, a użytkownik nie miał
+> jak poznać własnego uchwytu. Panel pokazuje go z linkiem do publicznego profilu.
+>
+> **5. STRAŻNIK `shared/web-contract.test.ts`.** Porównuje trasy API z literałami ścieżek
+> w `apps/web` — nie tylko z argumentami `apiFetch`, bo strona zlecenia podaje ścieżkę
+> PROPSEM (`<ActionButton path={…}>`) i cały cykl życia zlecenia byłby przegapiony.
+> Zweryfikowany próbą: usunięcie `/panel/ulubione` czerwieni suitę na `GET /me/favorites`.
+> **🔴 ZNALAZŁ DWIE ZASTANE MARTWE TRASY, o których nikt nie wiedział:**
+> `POST /offers/:id/withdraw` (od Sprintu 3 — złożonej oferty NIE DAŁO SIĘ wycofać inaczej
+> niż curl-em; naprawione przyciskiem w `/panel/oferty`) oraz **`PATCH /listings/:id` —
+> opublikowanej usługi NIE DA SIĘ edytować**. To drugie zostawiam świadomie: edycja to
+> funkcja, a ten sprint jest higieniczny. Wpisane do wyjątków z uzasadnieniem i dopisane
+> do S21.
+>
+> **🔴 ZASTANY BŁĄD 1: `public/robots.txt` przesłaniał `app/robots.ts`.** Next serwuje
+> statyki przed trasami aplikacji, więc plik sprzed Sprintu G1 wygrywał od miesiąca:
+> `/logowanie` i `/rejestracja` NIE były wyłączone z indeksacji, a linia `Sitemap:` **nigdy
+> nie trafiła do crawlerów** — czyli główny efekt pracy nad odkrywalnością z G1 nie działał.
+> Naprawione; strażnik porównuje teraz `public/` z trasami metadanych w `app/`.
+>
+> **🔴 ZASTANY BŁĄD 2, złapany na zrzucie nowej strony i potwierdzony POMIAREM: KAŻDY
+> główny przycisk Portalu był przezroczysty.** `.btn` miał `background-color: rgba(0,0,0,0)`,
+> bo warstwa „połysku" z `climb.css` (wyższa swoistość) nadpisywała `background-image`
+> ustawiony skrótem `background` w `globals.css`. „Filtruj", „Utwórz konto", „Zaloguj się"
+> renderowały się jako sam biały napis — od S9/S10. Nikt nie zgłosił, bo biały tekst na
+> ciemnym tle nadal się czyta. Wypełnienie żyje dziś w zmiennej `--btn-fill`, połysk jest
+> DRUGĄ warstwą, a `background-color` jest siatką bezpieczeństwa.
+>
+> **6. Moduł `analytics` przestał być jedynym bez testów.** ⚠️ Sprostowanie do roadmapy:
+> `shared/analytics.test.ts` istniał i pokrywał `normalizePath`/`dayKey` — brakowało testów
+> SERWISU modułu (agregacja dób, źródła liczb).
+>
+> **7. Rejestr ryzyk przestał kłamać:** dane demo na produkcji to dziś **R-17**, kursy
+> zostają przy R-16 (starsze, cytowane w ADR-012/013).
+>
+> **Bramki: 203/203 testów API** (było 182), **17/17 e2e** (było 16), lint, typecheck, build.
+> Backup prod przed wdrożeniem: `portal-20260814-170916.sql.gz`.
+>
+> **⚠️ DO WIADOMOŚCI: konta testowe usuwane przyciskiem zostawiają ślad z definicji.**
+> `anonymizeAccount` działa W MIEJSCU (wiersz zostaje, PII znika), więc po każdym takim
+> przejściu w bazie jest wiersz `deleted-*@deleted.invalid`. **Licząc „ilu realnych
+> użytkowników", odfiltruj tę domenę** — inaczej wróci mina „konta testowe liczone jako
+> realni użytkownicy".
 
 > **✅ S17 DOMKNIĘTY — punkty 3–4 (2026-08-14): „Zakładki i moderatorzy grup"**
 > (`3cdf582`, `c69e64f`). Wdrożone na staging i **produkcję**, przejrzane na żywo
@@ -77,7 +150,7 @@
 > **⚠️ DO WIADOMOŚCI WŁAŚCICIELA:** na produkcji jest konto `kuchar21ski@gmail.com`
 > („Macix", 13.08 wieczorem) — z profilem Lidera, bez potwierdzonego adresu, bez treści.
 > Nie jest moje i nie usuwam go. Jeśli to nie Ty, **to pierwszy realny użytkownik Portalu**
-> i wtedy decyzja o danych demo (R-16) przestaje być hipotetyczna.
+> i wtedy decyzja o danych demo (R-17) przestaje być hipotetyczna.
 
 > **✅ S17 — punkty 1–2 (2026-08-14): „Tematy i obrazy w grupach"** (`a5cfdf0`).
 > Wdrożone na staging i **produkcję**, dane demo przesiane z tematami.
@@ -148,7 +221,7 @@
 > **DECYZJA WŁAŚCICIELA: dane demo są na PRODUKCJI.** Zgłosiłem ryzyko (fikcyjni Liderzy
 > z punktami vs obietnica ADR-004) — decyzja podtrzymana. Bezpieczniki: druga flaga
 > `SEED_DEMO_ALLOW_PRODUCTION=1` i `--purge` zdejmujący komplet jedną komendą.
-> Ryzyko zapisane jako **R-16** w [RISKS.md](RISKS.md).
+> Ryzyko zapisane jako **R-17** w [RISKS.md](RISKS.md).
 >
 > **🔴 ZASTANY BŁĄD INFRASTRUKTURY: staging pokazywał dane PRODUKCJI.** Staging i prod
 > dzielą sieć Traefika `n8n_default`, a compose nadaje alias równy nazwie usługi — nazwa

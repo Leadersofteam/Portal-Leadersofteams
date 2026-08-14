@@ -1,4 +1,4 @@
-# Prompt startowy — Portal Leaders of Teams (sesja S18+)
+# Prompt startowy — Portal Leaders of Teams (sesja S19+)
 
 Skopiuj blok poniżej jako pierwszą wiadomość w nowej sesji Claude Code (Opus 5) na VPS.
 
@@ -18,7 +18,7 @@ Repo: /docker/portal-staging. Wdrożenia ręczne, nigdy CI.
 1. CLAUDE.md — zasady nienaruszalne i kryterium akceptacji zmiany.
 2. docs/MINY.md — pułapki, które w tym repo już kosztowały czas.
 3. docs/HANDOFF-OPUS.md — stan, mechanizmy i sprostowania.
-4. docs/SPRINTY-S18-S21.md — kierunek (S15–S19 jest już zamknięte/przenumerowane).
+4. docs/SPRINTY-S18-S21.md — kierunek (S18 domknięty 15.08).
 5. `git log --oneline -15` i `git status`.
 
 Skille projektowe (.claude/skills/, mapa w docs/SKILLE.md) włączają się same.
@@ -29,41 +29,42 @@ KORZYSTAJ Z NICH zamiast odtwarzać procedurę z pamięci.
 
 1. „Backend gotowy" ≠ „funkcja działa". Reset hasła prowadził w 404 przez tydzień
    przy zielonych testach backendu. Jeśli funkcja ma ścieżkę użytkownika — PRZEJDŹ JĄ.
-2. Trasa API bez wejścia w UI to funkcja, której nie ma. Zdarzyło się TRZY RAZY:
-   POST /groups (4 sprinty), eksport i usunięcie konta (RODO), lista ulubionych.
+2. Trasa API bez wejścia w UI to funkcja, której nie ma. Zdarzyło się SZEŚĆ razy.
+   Od S18 pilnuje tego test `shared/web-contract.test.ts` — jeśli dokładasz trasę,
+   dokładasz wejście albo wyjątek z uzasadnieniem.
 3. Dokumentacja bywa za kodem. Zanim uznasz coś za zrobione ALBO za brakujące —
    potwierdź w kodzie. Dotyczy też list „✅".
 
-## Zadanie na tę sesję: S18 „Prawda o Portalu"
+## ⚠️ Ta sesja ZACZYNA SIĘ od dwóch pytań do mnie
 
-Sprint higieniczny, zero nowych funkcji — chodzi o to, żeby to, co Portal twierdzi,
-było prawdą. Kolejność moja, zmień ją, jeśli po przeczytaniu kodu uznasz inaczej:
+S19 „Pierwszych dwudziestu" nie da się rozstrzygnąć z kodu. Zapytaj mnie na wejściu:
+1. Czy dane demo zostają na produkcji, gdy przyjdą realni Liderzy? (R-17; obie ścieżki
+   gotowe: `seed-demo.ts --purge` albo zostawienie). Na produkcji jest już konto
+   kuchar21ski@gmail.com „Macix" — jeśli to nie ja, pytanie nie jest hipotetyczne.
+2. Kogo zapraszamy jako pierwszych?
 
-1. ANALITYKA KŁAMIE. Healthcheck kontenera `web` uderza w `/` co 15 s i jest liczony
-   jako odsłona: 3857 „wejść" na dobę przy 2–3 na każdej innej stronie. Przepnij
-   healthcheck na osobną ścieżkę spoza białej listy w shared/analytics.ts.
-2. Moduł `analytics` nie ma ANI JEDNEGO testu (jedyny taki). Dopisz.
-3. RODO bez ścieżki użytkownika: GET /me/export i DELETE /me działają od D6, ale nie
-   mają żadnego wejścia w UI. Zrób /panel/konto — pobranie danych i usunięcie konta
-   z realnym potwierdzeniem. To obowiązek prawny (R-10), nie funkcja.
-4. GET /me/favorites bez strony — gwiazdka w /uslugi działa, ale ulubionych nie da się
-   nigdzie zobaczyć. Wzorzec gotowy w /panel/zapisane.
-5. STRAŻNIK: test porównujący trasy API z wywołaniami w apps/web, z jawną listą
-   wyjątków. Ta mina wystąpiła trzy razy — ma nie wrócić czwarty.
-6. docs/RISKS.md: dwa różne ryzyka mają numer R-16 (dane demo i jakość kursów).
+Do czasu odpowiedzi rób punkty 3–5 z S19, które od niej nie zależą.
+
+## Zadanie na tę sesję: S19 w docs/SPRINTY-S18-S21.md
+
+Zaproszenie Lidera bez cienia MLM (ścieżkę DOPISZ do antimlm.integration.test.ts —
+inaczej strażnik zazieleni się przez pominięcie), ślad zaufania w /szukaj,
+pierwsze 60 sekund oczami obcej osoby, mail powitalny + digest opt-in.
 
 ## Stan, który warto znać przed startem
 
-- Produkcja: 10 kont (9 demo + kuchar21ski@gmail.com „Macix" — NIE moje, NIE demo),
-  14 zleceń, 6 usług, 2,3 MB bazy, TTFB 57–101 ms. Serwer się nudzi.
-- Bramki po S17: 182 testy API, 16 e2e. Spadek liczby = sygnał, nie sukces.
+- Produkcja: 9 kont demo + kuchar21ski@gmail.com („Macix", NIE moje, NIE demo).
+  Licząc realnych użytkowników ODFILTRUJ `@demo.leadersofteams.pl` ORAZ
+  `deleted-*@deleted.invalid` — anonimizacja RODO zostawia wiersz w miejscu.
+- Bramki po S18: 203 testy API, 17 e2e. Spadek liczby = sygnał, nie sukces.
+- Analityka od 15.08 mówi prawdę (sonda nie jest już odsłoną) — pierwszy realny
+  pomiar ruchu będzie miał sens, wcześniejsze liczby `/` są bezwartościowe.
 - Branch feat/s12-widziec-i-reagowac, wypchnięty; PR do main tworzy właściciel.
 
 ## Czego oczekuje właściciel
 
 Działania z osądem, nie pytań o zakres. Decyduj sam, zapisuj uzasadnienie w kodzie
-i w commicie, jedź dalej. Pytaj tylko o to, czego nie da się rozstrzygnąć z kodu —
-np. czy dane demo zostają na produkcji (to decyzja na wejściu do S19, nie do S18).
+i w commicie, jedź dalej. Pytaj tylko o to, czego nie da się rozstrzygnąć z kodu.
 Konta testowe na produkcji są dozwolone — sprzątaj je po sobie.
 Zastany błąd: napraw i powiedz wprost, że był zastany.
 
@@ -73,10 +74,14 @@ a na koniec wypisz jednym akapitem, czego potrzebujesz.
 
 ---
 
-## Dlaczego S18 jest higieniczny, a nie „rozwojowy"
+## Czego nauczył S18 (warto mieć z tyłu głowy w S19)
 
-Bo pomiary z 14.08 mówią, że Portal ma komplet funkcji i **zero realnego ruchu**, ale
-trzy rzeczy, które twierdzi, nie są prawdą: analityka liczy własny healthcheck, RODO
-istnieje tylko w backendzie, a część tras nie ma wejścia w interfejsie. Każda z nich
-uderzy dokładnie w dniu, w którym przyjdą pierwsi ludzie. Pełne uzasadnienie i kolejne
-sprinty: [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md).
+Sprint higieniczny znalazł **cztery zastane błędy, których nie było w planie** — wszystkie
+tej samej klasy: kod deklarował coś, a rzeczywistość milczała. Dwie martwe trasy API,
+`public/robots.txt` przesłaniający generowany `app/robots.ts` (przez co `Sitemap:` nigdy
+nie trafił do crawlerów) i przezroczyste tło WSZYSTKICH głównych przycisków Portalu.
+Żadnego z nich nie złapał test — złapał je **pomiar i zrzut ekranu**.
+
+Drugi wniosek dotyczy testów: istniejący test analityki przechodził, bo użyto w nim
+27-znakowej atrapy uchwytu, a realne uchwyty mają po kilkanaście znaków. **Atrapa dobrana
+pod implementację potrafi zazielenić test na dane, które w produkcji nie występują.**

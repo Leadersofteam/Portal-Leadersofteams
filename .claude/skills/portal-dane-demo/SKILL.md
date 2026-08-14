@@ -6,7 +6,7 @@ description: Zasianie i zdjęcie danych przykładowych w Portalu LoT (firmy, Lid
 # Dane demo — zasianie i zdjęcie jedną komendą
 
 Produkcja ma dane przykładowe **decyzją właściciela z 2026-08-13**, mimo zgłoszonego ryzyka
-(fikcyjni Liderzy z punktami vs obietnica ADR-004 — ryzyko **R-16** w `docs/RISKS.md`).
+(fikcyjni Liderzy z punktami vs obietnica ADR-004 — ryzyko **R-17** w `docs/RISKS.md`).
 Dlatego istnieje `--purge`: decyzja ma pozostać odwracalna w sekundę.
 
 ## Markery w bazie
@@ -81,4 +81,4 @@ byłyby identyczne.
 ## Kiedy wrócić do decyzji
 
 **Przed zaproszeniem pierwszych realnych Liderów.** Realny Lider obok fikcyjnego z punktami
-to dokładnie sytuacja, o którą chodzi w R-16.
+to dokładnie sytuacja, o którą chodzi w R-17.

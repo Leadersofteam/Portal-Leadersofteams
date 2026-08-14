@@ -121,7 +121,7 @@ jeśli nowa funkcja nie zostanie dodana do ścieżki, test zazieleni się przez 
 
 **Kogo zapraszamy jako pierwszych realnych Liderów** i **czy dane demo zostają na produkcji**,
 gdy oni przyjdą. Te dwie decyzje są sprzężone: realny Lider obok fikcyjnego z punktami to
-dokładnie ta sytuacja, o którą chodzi w ryzyku R-16.
+dokładnie ta sytuacja, o którą chodzi w ryzyku R-17.
 
 ---
 
