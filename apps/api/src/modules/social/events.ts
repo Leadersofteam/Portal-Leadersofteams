@@ -9,8 +9,12 @@ import type { SocialService } from './service';
 export function socialSubscriptions(service: SocialService): Record<string, EventHandler> {
   return {
     'groups.post_published': (p) => service.onPostPublished(p as never),
+    'groups.post_deleted': (p) => service.onGroupPostDeleted(p as never),
     'marketplace.listing_published': (p) => service.onListingPublished(p as never),
     'community.answer_accepted': (p) => service.onAnswerAccepted(p as never),
     'ladder.level_achieved': (p) => service.onLevelAchieved(p as never),
+    // Wpis portalowy: zdarzenie WŁASNE modułu social. Ladder go NIE subskrybuje
+    // i subskrybować nie może — pilnuje tego test strukturalny (anty-MLM).
+    'social.post_published': (p) => service.onSocialPostPublished(p as never),
   };
 }

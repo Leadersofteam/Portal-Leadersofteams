@@ -17,7 +17,11 @@ export function LevelBadge({
   if (level < 1) return null;
   const clamped = Math.min(Math.max(level, 1), 7);
   return (
-    <span className="level-badge" data-level={clamped} title={title ?? `Poziom ${level} w Drabince Lidera`}>
+    <span
+      className="level-badge"
+      data-level={clamped}
+      title={title ?? `Poziom ${level} w Drabince Lidera`}
+    >
       <span className="rungs" aria-hidden="true">
         <i />
         <i />

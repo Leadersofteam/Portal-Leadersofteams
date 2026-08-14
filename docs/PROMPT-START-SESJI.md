@@ -1,5 +1,9 @@
 # Prompt startowy nowej sesji Claude Code (Opus 4.8) — Sprint 4.5 → 5+
 
+> ⛔ **NIEAKTUALNE (2026-08-13).** Ten prompt pochodzi z ery Sprintu 4.5 / Opus 4.8 i opisuje
+> stan sprzed go-live. Aktualny punkt startowy nowej sesji: **[PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md)**.
+> Zostawiony wyłącznie jako zapis historyczny.
+
 Skopiuj poniższy blok jako pierwszą wiadomość w nowej konwersacji Claude Code. Jest kompletny:
 kieruje wykonawcę do dokumentów sterujących, ustala zasady, podaje realia środowiska (staging żyje)
 i wskazuje punkt startu (Sprint 4.5 stabilizacja → Sprint 5 community).

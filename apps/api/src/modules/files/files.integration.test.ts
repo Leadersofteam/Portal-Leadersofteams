@@ -94,7 +94,10 @@ describe.skipIf(!hasInfra)('files — upload, warianty, awatar', () => {
     const { file } = up.json() as { file: { id: string } };
 
     for (const variant of ['thumb', 'full'] as const) {
-      const res = await ctx.app.inject({ method: 'GET', url: `/api/v1/files/${file.id}/${variant}` });
+      const res = await ctx.app.inject({
+        method: 'GET',
+        url: `/api/v1/files/${file.id}/${variant}`,
+      });
       expect(res.statusCode).toBe(200);
       expect(res.headers['content-type']).toBe('image/webp');
       expect(res.headers['cache-control']).toContain('immutable');
@@ -105,7 +108,11 @@ describe.skipIf(!hasInfra)('files — upload, warianty, awatar', () => {
   });
 
   it('odrzuca pliki, które nie są obrazem, mimo poprawnego mime', async () => {
-    const { boundary, body } = multipartBody('nie-obraz.png', Buffer.from('to nie jest png'), 'PORTFOLIO');
+    const { boundary, body } = multipartBody(
+      'nie-obraz.png',
+      Buffer.from('to nie jest png'),
+      'PORTFOLIO',
+    );
     const res = await ctx.app.inject({
       method: 'POST',
       url: '/api/v1/files',

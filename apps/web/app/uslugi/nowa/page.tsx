@@ -32,8 +32,8 @@ export default async function NewListingPage() {
         </>
       ) : (
         <p className="muted">
-          Usługi publikują Liderzy — najpierw{' '}
-          <Link href="/panel/profil">utwórz profil Lidera</Link>.
+          Usługi publikują Liderzy — najpierw <Link href="/panel/profil">utwórz profil Lidera</Link>
+          .
         </p>
       )}
     </main>

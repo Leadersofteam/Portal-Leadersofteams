@@ -62,6 +62,7 @@ export default async function MyListingsPage() {
 
       {listings.length === 0 ? (
         <EmptyState
+          art="rung"
           title="Nie masz jeszcze żadnej usługi"
           ctaHref="/uslugi/nowa"
           ctaLabel="Opublikuj pierwszą usługę"

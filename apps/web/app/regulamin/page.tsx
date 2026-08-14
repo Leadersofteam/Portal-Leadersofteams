@@ -44,20 +44,20 @@ export default function TermsPage() {
           bezpośrednio między Firmą a Liderem, poza Portalem.
         </li>
         <li>
-          Ceny podawane w usługach Liderów oraz widełki budżetu zleceń mają charakter deklaratywny
-          i nie stanowią oferty w rozumieniu Kodeksu cywilnego.
+          Ceny podawane w usługach Liderów oraz widełki budżetu zleceń mają charakter deklaratywny i
+          nie stanowią oferty w rozumieniu Kodeksu cywilnego.
         </li>
         <li>
-          Oceny publikowane są symultanicznie po obu stronach i nie mogą być usuwane na życzenie —
-          z wyjątkiem treści naruszających prawo lub regulamin (moduł zgłoszeń).
+          Oceny publikowane są symultanicznie po obu stronach i nie mogą być usuwane na życzenie — z
+          wyjątkiem treści naruszających prawo lub regulamin (moduł zgłoszeń).
         </li>
       </ul>
 
       <h2>§4. Treści użytkowników</h2>
       <ul>
         <li>
-          Użytkownik odpowiada za publikowane treści (posty, komentarze, pytania, odpowiedzi,
-          opisy usług) i oświadcza, że nie naruszają one praw osób trzecich.
+          Użytkownik odpowiada za publikowane treści (posty, komentarze, pytania, odpowiedzi, opisy
+          usług) i oświadcza, że nie naruszają one praw osób trzecich.
         </li>
         <li>
           Zabronione są: spam, treści bezprawne, podszywanie się, manipulowanie ocenami i punktacją
@@ -73,8 +73,8 @@ export default function TermsPage() {
       <ul>
         <li>
           Reklamacje i zgłoszenia:{' '}
-          <a href="mailto:kontakt@leadersofteams.com">kontakt@leadersofteams.com</a> — odpowiadamy
-          w terminie 14 dni.
+          <a href="mailto:kontakt@leadersofteams.com">kontakt@leadersofteams.com</a> — odpowiadamy w
+          terminie 14 dni.
         </li>
         <li>
           Portal nie jest stroną umów zawieranych między Firmą a Liderem i nie odpowiada za ich
@@ -85,7 +85,8 @@ export default function TermsPage() {
       <h2>§6. Postanowienia końcowe</h2>
       <ul>
         <li>
-          Zasady przetwarzania danych osobowych opisuje <a href="/prywatnosc">Polityka prywatności</a>.
+          Zasady przetwarzania danych osobowych opisuje{' '}
+          <a href="/prywatnosc">Polityka prywatności</a>.
         </li>
         <li>
           Zmiany regulaminu ogłaszane są na Portalu z 14-dniowym wyprzedzeniem; zmiany zasad

@@ -58,6 +58,8 @@ export function notificationMessage(type: string, payload: Record<string, unknow
       return `Awans w Drabince Lidera — poziom ${payload.level ?? ''}.`;
     case 'post_commented':
       return 'Nowy komentarz do Twojego posta.';
+    case 'user_mentioned':
+      return 'Ktoś wspomniał o Tobie.';
     case 'membership_requested':
       return 'Nowa prośba o dołączenie do Twojej grupy.';
     case 'membership_accepted':
@@ -73,6 +75,9 @@ export function notificationMessage(type: string, payload: Record<string, unknow
 
 // Cel linku powiadomienia (dane zawsze dociągane REST-em — ADR-007).
 export function notificationHref(type: string, payload: Record<string, unknown>): string {
+  // Wpis portalowy nie ma grupy — sprawdzamy go PRZED regułami grupowymi,
+  // inaczej wzmianka i komentarz lądowałyby na ogólnej liście powiadomień.
+  if (payload.socialPostId) return `/wpisy/${payload.socialPostId}`;
   if (type === 'post_commented' && payload.groupId && payload.postId)
     return `/grupy/${payload.groupId}/post/${payload.postId}`;
   if ((type === 'membership_requested' || type === 'membership_accepted') && payload.groupId)
@@ -84,4 +89,19 @@ export function notificationHref(type: string, payload: Record<string, unknown>)
   if (payload.orderId) return `/zlecenia/${payload.orderId}`;
   if (type === 'level_achieved') return '/panel/punkty';
   return '/powiadomienia';
+}
+
+/**
+ * Czas w feedzie: data i godzina bez sekund. Sekundy to czysty szum — nikt nie
+ * czyta wpisu z dokładnością co do sekundy, a na 390 px zjadają miejsce
+ * potrzebne na nazwę autora i odznakę poziomu.
+ */
+export function formatFeedTime(iso: string): string {
+  return new Date(iso).toLocaleString('pl-PL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }

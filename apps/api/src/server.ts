@@ -42,6 +42,7 @@ import type { Realtime } from './shared/realtime';
 import { createRedis } from './shared/redis';
 import type { Redis } from './shared/redis';
 import { createSessionStore } from './shared/session';
+import { createSearchService, searchRoutes } from './modules/search/index';
 import { createSocialAccountData, createSocialService, socialRoutes } from './modules/social/index';
 
 export interface AppContext {
@@ -119,6 +120,11 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   const mail = createMailService(
     {
       mailEnabled: config.mailEnabled,
+      smtpHost: config.SMTP_HOST,
+      smtpPort: config.SMTP_PORT,
+      smtpUser: config.SMTP_USER,
+      smtpPass: config.SMTP_PASS,
+      smtpSecure: config.SMTP_SECURE,
       brevoApiKey: config.BREVO_API_KEY,
       mailFrom: config.MAIL_FROM,
       mailFromName: config.MAIL_FROM_NAME,
@@ -180,6 +186,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     prisma,
     identity: identityService,
     ladder: ladderService,
+    redis,
   });
   const listingsService = createListingsService({
     prisma,
@@ -189,9 +196,12 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
 
-  await app.register(identityRoutes({ service: identityService, sessions, auth, turnstile, config }), {
-    prefix: '/api/v1',
-  });
+  await app.register(
+    identityRoutes({ service: identityService, sessions, auth, turnstile, config }),
+    {
+      prefix: '/api/v1',
+    },
+  );
   await app.register(
     marketplaceRoutes({
       profiles: profilesService,
@@ -227,6 +237,22 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     }),
     { prefix: '/api/v1' },
   );
+
+  // Wyszukiwarka globalna: komponuje publiczne API pięciu modułów, nie dotyka
+  // ich tabel (ADR-002). Cache + rate limit są tu obowiązkowe — patrz routes.ts.
+  const searchService = createSearchService({
+    listings: listingsService,
+    orders: ordersService,
+    profiles: profilesService,
+    community: communityService,
+    social: socialService,
+    identity: identityService,
+    ladder: ladderService,
+    cache,
+  });
+  await app.register(searchRoutes({ search: searchService, isTest: config.NODE_ENV === 'test' }), {
+    prefix: '/api/v1',
+  });
 
   // Socket.IO musi być podpięty po gotowości serwera HTTP (app.server istnieje
   // po app.ready()). Realtime to tylko sygnał (ADR-007) — patrz shared/realtime.

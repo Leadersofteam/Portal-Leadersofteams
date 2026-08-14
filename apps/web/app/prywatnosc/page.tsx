@@ -13,16 +13,16 @@ export default function PrivacyPage() {
 
       <h2>1. Administrator danych</h2>
       <p>
-        Administratorem danych osobowych jest Maciej Kucharski, operator platformy Leaders of
-        Teams. Kontakt w sprawach danych osobowych:{' '}
+        Administratorem danych osobowych jest Maciej Kucharski, operator platformy Leaders of Teams.
+        Kontakt w sprawach danych osobowych:{' '}
         <a href="mailto:kontakt@leadersofteams.com">kontakt@leadersofteams.com</a>.
       </p>
 
       <h2>2. Jakie dane przetwarzamy i po co</h2>
       <ul>
         <li>
-          <strong>Konto:</strong> e-mail, nazwa wyświetlana, hasło (wyłącznie jako skrót argon2id)
-          — w celu świadczenia usługi (art. 6 ust. 1 lit. b RODO).
+          <strong>Konto:</strong> e-mail, nazwa wyświetlana, hasło (wyłącznie jako skrót argon2id) —
+          w celu świadczenia usługi (art. 6 ust. 1 lit. b RODO).
         </li>
         <li>
           <strong>Treści profilu i aktywności:</strong> profil Lidera, portfolio, usługi, oferty,
@@ -35,8 +35,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Dane techniczne:</strong> logi serwera i identyfikator sesji (cookie
-          <code> lot_sid</code>, niezbędne do logowania) — bezpieczeństwo i diagnostyka
-          (art. 6 ust. 1 lit. f RODO).
+          <code> lot_sid</code>, niezbędne do logowania) — bezpieczeństwo i diagnostyka (art. 6 ust.
+          1 lit. f RODO).
         </li>
       </ul>
 
@@ -58,8 +58,8 @@ export default function PrivacyPage() {
       <h2>5. Twoje prawa</h2>
       <ul>
         <li>
-          <strong>Eksport danych:</strong> w panelu konta możesz pobrać komplet swoich danych
-          (art. 20 RODO).
+          <strong>Eksport danych:</strong> w panelu konta możesz pobrać komplet swoich danych (art.
+          20 RODO).
         </li>
         <li>
           <strong>Usunięcie konta:</strong> anonimizuje dane osobowe w miejscu; jawny rejestr

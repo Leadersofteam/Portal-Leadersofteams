@@ -35,7 +35,10 @@ export default function RegisterPage() {
           ...(turnstileToken ? { turnstileToken } : {}),
         }),
       });
-      router.push('/panel');
+      // Świeże konto trafia do kreatora, nie do pustego panelu — na pustym
+      // rynku pierwsze „co teraz?" kosztuje nas użytkownika. Kreator jest
+      // w całości pomijalny (patrz app/start/wizard.tsx).
+      router.push('/start');
       router.refresh();
     } catch (err) {
       setError(
@@ -77,11 +80,7 @@ export default function RegisterPage() {
           </div>
           {TURNSTILE_SITE_KEY && (
             <>
-              <Script
-                src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-                async
-                defer
-              />
+              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
               <div className="cf-turnstile field" data-sitekey={TURNSTILE_SITE_KEY} />
             </>
           )}

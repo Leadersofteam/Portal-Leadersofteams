@@ -91,8 +91,20 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
           'Zbuduję i wdrożę automatyzację lejka sprzedażowego end-to-end: od scoringu leadów po sekwencje follow-up.',
         tags: ['automatyzacja', 'CRM'],
         packages: [
-          { tier: 'BASIC', name: 'Audyt', priceDeclared: 1500, scope: 'Audyt lejka + raport z rekomendacjami', deliveryDays: 7 },
-          { tier: 'PREMIUM', name: 'Wdrożenie', priceDeclared: 9000, scope: 'Pełne wdrożenie automatyzacji z testami', deliveryDays: 30 },
+          {
+            tier: 'BASIC',
+            name: 'Audyt',
+            priceDeclared: 1500,
+            scope: 'Audyt lejka + raport z rekomendacjami',
+            deliveryDays: 7,
+          },
+          {
+            tier: 'PREMIUM',
+            name: 'Wdrożenie',
+            priceDeclared: 9000,
+            scope: 'Pełne wdrożenie automatyzacji z testami',
+            deliveryDays: 30,
+          },
         ],
         imageFileIds: [],
       },
@@ -113,21 +125,33 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
   it('katalog zwraca usługę z metadanymi Lidera; filtry cen działają', async () => {
     const list = await ctx.app.inject({ method: 'GET', url: '/api/v1/listings?sort=price_asc' });
     expect(list.statusCode).toBe(200);
-    const found = (list.json() as { listings: Array<{ id: string; priceFrom: number; leader: { displayName: string; level: number } }> }).listings.find(
-      (l) => l.id === listingId,
-    );
+    const found = (
+      list.json() as {
+        listings: Array<{
+          id: string;
+          priceFrom: number;
+          leader: { displayName: string; level: number };
+        }>;
+      }
+    ).listings.find((l) => l.id === listingId);
     expect(found).toBeDefined();
     expect(found!.priceFrom).toBe(1500);
     expect(found!.leader.displayName).toBe('Lider Usługowy');
 
     const filtered = await ctx.app.inject({ method: 'GET', url: '/api/v1/listings?priceMax=1000' });
     expect(
-      (filtered.json() as { listings: Array<{ id: string }> }).listings.some((l) => l.id === listingId),
+      (filtered.json() as { listings: Array<{ id: string }> }).listings.some(
+        (l) => l.id === listingId,
+      ),
     ).toBe(false);
 
-    const detail = await ctx.app.inject({ method: 'GET', url: `/api/v1/listings/slug/${listingSlug}` });
+    const detail = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/listings/slug/${listingSlug}`,
+    });
     expect(detail.statusCode).toBe(200);
-    const packages = (detail.json() as { listing: { packages: Array<{ tier: string }> } }).listing.packages;
+    const packages = (detail.json() as { listing: { packages: Array<{ tier: string }> } }).listing
+      .packages;
     expect(packages.map((p) => p.tier)).toEqual(['BASIC', 'PREMIUM']);
   });
 
@@ -175,7 +199,8 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
       url: `/api/v1/inquiries/${inquiryId}`,
       headers: { cookie: companyCookie },
     });
-    const messages = (thread.json() as { inquiry: { messages: Array<{ body: string }> } }).inquiry.messages;
+    const messages = (thread.json() as { inquiry: { messages: Array<{ body: string }> } }).inquiry
+      .messages;
     expect(messages).toHaveLength(2);
 
     const converted = await ctx.app.inject({

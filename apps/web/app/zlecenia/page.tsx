@@ -93,6 +93,7 @@ export default async function OrdersPage({
 
       {orders.length === 0 ? (
         <EmptyState
+          art="search"
           title="Brak zleceń spełniających kryteria"
           ctaHref="/zlecenia/nowe"
           ctaLabel="Dodaj pierwsze zlecenie"

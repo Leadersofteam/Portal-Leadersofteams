@@ -1,7 +1,13 @@
+import {
+  createSocialCommentInputSchema,
+  createSocialPostInputSchema,
+  feedQuerySchema,
+  updateSocialPostInputSchema,
+} from '@lot/contracts';
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
 
 import type { AuthHelpers } from '../../shared/auth';
+import { UnauthorizedError } from '../../shared/errors';
 import { parseBody } from '../../shared/validation';
 import type { SocialService } from './service';
 
@@ -9,11 +15,6 @@ export interface SocialRoutesDeps {
   social: SocialService;
   auth: AuthHelpers;
 }
-
-const feedQuerySchema = z.object({
-  cursor: z.string().optional(),
-  limit: z.coerce.number().int().min(1).max(50).default(20),
-});
 
 export function socialRoutes({ social, auth }: SocialRoutesDeps) {
   return async function plugin(app: FastifyInstance) {
@@ -32,10 +33,63 @@ export function socialRoutes({ social, auth }: SocialRoutesDeps) {
       return reply.send({ following: await social.isFollowing(user.id, request.params.id) });
     });
 
-    app.get('/feed', async (request, reply) => {
+    // --- wpisy portalowe ------------------------------------------------------
+    // Prefiks /social/posts jest OBOWIĄZKOWY: /posts/:id należy do modułu groups
+    // (Fastify odmówiłby startu przy zduplikowanej trasie).
+
+    app.post('/social/posts', async (request, reply) => {
       const user = await auth.requireUser(request);
-      const { cursor, limit } = parseBody(feedQuerySchema, request.query);
-      return reply.send(await social.getFeed(user.id, cursor, limit));
+      const input = parseBody(createSocialPostInputSchema, request.body);
+      return reply.code(201).send(await social.createPost(user.id, input));
+    });
+
+    app.get<{ Params: { id: string } }>('/social/posts/:id', async (request, reply) => {
+      const viewer = await auth.currentUser(request);
+      return reply.send(await social.getPost(request.params.id, viewer?.id));
+    });
+
+    app.patch<{ Params: { id: string } }>('/social/posts/:id', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const input = parseBody(updateSocialPostInputSchema, request.body);
+      return reply.send(await social.updatePost(user.id, request.params.id, input));
+    });
+
+    app.delete<{ Params: { id: string } }>('/social/posts/:id', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      return reply.send(await social.deletePost(user.id, request.params.id));
+    });
+
+    app.post<{ Params: { id: string } }>('/social/posts/:id/comments', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const input = parseBody(createSocialCommentInputSchema, request.body);
+      return reply.code(201).send(await social.addComment(user.id, request.params.id, input));
+    });
+
+    app.delete<{ Params: { id: string } }>('/social/comments/:id', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      return reply.send(await social.deleteComment(user.id, request.params.id));
+    });
+
+    app.put<{ Params: { id: string } }>('/social/posts/:id/appreciate', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      return reply.send(await social.appreciate(user.id, request.params.id));
+    });
+
+    app.delete<{ Params: { id: string } }>(
+      '/social/posts/:id/appreciate',
+      async (request, reply) => {
+        const user = await auth.requireUser(request);
+        return reply.send(await social.unappreciate(user.id, request.params.id));
+      },
+    );
+
+    // Feed: scope=all działa także dla gościa (treść i tak publiczna),
+    // scope=following wymaga sesji — bez niej nie ma czyjej osi pokazać.
+    app.get('/feed', async (request, reply) => {
+      const viewer = await auth.currentUser(request);
+      const { scope, cursor, limit } = parseBody(feedQuerySchema, request.query);
+      if (scope === 'following' && !viewer) throw new UnauthorizedError();
+      return reply.send(await social.getFeed(viewer?.id ?? null, { scope, cursor, limit }));
     });
 
     app.get<{ Params: { handle: string } }>('/profiles/:handle', async (request, reply) => {

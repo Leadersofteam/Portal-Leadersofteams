@@ -1,6 +1,22 @@
-// Warstwa e-mail (D4) za flagą konfiguracyjną. 0 zł (ADR-009): darmowy tier Brevo
-// (300/dzień) przez API, a przy braku klucza — fallback no-op (log). Realna wysyłka
-// jest WYŁĄCZONA dopóki właściciel nie poda BREVO_API_KEY; scaffolding jest gotowy.
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
+
+// Warstwa e-mail (D4) — 0 zł (ADR-009), dwa transporty i bezpieczny fallback.
+//
+// DOMYŚLNA DROGA TO WŁASNA SKRZYNKA (SMTP), nie zewnętrzny dostawca: używamy tej
+// samej skrzynki co App (smtp.hostinger.com, kontakt@leadersofteams.com), która
+// jest już opłacona w ramach hostingu domeny. Żadnego nowego vendora, żadnego
+// nowego kosztu, żadnej zgody na przetwarzanie danych przez trzecią stronę.
+//
+// Brevo zostaje jako alternatywa (darmowy tier 300/dzień) — przydatny, jeśli
+// kiedyś dojdzie masowy digest i nie będziemy chcieli obciążać reputacji
+// skrzynki transakcyjnej App-a.
+//
+// ⚠️ Czego świadomie NIE robimy: własnego serwera pocztowego na VPS. Port 25
+// wychodzący bywa blokowany, a poczta z „świeżego" IP bez historii i tak ląduje
+// w spamie — SPF/DKIM/DMARC to za mało. Skrzynka u dostawcy hostingu ma gotową
+// reputację i to jest jedyny sensowny wybór przy naszej skali.
+
 export interface MailMessage {
   to: string;
   subject: string;
@@ -15,6 +31,11 @@ export interface MailService {
 
 export interface MailConfig {
   mailEnabled: boolean;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUser?: string;
+  smtpPass?: string;
+  smtpSecure?: boolean;
   brevoApiKey?: string;
   mailFrom: string;
   mailFromName: string;
@@ -22,8 +43,48 @@ export interface MailConfig {
 
 export type MailLogger = (event: string, data: Record<string, unknown>) => void;
 
-// Wysyłka przez Brevo (transakcyjny SMTP API). Wywoływana WYŁĄCZNIE gdy włączona
-// flaga (klucz obecny). Digest trzyma wolumen poniżej limitu 300/dzień (ADR-009).
+// --- Transport 1: własna skrzynka przez SMTP (domyślny) ---------------------
+function createSmtpMailer(config: MailConfig, log?: MailLogger): MailService {
+  let transporter: Transporter | null = null;
+
+  // Leniwie: połączenie otwieramy przy pierwszej wysyłce, nie przy starcie
+  // serwera. Niedostępny SMTP nie może blokować bootu API.
+  function getTransport(): Transporter {
+    transporter ??= nodemailer.createTransport({
+      host: config.smtpHost!,
+      port: config.smtpPort ?? 465,
+      secure: config.smtpSecure ?? true,
+      auth: { user: config.smtpUser!, pass: config.smtpPass! },
+    });
+    return transporter;
+  }
+
+  return {
+    enabled: true,
+    async send(msg) {
+      try {
+        await getTransport().sendMail({
+          from: `"${config.mailFromName}" <${config.mailFrom}>`,
+          to: msg.to,
+          subject: msg.subject,
+          text: msg.text,
+          ...(msg.html ? { html: msg.html } : {}),
+        });
+        log?.('mail.sent', { transport: 'smtp', to: msg.to, subject: msg.subject });
+      } catch (err) {
+        // Log NIE zawiera treści ani danych uwierzytelniających — tylko powód.
+        log?.('mail.send_failed', {
+          transport: 'smtp',
+          to: msg.to,
+          reason: err instanceof Error ? err.message : 'unknown',
+        });
+        throw err;
+      }
+    },
+  };
+}
+
+// --- Transport 2: Brevo (alternatywa) ---------------------------------------
 function createBrevoMailer(config: MailConfig, log?: MailLogger): MailService {
   return {
     enabled: true,
@@ -45,15 +106,19 @@ function createBrevoMailer(config: MailConfig, log?: MailLogger): MailService {
       });
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        log?.('mail.send_failed', { status: res.status, body: body.slice(0, 500) });
+        log?.('mail.send_failed', {
+          transport: 'brevo',
+          status: res.status,
+          body: body.slice(0, 500),
+        });
         throw new Error(`Brevo send failed: ${res.status}`);
       }
-      log?.('mail.sent', { to: msg.to, subject: msg.subject });
+      log?.('mail.sent', { transport: 'brevo', to: msg.to, subject: msg.subject });
     },
   };
 }
 
-// Fallback bez sekretu: nic nie wysyła, tylko loguje (0 zł, bezpieczny domyślnie).
+// --- Fallback: nic nie wysyła, tylko loguje ---------------------------------
 function createNoopMailer(log?: MailLogger): MailService {
   return {
     enabled: false,
@@ -63,8 +128,14 @@ function createNoopMailer(log?: MailLogger): MailService {
   };
 }
 
+/**
+ * Wybór transportu. Kolejność jest celowa: własna skrzynka ma pierwszeństwo
+ * przed zewnętrznym dostawcą. Jeśli skonfigurowano oba, wygrywa SMTP.
+ */
 export function createMailService(config: MailConfig, log?: MailLogger): MailService {
-  return config.mailEnabled && config.brevoApiKey
-    ? createBrevoMailer(config, log)
-    : createNoopMailer(log);
+  if (config.smtpHost && config.smtpUser && config.smtpPass) {
+    return createSmtpMailer(config, log);
+  }
+  if (config.brevoApiKey) return createBrevoMailer(config, log);
+  return createNoopMailer(log);
 }

@@ -10,6 +10,7 @@ import type {
 import type { Prisma } from '@prisma/client';
 
 import type { PrismaClient } from '../../shared/db';
+import { toBooleanQuery } from '../../shared/fulltext';
 import {
   DomainError,
   ForbiddenError,
@@ -41,7 +42,15 @@ export interface ListingsDeps {
 
 function slugify(title: string): string {
   const map: Record<string, string> = {
-    ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
+    ą: 'a',
+    ć: 'c',
+    ę: 'e',
+    ł: 'l',
+    ń: 'n',
+    ó: 'o',
+    ś: 's',
+    ź: 'z',
+    ż: 'z',
   };
   const base = title
     .toLowerCase()
@@ -268,14 +277,21 @@ export function createListingsService({ prisma, identity, orders, files, redis }
     async list(filters: ListingFilters) {
       // FULLTEXT jak w orders: surowy MATCH…AGAINST po id (wzorzec loadPublished).
       let fulltextIds: string[] | null = null;
+      let likeQ: string | null = null;
       if (filters.q) {
-        const rows = await prisma.$queryRaw<Array<{ id: string }>>`
-            SELECT id FROM service_listings
-            WHERE MATCH(title, description) AGAINST(${filters.q} IN NATURAL LANGUAGE MODE)
-              AND status = 'PUBLISHED'
-            LIMIT 200`;
-        fulltextIds = rows.map((r) => r.id);
-        if (fulltextIds.length === 0) return { listings: [], nextCursor: null };
+        const expr = toBooleanQuery(filters.q);
+        if (expr) {
+          const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+              SELECT id FROM service_listings
+              WHERE MATCH(title, description) AGAINST(${expr} IN BOOLEAN MODE)
+                AND status = 'PUBLISHED'
+              LIMIT 200`;
+          fulltextIds = rows.map((r) => r.id);
+          if (fulltextIds.length === 0) return { listings: [], nextCursor: null };
+        } else {
+          // Fraza krótsza niż próg indeksu — fallback na LIKE po tytule.
+          likeQ = filters.q;
+        }
       }
 
       const priceWhere: Prisma.IntFilter | undefined =
@@ -290,6 +306,7 @@ export function createListingsService({ prisma, identity, orders, files, redis }
         status: 'PUBLISHED',
         leaderProfile: { isVisible: true },
         ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
+        ...(likeQ ? { title: { contains: likeQ } } : {}),
         ...(filters.industryId ? { industryId: filters.industryId } : {}),
         ...(filters.tag ? { tags: { some: { tag: { slug: filters.tag } } } } : {}),
         ...(priceWhere ? { priceFrom: priceWhere } : {}),

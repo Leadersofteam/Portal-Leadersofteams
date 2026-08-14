@@ -17,7 +17,12 @@ interface ProfileData {
   headline: string;
   bio: string | null;
   isVisible: boolean;
-  portfolioItems: Array<{ id: string; title: string; url: string | null; imageFileId?: string | null }>;
+  portfolioItems: Array<{
+    id: string;
+    title: string;
+    url: string | null;
+    imageFileId?: string | null;
+  }>;
 }
 
 async function uploadImage(file: File, kind: 'AVATAR' | 'PORTFOLIO'): Promise<string> {
@@ -138,11 +143,7 @@ export function ProfileForm({
         <h2>Zdjęcie profilowe</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span className="avatar lg">
-            {avatarId ? (
-              <img src={`/api/v1/files/${avatarId}/thumb`} alt="" />
-            ) : (
-              '•'
-            )}
+            {avatarId ? <img src={`/api/v1/files/${avatarId}/thumb`} alt="" /> : '•'}
           </span>
           <div className="actions-row" style={{ margin: 0 }}>
             <label className="btn secondary" style={{ cursor: 'pointer' }}>
@@ -254,7 +255,12 @@ export function ProfileForm({
             </div>
             <div className="field">
               <label htmlFor="pf-image">Zdjęcie projektu (opcjonalnie, do 5 MB)</label>
-              <input id="pf-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" />
+              <input
+                id="pf-image"
+                name="image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+              />
             </div>
             <button className="btn secondary" type="submit">
               Dodaj pozycję

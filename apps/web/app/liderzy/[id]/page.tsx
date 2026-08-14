@@ -85,9 +85,11 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
   const isSelf = me?.user?.id === profile.userId;
   const initiallyFollowing =
     me?.user && !isSelf
-      ? ((await serverApi<{ following: boolean }>(`/users/${profile.userId}/follow`).catch(
-          () => null,
-        ))?.following ?? false)
+      ? ((
+          await serverApi<{ following: boolean }>(`/users/${profile.userId}/follow`).catch(
+            () => null,
+          )
+        )?.following ?? false)
       : false;
   const reviewsData =
     profile.reviewCount > 0
@@ -150,8 +152,18 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
           </div>
           {reviewsData.reviews.map((review) => (
             <div key={review.id} className="card mt-2">
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                <strong>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</strong>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <strong>
+                  {'★'.repeat(review.rating)}
+                  {'☆'.repeat(5 - review.rating)}
+                </strong>
                 <span className="muted">{review.companyName}</span>
               </div>
               <p className="muted" style={{ margin: '0.3rem 0 0' }}>

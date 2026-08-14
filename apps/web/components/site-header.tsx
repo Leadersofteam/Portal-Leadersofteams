@@ -4,9 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import { GlobalSearch } from '@/components/global-search';
 import { NotificationBell } from '@/components/notification-bell';
 import { LogoMark } from '@/components/ui/logo';
 
+// Pełna nawigacja desktopu. Na mobile pięć najczęstszych miejsc przejmuje
+// dolny pasek (components/bottom-nav.tsx), a reszta zostaje pod hamburgerem —
+// header ma wtedy nieść tylko markę i wejście w menu.
 const NAV_LINKS = [
   { href: '/feed', label: 'Feed' },
   { href: '/uslugi', label: 'Usługi' },
@@ -29,6 +33,8 @@ export function SiteHeader() {
         Leaders of Teams
       </Link>
 
+      <GlobalSearch />
+
       <button
         type="button"
         className="nav-toggle"
@@ -46,7 +52,9 @@ export function SiteHeader() {
           <Link
             key={link.href}
             href={link.href}
-            className={pathname === link.href || pathname.startsWith(`${link.href}/`) ? 'active' : ''}
+            className={
+              pathname === link.href || pathname.startsWith(`${link.href}/`) ? 'active' : ''
+            }
             onClick={close}
           >
             {link.label}

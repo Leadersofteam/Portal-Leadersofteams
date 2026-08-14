@@ -79,6 +79,28 @@ export type SessionUser = z.infer<typeof sessionUserSchema>;
 // Firma
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// NIP — walidacja sumy kontrolnej (offline, 0 zł — ADR-009)
+//
+// UWAGA CO DOKŁADNIE SPRAWDZAMY: to jest wyłącznie poprawność FORMALNA numeru
+// (algorytm wagowy mod 11), a NIE potwierdzenie, że firma istnieje i jest
+// czynnym podatnikiem. Dlatego etykieta w UI musi brzmieć „NIP — suma kontrolna
+// OK", nigdy „NIP zweryfikowany": marka Portalu stoi na „dowód, nie deklaracja",
+// więc nie wolno nam sugerować weryfikacji rejestrowej, której nie robimy.
+// Weryfikacja w Białej Liście MF dojdzie, gdy potwierdzimy limity darmowego API.
+// ---------------------------------------------------------------------------
+
+const NIP_WEIGHTS = [6, 5, 7, 2, 3, 4, 5, 6, 7] as const;
+
+export function isValidNip(nip: string): boolean {
+  const digits = nip.replace(/[\s-]/g, '');
+  if (!/^\d{10}$/.test(digits)) return false;
+  const sum = NIP_WEIGHTS.reduce((acc, weight, i) => acc + weight * Number(digits[i]), 0);
+  const check = sum % 11;
+  // Reszta 10 nie ma reprezentacji jako cyfra kontrolna — taki numer jest błędny.
+  return check !== 10 && check === Number(digits[9]);
+}
+
 export const createCompanyInputSchema = z.object({
   name: z.string().trim().min(2).max(120),
   // NIP opcjonalny na starcie (brak weryfikacji Firm — brief 3.4);
@@ -87,6 +109,7 @@ export const createCompanyInputSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{10}$/, 'NIP musi składać się z 10 cyfr')
+    .refine(isValidNip, 'Nieprawidłowy NIP — błędna suma kontrolna')
     .optional(),
   description: z.string().trim().max(2000).optional(),
 });
@@ -198,9 +221,7 @@ export type UpdateListingInput = z.infer<typeof updateListingInputSchema>;
 
 // Sortowanie tylko po polach SQL-owalnych z kursorem (rating liczy się per
 // Lider poza tym modułem — świadomie poza enum, żeby nie kłamać paginacją).
-export const listingSortSchema = z
-  .enum(['newest', 'price_asc', 'price_desc'])
-  .default('newest');
+export const listingSortSchema = z.enum(['newest', 'price_asc', 'price_desc']).default('newest');
 export type ListingSort = z.infer<typeof listingSortSchema>;
 
 export const listingFiltersSchema = z.object({
@@ -329,7 +350,10 @@ export const moderationResolveInputSchema = z.object({
 export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;
 
 // Zgłoszenie treści przez użytkownika (D7) → ModerationCase źródło REPORT.
-export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER']);
+// SOCIAL_POST jest osobnym typem, a nie POST: id wpisu portalowego wskazuje
+// tabelę social_posts, więc wrzucenie go pod „POST" kierowałoby moderatora do
+// nieistniejącego posta w grupie.
+export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER', 'SOCIAL_POST']);
 export type ReportSubjectType = z.infer<typeof reportSubjectTypeSchema>;
 
 export const reportInputSchema = z.object({
@@ -444,3 +468,66 @@ export const notificationsReadInputSchema = z
     path: ['ids'],
   });
 export type NotificationsReadInput = z.infer<typeof notificationsReadInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Social — wpis portalowy (moduł social, X-lite wg ADR-010)
+//
+// Krótka notka bez tytułu: to nie jest post w grupie (tam jest tytuł, typ
+// i moderacja grupowa), tylko wpis „co u mnie" do obserwujących. Limit 600
+// znaków jest celowy — zmusza do konkretu i trzyma feed czytelnym na 390 px.
+// ZERO punktów za cokolwiek tutaj (ADR-004).
+// ---------------------------------------------------------------------------
+
+export const socialPostBodySchema = z
+  .string()
+  .trim()
+  .min(1, 'Wpis nie może być pusty')
+  .max(600, 'Wpis: maksymalnie 600 znaków');
+
+export const createSocialPostInputSchema = z.object({ body: socialPostBodySchema });
+export type CreateSocialPostInput = z.infer<typeof createSocialPostInputSchema>;
+
+export const updateSocialPostInputSchema = z.object({ body: socialPostBodySchema });
+export type UpdateSocialPostInput = z.infer<typeof updateSocialPostInputSchema>;
+
+export const createSocialCommentInputSchema = z.object({
+  body: z.string().trim().min(1, 'Komentarz nie może być pusty').max(2000),
+  // Wątkowanie 1 poziom — jak w grupach.
+  parentId: idSchema.optional(),
+});
+export type CreateSocialCommentInput = z.infer<typeof createSocialCommentInputSchema>;
+
+// Zakres feedu: obserwowani (wymaga sesji) albo cała społeczność (także dla
+// gościa — pusty rynek nie wybacza ekranu logowania jako pierwszego wrażenia).
+export const feedScopeSchema = z.enum(['following', 'all']).default('following');
+export type FeedScope = z.infer<typeof feedScopeSchema>;
+
+export const feedQuerySchema = z.object({
+  scope: feedScopeSchema,
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type FeedQuery = z.infer<typeof feedQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Onboarding — pierwsza mila (S10)
+//
+// To WYŁĄCZNIE stan interfejsu: który krok kreatora, jaka intencja, czy
+// checklista schowana. Zero związku z punktacją — patrz komentarz nad
+// updateOnboarding w modules/identity/service.ts.
+// ---------------------------------------------------------------------------
+
+export const onboardingIntentSchema = z.enum(['LEADER', 'COMPANY', 'BOTH']);
+export type OnboardingIntent = z.infer<typeof onboardingIntentSchema>;
+
+export const updateOnboardingInputSchema = z
+  .object({
+    step: z.coerce.number().int().min(0).max(4).optional(),
+    intent: onboardingIntentSchema.optional(),
+    completed: z.boolean().optional(),
+    dismissChecklist: z.boolean().optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: 'Podaj co najmniej jedno pole',
+  });
+export type UpdateOnboardingInput = z.infer<typeof updateOnboardingInputSchema>;

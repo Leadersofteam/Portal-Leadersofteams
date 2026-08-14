@@ -19,10 +19,28 @@ export E2E_BASE_URL=http://127.0.0.1:3000
 
 pids=()
 cleanup() {
-  for p in "${pids[@]:-}"; do kill "$p" 2>/dev/null || true; done
+  # UWAGA: `pnpm exec …` to opakowanie — zabicie samego rodzica zostawia żywy
+  # proces `next-server` na porcie 3000. Kolejny przebieg dostaje wtedy
+  # EADDRINUSE, ale skrypt tego NIE widzi (curl trafia w stary serwer) i testy
+  # lecą przeciwko POPRZEDNIEMU buildowi — objawia się to lawiną niezrozumiałych
+  # czerwonych testów. Dlatego ubijamy całe grupy procesów (startowane setsid).
+  for p in "${pids[@]:-}"; do
+    kill -- "-$p" 2>/dev/null || kill "$p" 2>/dev/null || true
+  done
   docker compose -f infra/docker-compose.dev.yml -p portal-dev down -v >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+
+# Port zajęty przez sierotę z poprzedniego przebiegu = testy przeciwko staremu
+# buildowi. Lepiej stanąć od razu z jasnym komunikatem niż zielenić/czerwienić
+# się z niewłaściwego powodu.
+for port in 3000 3001; do
+  if ss -ltn "sport = :$port" 2>/dev/null | grep -q LISTEN; then
+    echo "BŁĄD: port $port jest zajęty (sierota z poprzedniego przebiegu?)." >&2
+    ss -ltnp "sport = :$port" >&2 || true
+    exit 1
+  fi
+done
 
 echo "== MySQL/Redis (compose dev) =="
 docker compose -f infra/docker-compose.dev.yml -p portal-dev up -d --wait
@@ -34,9 +52,9 @@ echo "== build web (produkcyjny) =="
 NODE_ENV=production pnpm -C apps/web exec next build >/tmp/e2e-webbuild.log 2>&1 || { tail -30 /tmp/e2e-webbuild.log; exit 1; }
 
 echo "== api + worker + web =="
-NODE_ENV=development pnpm -C apps/api exec tsx src/main.ts >/tmp/e2e-api.log 2>&1 & pids+=($!)
-NODE_ENV=development pnpm -C apps/api exec tsx src/worker.ts >/tmp/e2e-worker.log 2>&1 & pids+=($!)
-NODE_ENV=production pnpm -C apps/web exec next start -p 3000 -H 127.0.0.1 >/tmp/e2e-web.log 2>&1 & pids+=($!)
+setsid env NODE_ENV=development pnpm -C apps/api exec tsx src/main.ts >/tmp/e2e-api.log 2>&1 & pids+=($!)
+setsid env NODE_ENV=development pnpm -C apps/api exec tsx src/worker.ts >/tmp/e2e-worker.log 2>&1 & pids+=($!)
+setsid env NODE_ENV=production pnpm -C apps/web exec next start -p 3000 -H 127.0.0.1 >/tmp/e2e-web.log 2>&1 & pids+=($!)
 
 echo "== czekam na web (http://127.0.0.1:3000) =="
 for i in $(seq 1 90); do

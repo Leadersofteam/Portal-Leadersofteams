@@ -60,11 +60,25 @@ export function OwnPostActions({
         {error && <div className="error-box">{error}</div>}
         <div className="field">
           <label htmlFor="edit-title">Tytuł</label>
-          <input id="edit-title" name="title" required minLength={5} maxLength={140} defaultValue={title} />
+          <input
+            id="edit-title"
+            name="title"
+            required
+            minLength={5}
+            maxLength={140}
+            defaultValue={title}
+          />
         </div>
         <div className="field">
           <label htmlFor="edit-body">Treść</label>
-          <textarea id="edit-body" name="body" required minLength={10} maxLength={20000} defaultValue={body} />
+          <textarea
+            id="edit-body"
+            name="body"
+            required
+            minLength={10}
+            maxLength={20000}
+            defaultValue={body}
+          />
         </div>
         <div className="actions-row" style={{ margin: 0 }}>
           <button className="btn" type="submit" disabled={pending}>
@@ -81,10 +95,20 @@ export function OwnPostActions({
   return (
     <div className="actions-row" style={{ margin: '0.5rem 0 0' }}>
       {error && <span className="badge warning">{error}</span>}
-      <button className="btn secondary" type="button" disabled={pending} onClick={() => setEditing(true)}>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={pending}
+        onClick={() => setEditing(true)}
+      >
         Edytuj
       </button>
-      <button className="btn secondary" type="button" disabled={pending} onClick={() => void onDelete()}>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={pending}
+        onClick={() => void onDelete()}
+      >
         Usuń
       </button>
     </div>

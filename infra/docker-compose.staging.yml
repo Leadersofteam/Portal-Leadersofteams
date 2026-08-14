@@ -58,6 +58,16 @@ services:
       REDIS_URL: redis://redis:6379
       LOG_LEVEL: debug
       UPLOADS_DIR: /app/uploads
+      # E-mail: ten sam zestaw co na produkcji, żeby dało się przetestować
+      # wysyłkę PRZED wdrożeniem. Puste = no-op (log zamiast maila).
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
+      APP_BASE_URL: ${APP_BASE_URL:-https://staging.leadersofteams.pl}
     volumes:
       - portal_staging_uploads:/app/uploads
     depends_on:

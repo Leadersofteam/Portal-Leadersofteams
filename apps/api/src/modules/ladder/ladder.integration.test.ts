@@ -357,10 +357,17 @@ describe.skipIf(!hasInfra)('Drabinka — oceny, punkty, poziomy, antyfraud', () 
       headers: { cookie: modCookie },
     });
     expect(cases.statusCode).toBe(200);
+    // Zawężamy do sprawy TEGO przebiegu (subjectUserId = nasz Lider). Wcześniej
+    // test brał „pierwszą sprawę z jakimkolwiek pointEventId" i wystarczyła
+    // jedna resztka po przerwanym przebiegu — wskazująca na skasowany już
+    // PointEvent — żeby dostać 404 w miejscu niezwiązanym z przyczyną.
     const openCase = cases
       .json()
-      .cases.find((c: { pointEventId: string | null }) => c.pointEventId);
-    expect(openCase).toBeDefined();
+      .cases.find(
+        (c: { pointEventId: string | null; subjectUserId: string | null }) =>
+          c.pointEventId && c.subjectUserId === leaderUserId,
+      );
+    expect(openCase, 'brak otwartej sprawy dla Lidera z tego przebiegu').toBeDefined();
 
     const resolve = await post(modCookie, `/api/v1/moderation/cases/${openCase.id}/resolve`, {
       action: 'REJECT',

@@ -67,6 +67,9 @@ interface UserMentionedPayload {
   groupId?: string;
   postId?: string;
   threadId?: string;
+  // Wzmianka we wpisie portalowym nie ma grupy — bez tego pola powiadomienie
+  // nie miałoby dokąd prowadzić i lądowałoby na ogólnej liście.
+  socialPostId?: string;
 }
 
 interface LevelAchievedPayload {
@@ -76,8 +79,9 @@ interface LevelAchievedPayload {
 }
 interface CommentAddedPayload {
   commentId: string;
-  postId: string;
-  groupId: string;
+  postId?: string;
+  groupId?: string;
+  socialPostId?: string;
   postAuthorUserId: string;
   actorUserId: string;
 }
@@ -148,8 +152,13 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
         {
           userId: p.mentionedUserId,
           type: 'user_mentioned',
-          dedupeKey: `user_mentioned:${p.postId ?? p.threadId ?? 'x'}:${p.authorUserId}`,
-          payload: { groupId: p.groupId, postId: p.postId, threadId: p.threadId },
+          dedupeKey: `user_mentioned:${p.postId ?? p.threadId ?? p.socialPostId ?? 'x'}:${p.authorUserId}`,
+          payload: {
+            groupId: p.groupId,
+            postId: p.postId,
+            threadId: p.threadId,
+            socialPostId: p.socialPostId,
+          },
         },
       ]);
     },
@@ -243,7 +252,7 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
           userId: p.postAuthorUserId,
           type: 'post_commented',
           dedupeKey: `comment_added:${p.commentId}`,
-          payload: { postId: p.postId, groupId: p.groupId },
+          payload: { postId: p.postId, groupId: p.groupId, socialPostId: p.socialPostId },
         },
       ]);
     },

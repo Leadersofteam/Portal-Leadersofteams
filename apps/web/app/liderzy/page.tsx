@@ -89,6 +89,7 @@ export default async function LeadersDirectoryPage({
 
       {leaders.length === 0 ? (
         <EmptyState
+          art="search"
           title="Brak Liderów spełniających kryteria"
           ctaHref="/liderzy"
           ctaLabel="Wyczyść filtry"

@@ -1,19 +1,32 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
+import { AppreciateButton } from '@/components/appreciate-button';
+import { MentionText } from '@/components/mention-text';
+import { ShareButton } from '@/components/share-button';
 import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LevelBadge } from '@/components/ui/level-badge';
+import { formatFeedTime } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
-export const metadata = { title: 'Twój feed — Leaders of Teams' };
+import { Composer } from './composer';
+
+export const metadata = { title: 'Feed społeczności — Leaders of Teams' };
+
+type FeedScope = 'following' | 'all';
 
 interface FeedItem {
   id: string;
-  type: 'POST_PUBLISHED' | 'LISTING_PUBLISHED' | 'ANSWER_ACCEPTED' | 'LEVEL_ACHIEVED';
+  type:
+    | 'POST_PUBLISHED'
+    | 'LISTING_PUBLISHED'
+    | 'ANSWER_ACCEPTED'
+    | 'LEVEL_ACHIEVED'
+    | 'SOCIAL_POST_PUBLISHED';
   subjectId: string;
   meta: Record<string, unknown>;
   createdAt: string;
+  post?: { body: string; editedAt: string | null; appreciations: number; comments: number };
   actor: {
     id: string;
     displayName: string;
@@ -23,6 +36,8 @@ interface FeedItem {
   };
 }
 
+// Opis zdarzenia w feedzie. Wpis portalowy jest wyjątkiem: nie opisujemy go
+// zdaniem, tylko pokazujemy treść — to jedyny typ, który sam w sobie JEST treścią.
 function itemDescription(item: FeedItem): { text: string; href: string | null } {
   const meta = item.meta;
   switch (item.type) {
@@ -56,77 +71,136 @@ export default async function FeedPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
-  if (!me?.user) redirect('/logowanie');
-
   const params = await searchParams;
+  const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
+  const isLoggedIn = Boolean(me?.user);
+
+  // Gość zawsze ląduje na „całej społeczności" — pusty rynek nie wybacza
+  // ekranu logowania jako pierwszego wrażenia.
+  const requested = params.zakres === 'wszyscy' ? 'all' : 'following';
+  const scope: FeedScope = isLoggedIn ? requested : 'all';
   const cursor = typeof params.cursor === 'string' ? params.cursor : '';
+
+  const query = new URLSearchParams({ scope });
+  if (cursor) query.set('cursor', cursor);
   const data = await serverApi<{
     items: FeedItem[];
     nextCursor: string | null;
     followingCount: number;
-  }>(`/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`);
+  }>(`/feed?${query.toString()}`);
 
   const items = data?.items ?? [];
   const followingCount = data?.followingCount ?? 0;
+  const hrefFor = (s: FeedScope) => (s === 'all' ? '/feed?zakres=wszyscy' : '/feed');
 
   return (
     <main>
-      <h1>Twój feed</h1>
+      <h1>Feed społeczności</h1>
       <p className="muted">
-        Chronologiczna aktywność obserwowanych — bez algorytmu, bez nieskończonego scrolla. To Ty
-        decydujesz, kogo słuchasz.
+        Chronologicznie — bez algorytmu, bez nieskończonego scrolla. To Ty decydujesz, kogo
+        słuchasz.
       </p>
 
-      {followingCount === 0 ? (
-        <EmptyState
-          title="Nie obserwujesz jeszcze nikogo"
-          ctaHref="/liderzy"
-          ctaLabel="Przeglądaj katalog Liderów"
-        >
-          Wejdź na profil Lidera i kliknij „Obserwuj" — jego wpisy, usługi i awanse pojawią się
-          tutaj.
-        </EmptyState>
-      ) : items.length === 0 ? (
-        <EmptyState title="Na razie cisza">
-          Obserwowani ({followingCount}) nie opublikowali jeszcze nic nowego.
-        </EmptyState>
+      {isLoggedIn && (
+        <nav className="feed-tabs" aria-label="Zakres feedu">
+          <Link href={hrefFor('following')} className={scope === 'following' ? 'active' : ''}>
+            Obserwowani
+          </Link>
+          <Link href={hrefFor('all')} className={scope === 'all' ? 'active' : ''}>
+            Cała społeczność
+          </Link>
+        </nav>
+      )}
+
+      {isLoggedIn ? (
+        <Composer />
       ) : (
-        <div className="message-thread">
+        <div className="card mt-2">
+          <p className="mt-0">
+            <Link href="/rejestracja">Załóż konto</Link>, żeby publikować wpisy, doceniać pracę
+            innych i budować swój poziom w Drabince.
+          </p>
+        </div>
+      )}
+
+      {items.length === 0 ? (
+        scope === 'following' && followingCount === 0 ? (
+          <EmptyState
+            art="ladder"
+            title="Nie obserwujesz jeszcze nikogo"
+            ctaHref="/feed?zakres=wszyscy"
+            ctaLabel="Zobacz całą społeczność"
+          >
+            Wejdź na profil Lidera i kliknij „Obserwuj" — jego wpisy, usługi i awanse pojawią się
+            tutaj.
+          </EmptyState>
+        ) : (
+          <EmptyState art="inbox" title="Na razie cisza">
+            {scope === 'following'
+              ? `Obserwowani (${followingCount}) nie opublikowali jeszcze nic nowego.`
+              : 'Nikt jeszcze nic nie opublikował. Możesz być pierwszy.'}
+          </EmptyState>
+        )
+      ) : (
+        <div className="feed-list">
           {items.map((item) => {
+            const isPost = item.type === 'SOCIAL_POST_PUBLISHED' && item.post;
             const { text, href } = itemDescription(item);
             return (
-              <div key={item.id} className="message" style={{ maxWidth: 'none' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                  <Avatar
-                    name={item.actor.displayName}
-                    size="sm"
-                    src={
-                      item.actor.avatarFileId
-                        ? `/api/v1/files/${item.actor.avatarFileId}/thumb`
-                        : null
-                    }
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      {item.actor.handle ? (
-                        <Link href={`/profil/${item.actor.handle}`}>
-                          <strong>{item.actor.displayName}</strong>
-                        </Link>
-                      ) : (
+              <article key={item.id} className="feed-card">
+                <Avatar
+                  name={item.actor.displayName}
+                  size="sm"
+                  src={
+                    item.actor.avatarFileId
+                      ? `/api/v1/files/${item.actor.avatarFileId}/thumb`
+                      : null
+                  }
+                />
+                <div className="feed-card-body">
+                  <div className="feed-card-head">
+                    {item.actor.handle ? (
+                      <Link href={`/profil/${item.actor.handle}`}>
                         <strong>{item.actor.displayName}</strong>
-                      )}
-                      {item.actor.level >= 1 && <LevelBadge level={item.actor.level} />}
-                      <span className="muted" style={{ fontSize: '0.8rem' }}>
-                        {new Date(item.createdAt).toLocaleString('pl-PL')}
-                      </span>
-                    </div>
-                    <p style={{ margin: '0.3rem 0 0' }}>
+                      </Link>
+                    ) : (
+                      <strong>{item.actor.displayName}</strong>
+                    )}
+                    {item.actor.level >= 1 && <LevelBadge level={item.actor.level} />}
+                    <time dateTime={item.createdAt} className="feed-card-time">
+                      {formatFeedTime(item.createdAt)}
+                    </time>
+                  </div>
+
+                  {isPost ? (
+                    <>
+                      <p className="feed-post-body">
+                        <MentionText>{item.post!.body}</MentionText>
+                      </p>
+                      <div className="feed-card-actions">
+                        <AppreciateButton
+                          postId={item.subjectId}
+                          initialCount={item.post!.appreciations}
+                          initialActive={false}
+                        />
+                        <Link className="feed-action" href={`/wpisy/${item.subjectId}`}>
+                          {item.post!.comments > 0
+                            ? `Komentarze (${item.post!.comments})`
+                            : 'Skomentuj'}
+                        </Link>
+                        <ShareButton
+                          url={`/wpisy/${item.subjectId}`}
+                          title={`Wpis ${item.actor.displayName} — Leaders of Teams`}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="feed-card-text">
                       {href ? <Link href={href}>{text}</Link> : text}
                     </p>
-                  </div>
+                  )}
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
@@ -134,7 +208,10 @@ export default async function FeedPage({
 
       {data?.nextCursor && (
         <p className="mt-2">
-          <Link className="btn secondary" href={`/feed?cursor=${encodeURIComponent(data.nextCursor)}`}>
+          <Link
+            className="btn secondary"
+            href={`${hrefFor(scope)}${scope === 'all' ? '&' : '?'}cursor=${encodeURIComponent(data.nextCursor)}`}
+          >
             Wczytaj więcej
           </Link>
         </p>

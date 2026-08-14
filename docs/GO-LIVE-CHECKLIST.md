@@ -21,7 +21,9 @@ uzupełnienie po sesji S7: 2026-08-12.
 
 ## 0. Warunki wstępne (wejścia właściciela — wymagane przed startem)
 
-- [ ] `BREVO_API_KEY` (e-mail transakcyjny) — sekret prod.
+- [x] **E-mail transakcyjny — ZROBIONE 2026-08-13**: własna skrzynka przez SMTP
+      (`SMTP_HOST`/`SMTP_USER`/`SMTP_PASS`, `MAIL_FROM` = adres skrzynki), a nie Brevo.
+      Rejestracja i reset hasła zweryfikowane na produkcji. Szczegóły: `runbooks/sekrety.md`.
 - [ ] Klucze **Cloudflare Turnstile** (prod site key + secret) — aktywacja anty-bota (R-13).
 - [ ] **Regulamin + polityka prywatności** — wsad prawny właściciela/prawnika (R-10/R-15).
 - [ ] Decyzja o **seedingu**: dane **demo / testowe** (nie realne zaproszenia) — zakres i źródło (R-06).
@@ -41,7 +43,7 @@ uzupełnienie po sesji S7: 2026-08-12.
 - [ ] Bull Board (opcjonalnie) — podgląd kolejek.
 - [ ] `docker compose -f infra/docker-compose.yml up -d --build` — start prod (nadal za basic-auth).
 - [ ] Migracje prod: profil `tools` → `prisma migrate deploy`.
-- [ ] Env prod aktywne (Brevo, Turnstile) — runtime, bez rebuildu na same klucze.
+- [ ] Env prod aktywne (Turnstile — poczta już aktywna) — runtime, bez rebuildu na same klucze.
 - [ ] Smoke test za basic-auth: rejestracja, logowanie, marketplace, Drabinka.
 
 ## 3. Seeding (GATE — dane demo/testowe)

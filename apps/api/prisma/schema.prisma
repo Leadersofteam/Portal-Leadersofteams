@@ -44,6 +44,16 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  // Pierwsza mila (S10). To CZYSTY stan UI: gdzie użytkownik jest w kreatorze
+  // i czy schował checklistę. ŻADNE z tych pól nie rodzi zdarzenia i nie ma
+  // drogi do Drabinki — onboarding to mapa, nie nagroda (ADR-004).
+  // Intencja trzymana jako String, nie enum: to pole wyłącznie prezentacyjne,
+  // a każdy enum w MySQL to kolejny ALTER przy najmniejszej zmianie.
+  onboardingStep        Int       @default(0)
+  onboardingIntent      String?
+  onboardingCompletedAt DateTime?
+  checklistDismissedAt  DateTime?
+
   avatarFile    UploadedFile?  @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   uploadedFiles UploadedFile[] @relation("FileOwner")
 
@@ -56,6 +66,9 @@ model User {
   following          Follow[]            @relation("Follower")
   followers          Follow[]            @relation("Followed")
   activityItems      ActivityItem[]
+  socialPosts        SocialPost[]        @relation("SocialAuthor")
+  socialComments     SocialComment[]     @relation("SocialCommentAuthor")
+  socialReactions    SocialReaction[]    @relation("SocialReactor")
   createdGroups      Group[]
   groupMemberships   GroupMembership[]
   posts              Post[]
@@ -886,11 +899,15 @@ model Follow {
   @@map("follows")
 }
 
+// UWAGA MySQL: ENUM jest składowany jako LICZBA PORZĄDKOWA, nie tekst. Nowe
+// wartości dopisujemy WYŁĄCZNIE NA KOŃCU listy — wstawienie w środek po cichu
+// przemapowałoby istniejące wiersze na sąsiednie wartości.
 enum ActivityType {
   POST_PUBLISHED
   LISTING_PUBLISHED
   ANSWER_ACCEPTED
   LEVEL_ACHIEVED
+  SOCIAL_POST_PUBLISHED
 }
 
 // Feed materializowany przez workera z ISTNIEJĄCYCH zdarzeń (bez fan-outu —
@@ -908,5 +925,74 @@ model ActivityItem {
 
   @@unique([type, subjectId])
   @@index([actorId, createdAt])
+  // Feed „Cała społeczność" sortuje po czasie BEZ filtra po aktorze — bez tego
+  // indeksu byłby to pełny skan tabeli przy każdym wejściu gościa na /feed.
+  @@index([createdAt])
   @@map("activity_items")
+}
+
+// ---------------------------------------------------------------------------
+// social — wpis portalowy (X-lite, S8)
+//
+// Świadomie OSOBNE encje, a nie rozluźnienie Post.groupId do nullable:
+// groups.addComment/react/getPost bezwarunkowo wołają requireActiveMembership,
+// więc dorabianie tam gałęzi „a jak nie ma grupy" oznaczałoby modyfikowanie
+// działającego kodu kontroli dostępu — najgorszy możliwy stosunek ryzyka do
+// zysku. To zresztą różne byty: wpis w grupie ma tytuł, typ i moderację
+// grupową; wpis portalowy to krótka notka do obserwujących.
+//
+// ANTY-MLM: żadna z tych encji nie rodzi PointEvent. Zdarzenia social.* nie są
+// subskrybowane przez ladder (test strukturalny w modules/social).
+// ---------------------------------------------------------------------------
+
+model SocialPost {
+  id           String    @id @default(cuid())
+  authorUserId String
+  body         String    @db.Text
+  editedAt     DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  author    User             @relation("SocialAuthor", fields: [authorUserId], references: [id])
+  comments  SocialComment[]
+  reactions SocialReaction[]
+
+  @@index([authorUserId, createdAt])
+  @@index([createdAt])
+  @@fulltext([body])
+  @@map("social_posts")
+}
+
+model SocialComment {
+  id           String    @id @default(cuid())
+  postId       String
+  authorUserId String
+  // Wątkowanie 1 poziom, jak w grupach (ADR-010).
+  parentId     String?
+  body         String    @db.Text
+  editedAt     DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  post    SocialPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User            @relation("SocialCommentAuthor", fields: [authorUserId], references: [id])
+  parent  SocialComment?  @relation("socialCommentThread", fields: [parentId], references: [id])
+  replies SocialComment[] @relation("socialCommentThread")
+
+  @@index([postId, createdAt])
+  @@map("social_comments")
+}
+
+// Jedna reakcja „doceniam" — jak w grupach, bez palety emocji i BEZ punktów.
+model SocialReaction {
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User       @relation("SocialReactor", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+  @@map("social_posts_reactions")
 }

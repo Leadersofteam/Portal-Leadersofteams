@@ -72,9 +72,7 @@ export default async function PostPage({
         <span className="badge">{POST_TYPE_LABELS[post.type] ?? post.type}</span>
         <h1>{post.title}</h1>
         <div className="meta">{post.authorName}</div>
-        <p className="description">
-          {post.body}
-        </p>
+        <p className="description">{post.body}</p>
         <div className="actions-row">
           {canParticipate ? (
             <ReactButton
@@ -106,7 +104,10 @@ export default async function PostPage({
       ) : (
         topLevel.map((comment) => (
           <div key={comment.id} className="card mt-2">
-            <div className="meta" style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <div
+              className="meta"
+              style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}
+            >
               <span>{comment.authorName}</span>
               {comment.isOwn && !comment.deletedAt && <OwnCommentDelete commentId={comment.id} />}
             </div>

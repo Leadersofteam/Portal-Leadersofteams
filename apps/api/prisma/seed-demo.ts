@@ -90,7 +90,9 @@ const LEADERS: LeaderSpec[] = [
     industrySlug: 'ai-automatyzacja',
     headline: 'Inżynier AI / MLOps',
     bio: 'Automatyzacja procesów z LLM i klasyczne ML. Wdrożenia produkcyjne z monitoringiem.',
-    portfolio: [{ title: 'Klasyfikacja dokumentów PL', description: 'Pipeline OCR + model + review.' }],
+    portfolio: [
+      { title: 'Klasyfikacja dokumentów PL', description: 'Pipeline OCR + model + review.' },
+    ],
   },
   {
     key: 'kasia',
@@ -99,7 +101,9 @@ const LEADERS: LeaderSpec[] = [
     industrySlug: 'marketing',
     headline: 'Performance Marketing Lead',
     bio: 'Kampanie Google/Meta, atrybucja i optymalizacja lejka. Budżety do 500k/mies.',
-    portfolio: [{ title: 'Skalowanie kampanii e-commerce', description: 'ROAS 3.1 → 5.4 w 2 kwartały.' }],
+    portfolio: [
+      { title: 'Skalowanie kampanii e-commerce', description: 'ROAS 3.1 → 5.4 w 2 kwartały.' },
+    ],
   },
   {
     key: 'piotr',
@@ -117,7 +121,9 @@ const LEADERS: LeaderSpec[] = [
     industrySlug: 'design-ux',
     headline: 'Product Designer (UX/UI)',
     bio: 'Projektowanie produktów cyfrowych: badania, przepływy, design system.',
-    portfolio: [{ title: 'Redesign panelu klienta', description: 'Spadek zgłoszeń supportu o 22%.' }],
+    portfolio: [
+      { title: 'Redesign panelu klienta', description: 'Spadek zgłoszeń supportu o 22%.' },
+    ],
   },
   {
     key: 'tomek',
@@ -132,7 +138,9 @@ const LEADERS: LeaderSpec[] = [
 
 async function guard() {
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('seed-demo: ODMOWA — NODE_ENV=production. Dane demo nie trafiają na produkcję.');
+    throw new Error(
+      'seed-demo: ODMOWA — NODE_ENV=production. Dane demo nie trafiają na produkcję.',
+    );
   }
   if (process.env.SEED_DEMO !== '1') {
     throw new Error('seed-demo: ustaw SEED_DEMO=1, aby zasiać dane demo (bezpiecznik).');
@@ -176,10 +184,17 @@ async function main() {
   // Wymagane słowniki/grupy z produkcyjnego seedu.
   const industries = await prisma.industry.findMany();
   const industryBySlug = new Map(industries.map((i) => [i.slug, i]));
-  const usedSlugs = new Set([...LEADERS.map((l) => l.industrySlug), 'it', 'ai-automatyzacja', 'marketing']);
+  const usedSlugs = new Set([
+    ...LEADERS.map((l) => l.industrySlug),
+    'it',
+    'ai-automatyzacja',
+    'marketing',
+  ]);
   for (const slug of usedSlugs) {
     if (!industryBySlug.has(slug)) {
-      throw new Error(`seed-demo: brak branży '${slug}'. Najpierw uruchom bazowy seed (prisma db seed).`);
+      throw new Error(
+        `seed-demo: brak branży '${slug}'. Najpierw uruchom bazowy seed (prisma db seed).`,
+      );
     }
   }
   const groups = await prisma.group.findMany({ where: { isSystem: true } });
@@ -221,7 +236,12 @@ async function main() {
       },
     });
     const company = await prisma.company.create({
-      data: { name: spec.name, nip: DEMO_COMPANY_NIP, description: spec.description, createdAt: accountCreatedAt },
+      data: {
+        name: spec.name,
+        nip: DEMO_COMPANY_NIP,
+        description: spec.description,
+        createdAt: accountCreatedAt,
+      },
     });
     await prisma.companyMember.create({
       data: { companyId: company.id, userId: owner.id, role: 'OWNER', createdAt: accountCreatedAt },
@@ -230,7 +250,10 @@ async function main() {
   }
 
   // --- Liderzy + profile + portfolio ----------------------------------------
-  const leaderByKey = new Map<string, { userId: string; profileId: string; industrySlug: string }>();
+  const leaderByKey = new Map<
+    string,
+    { userId: string; profileId: string; industrySlug: string }
+  >();
   for (const spec of LEADERS) {
     const industry = industryBySlug.get(spec.industrySlug)!;
     const user = await prisma.user.create({
@@ -254,14 +277,25 @@ async function main() {
         },
       },
     });
-    leaderByKey.set(spec.key, { userId: user.id, profileId: profile.id, industrySlug: spec.industrySlug });
+    leaderByKey.set(spec.key, {
+      userId: user.id,
+      profileId: profile.id,
+      industrySlug: spec.industrySlug,
+    });
   }
 
   const leader = (k: string) => leaderByKey.get(k)!;
   const company = (k: string) => companyByKey.get(k)!;
 
   // --- Członkostwa w grupach (żeby /grupy i Q&A były wypełnione) -------------
-  const memberGroups = ['it', 'ai-automatyzacja', 'marketing', 'design-ux', 'sprzedaz', 'zarzadzanie-projektami'];
+  const memberGroups = [
+    'it',
+    'ai-automatyzacja',
+    'marketing',
+    'design-ux',
+    'sprzedaz',
+    'zarzadzanie-projektami',
+  ];
   const allMemberUserIds = [
     ...[...leaderByKey.values()].map((l) => l.userId),
     ...[...companyByKey.values()].map((c) => c.ownerUserId),
@@ -317,7 +351,8 @@ async function main() {
       companyKey: 'finteam',
       industrySlug: 'ai-automatyzacja',
       title: 'Automatyzacja procesów księgowych (AI)',
-      description: 'Klasyfikacja i ekstrakcja danych z dokumentów, integracja z systemem księgowym.',
+      description:
+        'Klasyfikacja i ekstrakcja danych z dokumentów, integracja z systemem księgowym.',
       budgetMin: 10000,
       budgetMax: 25000,
       minLevel: 2,
@@ -383,16 +418,96 @@ async function main() {
     reviewDaysAgo: number;
   }
   const DONE_ORDERS: DoneOrderSpec[] = [
-    { companyKey: 'nordic', leaderKey: 'anna', industrySlug: 'it', title: 'Portal ofert wewnętrznych', rating: 5, leaderRating: 5, reviewDaysAgo: 40 },
-    { companyKey: 'brandowo', leaderKey: 'anna', industrySlug: 'it', title: 'Integracja API płatności', rating: 5, leaderRating: 4, reviewDaysAgo: 33 },
-    { companyKey: 'finteam', leaderKey: 'anna', industrySlug: 'it', title: 'Dashboard analityczny', rating: 4, leaderRating: 5, reviewDaysAgo: 26 },
-    { companyKey: 'nordic', leaderKey: 'anna', industrySlug: 'it', title: 'Moduł raportów (druga współpraca)', rating: 5, leaderRating: 5, reviewDaysAgo: 19 },
-    { companyKey: 'nordic', leaderKey: 'marek', industrySlug: 'ai-automatyzacja', title: 'Model rekomendacji', rating: 5, leaderRating: 5, reviewDaysAgo: 38 },
-    { companyKey: 'brandowo', leaderKey: 'marek', industrySlug: 'ai-automatyzacja', title: 'Automatyzacja raportów', rating: 4, leaderRating: 4, reviewDaysAgo: 30 },
-    { companyKey: 'brandowo', leaderKey: 'kasia', industrySlug: 'marketing', title: 'Kampania świąteczna', rating: 5, leaderRating: 5, reviewDaysAgo: 22 },
-    { companyKey: 'finteam', leaderKey: 'piotr', industrySlug: 'sprzedaz', title: 'Proces outbound B2B', rating: 4, leaderRating: 4, reviewDaysAgo: 15 },
-    { companyKey: 'nordic', leaderKey: 'ola', industrySlug: 'design-ux', title: 'Design system v1', rating: 5, leaderRating: 5, reviewDaysAgo: 12 },
-    { companyKey: 'brandowo', leaderKey: 'tomek', industrySlug: 'zarzadzanie-projektami', title: 'Koordynacja wdrożenia', rating: 4, leaderRating: 5, reviewDaysAgo: 11 },
+    {
+      companyKey: 'nordic',
+      leaderKey: 'anna',
+      industrySlug: 'it',
+      title: 'Portal ofert wewnętrznych',
+      rating: 5,
+      leaderRating: 5,
+      reviewDaysAgo: 40,
+    },
+    {
+      companyKey: 'brandowo',
+      leaderKey: 'anna',
+      industrySlug: 'it',
+      title: 'Integracja API płatności',
+      rating: 5,
+      leaderRating: 4,
+      reviewDaysAgo: 33,
+    },
+    {
+      companyKey: 'finteam',
+      leaderKey: 'anna',
+      industrySlug: 'it',
+      title: 'Dashboard analityczny',
+      rating: 4,
+      leaderRating: 5,
+      reviewDaysAgo: 26,
+    },
+    {
+      companyKey: 'nordic',
+      leaderKey: 'anna',
+      industrySlug: 'it',
+      title: 'Moduł raportów (druga współpraca)',
+      rating: 5,
+      leaderRating: 5,
+      reviewDaysAgo: 19,
+    },
+    {
+      companyKey: 'nordic',
+      leaderKey: 'marek',
+      industrySlug: 'ai-automatyzacja',
+      title: 'Model rekomendacji',
+      rating: 5,
+      leaderRating: 5,
+      reviewDaysAgo: 38,
+    },
+    {
+      companyKey: 'brandowo',
+      leaderKey: 'marek',
+      industrySlug: 'ai-automatyzacja',
+      title: 'Automatyzacja raportów',
+      rating: 4,
+      leaderRating: 4,
+      reviewDaysAgo: 30,
+    },
+    {
+      companyKey: 'brandowo',
+      leaderKey: 'kasia',
+      industrySlug: 'marketing',
+      title: 'Kampania świąteczna',
+      rating: 5,
+      leaderRating: 5,
+      reviewDaysAgo: 22,
+    },
+    {
+      companyKey: 'finteam',
+      leaderKey: 'piotr',
+      industrySlug: 'sprzedaz',
+      title: 'Proces outbound B2B',
+      rating: 4,
+      leaderRating: 4,
+      reviewDaysAgo: 15,
+    },
+    {
+      companyKey: 'nordic',
+      leaderKey: 'ola',
+      industrySlug: 'design-ux',
+      title: 'Design system v1',
+      rating: 5,
+      leaderRating: 5,
+      reviewDaysAgo: 12,
+    },
+    {
+      companyKey: 'brandowo',
+      leaderKey: 'tomek',
+      industrySlug: 'zarzadzanie-projektami',
+      title: 'Koordynacja wdrożenia',
+      rating: 4,
+      leaderRating: 5,
+      reviewDaysAgo: 11,
+    },
   ];
   // sort rosnąco po wieku wstecznym => od najstarszych do najnowszych
   DONE_ORDERS.sort((a, b) => b.reviewDaysAgo - a.reviewDaysAgo);
@@ -437,7 +552,10 @@ async function main() {
         direction: 'COMPANY_TO_LEADER',
         authorUserId: c.ownerUserId,
         rating: spec.rating,
-        comment: spec.rating >= 5 ? 'Świetna współpraca, polecam!' : 'Solidna realizacja, wszystko na czas.',
+        comment:
+          spec.rating >= 5
+            ? 'Świetna współpraca, polecam!'
+            : 'Solidna realizacja, wszystko na czas.',
         subjectLeaderUserId: l.userId,
         createdAt: reviewAt,
         publishedAt: reviewAt,
@@ -557,8 +675,16 @@ async function main() {
     body: 'Mamy kilku klientów na różnych wersjach. Jak prowadzicie wersjonowanie i deprecację endpointów?',
     createdDaysAgo: 29,
     answers: [
-      { leaderKey: 'anna', body: 'Semver na kontrakcie + nagłówek wersji, deprecacja z oknem 2 wydań i changelogiem.', accepted: true, acceptDaysAgo: 27 },
-      { leaderKey: 'tomek', body: 'U nas sprawdza się osobny pakiet contracts i testy kontraktowe w CI.' },
+      {
+        leaderKey: 'anna',
+        body: 'Semver na kontrakcie + nagłówek wersji, deprecacja z oknem 2 wydań i changelogiem.',
+        accepted: true,
+        acceptDaysAgo: 27,
+      },
+      {
+        leaderKey: 'tomek',
+        body: 'U nas sprawdza się osobny pakiet contracts i testy kontraktowe w CI.',
+      },
     ],
     // Wyborca (Tomek) ma już własną odpowiedź w tym wątku → głos KWALIFIKOWANY.
     votes: [{ answerLeaderKey: 'anna', voterUserId: leader('tomek').userId, voteDaysAgo: 26 }],
@@ -571,7 +697,12 @@ async function main() {
     body: 'Meta vs Google vs organic. Model last-click zafałszowuje. Co stosujecie w praktyce?',
     createdDaysAgo: 21,
     answers: [
-      { leaderKey: 'kasia', body: 'Data-driven w GA4 + kontrola przez geo-lift testy raz na kwartał.', accepted: true, acceptDaysAgo: 20 },
+      {
+        leaderKey: 'kasia',
+        body: 'Data-driven w GA4 + kontrola przez geo-lift testy raz na kwartał.',
+        accepted: true,
+        acceptDaysAgo: 20,
+      },
     ],
   });
 
@@ -582,7 +713,12 @@ async function main() {
     body: 'Faktury i umowy po polsku. Zależy mi na jakości ekstrakcji pól. Open-source czy API?',
     createdDaysAgo: 18,
     answers: [
-      { leaderKey: 'marek', body: 'Dla PL: layout-aware model + reguły na polach krytycznych. API tylko na fallback.', accepted: true, acceptDaysAgo: 16 },
+      {
+        leaderKey: 'marek',
+        body: 'Dla PL: layout-aware model + reguły na polach krytycznych. API tylko na fallback.',
+        accepted: true,
+        acceptDaysAgo: 16,
+      },
     ],
     votes: [{ answerLeaderKey: 'marek', voterUserId: leader('anna').userId, voteDaysAgo: 15 }],
   });
@@ -594,7 +730,10 @@ async function main() {
     body: 'Przetwarzamy dane finansowe klientów. Jak podchodzicie do retencji i dostępu?',
     createdDaysAgo: 12,
     answers: [
-      { leaderKey: 'marek', body: 'Szyfrowanie w spoczynku, minimalizacja danych, pełny audit log dostępu.' },
+      {
+        leaderKey: 'marek',
+        body: 'Szyfrowanie w spoczynku, minimalizacja danych, pełny audit log dostępu.',
+      },
     ],
     votes: [{ answerLeaderKey: 'marek', voterUserId: leader('tomek').userId, voteDaysAgo: 10 }],
   });
@@ -606,7 +745,12 @@ async function main() {
     body: 'Web, API, worker. Chcemy współdzielić typy. Co się sprawdza przy małym zespole?',
     createdDaysAgo: 9,
     answers: [
-      { leaderKey: 'tomek', body: 'Monorepo pnpm + współdzielony pakiet kontraktów. Prostsze wydania i spójność typów.', accepted: true, acceptDaysAgo: 8 },
+      {
+        leaderKey: 'tomek',
+        body: 'Monorepo pnpm + współdzielony pakiet kontraktów. Prostsze wydania i spójność typów.',
+        accepted: true,
+        acceptDaysAgo: 8,
+      },
     ],
   });
 
@@ -639,7 +783,9 @@ async function main() {
     orderBy: { totalPoints: 'desc' },
   });
   const nameByUserId = new Map(
-    (await prisma.user.findMany({ where: { id: { in: states.map((s) => s.userId) } } })).map((u) => [u.id, u.displayName]),
+    (await prisma.user.findMany({ where: { id: { in: states.map((s) => s.userId) } } })).map(
+      (u) => [u.id, u.displayName],
+    ),
   );
   console.log('— DANE DEMO zasiane —');
   console.log(`Firmy: ${COMPANIES.length} · Liderzy: ${LEADERS.length}`);
@@ -649,7 +795,13 @@ async function main() {
     title: string;
     description: string;
     tags: string[];
-    packages: Array<{ tier: 'BASIC' | 'STANDARD' | 'PREMIUM'; name: string; price: number; scope: string; days: number }>;
+    packages: Array<{
+      tier: 'BASIC' | 'STANDARD' | 'PREMIUM';
+      name: string;
+      price: number;
+      scope: string;
+      days: number;
+    }>;
   }> = [];
   let listingIdx = 0;
   for (const [key, l] of leaderByKey) {
@@ -663,8 +815,20 @@ async function main() {
         'Pracuję na Waszych danych i procesach — kończymy konkretną listą kroków z priorytetami.',
       tags: ['doradztwo', l.industrySlug],
       packages: [
-        { tier: 'BASIC', name: 'Diagnoza', price: 1900 + listingIdx * 100, scope: 'Audyt + raport z rekomendacjami (do 10 stron).', days: 7 },
-        { tier: 'STANDARD', name: 'Diagnoza + warsztat', price: 3900 + listingIdx * 100, scope: 'Audyt, warsztat 4h z zespołem i plan 90 dni.', days: 14 },
+        {
+          tier: 'BASIC',
+          name: 'Diagnoza',
+          price: 1900 + listingIdx * 100,
+          scope: 'Audyt + raport z rekomendacjami (do 10 stron).',
+          days: 7,
+        },
+        {
+          tier: 'STANDARD',
+          name: 'Diagnoza + warsztat',
+          price: 3900 + listingIdx * 100,
+          scope: 'Audyt, warsztat 4h z zespołem i plan 90 dni.',
+          days: 14,
+        },
       ],
     });
   }
@@ -672,14 +836,19 @@ async function main() {
     const l = leader(spec.leaderKey);
     const slugBase = spec.title
       .toLowerCase()
-      .replace(/[ąćęłńóśźż]/g, (ch) => ({ ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z' })[ch] ?? ch)
+      .replace(
+        /[ąćęłńóśźż]/g,
+        (ch) =>
+          ({ ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z' })[ch] ?? ch,
+      )
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 60);
     const listing = await prisma.serviceListing.create({
       data: {
         leaderProfileId: l.profileId,
-        industryId: (await prisma.leaderProfile.findUniqueOrThrow({ where: { id: l.profileId } })).industryId,
+        industryId: (await prisma.leaderProfile.findUniqueOrThrow({ where: { id: l.profileId } }))
+          .industryId,
         title: spec.title,
         slug: `${slugBase}-${l.profileId.slice(-6)}`,
         description: spec.description,
@@ -698,7 +867,10 @@ async function main() {
       },
     });
     for (const tagName of spec.tags) {
-      const tagSlugValue = tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const tagSlugValue = tagName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
       if (!tagSlugValue) continue;
       const tag = await prisma.tag.upsert({
         where: { slug: tagSlugValue },
@@ -714,7 +886,9 @@ async function main() {
   console.log(`Usługi demo: ${DEMO_LISTINGS.length}`);
 
   console.log(`Zlecenia otwarte: ${OPEN_ORDERS.length} · zakończone: ${DONE_ORDERS.length}`);
-  console.log(`Punkty dojrzałe (CONFIRMED): ${matured} · usunięto zdarzeń outbox demo: ${outboxToDelete.length}`);
+  console.log(
+    `Punkty dojrzałe (CONFIRMED): ${matured} · usunięto zdarzeń outbox demo: ${outboxToDelete.length}`,
+  );
   console.log('Poziomy Liderów:');
   for (const s of states) {
     console.log(

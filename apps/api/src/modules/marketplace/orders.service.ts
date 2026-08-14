@@ -8,6 +8,7 @@ import type { OrderStatus, Prisma } from '@prisma/client';
 
 import type { Cache } from '../../shared/cache';
 import type { PrismaClient } from '../../shared/db';
+import { toBooleanQuery } from '../../shared/fulltext';
 import {
   ConflictError,
   DomainError,
@@ -80,20 +81,31 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
 
   // Właściwy odczyt listingu (owinięty cache-aside w listPublished).
   async function loadPublished(filters: OrderFilters) {
+    // FULLTEXT w trybie boolowskim (prefiksy: „rekrut" znajduje „rekrutację").
+    // Wyrażenie idzie jako PARAMETR — nigdy przez sklejanie stringów.
+    // Gdy fraza jest zbyt krótka na indeks (innodb_ft_min_token_size = 3),
+    // toBooleanQuery zwraca null i schodzimy na LIKE, zamiast pokazywać pustkę.
     let fulltextIds: string[] | null = null;
+    let likeQ: string | null = null;
     if (filters.q) {
-      const rows = await prisma.$queryRaw<Array<{ id: string }>>`
-          SELECT id FROM orders
-          WHERE MATCH(title, description) AGAINST(${filters.q} IN NATURAL LANGUAGE MODE)
-            AND status = 'PUBLISHED'
-          LIMIT 200`;
-      fulltextIds = rows.map((r) => r.id);
-      if (fulltextIds.length === 0) return { orders: [], nextCursor: null };
+      const expr = toBooleanQuery(filters.q);
+      if (expr) {
+        const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+            SELECT id FROM orders
+            WHERE MATCH(title, description) AGAINST(${expr} IN BOOLEAN MODE)
+              AND status = 'PUBLISHED'
+            LIMIT 200`;
+        fulltextIds = rows.map((r) => r.id);
+        if (fulltextIds.length === 0) return { orders: [], nextCursor: null };
+      } else {
+        likeQ = filters.q;
+      }
     }
 
     const where: Prisma.OrderWhereInput = {
       status: 'PUBLISHED',
       ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
+      ...(likeQ ? { title: { contains: likeQ } } : {}),
       ...(filters.industryId ? { industryId: filters.industryId } : {}),
       ...(filters.maxMinLevel !== undefined ? { minLevel: { lte: filters.maxMinLevel } } : {}),
       ...(filters.budgetMin !== undefined ? { budgetMax: { gte: filters.budgetMin } } : {}),

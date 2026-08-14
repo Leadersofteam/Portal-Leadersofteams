@@ -12,6 +12,19 @@ interface LevelRow {
   unlocksTeamCreation: boolean;
 }
 
+// Jedno źródło opisu odblokowań — używane i przez tabelę (desktop), i przez
+// karty (mobile). Rozjazd tych dwóch list byłby niewidoczny do pierwszej skargi.
+function levelUnlocks(lvl: LevelRow): string {
+  return [
+    'większe zlecenia',
+    lvl.level === 2 ? 'zakładanie grup branżowych' : null,
+    lvl.unlocksAppAccess ? 'wyróżnienie i pierwszeństwo w katalogu Liderów' : null,
+    lvl.unlocksTeamCreation ? 'założenie własnego zespołu w Portalu' : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
 export const metadata = {
   title: 'Drabinka Lidera — zasady punktacji — Leaders of Teams',
   description:
@@ -84,7 +97,27 @@ export default async function LadderRulesPage() {
           ))}
         </div>
       )}
-      <div className="table-wrap">
+      {/* Na telefonie tabela z czterema kolumnami jest nieczytelna nawet ze
+          scrollem — te same dane idą jako karty, jedna na szczebel. */}
+      <div className="rung-cards">
+        {levels.map((lvl) => (
+          <div
+            key={lvl.level}
+            className="rung-card"
+            style={{ '--rung-color': `var(--level-${lvl.level})` } as React.CSSProperties}
+          >
+            <span className="rung-card-level">{lvl.level}</span>
+            <h3 className="rung-card-name">{lvl.name}</h3>
+            <p className="rung-card-meta">
+              {lvl.pointsRequired} pkt
+              {lvl.minPathSharePct > 0 ? ` · min. ${lvl.minPathSharePct}% z każdej ścieżki` : ''}
+            </p>
+            <p className="rung-card-unlock">{levelUnlocks(lvl)}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="table-wrap desktop-only">
         <table>
           <thead>
             <tr>
@@ -101,16 +134,7 @@ export default async function LadderRulesPage() {
                 </td>
                 <td>{lvl.pointsRequired}</td>
                 <td>{lvl.minPathSharePct > 0 ? `min. ${lvl.minPathSharePct}% z każdej` : '—'}</td>
-                <td>
-                  {[
-                    'większe zlecenia',
-                    lvl.level === 2 ? 'zakładanie grup branżowych' : null,
-                    lvl.unlocksAppAccess ? 'wyróżnienie i pierwszeństwo w katalogu Liderów' : null,
-                    lvl.unlocksTeamCreation ? 'założenie własnego zespołu w Portalu' : null,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </td>
+                <td>{levelUnlocks(lvl)}</td>
               </tr>
             ))}
           </tbody>

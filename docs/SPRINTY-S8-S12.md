@@ -1,6 +1,11 @@
 # Roadmapa S8–S12 — „Kieszonkowa Drabina": mobile-first + wyjątkowy design
 
-**Data:** 2026-08-12 · **Autor:** Fable 5 (sesja S7/go-live) · **Status:** plan zatwierdzany przez właściciela
+**Data:** 2026-08-12 · **Autor:** Fable 5 (sesja S7/go-live)
+**Status (2026-08-13, Opus 5):** ✅ **S8, S9, S10 i S11 ZREALIZOWANE i WDROŻONE NA PRODUKCJĘ**
+(szczegóły i commity w [HANDOFF-OPUS.md](HANDOFF-OPUS.md)). Otwarty pozostaje **S12**.
+Świadomie NIE zrobione z S11: publiczny profil Firmy (`/firmy/[id]`) i digest e-mail —
+oba mają sens dopiero przy realnym ruchu i realnych Firmach.
+Świadomie odłożone z S10: seeding rynku (R-06) — to decyzja i działanie właściciela.
 **Kontekst:** Portal jest publicznie żywy (leadersofteams.pl), rynek pusty (0 kont realnych),
 moduły S7 wdrożone (files/listings/social), design v2 „drabina jako architektura" objął
 na razie landing. Ograniczenia niezmienne: 0 zł za klik (ADR-009), anty-MLM (ADR-004),
@@ -11,6 +16,7 @@ anty-engagement (ADR-010: chronologia, bez infinite scroll, bez DM), wdrożenia 
 ## Dwie zasady przekrojowe (obowiązują w KAŻDYM sprincie)
 
 ### 1. Mobile-first — projektujemy od 390 px W GÓRĘ
+
 - Każdy nowy widok najpierw makietowany/oceniany na 390 px, desktop jest rozszerzeniem.
 - Definition of done każdego PR-a: zrzut 390 px (headless Chromium — harness z S7)
   obok zrzutu desktop; cele dotyku ≥ 44 px; formularze z przyklejonym CTA na dole.
@@ -18,7 +24,9 @@ anty-engagement (ADR-010: chronologia, bez infinite scroll, bez DM), wdrożenia 
   nie rozwiązanie).
 
 ### 2. Język wizualny „światło, na które się wspinasz" — nic generycznego
+
 Ustalony w S7 i ROZWIJANY, nie wymieniany:
+
 - **Drabina jako architektura** (climb-rail, LadderArt, glify szczebli) — każdy nowy
   widok musi użyć przynajmniej jednego elementu tego języka.
 - **Bursztyn tylko zdobyty** — kolor poziomu 7 nigdy w przyciskach/marketingu, tylko
@@ -128,6 +136,7 @@ Cel: zanim przyjdzie ruch — wiedzieć, ile uniesiemy, i widzieć, co się dzie
 ---
 
 ## Kolejność i logika
+
 S8 przed S9 (nawigacja to szkielet, do którego S9 wiesza mięso) → S10 przed
 zaproszeniem founding Liderów (nie palimy pierwszego wrażenia) → S11, gdy są
 pierwsi userzy do uwiarygodnienia → S12 przed jakąkolwiek promocją.

@@ -15,6 +15,13 @@ const API_MODULES = [
   'antifraud',
   'notifications',
   'integration',
+  // Dopisane w S11: te moduły powstały po ustaleniu listy i przez pewien czas
+  // NIE były pilnowane przez import/no-restricted-paths — czyli granica ADR-002
+  // istniała dla nich wyłącznie w dobrych intencjach.
+  'social',
+  'listings',
+  'files',
+  'search',
 ];
 
 export default tseslint.config(
@@ -33,6 +40,27 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': 'error',
+    },
+  },
+  {
+    // Service worker żyje poza oknem przeglądarki — ma własne globalne API
+    // (self/caches/clients), których nie zna ani config przeglądarki, ani Node.
+    files: ['apps/web/public/sw.js'],
+    languageOptions: {
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        Response: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
+    // Skrypty narzędziowe uruchamiane ręcznie przez Node (generator ikon PWA).
+    files: ['**/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { Buffer: 'readonly', console: 'readonly', process: 'readonly' },
     },
   },
   {

@@ -30,4 +30,16 @@ describe('granica anty-MLM: subskrypcje modułu ladder', () => {
       expect(type).not.toMatch(/listing|inquiry/);
     }
   });
+
+  // Warstwa społecznościowa (wpisy portalowe, komentarze, „doceniam", obserwowanie,
+  // wzmianki) jest z definicji poza punktacją: to aktywność, a nie uznana praca.
+  // Gdyby ktoś kiedyś dopiął tu zdarzenie social.*, Portal stałby się dokładnie
+  // tym, czym obiecaliśmy nie być (brief §6, ADR-004).
+  it('ladder NIE konsumuje żadnego zdarzenia warstwy społecznościowej', () => {
+    const subscriptions = ladderSubscriptions({} as LadderService);
+    for (const type of Object.keys(subscriptions)) {
+      expect(type).not.toMatch(/^social\./);
+      expect(type).not.toMatch(/post|comment|react|appreciat|follow|mention/i);
+    }
+  });
 });

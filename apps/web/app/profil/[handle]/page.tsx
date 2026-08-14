@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { ShareButton } from '@/components/share-button';
 import { Avatar } from '@/components/ui/avatar';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
@@ -53,6 +54,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   LISTING_PUBLISHED: 'Nowa usługa',
   ANSWER_ACCEPTED: 'Zaakceptowana odpowiedź',
   LEVEL_ACHIEVED: 'Awans w Drabince',
+  SOCIAL_POST_PUBLISHED: 'Wpis',
 };
 
 function activityHref(a: SocialProfile['activity'][number]): string | null {
@@ -60,6 +62,7 @@ function activityHref(a: SocialProfile['activity'][number]): string | null {
     return `/grupy/${a.meta.groupId}/post/${a.subjectId}`;
   if (a.type === 'LISTING_PUBLISHED' && a.meta.slug) return `/uslugi/${a.meta.slug}`;
   if (a.type === 'ANSWER_ACCEPTED' && a.meta.threadId) return `/watki/${a.meta.threadId}`;
+  if (a.type === 'SOCIAL_POST_PUBLISHED') return `/wpisy/${a.subjectId}`;
   return null;
 }
 
@@ -76,42 +79,59 @@ export default async function SocialProfilePage({
   const isSelf = me?.user?.id === data.user.id;
   const initiallyFollowing =
     me?.user && !isSelf
-      ? ((await serverApi<{ following: boolean }>(`/users/${data.user.id}/follow`).catch(
-          () => null,
-        ))?.following ?? false)
+      ? ((
+          await serverApi<{ following: boolean }>(`/users/${data.user.id}/follow`).catch(() => null)
+        )?.following ?? false)
       : false;
 
   return (
     <main>
-      <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* Nagłówek profilu jako CREDENTIAL: poziom nie jest ozdobą przy nazwisku,
+          tylko główną informacją — to jedyna rzecz w Portalu, której nie da się
+          kupić ani wyrekrutować. */}
+      <header className="credential-header">
         <Avatar
           name={data.user.displayName}
           size="lg"
           src={data.user.avatarFileId ? `/api/v1/files/${data.user.avatarFileId}/thumb` : null}
         />
-        <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0 }}>{data.user.displayName}</h1>
-          <p className="meta muted" style={{ margin: '0.35rem 0 0' }}>
-            @{handle}
-            {data.user.level >= 1 && (
-              <>
-                {' '}
-                · <LevelBadge level={data.user.level} />
-              </>
-            )}
-            {' '}· {data.followers} obserwujących · {data.following} obserwowanych
+        <div className="credential-main">
+          <h1>{data.user.displayName}</h1>
+          <p className="meta muted">
+            @{handle} · {data.followers} obserwujących · {data.following} obserwowanych
           </p>
           {data.leaderProfile && (
-            <p style={{ margin: '0.4rem 0 0' }}>
+            <p className="credential-headline">
               {data.leaderProfile.headline}{' '}
               <Link href={`/liderzy/${data.leaderProfile.id}`}>Profil Lidera →</Link>
             </p>
           )}
         </div>
-        {me?.user && !isSelf && (
-          <FollowButton userId={data.user.id} initiallyFollowing={initiallyFollowing} />
-        )}
-      </div>
+
+        <div className="credential-side">
+          {data.user.level >= 1 ? (
+            <div className="credential-level" data-level={data.user.level}>
+              <span className="credential-level-num">{data.user.level}</span>
+              <LevelBadge level={data.user.level} />
+            </div>
+          ) : (
+            <p className="muted credential-level-empty">U podnóża Drabinki</p>
+          )}
+
+          <div className="credential-actions">
+            {me?.user && !isSelf && (
+              <FollowButton userId={data.user.id} initiallyFollowing={initiallyFollowing} />
+            )}
+            {isSelf && data.user.level >= 1 && (
+              <ShareButton
+                url={`/profil/${handle}`}
+                title={`Mój poziom ${data.user.level} w Drabince Lidera — Leaders of Teams`}
+                label="Udostępnij swój poziom"
+              />
+            )}
+          </div>
+        </div>
+      </header>
 
       <h2>Aktywność</h2>
       {data.activity.length === 0 ? (
@@ -119,7 +139,7 @@ export default async function SocialProfilePage({
       ) : (
         data.activity.map((a) => {
           const href = activityHref(a);
-          const title = String(a.meta.title ?? a.meta.threadTitle ?? '');
+          const title = String(a.meta.title ?? a.meta.threadTitle ?? a.meta.excerpt ?? '');
           const label = `${ACTIVITY_LABELS[a.type] ?? a.type}${title ? `: ${title}` : ''}${
             a.type === 'LEVEL_ACHIEVED' ? ` — poziom ${String(a.meta.level ?? '')}` : ''
           }`;

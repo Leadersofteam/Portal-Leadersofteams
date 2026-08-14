@@ -1,7 +1,91 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-08-12 · **Branch tej sesji:** `feat/s7-produkt` (zmergowany do `main`)
-**Wykonawca:** Fable 5 (sesja S7 + go-live) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl (certy LE, backup cron 03:45); następne sprinty: **[SPRINTY-S8-S12.md](SPRINTY-S8-S12.md)** (mobile-first + rozwinięcie języka wizualnego)
+**Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s8-s11-kieszonkowa-drabina`
+**Wykonawca:** Opus 5 (sesja S8–S11) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
+(certy LE, backup cron 03:45). **▶ NASTĘPNY KROK: [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)**
+(„Pierwszych dwudziestu"), start sesji: **[PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md)**.
+Poprzednia roadmapa S8–S12 jest zrealizowana poza S12: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md).
+
+> **✅ SESJA S8–S11 (2026-08-13): „Kieszonkowa Drabina".** Cztery przyrosty, każdy osobno
+> zweryfikowany bramkami, wdrożony na staging i **na produkcję**, i przeklikany na żywo
+> kontem testowym. Gałąź `feat/s8-s11-kieszonkowa-drabina` (PR tworzy właściciel — brak `gh`).
+>
+> 1. **S8 mobile/PWA** (`9e7de16`) — dolny pasek 5 slotów pod kciuk (Feed · Usługi · [+] ·
+>    Powiadomienia · Panel), arkusz akcji twórczych na natywnym `<dialog>`, własna rodzina ikon
+>    SVG (koniec z emoji w headerze), `manifest.webmanifest` + ikony maskable + service worker
+>    - `/offline`, tabela progów Drabinki jako karty na mobile, cele dotyku ≥ 44 px.
+>      **SW świadomie minimalny:** `/api/*` NIGDY nie trafia do cache, nawigacje network-only —
+>      każda strona jest SSR-owana z ciasteczkiem sesji, więc cache HTML = czyjś panel u kogoś innego.
+> 2. **S8 społeczność X-lite** (`b1580dd`) — wpis portalowy (`SocialPost/Comment/Reaction`),
+>    kompozytor na `/feed`, zakładki „Obserwowani | Cała społeczność" (ta druga **publiczna dla
+>    gościa**), „Doceniam", komentarze 1 poziom, permalink `/wpisy/[id]` z kartą OG, wzmianki
+>    `@handle` prowadzące do wpisu, udostępnianie przez Web Share API.
+> 3. **S9+S10 wnętrze i pierwsza mila** (`a57fad9`) — panel jako „baza wspinacza" z pionową
+>    szyną 7 szczebli, checklist „Zacznij tutaj" (odhaczony krok GAŚNIE), profil jako credential
+>    - „Udostępnij swój poziom", 5 własnych ilustracji SVG w pustych stanach, kreator `/start`
+>      (3 kroki, pomijalny; rejestracja przekierowuje tam zamiast do panelu).
+> 4. **S11 szukanie i zaufanie** (`e4013cc`) — globalna wyszukiwarka (`/szukaj` z zakładkami
+>    i licznikami, pole w headerze działa bez JS), `shared/fulltext.ts` przenosi MATCH…AGAINST
+>    na BOOLEAN MODE z prefiksami i **ożywia dwa martwe indeksy** (`threads`, `social_posts`),
+>    walidacja sumy kontrolnej NIP offline, porównywarka pakietów bez JS (`:has()`).
+>
+> **ANTY-MLM — dowód, nie deklaracja.** Cała nowa warstwa (wpisy, komentarze, doceniam,
+> obserwowanie, wzmianki, onboarding, wyszukiwanie) jest poza punktacją, a pilnują tego testy
+> STRUKTURALNE: `social/antimlm.integration.test.ts` przechodzi pełną ścieżkę społeczną, zbiera
+> WSZYSTKIE zdarzenia z outboxa, asertuje że lista jest niepusta (inaczej test zieleniłby się
+> z niewłaściwego powodu) i że żadne z nich nie jest kluczem w `ladderSubscriptions`.
+> `identity.updateOnboarding` nie emituje ANI JEDNEGO zdarzenia — brak zdarzenia to brak drogi
+> do laddera, czyli zabezpieczenie z architektury, nie z regulaminu.
+>
+> **Naprawione po drodze (wszystko zastane, potwierdzone na czystym `main`):**
+>
+> - **e2e ścieżki krytycznej było CZERWONE.** Helper `submitReview` uznawał sukces po ZNIKNIĘCIU
+>   pola oceny, a element nieobecny w trakcie nawigacji też jest „ukryty" — meldował sukces, choć
+>   ocena nie poleciała, i test padał kilka kroków dalej, w miejscu niezwiązanym z przyczyną.
+>   Sygnałem sukcesu jest teraz LOKATOR pozytywnego śladu. Uwaga: fraza „Oceny publikują się
+>   symultanicznie" stoi w opisie samego formularza, więc `getByText(/Oceny/)` to ta sama pułapka.
+> - **`infra/e2e.sh` zostawiał sieroty.** Trap zabijał opakowanie `pnpm`, ale nie `next-server`;
+>   proces zostawał na porcie 3000, a kolejny przebieg — nic o tym nie wiedząc — testował
+>   POPRZEDNI build. Objaw: lawina niezrozumiałych czerwonych testów. Teraz procesy startują
+>   przez `setsid`, giną całymi grupami, a skrypt sprawdza porty na wejściu i staje z komunikatem.
+> - **`groups.deletePost` zostawiał sierotę w feedzie** (usunięty post wisiał na osi aktywności
+>   z dawnym tytułem i linkiem w 404) → zdarzenie `groups.post_deleted` konsumowane przez `social`.
+> - **Bramka `format:check` była czerwona na `main`** (42 pliki) — wyprostowane osobnym commitem
+>   `894cf00`, żeby diff sprintu został czytelny.
+>
+> 5. **✅ S12 częściowo: POCZTA NA WŁASNEJ SKRZYNCE** (`d4c9230`) — nie było potrzeby
+>    zewnętrznego dostawcy. Portal wysyła przez `smtp.hostinger.com` na koncie
+>    `kontakt@leadersofteams.com`, czyli tę samą skrzynkę, której od dawna używa App;
+>    jest opłacona w ramach hostingu domeny. `shared/mail.ts` ma transport SMTP
+>    (nodemailer) z PIERWSZEŃSTWEM przed Brevo, który zostaje jako opcja pod przyszły
+>    masowy digest. **To zamknęło najpoważniejszy bloker pierwszej mili:** do 13.08
+>    reset hasła po cichu nic nie robił, więc osoba, która zapomniała hasła, nie miała
+>    żadnej drogi powrotu. Zweryfikowane na produkcji (`mail.sent`, `transport: smtp`)
+>    dla rejestracji i resetu; konto testowe usunięte.
+>    ⚠️ `MAIL_FROM` musi równać się `SMTP_USER` — nadawca z innej domeny nie przejdzie
+>    SPF/DMARC. Dlatego prod ma `kontakt@leadersofteams.com`, nie `no-reply@leadersofteams.pl`.
+>    ⛔ Świadomie NIE stawiamy serwera pocztowego na VPS (port 25 blokowany, świeże IP = spam).
+>    Szczegóły i zmienne: [runbooks/sekrety.md](runbooks/sekrety.md).
+>
+> **⚠️ DŁUG Z TEJ SESJI — świadomie nieukończony, nie zapomniany (do S13):**
+>
+> - `Company.nipVerifiedAt` i odznaka „NIP — suma kontrolna OK" NIE weszły. Sama walidacja
+>   DZIAŁA (błędny NIP → 400 przy tworzeniu firmy, testy w `shared/nip.test.ts`), ale nie ma
+>   trwałego znacznika ani odznaki w UI — styl `.nip-badge` czeka nieużywany w `styles/search.css`.
+> - `GET /listings/tags/popular` i chipy popularnych tagów NIE weszły. To nie kosmetyka:
+>   frazy krótsze niż 3 znaki („HR", „IT", „AI") nigdy nie trafią do FULLTEXT, więc tagi są
+>   jedyną drogą do tych kategorii.
+> - **Panel moderacji jest ślepy na zgłoszenia** (dług zastany po D7, nie z tej sesji):
+>   `/panel/moderacja` renderuje samą notatkę, bez `subjectType`, `subjectId` i linku do treści.
+>   Moderator wie, że coś zgłoszono, i nie ma jak tego otworzyć. Naprawa: S12.
+> - Poprawione tuż po sesji (`bd2f0e1`): zgłoszenie wpisu portalowego szło jako `POST`, czyli typ
+>   posta w grupie → dodany osobny `SOCIAL_POST`; JSON-LD `SearchAction` wskazywał `/liderzy?q=`
+>   zamiast `/szukaj?q=`.
+>
+> **Bramki na koniec:** 132/132 testów API, 12/12 e2e, lint (z zaostrzonymi granicami modułów:
+> `API_MODULES` uzupełnione o social/listings/files/search), typecheck, build. Trzy migracje,
+> wszystkie **expand-only**. Weryfikacja na żywo na produkcji: rejestracja → kreator → panel →
+> publikacja wpisu → materializacja przez workera → wyszukanie po prefiksie.
 
 > **✅ SESJA S7 (2026-08-11/12): „Marketplace + Społeczność + Tożsamość".** Cztery przyrosty
 > na gałęzi `feat/s7-produkt` (PR do main po stronie właściciela), wszystkie wdrożone i
@@ -44,8 +128,9 @@
 > **⚠️ Dryf dok↔kod naprawiony 2026-07-12:** ten dokument opisywał Sprint 5 jako „następny do zrobienia".
 > W rzeczywistości moduł `community` był już w `main` (zmergowany PR #8 `claude/lot-portal-sprints-5-9-*`) —
 > tylko wskaźnik sprintu nie został zaktualizowany. Zweryfikowano end-to-end: 73 testy zielone (11 community
-> + anty-MLM `subscriptions`), lint/typecheck/build czyste. **Nie odtwarzać Sprintu 5.** Realny następny
-> przyrost to Sprint 4.5 (niżej), po nim Sprint 6.
+>
+> - anty-MLM `subscriptions`), lint/typecheck/build czyste. **Nie odtwarzać Sprintu 5.** Realny następny
+>   przyrost to Sprint 4.5 (niżej), po nim Sprint 6.
 
 Ten dokument jest **jedynym punktem startu** dla kontynuacji prac. Czytaj w kolejności:
 
@@ -124,18 +209,18 @@ wtedy twarde limity pamięci prod-MySQL w compose + pilnowanie swapu (4 G).
 
 ## 2. Zidentyfikowany dług / luki (do domknięcia w najbliższych sprintach)
 
-| #      | Luka                                                                                                             | Gdzie domknąć                             |
-| ------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| ~~D1~~ | ✅ **ZROBIONE (Sprint 4)** — moduł `notifications` konsumuje zdarzenia → wpisy in-app + sygnał realtime          | —                                         |
-| ~~D2~~ | ✅ **ZROBIONE (Sprint 4)** — Socket.IO sygnał-only (pokój `user:{id}`, handshake sesyjnym cookie, Redis pub/sub) | —                                         |
-| ~~D3~~ | ✅ **ZROBIONE** — cache-aside Redis (`shared/cache.ts`, inwalidacja przez wersję namespace; `/me/ladder` NIGDY nie cache'owany). Test w `hardening.integration.test.ts` | —                        |
-| ~~D4~~ | ✅ **ZROBIONE (scaffolding)** — warstwa e-mail (`shared/mail.ts`): realny transport Brevo + fallback no-op; weryfikacja adresu, reset hasła (flow `verify-email`/`request-password-reset`/`reset-password`). **Aktywacja wysyłki = podanie `BREVO_API_KEY` przez właściciela** (do launchu). Digest powiadomień: do dołożenia | Aktywacja: launch |
-| ~~D5~~ | ✅ **ZROBIONE** — e2e Playwright ścieżki krytycznej (ADR-008): rejestracja→firma→zlecenie→oferta→przyznanie→cykl→obustronna ocena→punkty, 2 aktorów, przeglądarkowo (`apps/web/e2e/critical-path.spec.ts`, runner `infra/e2e.sh`). **Złapał realny bug prod:** `apiFetch` słał `content-type: application/json` przy pustym body → Fastify odrzucał WSZYSTKIE akcje bez body (publikuj/akceptuj/start/…) — naprawione w `apps/web/lib/api.ts` | —                       |
-| ~~D6~~ | ✅ **ZROBIONE** — RODO: `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, treści `[treść usunięta]`, profil ukryty, sesja unieważniona) + `GET /me/export`. Test w `hardening` | —                        |
-| ~~D7~~ | ✅ **ZROBIONE** — rate-limity świeżych kont (`shared/quota.ts`) + „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + **Turnstile flag-gated** (`shared/turnstile.ts`, wpięty w `/auth/register`, widget na `/rejestracja`; OFF bez kluczy). Aktywacja = klucze Cloudflare przy launchu | — (aktywacja: launch) |
-| D8     | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu       | niski priorytet |
-| ~~D9~~ | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: **launch** — prod (decyzja: zostajemy na 8 GB z limitami RAM) + zdjęcie basic-auth | Launch                   |
-| **D10**| ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony                                          | Sprint 6, opcjonalnie    |
+| #       | Luka                                                                                                                                                                                                                                                                                                                                                                                                                                          | Gdzie domknąć         |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| ~~D1~~  | ✅ **ZROBIONE (Sprint 4)** — moduł `notifications` konsumuje zdarzenia → wpisy in-app + sygnał realtime                                                                                                                                                                                                                                                                                                                                       | —                     |
+| ~~D2~~  | ✅ **ZROBIONE (Sprint 4)** — Socket.IO sygnał-only (pokój `user:{id}`, handshake sesyjnym cookie, Redis pub/sub)                                                                                                                                                                                                                                                                                                                              | —                     |
+| ~~D3~~  | ✅ **ZROBIONE** — cache-aside Redis (`shared/cache.ts`, inwalidacja przez wersję namespace; `/me/ladder` NIGDY nie cache'owany). Test w `hardening.integration.test.ts`                                                                                                                                                                                                                                                                       | —                     |
+| ~~D4~~  | ✅ **ZROBIONE (scaffolding)** — warstwa e-mail (`shared/mail.ts`): realny transport Brevo + fallback no-op; weryfikacja adresu, reset hasła (flow `verify-email`/`request-password-reset`/`reset-password`). **AKTYWOWANE 2026-08-13** — własna skrzynka SMTP, nie Brevo (patrz sesja S8–S11 pkt 5 i `runbooks/sekrety.md`). Digest powiadomień: do dołożenia (S13)                                                                           | ✅ aktywne            |
+| ~~D5~~  | ✅ **ZROBIONE** — e2e Playwright ścieżki krytycznej (ADR-008): rejestracja→firma→zlecenie→oferta→przyznanie→cykl→obustronna ocena→punkty, 2 aktorów, przeglądarkowo (`apps/web/e2e/critical-path.spec.ts`, runner `infra/e2e.sh`). **Złapał realny bug prod:** `apiFetch` słał `content-type: application/json` przy pustym body → Fastify odrzucał WSZYSTKIE akcje bez body (publikuj/akceptuj/start/…) — naprawione w `apps/web/lib/api.ts` | —                     |
+| ~~D6~~  | ✅ **ZROBIONE** — RODO: `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, treści `[treść usunięta]`, profil ukryty, sesja unieważniona) + `GET /me/export`. Test w `hardening`                                                                                                                                                                                                                                                         | —                     |
+| ~~D7~~  | ✅ **ZROBIONE** — rate-limity świeżych kont (`shared/quota.ts`) + „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + **Turnstile flag-gated** (`shared/turnstile.ts`, wpięty w `/auth/register`, widget na `/rejestracja`; OFF bez kluczy). Aktywacja = klucze Cloudflare przy launchu                                                                                                                                         | — (aktywacja: launch) |
+| D8      | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu                                                                                                                                                                                                                                                                                                                                    | niski priorytet       |
+| ~~D9~~  | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: **launch** — prod (decyzja: zostajemy na 8 GB z limitami RAM) + zdjęcie basic-auth                                                                                                                                                                                                                                                            | Launch                |
+| **D10** | ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony                                                                                                                                                                                                                                                                                                                                                                      | Sprint 6, opcjonalnie |
 
 > **Audyt stanu kodu vs docs (2026-07-12):** przy wejściu w Sprint 6 potwierdzono, że backend Sprintu 6
 > jest w większości ZROBIONY i zielony (73 testy): cache-aside (D3), e-mail flag-gated + weryfikacja/reset
@@ -184,7 +269,7 @@ DoD: użytkownik może realnie awansować oboma ścieżkami; testy obu ścieżek
 
 Stan po audycie 2026-07-12 (patrz §2). Backend hardeningu jest w większości dostarczony i zielony.
 
-1. ✅ **E-mail (Brevo, ADR-009)** — weryfikacja adresu, reset hasła (`shared/mail.ts` + flow); realny transport + no-op fallback. **Otwarte:** dzienny digest (job w workerze) + aktywacja `BREVO_API_KEY` (właściciel, przy launchu).
+1. ✅ **E-mail (ADR-009)** — weryfikacja adresu i reset hasła (`shared/mail.ts` + flow). **Aktywne od 2026-08-13 przez WŁASNĄ skrzynkę SMTP** (`kontakt@leadersofteams.com`), a nie przez Brevo — zero nowego dostawcy i kosztu; Brevo zostaje jako alternatywa. **Otwarte:** dzienny digest (job w workerze, S13).
 2. **Antybot/antyspam (R-03/R-13):** ✅ rate-limity świeżych kont (`shared/quota.ts`) + ✅ „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + ✅ **Cloudflare Turnstile flag-gated** (`shared/turnstile.ts`, fail-closed przy ON; `/auth/register` wymaga tokenu; widget na `/rejestracja` gdy `NEXT_PUBLIC_TURNSTILE_SITE_KEY`). Aktywacja: klucze Cloudflare przy launchu (`docs/runbooks/sekrety.md`).
 3. ✅ **RODO (R-10)** — `DELETE /me` = anonimizacja w miejscu (ledger ZACHOWANY, `anonymizedAt`, treści `[treść usunięta]`, profil ukryty, sesja unieważniona); `GET /me/export`.
 4. ✅ **Cache (ADR-007, D3)** — cache-aside Redis (`shared/cache.ts`) z inwalidacją przez wersję namespace; `/me/ladder` NIGDY nie cache'owany.
