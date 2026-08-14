@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
 import { AppreciateButton } from '@/components/appreciate-button';
+import { BookmarkButton } from '@/components/bookmark-button';
 import { MentionText } from '@/components/mention-text';
 import { PostMedia } from '@/components/post-media';
 import { QuotedPost } from '@/components/quoted-post';
@@ -36,6 +37,7 @@ interface PostDetail {
     isOwn: boolean;
     appreciations: number;
     viewerAppreciated: boolean;
+    viewerBookmarked: boolean;
     imageFileIds: string[];
     quoted: QuotedPostView | null;
   };
@@ -139,6 +141,11 @@ export default async function SocialPostPage({ params }: { params: Promise<{ id:
                 Podaj dalej
               </Link>
             )}
+            <BookmarkButton
+              subjectType="SOCIAL_POST"
+              subjectId={post.id}
+              initialActive={post.viewerBookmarked}
+            />
             <ShareButton
               url={`/wpisy/${post.id}`}
               title={`Wpis ${post.author.displayName} — Leaders of Teams`}

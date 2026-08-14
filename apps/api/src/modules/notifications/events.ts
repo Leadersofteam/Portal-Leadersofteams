@@ -26,6 +26,9 @@ export function notificationsSubscriptions(
     'social.post_quoted': (p) => service.onPostQuoted(p as never),
     'groups.membership_requested': (p) => service.onMembershipRequested(p as never),
     'groups.membership_accepted': (p) => service.onMembershipAccepted(p as never),
+    // GRANICA ANTY-MLM: rola moderatora grupy to obowiązek, nie punkty —
+    // konsumuje WYŁĄCZNIE notifications (test strukturalny w groups).
+    'groups.membership_role_changed': (p) => service.onMembershipRoleChanged(p as never),
     'community.answer_created': (p) => service.onAnswerCreated(p as never),
     'community.answer_accepted': (p) => service.onAnswerAccepted(p as never),
   };

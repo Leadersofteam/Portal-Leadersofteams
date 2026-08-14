@@ -152,6 +152,98 @@ export function ReactButton({
   );
 }
 
+// --- pierwsza linia moderacji: akcje moderatora GRUPY (S17) ------------------
+// Rola w grupie to co innego niż rola platformowa — te przyciski widzi
+// moderator grupy, a nie moderator Portalu.
+
+export function PinButton({ postId, pinned }: { postId: string; pinned: boolean }) {
+  const { run, error, pending } = useAction();
+  return (
+    <span>
+      <button
+        className="btn secondary"
+        disabled={pending}
+        onClick={() =>
+          void run(() => apiFetch(`/posts/${postId}/pin`, { method: pinned ? 'DELETE' : 'POST' }))
+        }
+      >
+        {pending ? '…' : pinned ? 'Odepnij' : 'Przypnij w grupie'}
+      </button>
+      {error && <span className="error-box">{error}</span>}
+    </span>
+  );
+}
+
+export function HidePostButton({ postId }: { postId: string }) {
+  const { run, error, pending } = useAction();
+  return (
+    <span>
+      <button
+        className="btn secondary"
+        disabled={pending}
+        onClick={() => {
+          // Ukrycie cudzej treści jest odwracalne tylko przez bazę, więc pytamy
+          // wprost. Świadomie natywny confirm: to akcja rzadka i moderatorska,
+          // własny modal byłby kosztem bez zysku.
+          if (!confirm('Ukryć ten post w grupie? Zniknie z listy i z osi aktywności.')) return;
+          void run(() => apiFetch(`/posts/${postId}/hide`, { method: 'POST' }));
+        }}
+      >
+        {pending ? '…' : 'Ukryj post'}
+      </button>
+      {error && <span className="error-box">{error}</span>}
+    </span>
+  );
+}
+
+export function MemberRoleActions({
+  membershipId,
+  role,
+  status,
+  isSelf,
+}: {
+  membershipId: string;
+  role: 'MEMBER' | 'MODERATOR';
+  status: 'ACTIVE' | 'PENDING' | 'BANNED';
+  isSelf: boolean;
+}) {
+  const { run, error, pending } = useAction();
+
+  if (status === 'BANNED') return <span className="badge">Wyproszony(a)</span>;
+
+  return (
+    <span className="actions-row">
+      <button
+        className="btn secondary"
+        disabled={pending}
+        onClick={() =>
+          void run(() =>
+            apiFetch(`/memberships/${membershipId}/role`, {
+              method: 'POST',
+              body: JSON.stringify({ role: role === 'MODERATOR' ? 'MEMBER' : 'MODERATOR' }),
+            }),
+          )
+        }
+      >
+        {pending ? '…' : role === 'MODERATOR' ? 'Odbierz moderację' : 'Zrób moderatorem'}
+      </button>
+      {!isSelf && role === 'MEMBER' && (
+        <button
+          className="btn secondary"
+          disabled={pending}
+          onClick={() => {
+            if (!confirm('Wyprosić tę osobę z grupy? Nie będzie mogła dołączyć ponownie.')) return;
+            void run(() => apiFetch(`/memberships/${membershipId}/ban`, { method: 'POST' }));
+          }}
+        >
+          Wyproś
+        </button>
+      )}
+      {error && <span className="error-box">{error}</span>}
+    </span>
+  );
+}
+
 export function ApproveButton({ membershipId }: { membershipId: string }) {
   const { run, error, pending } = useAction();
   return (

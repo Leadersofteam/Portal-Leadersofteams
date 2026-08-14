@@ -126,6 +126,9 @@ export default async function PanelPage() {
         <Link className="btn secondary" href="/panel/zlecenia">
           Zlecenia firmy
         </Link>
+        <Link className="btn secondary" href="/panel/zapisane">
+          Zapisane
+        </Link>
         <Link className="btn" href="/zlecenia/nowe">
           + Nowe zlecenie
         </Link>

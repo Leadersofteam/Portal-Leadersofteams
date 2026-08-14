@@ -76,8 +76,60 @@ test('wpis portalowy: kompozytor → feed społeczności → permalink → docen
     timeout: 15_000,
   });
 
+  // ZAKŁADKA (S17) przechodzona KOŃCEM-KOŃCEM. Sam endpoint już raz w tym repo
+  // wystarczył, żeby uznać funkcję za gotową — i przez tydzień prowadziła w 404.
+  // Kotwiczymy na pozytywnym śladzie: nazwa przycisku po zapisaniu i treść
+  // wpisu na prywatnej półce.
+  await reader.getByRole('button', { name: 'Zapisz na później' }).click();
+  await expect(reader.getByRole('button', { name: 'Usuń z zapisanych' })).toBeVisible({
+    timeout: 15_000,
+  });
+
+  await reader.goto('/panel/zapisane');
+  await expect(reader.getByRole('heading', { name: 'Zapisane' })).toBeVisible();
+  await expect(reader.getByText(body).first()).toBeVisible({ timeout: 15_000 });
+
+  // Zdjęcie z półki działa z samej listy — i wpis z niej znika.
+  await reader.getByRole('button', { name: 'Usuń z zapisanych' }).first().click();
+  await expect(async () => {
+    await reader.goto('/panel/zapisane');
+    await expect(reader.getByText(body)).toHaveCount(0);
+  }).toPass({ timeout: 20_000 });
+
+  // ADR-010: prywatna półka nie może wyciekać na zewnątrz. Autor wpisu nie widzi
+  // ŻADNEGO licznika zapisań pod swoją treścią.
+  await author.goto('/feed?zakres=wszyscy');
+  await expect(author.getByText(/zapisa(ł|no|ń) \d+/i)).toHaveCount(0);
+
   await authorCtx.close();
   await readerCtx.close();
+});
+
+// ZASTANY BŁĄD naprawiony w S17: nagłówek NIGDY nie czytał sesji, więc
+// zalogowana osoba na każdej stronie widziała „Zaloguj się / Dołącz".
+// Test celowo patrzy na NAGŁÓWEK (`banner`), a nie na stronę: „Zaloguj się"
+// występuje też w treści i w stopce, więc lokator bez zawężenia łamie się
+// na trzech dopasowaniach (tryb strict Playwrighta).
+test('nagłówek rozpoznaje zalogowanego i gościa', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  const guest = await browser.newContext();
+  const guestPage = await guest.newPage();
+  await guestPage.goto('/');
+  await expect(
+    guestPage.getByRole('banner').getByRole('link', { name: 'Zaloguj się' }),
+  ).toBeVisible({ timeout: 15_000 });
+
+  await register(page, 'E2E Nagłówek', `naglowek-${stamp}@e2e.local`);
+  await page.goto('/');
+  await expect(page.getByRole('banner').getByRole('link', { name: 'E2E' })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Zaloguj się' })).toHaveCount(0);
+
+  await context.close();
+  await guest.close();
 });
 
 test('gość widzi feed społeczności bez logowania', async ({ page }) => {

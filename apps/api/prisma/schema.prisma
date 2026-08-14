@@ -79,6 +79,7 @@ model User {
   answerVotes        AnswerVote[]
   notifications      Notification[]
   verificationTokens VerificationToken[]
+  bookmarks          Bookmark[]
 
   @@map("users")
 }
@@ -582,6 +583,12 @@ model Post {
   // FK celowo pominięty do czasu istnienia modułu teams.
   teamId           String?
   moderationStatus PostModerationStatus @default(VISIBLE)
+  // Przypięcie przez moderatora grupy (S17). NAJWYŻEJ JEDEN post na grupę —
+  // egzekwowane w domenie (przypięcie nowego odpina poprzedni w transakcji),
+  // nie unikatem, bo unikat częściowy („tylko gdy NOT NULL") nie istnieje
+  // w MySQL. Dwa przypięcia byłyby drugim feedem, a ADR-010 zabrania rankingu
+  // treści: jeden pin to nawigacja („zacznij tutaj"), nie kolejność.
+  pinnedAt         DateTime?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
@@ -597,6 +604,7 @@ model Post {
   deletedAt DateTime?
 
   @@index([groupId, createdAt])
+  @@index([groupId, pinnedAt])
   @@index([authorUserId])
   @@fulltext([title, body])
   @@map("posts")
@@ -1105,4 +1113,46 @@ model SocialReaction {
   @@id([postId, userId])
   @@index([userId])
   @@map("social_posts_reactions")
+}
+
+// ---------------------------------------------------------------------------
+// Zakładki (S17) — PRYWATNE zapisywanie treści na później.
+//
+// ADR-010: zakładka nie ma i NIE BĘDZIE mieć publicznego licznika. Widzi ją
+// wyłącznie jej właściciel; nigdzie nie zwracamy „ile osób zapisało". To nie
+// przeoczenie — licznik zamieniłby prywatną półkę w kolejną walutę popularności
+// obok „doceniam", a Portal ma jedną walutę i jest nią zapracowany status.
+//
+// ANTY-MLM: zapisanie do zakładek nie emituje ŻADNEGO zdarzenia do outboxa —
+// tak samo jak `identity.updateOnboarding`. Brak zdarzenia to brak drogi do
+// laddera, czyli zabezpieczenie z architektury, a nie z regulaminu.
+//
+// WŁAŚCICIELEM jest moduł `social` — ten sam, który trzyma tematy nad OBIEMA
+// tabelami treści. Zakładka, jak temat, jest projekcją nad wpisem portalowym
+// i postem w grupie naraz.
+// ---------------------------------------------------------------------------
+
+enum BookmarkSubjectType {
+  SOCIAL_POST
+  POST
+}
+
+model Bookmark {
+  userId String
+  // Polimorf BEZ klucza obcego na treść — dwa różne rodzaje treści nie zmieszczą
+  // się w jednym FK. Wiersz po skasowanej treści zostaje wiszący, ale odczyt
+  // filtruje treść usuniętą i ukrytą, więc jest niewidoczny i tani. Świadomy
+  // wybór: alternatywą były dwie bliźniacze tabele albo kaskada z każdej strony.
+  subjectType BookmarkSubjectType
+  subjectId   String
+  createdAt   DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Klucz złożony daje idempotencję za darmo — powtórne zapisanie tej samej
+  // treści nie mnoży wierszy (ten sam wzorzec co SocialReaction).
+  @@id([userId, subjectType, subjectId])
+  // Lista „Zapisane" jest chronologiczna po czasie ZAPISANIA, nie publikacji.
+  @@index([userId, createdAt])
+  @@map("bookmarks")
 }

@@ -94,6 +94,12 @@ interface MembershipAcceptedPayload {
   groupId: string;
   requesterUserId: string;
 }
+interface MembershipRoleChangedPayload {
+  groupId: string;
+  userId: string;
+  role: 'MEMBER' | 'MODERATOR';
+  actorUserId: string;
+}
 interface AnswerCreatedPayload {
   answerId: string;
   threadId: string;
@@ -293,6 +299,25 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
           userId: p.requesterUserId,
           type: 'membership_accepted',
           dedupeKey: `membership_accepted:${p.groupId}:${p.requesterUserId}`,
+          payload: { groupId: p.groupId },
+        },
+      ]);
+    },
+
+    /**
+     * Awans na moderatora grupy (S17). Bez tego powiadomienia człowiek dostaje
+     * uprawnienia i nie ma jak się o tym dowiedzieć — rola bez wiedzy o roli
+     * jest martwa. O degradacji NIE powiadamiamy: to komunikat, który upokarza,
+     * a moderator, który ją nadał, powinien powiedzieć o niej sam.
+     * ANTY-MLM: rola w grupie to obowiązek, nie status — ZERO punktów.
+     */
+    async onMembershipRoleChanged(p: MembershipRoleChangedPayload) {
+      if (p.role !== 'MODERATOR') return 0;
+      return deliver([
+        {
+          userId: p.userId,
+          type: 'group_moderator_granted',
+          dedupeKey: `group_moderator:${p.groupId}:${p.userId}`,
           payload: { groupId: p.groupId },
         },
       ]);

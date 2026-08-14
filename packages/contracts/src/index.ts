@@ -472,6 +472,15 @@ export const createCommentInputSchema = z.object({
 });
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
 
+// Moderatorzy grup jako PIERWSZA LINIA (S17). Rola istniała w schemacie od
+// Sprintu 4, ale używała jej wyłącznie akceptacja wniosków o członkostwo —
+// grupa nie miała jak awansować moderatora ani zdjąć treści u siebie.
+export const groupMemberRoleSchema = z.enum(['MEMBER', 'MODERATOR']);
+export type GroupMemberRole = z.infer<typeof groupMemberRoleSchema>;
+
+export const updateMembershipRoleInputSchema = z.object({ role: groupMemberRoleSchema });
+export type UpdateMembershipRoleInput = z.infer<typeof updateMembershipRoleInputSchema>;
+
 // ---------------------------------------------------------------------------
 // Community — Q&A / mentoring (moduł community, ADR-010 / brief 3.3).
 // DRUGA, PUNKTOWANA ścieżka awansu: zaakceptowana odpowiedź i kwalifikowany
@@ -576,6 +585,18 @@ export const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 export type FeedQuery = z.infer<typeof feedQuerySchema>;
+
+// Zakładki (S17) — PRYWATNA półka „na później". Te same dwa rodzaje treści co
+// przy tematach: wpis portalowy i post w grupie. ADR-010: nigdzie nie ma i nie
+// będzie liczby zapisań — zakładka jest dla jednej osoby, nie sygnałem dla tłumu.
+export const bookmarkSubjectTypeSchema = z.enum(['SOCIAL_POST', 'POST']);
+export type BookmarkSubjectType = z.infer<typeof bookmarkSubjectTypeSchema>;
+
+export const bookmarksQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type BookmarksQuery = z.infer<typeof bookmarksQuerySchema>;
 
 // ---------------------------------------------------------------------------
 // Onboarding — pierwsza mila (S10)

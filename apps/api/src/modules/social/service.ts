@@ -1,4 +1,5 @@
 import type {
+  BookmarkSubjectType,
   CreateSocialCommentInput,
   CreateSocialPostInput,
   FeedScope,
@@ -47,6 +48,41 @@ export interface SocialDeps {
 }
 
 const FEED_LIMIT = 20;
+const BOOKMARKS_LIMIT = 20;
+
+/**
+ * Pozycja na półce „Zapisane". Jeden kształt dla obu rodzajów treści: wpis
+ * portalowy nie ma tytułu ani grupy, post w grupie ma jedno i drugie — front
+ * ma odróżniać je po `subjectType`, a nie po tym, których pól brakuje.
+ * ŚWIADOMIE bez jakiegokolwiek licznika (ADR-010).
+ */
+export interface BookmarkItem {
+  subjectType: BookmarkSubjectType;
+  subjectId: string;
+  savedAt: Date;
+  title: string | null;
+  body: string;
+  authorName: string;
+  groupId: string | null;
+  groupName: string | null;
+  publishedAt: Date;
+}
+
+/**
+ * Kursor listy zakładek: czas zapisania + identyfikator treści. Sam czas nie
+ * wystarcza — dwie zakładki zapisane w tej samej milisekundzie (a to normalne
+ * przy szybkim klikaniu) zjadłyby się nawzajem na granicy strony.
+ */
+function encodeBookmarkCursor(createdAt: Date, subjectId: string): string {
+  return `${createdAt.toISOString()}|${subjectId}`;
+}
+
+function decodeBookmarkCursor(cursor: string): { createdAt: Date; subjectId: string } | null {
+  const [iso, subjectId] = cursor.split('|');
+  if (!iso || !subjectId) return null;
+  const createdAt = new Date(iso);
+  return Number.isNaN(createdAt.getTime()) ? null : { createdAt, subjectId };
+}
 
 /** Podgląd cytowanego wpisu w karcie. `available: false` = treść zniknęła. */
 export type QuotedPost =
@@ -431,6 +467,171 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
       };
     },
 
+    // --- Zakładki (S17) -------------------------------------------------------
+    //
+    // ADR-010: ŻADNA z tych metod nie zwraca liczby zapisań i nigdy nie będzie.
+    // To nie przeoczenie — publiczny licznik zamieniłby prywatną półkę „na
+    // później" w drugą walutę popularności obok „doceniam". Zakładka ma służyć
+    // jednej osobie: tej, która ją założyła.
+    //
+    // ANTY-MLM: zero zdarzeń outboxa. Tak samo jak `identity.updateOnboarding` —
+    // brak zdarzenia to brak drogi do laddera, czyli zabezpieczenie wynikające
+    // z architektury, a nie z regulaminu.
+
+    /** Stan zakładek widza dla PARTII treści — feed woła to raz na stronę, nie raz na kartę. */
+    async getViewerBookmarks(
+      userId: string,
+      subjectType: BookmarkSubjectType,
+      subjectIds: string[],
+    ): Promise<Set<string>> {
+      if (subjectIds.length === 0) return new Set();
+      const rows = await prisma.bookmark.findMany({
+        where: { userId, subjectType, subjectId: { in: subjectIds } },
+        select: { subjectId: true },
+      });
+      return new Set(rows.map((r) => r.subjectId));
+    },
+
+    async bookmark(userId: string, subjectType: BookmarkSubjectType, subjectId: string) {
+      // Istnienie i widoczność treści sprawdzamy PRZED zapisem — inaczej na
+      // półce lądowałby identyfikator prowadzący w 404, a przy okazji dałoby
+      // się sondować bazę: „zapisało się" byłoby odpowiedzią „ten wpis istnieje".
+      const exists =
+        subjectType === 'SOCIAL_POST'
+          ? await prisma.socialPost.findFirst({
+              where: { id: subjectId, deletedAt: null },
+              select: { id: true },
+            })
+          : await prisma.post.findFirst({
+              where: { id: subjectId, deletedAt: null, moderationStatus: 'VISIBLE' },
+              select: { id: true },
+            });
+      if (!exists) throw new NotFoundError('Treść nie istnieje');
+      try {
+        await prisma.bookmark.create({ data: { userId, subjectType, subjectId } });
+      } catch (err: unknown) {
+        // Klucz złożony (userId, subjectType, subjectId) → powtórne zapisanie
+        // jest no-opem, nie błędem (idempotencja jak przy „doceniam").
+        if (!(typeof err === 'object' && err !== null && 'code' in err && err.code === 'P2002')) {
+          throw err;
+        }
+      }
+      return { bookmarked: true };
+    },
+
+    async unbookmark(userId: string, subjectType: BookmarkSubjectType, subjectId: string) {
+      await prisma.bookmark.deleteMany({ where: { userId, subjectType, subjectId } });
+      return { bookmarked: false };
+    },
+
+    /**
+     * Prywatna lista „Zapisane" — chronologicznie po czasie ZAPISANIA, nie
+     * publikacji: człowiek wraca do tego, co odłożył ostatnio.
+     *
+     * Treść usunięta albo ukryta przez moderatora znika z listy, choć wiersz
+     * zakładki zostaje (polimorf bez klucza obcego — patrz komentarz w schemacie).
+     * Skutek uboczny: strona bywa krótsza niż `limit`. Świadomie wolimy to od
+     * kafelka „treść niedostępna", którego nie da się kliknąć ani usunąć.
+     */
+    async listBookmarks(
+      userId: string,
+      { cursor, limit = BOOKMARKS_LIMIT }: { cursor?: string; limit?: number } = {},
+    ) {
+      const decoded = cursor ? decodeBookmarkCursor(cursor) : null;
+      const rows = await prisma.bookmark.findMany({
+        where: {
+          userId,
+          ...(decoded
+            ? {
+                OR: [
+                  { createdAt: { lt: decoded.createdAt } },
+                  { createdAt: decoded.createdAt, subjectId: { lt: decoded.subjectId } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: [{ createdAt: 'desc' }, { subjectId: 'desc' }],
+        take: limit + 1,
+      });
+      const hasMore = rows.length > limit;
+      const page = hasMore ? rows.slice(0, limit) : rows;
+      const last = page[page.length - 1];
+
+      const socialIds = page.filter((r) => r.subjectType === 'SOCIAL_POST').map((r) => r.subjectId);
+      const groupIds = page.filter((r) => r.subjectType === 'POST').map((r) => r.subjectId);
+
+      const [socialPosts, groupPosts] = await Promise.all([
+        socialIds.length
+          ? prisma.socialPost.findMany({
+              where: { id: { in: socialIds }, deletedAt: null },
+              select: { id: true, body: true, authorUserId: true, createdAt: true },
+            })
+          : Promise.resolve([]),
+        groupIds.length
+          ? prisma.post.findMany({
+              where: { id: { in: groupIds }, deletedAt: null, moderationStatus: 'VISIBLE' },
+              select: {
+                id: true,
+                title: true,
+                body: true,
+                authorUserId: true,
+                createdAt: true,
+                groupId: true,
+                group: { select: { name: true } },
+              },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const authors = await identity.getPublicUsers([
+        ...socialPosts.map((p) => p.authorUserId),
+        ...groupPosts.map((p) => p.authorUserId),
+      ]);
+      const authorName = (id: string) => authors.get(id)?.displayName ?? 'Użytkownik';
+      const socialById = new Map(socialPosts.map((p) => [p.id, p]));
+      const groupById = new Map(groupPosts.map((p) => [p.id, p]));
+
+      const items = page.flatMap<BookmarkItem>((row) => {
+        if (row.subjectType === 'SOCIAL_POST') {
+          const post = socialById.get(row.subjectId);
+          if (!post) return [];
+          return [
+            {
+              subjectType: 'SOCIAL_POST' as const,
+              subjectId: post.id,
+              savedAt: row.createdAt,
+              title: null,
+              body: post.body,
+              authorName: authorName(post.authorUserId),
+              groupId: null,
+              groupName: null,
+              publishedAt: post.createdAt,
+            },
+          ];
+        }
+        const post = groupById.get(row.subjectId);
+        if (!post) return [];
+        return [
+          {
+            subjectType: 'POST' as const,
+            subjectId: post.id,
+            savedAt: row.createdAt,
+            title: post.title,
+            body: post.body,
+            authorName: authorName(post.authorUserId),
+            groupId: post.groupId,
+            groupName: post.group.name,
+            publishedAt: post.createdAt,
+          },
+        ];
+      });
+
+      return {
+        items,
+        nextCursor: hasMore && last ? encodeBookmarkCursor(last.createdAt, last.subjectId) : null,
+      };
+    },
+
     // Permalink wpisu — czytelny także dla gościa (treść jest publiczna).
     async getPost(postId: string, viewerId?: string) {
       const post = await prisma.socialPost.findFirst({
@@ -445,7 +646,7 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
       });
 
       const userIds = [...new Set([post.authorUserId, ...comments.map((c) => c.authorUserId)])];
-      const [users, levels, appreciations, mine, extras] = await Promise.all([
+      const [users, levels, appreciations, mine, extras, bookmarked] = await Promise.all([
         identity.getPublicUsers(userIds),
         ladder.getLevels(userIds),
         prisma.socialReaction.count({ where: { postId } }),
@@ -455,6 +656,17 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
             })
           : Promise.resolve(null),
         loadPostExtras([postId]),
+        viewerId
+          ? prisma.bookmark.findUnique({
+              where: {
+                userId_subjectType_subjectId: {
+                  userId: viewerId,
+                  subjectType: 'SOCIAL_POST',
+                  subjectId: postId,
+                },
+              },
+            })
+          : Promise.resolve(null),
       ]);
 
       const person = (id: string) => ({
@@ -475,6 +687,8 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
           isOwn: viewerId === post.authorUserId,
           appreciations,
           viewerAppreciated: Boolean(mine),
+          // ADR-010: stan zakładki widza, NIGDY liczba zapisań.
+          viewerBookmarked: Boolean(bookmarked),
           imageFileIds: extras.imagesBy.get(postId) ?? [],
           quoted: extras.quotedBy.get(postId) ?? null,
         },
@@ -566,6 +780,29 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
       const reactionsBy = new Map(reactionCounts.map((r) => [r.postId, r._count.postId]));
       const commentsBy = new Map(commentCounts.map((c) => [c.postId, c._count.postId]));
 
+      // Stan WIDZA dla całej strony dwoma zapytaniami.
+      // ZASTANE: do S17 feed w ogóle nie wiedział, co widz już docenił — front
+      // miał na sztywno `initialActive={false}`, więc docenione wpisy wyglądały
+      // na niedocenione, a ponowne kliknięcie kasowało własne docenienie.
+      const [viewerReacted, viewerBookmarked] = await Promise.all([
+        userId && postIds.length
+          ? prisma.socialReaction
+              .findMany({
+                where: { userId, postId: { in: postIds } },
+                select: { postId: true },
+              })
+              .then((rows) => new Set(rows.map((r) => r.postId)))
+          : Promise.resolve(new Set<string>()),
+        userId && postIds.length
+          ? prisma.bookmark
+              .findMany({
+                where: { userId, subjectType: 'SOCIAL_POST', subjectId: { in: postIds } },
+                select: { subjectId: true },
+              })
+              .then((rows) => new Set(rows.map((r) => r.subjectId)))
+          : Promise.resolve(new Set<string>()),
+      ]);
+
       return {
         items: page
           // Wpis usunięty tuż po pobraniu strony — nie pokazujemy pustego kafelka.
@@ -587,6 +824,9 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
                       quoted: extras.quotedBy.get(post.id) ?? null,
                       appreciations: reactionsBy.get(post.id) ?? 0,
                       comments: commentsBy.get(post.id) ?? 0,
+                      viewerAppreciated: viewerReacted.has(post.id),
+                      // ADR-010: stan zakładki widza, NIGDY liczba zapisań.
+                      viewerBookmarked: viewerBookmarked.has(post.id),
                     },
                   }
                 : {}),

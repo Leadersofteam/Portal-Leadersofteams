@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { AppreciateButton } from '@/components/appreciate-button';
+import { BookmarkButton } from '@/components/bookmark-button';
 import { MentionText } from '@/components/mention-text';
 import { ShareButton } from '@/components/share-button';
 import { Avatar } from '@/components/ui/avatar';
@@ -36,6 +37,8 @@ interface FeedItem {
     quoted: QuotedPostView | null;
     appreciations: number;
     comments: number;
+    viewerAppreciated: boolean;
+    viewerBookmarked: boolean;
   };
   actor: {
     id: string;
@@ -227,16 +230,25 @@ export default async function FeedPage({
                         alt={`Obraz do wpisu — ${item.actor.displayName}`}
                       />
                       <div className="feed-card-actions">
+                        {/* ZASTANE do S17: `initialActive` było tu na sztywno
+                            `false`, więc docenione wpisy wyglądały na
+                            niedocenione, a ponowne kliknięcie kasowało własne
+                            docenienie. Feed zwraca teraz stan widza. */}
                         <AppreciateButton
                           postId={item.subjectId}
                           initialCount={item.post!.appreciations}
-                          initialActive={false}
+                          initialActive={item.post!.viewerAppreciated}
                         />
                         <Link className="feed-action" href={`/wpisy/${item.subjectId}`}>
                           {item.post!.comments > 0
                             ? `Komentarze (${item.post!.comments})`
                             : 'Skomentuj'}
                         </Link>
+                        <BookmarkButton
+                          subjectType="SOCIAL_POST"
+                          subjectId={item.subjectId}
+                          initialActive={item.post!.viewerBookmarked}
+                        />
                         {isLoggedIn && (
                           <Link
                             className="feed-action"

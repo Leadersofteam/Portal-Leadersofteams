@@ -1,4 +1,6 @@
 import {
+  bookmarkSubjectTypeSchema,
+  bookmarksQuerySchema,
   createSocialCommentInputSchema,
   createSocialPostInputSchema,
   feedQuerySchema,
@@ -113,5 +115,34 @@ export function socialRoutes({ social, auth }: SocialRoutesDeps) {
       const user = await auth.requireUser(request);
       return reply.send(await social.getMySocial(user.id));
     });
+
+    // --- Zakładki (S17) -------------------------------------------------------
+    // Wszystko pod `/me/`: zakładka jest PRYWATNA i nie ma publicznego widoku
+    // ani licznika (ADR-010). Rodzaj treści jest w ścieżce, bo ten sam
+    // identyfikator może być wpisem portalowym albo postem w grupie.
+
+    app.get('/me/bookmarks', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const { cursor, limit } = parseBody(bookmarksQuerySchema, request.query ?? {});
+      return reply.send(await social.listBookmarks(user.id, { cursor, limit }));
+    });
+
+    app.put<{ Params: { type: string; id: string } }>(
+      '/me/bookmarks/:type/:id',
+      async (request, reply) => {
+        const user = await auth.requireUser(request);
+        const type = parseBody(bookmarkSubjectTypeSchema, request.params.type);
+        return reply.send(await social.bookmark(user.id, type, request.params.id));
+      },
+    );
+
+    app.delete<{ Params: { type: string; id: string } }>(
+      '/me/bookmarks/:type/:id',
+      async (request, reply) => {
+        const user = await auth.requireUser(request);
+        const type = parseBody(bookmarkSubjectTypeSchema, request.params.type);
+        return reply.send(await social.unbookmark(user.id, type, request.params.id));
+      },
+    );
   };
 }

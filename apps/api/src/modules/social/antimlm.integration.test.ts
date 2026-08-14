@@ -56,6 +56,7 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
 
   afterAll(async () => {
     if (!ctx) return;
+    await ctx.prisma.bookmark.deleteMany({ where: { userId: { in: [aId, bId] } } });
     await ctx.prisma.socialReaction.deleteMany({ where: { userId: { in: [aId, bId] } } });
     await ctx.prisma.socialComment.deleteMany({ where: { authorUserId: { in: [aId, bId] } } });
     await ctx.prisma.socialPost.deleteMany({ where: { authorUserId: { in: [aId, bId] } } });
@@ -129,12 +130,38 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
     });
     expect(tagged.statusCode).toBe(201);
 
+    // Zbierz WSZYSTKIE zdarzenia wypuszczone przez ścieżkę DO TEJ PORY —
+    // punkt odniesienia dla kroku z zakładką (niżej).
+    const beforeBookmark = await ctx.prisma.outboxEvent.findMany({
+      where: { createdAt: { gte: startedAt } },
+      select: { type: true },
+    });
+    const typesBeforeBookmark = [...new Set(beforeBookmark.map((e) => e.type))];
+
+    // ZAKŁADKA (S17). Krok dołożony z tego samego powodu co cytowanie i tematy:
+    // strażnik strzeże wyłącznie tego, przez co realnie przeszedł.
+    const bookmarked = await ctx.app.inject({
+      method: 'PUT',
+      url: `/api/v1/me/bookmarks/SOCIAL_POST/${postId}`,
+      headers: { cookie: aCookie },
+    });
+    expect(bookmarked.statusCode).toBe(200);
+
     // Zbierz WSZYSTKIE zdarzenia wypuszczone przez tę ścieżkę.
     const events = await ctx.prisma.outboxEvent.findMany({
       where: { createdAt: { gte: startedAt } },
       select: { type: true },
     });
     const types = [...new Set(events.map((e) => e.type))];
+
+    // Zakładka ma NIE emitować żadnego zdarzenia — tak jak onboarding. Brak
+    // zdarzenia to brak drogi do laddera, czyli zabezpieczenie z architektury,
+    // a nie z konfiguracji subskrypcji. Asercja jest tu zamiast `toContain`,
+    // bo pilnujemy CISZY, a ciszy nie da się sprawdzić listą typów.
+    expect(
+      types.sort(),
+      'zapisanie do zakładek wypuściło zdarzenie — prywatna półka nie może mieć drogi do laddera',
+    ).toEqual(typesBeforeBookmark.sort());
     expect(
       types.length,
       'ścieżka społeczna nie wypuściła ŻADNEGO zdarzenia — test zieleniłby się z niewłaściwego powodu',

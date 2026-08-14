@@ -66,6 +66,8 @@ export function notificationMessage(type: string, payload: Record<string, unknow
       return 'Nowa prośba o dołączenie do Twojej grupy.';
     case 'membership_accepted':
       return 'Przyjęto Cię do grupy.';
+    case 'group_moderator_granted':
+      return 'Jesteś moderatorem grupy — możesz przypinać, ukrywać treści i zarządzać składem.';
     case 'answer_received':
       return 'Nowa odpowiedź na Twoje pytanie.';
     case 'answer_accepted':
@@ -82,7 +84,12 @@ export function notificationHref(type: string, payload: Record<string, unknown>)
   if (payload.socialPostId) return `/wpisy/${payload.socialPostId}`;
   if (type === 'post_commented' && payload.groupId && payload.postId)
     return `/grupy/${payload.groupId}/post/${payload.postId}`;
-  if ((type === 'membership_requested' || type === 'membership_accepted') && payload.groupId)
+  if (
+    (type === 'membership_requested' ||
+      type === 'membership_accepted' ||
+      type === 'group_moderator_granted') &&
+    payload.groupId
+  )
     return `/grupy/${payload.groupId}`;
   if ((type === 'answer_received' || type === 'answer_accepted') && payload.threadId)
     return `/watki/${payload.threadId}`;

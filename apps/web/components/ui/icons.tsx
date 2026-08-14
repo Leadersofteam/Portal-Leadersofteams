@@ -151,6 +151,23 @@ export function IconAppreciate({ size = 24, active = false }: IconProps) {
   );
 }
 
+/**
+ * Zakładka — półka „na później". Zakładka w książce, nie gwiazdka: gwiazdka
+ * mówi „to jest dobre" (ocena dla innych), zakładka mówi „wrócę do tego"
+ * (notatka dla siebie). ADR-010: zakładek nikt nie liczy publicznie.
+ */
+export function IconBookmark({ size = 24, active = false }: IconProps) {
+  return (
+    <svg {...svgProps(size)}>
+      <path
+        d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"
+        fill={active ? 'currentColor' : 'none'}
+        fillOpacity={active ? 0.18 : 0}
+      />
+    </svg>
+  );
+}
+
 /** Menu — trzy szczeble (spójne z hamburgerem, ale jako ikona w treści). */
 export function IconMore({ size = 24 }: IconProps) {
   return (

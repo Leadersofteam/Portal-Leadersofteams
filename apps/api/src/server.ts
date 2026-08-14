@@ -198,12 +198,23 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
   const reviewsService = createReviewsService({ prisma, identity: identityService });
+  // KOLEJNOŚĆ MA ZNACZENIE: `social` powstaje PRZED `groups`, bo groups czyta
+  // z niego stan zakładek widza (S17). Odwrotnej zależności nie ma i mieć nie
+  // może — to `social` jest właścicielem projekcji nad obiema tabelami treści.
+  const socialService = createSocialService({
+    prisma,
+    identity: identityService,
+    ladder: ladderService,
+    files: filesService,
+    redis,
+  });
   const groupsService = createGroupsService({
     prisma,
     identity: identityService,
     ladder: ladderService,
     cache,
     files: filesService,
+    bookmarks: socialService,
     redis,
   });
   const communityService = createCommunityService({
@@ -213,13 +224,6 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     redis,
   });
   const notificationsService = createNotificationsService({ prisma, identity: identityService });
-  const socialService = createSocialService({
-    prisma,
-    identity: identityService,
-    ladder: ladderService,
-    files: filesService,
-    redis,
-  });
   const listingsService = createListingsService({
     prisma,
     identity: identityService,
