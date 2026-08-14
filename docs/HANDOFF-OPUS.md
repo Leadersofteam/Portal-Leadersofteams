@@ -15,7 +15,7 @@
 > ⚠️ Ten sprint **zaczyna się od decyzji właściciela**, której nie da się rozstrzygnąć z kodu:
 > czy dane demo zostają na produkcji, gdy przyjdą realni Liderzy (R-17), i kogo zapraszamy.
 
-> **✅ S18 DOMKNIĘTY (2026-08-15): „Prawda o Portalu"** (`0af32c3`, `5012178`, `f0f1a1f`).
+> **✅ S18 DOMKNIĘTY (2026-08-15): „Prawda o Portalu"** (`0af32c3`, `5012178`, `60e20b8`, `53fa760`).
 > Wdrożone na staging **i produkcję**, przejście ścieżki wykonane NA ŻYWO kontem testowym
 > (skasowanym własnym przyciskiem „Usuń konto" — testowana funkcja była jednocześnie
 > sprzątaniem). Sprint higieniczny: zero nowych funkcji, wszystko o zgodność deklaracji

@@ -101,7 +101,10 @@ export function AccountActions() {
           </li>
           <li>awatar i wszystkie wgrane pliki — usuwane też z dysku,</li>
           <li>profil Lidera i portfolio; Twoje usługi trafiają do archiwum,</li>
-          <li>obserwowania, reakcje, zakładki i Twoja oś aktywności.</li>
+          <li>
+            obserwowania, reakcje, Twoja oś aktywności oraz obie prywatne półki — zakładki i
+            ulubione usługi.
+          </li>
         </ul>
         <p className="muted">Co zostaje, ale bez powiązania z Tobą:</p>
         <ul>
