@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 
 import { ReportButton } from '@/components/report-button';
 import { POST_TYPE_LABELS } from '@/lib/labels';
+import { MentionText } from '@/components/mention-text';
+import { PostMedia } from '@/components/post-media';
 import { serverApi } from '@/lib/server-api';
 
 import { ReactButton } from '../../group-actions';
@@ -16,6 +18,7 @@ interface PostDetail {
     type: string;
     title: string;
     body: string;
+    imageFileIds: string[];
     authorName: string;
     reactionsCount: number;
     viewerReacted: boolean;
@@ -72,7 +75,10 @@ export default async function PostPage({
         <span className="badge">{POST_TYPE_LABELS[post.type] ?? post.type}</span>
         <h1>{post.title}</h1>
         <div className="meta">{post.authorName}</div>
-        <p className="description">{post.body}</p>
+        <p className="description">
+          <MentionText>{post.body}</MentionText>
+        </p>
+        <PostMedia fileIds={post.imageFileIds ?? []} alt={`Obraz do dyskusji — ${post.title}`} />
         <div className="actions-row">
           {canParticipate ? (
             <ReactButton

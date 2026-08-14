@@ -1968,3 +1968,21 @@ a.quoted-post:hover {
 .verify-banner h3 {
   margin-top: 0;
 }
+
+/* Temat (#hashtag) w treści — odróżniony od wzmianki @handle, bo prowadzi
+   w zupełnie inne miejsce: wzmianka do osoby, temat do rozmowy. */
+.topic-link {
+  color: var(--level-4);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.topic-link:hover {
+  text-decoration: underline;
+}
+
+/* Podpowiedź pod polem treści (np. o #tematach i @wzmiankach) */
+.field-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+}

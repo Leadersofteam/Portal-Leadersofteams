@@ -228,6 +228,7 @@ model UploadedFile {
   portfolioItems PortfolioItem[]
   listingImages  ListingImage[]
   socialImages   SocialPostImage[]
+  postImages     PostImage[]
 
   @@index([ownerId, kind])
   @@map("uploaded_files")
@@ -584,10 +585,12 @@ model Post {
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
-  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  author    User       @relation(fields: [authorUserId], references: [id])
+  group     Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author    User        @relation(fields: [authorUserId], references: [id])
   comments  Comment[]
   reactions Reaction[]
+  images    PostImage[]
+  topics    PostTopic[]
 
   // Edycja/usunięcie własnych treści (moduł social, S4) — soft delete.
   editedAt  DateTime?
@@ -945,6 +948,75 @@ model ActivityItem {
   @@map("activity_items")
 }
 
+// Obrazy przy poście w grupie (S17). Ten sam wzorzec co SocialPostImage —
+// dyskusja branżowa bez możliwości pokazania zrzutu czy schematu jest kaleka.
+model PostImage {
+  id       String @id @default(cuid())
+  postId   String
+  fileId   String
+  position Int    @default(0)
+
+  post Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  file UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, fileId])
+  @@index([postId, position])
+  @@map("post_images")
+}
+
+// ---------------------------------------------------------------------------
+// Tematy (#hashtagi) — S17
+//
+// WŁASNY model, a NIE współdzielenie `Tag` z modułu listings. Tag przy usłudze
+// to deklaracja sprzedawcy o kategorii oferty; temat we wpisie to swobodne
+// słowo w rozmowie. Zlanie ich w jedną tabelę oznaczałoby, że „popularne tagi"
+// w katalogu usług zaczynają mieszać kategorie ofert z tematami dyskusji.
+//
+// WŁAŚCICIELEM jest moduł `social`: tematy wydobywa ten sam konsument, który
+// buduje oś aktywności (`onSocialPostPublished` / `onPostPublished`), więc
+// projekcja tematów powstaje dokładnie tam, gdzie projekcja feedu.
+//
+// ADR-010: strona tematu jest CHRONOLOGICZNA. Liczba użyć służy wyłącznie do
+// podpowiedzi nawigacyjnych, nigdy do kolejności treści.
+// ---------------------------------------------------------------------------
+
+model Topic {
+  id        String   @id @default(cuid())
+  // Pisownia z pierwszego użycia — pokazujemy ją, żeby „#AI" nie stało się „#ai".
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  socialPosts SocialPostTopic[]
+  posts       PostTopic[]
+
+  @@map("topics")
+}
+
+model SocialPostTopic {
+  postId  String
+  topicId String
+
+  post  SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  topic Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([postId, topicId])
+  @@index([topicId])
+  @@map("social_post_topics")
+}
+
+model PostTopic {
+  postId  String
+  topicId String
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([postId, topicId])
+  @@index([topicId])
+  @@map("post_topics")
+}
+
 // ---------------------------------------------------------------------------
 // social — wpis portalowy (X-lite, S8)
 //
@@ -975,6 +1047,7 @@ model SocialPost {
   comments   SocialComment[]
   reactions  SocialReaction[]
   images     SocialPostImage[]
+  topics     SocialPostTopic[]
   quotedPost SocialPost?       @relation("SocialQuote", fields: [quotedPostId], references: [id], onDelete: SetNull)
   quotedBy   SocialPost[]      @relation("SocialQuote")
 

@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
 import { GROUP_TYPE_LABELS, POST_TYPE_LABELS } from '@/lib/labels';
+import { MentionText } from '@/components/mention-text';
+import { PostMedia } from '@/components/post-media';
 import { serverApi } from '@/lib/server-api';
 
 import { ApproveButton, JoinLeaveButton, PostForm, ReactButton } from './group-actions';
@@ -50,6 +52,7 @@ interface FeedPost {
   type: string;
   title: string;
   body: string;
+  imageFileIds: string[];
   authorName: string;
   commentsCount: number;
   reactionsCount: number;
@@ -140,7 +143,10 @@ export default async function GroupPage({
             </h3>
             <div className="meta">{post.authorName}</div>
             <p className="description">
-              {post.body.length > 280 ? `${post.body.slice(0, 280)}…` : post.body}
+              <MentionText>
+                {post.body.length > 280 ? `${post.body.slice(0, 280)}…` : post.body}
+              </MentionText>
+              <PostMedia fileIds={post.imageFileIds ?? []} alt={`Obraz — ${post.title}`} />
             </p>
             <div className="actions-row">
               {viewer.membershipStatus === 'ACTIVE' ? (

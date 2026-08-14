@@ -6,6 +6,13 @@ import { z } from 'zod';
 
 export const idSchema = z.string().cuid();
 
+// Maksymalna liczba obrazów przy jednej treści (wpis portalowy, post w grupie).
+// Limit świadomy: więcej nie mieści się w siatce na 390 px bez zamiany feedu
+// w galerię. Stała stoi TUTAJ, w sekcji wspólnej, bo używają jej schematy
+// z dwóch różnych miejsc pliku — a `const` nie jest hoistowany, więc przy
+// definicji niżej pierwsze użycie wywracało moduł na starcie.
+export const SOCIAL_POST_MAX_IMAGES = 4;
+
 export const apiErrorSchema = z.object({
   error: z.object({
     code: z.string(),
@@ -434,6 +441,10 @@ export const createPostInputSchema = z.object({
   type: postTypeSchema.default('DISCUSSION'),
   title: z.string().trim().min(5, 'Tytuł: min. 5 znaków').max(140),
   body: z.string().trim().min(10, 'Treść: min. 10 znaków').max(20000),
+  // Obrazy przy poście w grupie (S17) — ten sam limit i ta sama mechanika
+  // co przy wpisie portalowym. Dyskusja branżowa bez możliwości pokazania
+  // zrzutu albo schematu jest kaleka.
+  imageFileIds: z.array(idSchema).max(SOCIAL_POST_MAX_IMAGES).optional(),
 });
 export type CreatePostInput = z.infer<typeof createPostInputSchema>;
 
@@ -530,10 +541,6 @@ export const socialPostBodyOptionalSchema = z
   .string()
   .trim()
   .max(600, 'Wpis: maksymalnie 600 znaków');
-
-// Do 4 obrazów, jak w X. Limit jest świadomy: więcej nie mieści się w siatce
-// na 390 px bez zamiany feedu w galerię, a feed ma zostać czytelny.
-export const SOCIAL_POST_MAX_IMAGES = 4;
 
 export const createSocialPostInputSchema = z.object({
   // Tekst może być pusty, JEŚLI wpis niesie obraz albo cytat — udostępnienie

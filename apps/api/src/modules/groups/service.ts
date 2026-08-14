@@ -21,6 +21,9 @@ const GROUPS_CACHE_TTL = 300;
 
 export interface GroupsServiceDeps {
   prisma: PrismaClient;
+  // Walidacja własności obrazów przy poście (S17) — ten sam wzorzec co listings
+  // i social. Opcjonalna: worker buduje ten serwis bez warstwy uploadów.
+  files?: { assertOwned(fileId: string, ownerId: string, kind?: string): Promise<void> };
   identity: Pick<IdentityService, 'getPublicUsers' | 'getUserCreatedAt' | 'getUserIdsByHandles'>;
   // ladder tylko do ODCZYTU poziomu (bramka) — żadnej krawędzi zdarzeń do ladder
   // (anty-MLM, ADR-010 dec. 4). Aktywność w groups nie generuje punktów.
@@ -31,7 +34,14 @@ export interface GroupsServiceDeps {
 
 const FEED_PAGE_DEFAULT = 20;
 
-export function createGroupsService({ prisma, identity, ladder, cache, redis }: GroupsServiceDeps) {
+export function createGroupsService({
+  prisma,
+  identity,
+  ladder,
+  cache,
+  files,
+  redis,
+}: GroupsServiceDeps) {
   async function requireGroup(groupId: string) {
     const group = await prisma.group.findUnique({ where: { id: groupId } });
     if (!group) throw new NotFoundError('Grupa nie istnieje');
@@ -251,6 +261,14 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
         userId,
         FRESH_ACCOUNT_LIMITS.group_post,
       );
+      // Własność plików sprawdzamy PRZED transakcją — cudzy identyfikator ma
+      // odbić się od walidacji, a nie wylądować w bazie i wyświetlić czyjeś
+      // zdjęcie pod naszym nazwiskiem (ta sama bariera co przy wpisach).
+      const imageFileIds = input.imageFileIds ?? [];
+      if (imageFileIds.length > 0 && files) {
+        for (const fileId of imageFileIds) await files.assertOwned(fileId, userId, 'SOCIAL');
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         const post = await tx.post.create({
           data: {
@@ -261,6 +279,11 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
             body: input.body,
           },
         });
+        if (imageFileIds.length > 0) {
+          await tx.postImage.createMany({
+            data: imageFileIds.map((fileId, position) => ({ postId: post.id, fileId, position })),
+          });
+        }
         await emitEvent(tx, 'groups.post_published', {
           postId: post.id,
           groupId,
@@ -418,6 +441,18 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
             ).map((r) => r.postId),
           )
         : new Set<string>();
+      // Obrazy dla CAŁEJ strony jednym zapytaniem — lista postów w grupie to
+      // widok otwierany często, a N+1 tutaj nie widać w testach, tylko na prodzie.
+      const images = await prisma.postImage.findMany({
+        where: { postId: { in: page.map((p) => p.id) } },
+        orderBy: [{ position: 'asc' }],
+        select: { postId: true, fileId: true },
+      });
+      const imagesByPost = new Map<string, string[]>();
+      for (const img of images) {
+        imagesByPost.set(img.postId, [...(imagesByPost.get(img.postId) ?? []), img.fileId]);
+      }
+
       return {
         posts: page.map((p) => ({
           id: p.id,
@@ -425,6 +460,7 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
           title: p.title,
           body: p.body,
           authorName: authors.get(p.authorUserId)?.displayName ?? 'Użytkownik',
+          imageFileIds: imagesByPost.get(p.id) ?? [],
           commentsCount: p._count.comments,
           reactionsCount: p._count.reactions,
           viewerReacted: reactedSet.has(p.id),
@@ -440,6 +476,7 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
         include: {
           _count: { select: { reactions: true } },
           comments: { orderBy: { createdAt: 'asc' }, take: 500 },
+          images: { orderBy: { position: 'asc' }, select: { fileId: true } },
         },
       });
       if (!post || post.moderationStatus !== 'VISIBLE' || post.deletedAt)
@@ -458,6 +495,7 @@ export function createGroupsService({ prisma, identity, ladder, cache, redis }: 
           type: post.type,
           title: post.title,
           body: post.body,
+          imageFileIds: post.images.map((i) => i.fileId),
           authorName: users.get(post.authorUserId)?.displayName ?? 'Użytkownik',
           reactionsCount: post._count.reactions,
           viewerReacted,

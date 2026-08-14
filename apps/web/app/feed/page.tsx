@@ -111,6 +111,14 @@ export default async function FeedPage({
     ? quotedPreview.post.body.slice(0, 60) + (quotedPreview.post.body.length > 60 ? '…' : '')
     : undefined;
 
+  // Popularne tematy jako NAWIGACJA, nie ranking treści (ADR-010). Feed niżej
+  // pozostaje ściśle chronologiczny — chipy tylko pomagają znaleźć rozmowę,
+  // której nie da się wyszukać (frazy krótsze niż 3 znaki nie wchodzą do FULLTEXT).
+  const topicsData = await serverApi<{
+    topics: Array<{ name: string; slug: string; count: number }>;
+  }>('/topics/popular');
+  const topics = topicsData?.topics ?? [];
+
   const items = data?.items ?? [];
   const followingCount = data?.followingCount ?? 0;
   const hrefFor = (s: FeedScope) => (s === 'all' ? '/feed?zakres=wszyscy' : '/feed');
@@ -132,6 +140,18 @@ export default async function FeedPage({
             Cała społeczność
           </Link>
         </nav>
+      )}
+
+      {topics.length > 0 && (
+        <ul className="tag-chips" aria-label="Popularne tematy">
+          {topics.map((topic) => (
+            <li key={topic.slug}>
+              <Link className="tag-chip" href={`/tematy/${topic.slug}`}>
+                #{topic.name} <span className="muted">({topic.count})</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
 
       {isLoggedIn ? (

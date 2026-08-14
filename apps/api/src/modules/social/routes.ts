@@ -7,7 +7,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 
 import type { AuthHelpers } from '../../shared/auth';
-import { UnauthorizedError } from '../../shared/errors';
+import { NotFoundError, UnauthorizedError } from '../../shared/errors';
 import { parseBody } from '../../shared/validation';
 import type { SocialService } from './service';
 
@@ -85,6 +85,19 @@ export function socialRoutes({ social, auth }: SocialRoutesDeps) {
 
     // Feed: scope=all działa także dla gościa (treść i tak publiczna),
     // scope=following wymaga sesji — bez niej nie ma czyjej osi pokazać.
+    // Tematy (#hashtagi) — publiczne, bo treść i tak jest publiczna.
+    app.get('/topics/popular', async (_request, reply) => {
+      return reply.send({ topics: await social.getPopularTopics() });
+    });
+
+    // UWAGA na kolejność: `/topics/popular` MUSI stać przed `/topics/:slug`,
+    // inaczej „popular" zostałoby potraktowane jako slug tematu.
+    app.get<{ Params: { slug: string } }>('/topics/:slug', async (request, reply) => {
+      const result = await social.getTopic(request.params.slug);
+      if (!result) throw new NotFoundError('Temat nie istnieje');
+      return reply.send(result);
+    });
+
     app.get('/feed', async (request, reply) => {
       const viewer = await auth.currentUser(request);
       const { scope, cursor, limit } = parseBody(feedQuerySchema, request.query);

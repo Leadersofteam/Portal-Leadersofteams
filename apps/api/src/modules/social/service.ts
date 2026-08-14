@@ -11,6 +11,7 @@ import { DomainError, ForbiddenError, NotFoundError } from '../../shared/errors'
 import { emitEvent } from '../../shared/outbox';
 import { toBooleanQuery } from '../../shared/fulltext';
 import { extractMentions } from '../../shared/mentions';
+import { extractTopics } from '../../shared/topics';
 import { enforceFreshAccountQuota, FRESH_ACCOUNT_LIMITS } from '../../shared/quota';
 import type { Redis } from '../../shared/redis';
 import type { IdentityService } from '../identity/index';
@@ -170,6 +171,41 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
       }
     }
     return { imagesBy, quotedBy };
+  }
+
+  /**
+   * Wydobywa #tematy z treści i podpina je do wpisu albo postu w grupie.
+   *
+   * DLACZEGO TUTAJ, w module `social`: tematy są PROJEKCJĄ treści, tak samo jak
+   * oś aktywności. Powstają w tym samym konsumencie, który buduje feed, więc
+   * jest jedno miejsce, w którym „opublikowana treść" zamienia się w to, co
+   * widać w nawigacji. Gdyby każdy moduł zapisywał tematy u siebie, mielibyśmy
+   * dwie implementacje parsera i dwa sposoby na ich rozjechanie.
+   *
+   * Idempotentne: przy ponownym przetworzeniu zdarzenia (retry joba) nic się
+   * nie dubluje, bo powiązanie ma klucz złożony.
+   */
+  async function syncTopics(kind: 'social' | 'group', postId: string, body: string) {
+    const topics = extractTopics(body);
+    if (topics.length === 0) return;
+    for (const topic of topics) {
+      const row = await prisma.topic.upsert({
+        where: { slug: topic.slug },
+        update: {},
+        create: { slug: topic.slug, name: topic.name },
+      });
+      if (kind === 'social') {
+        await prisma.socialPostTopic.createMany({
+          data: [{ postId, topicId: row.id }],
+          skipDuplicates: true,
+        });
+      } else {
+        await prisma.postTopic.createMany({
+          data: [{ postId, topicId: row.id }],
+          skipDuplicates: true,
+        });
+      }
+    }
   }
 
   async function requireOwnPost(postId: string, userId: string) {
@@ -674,9 +710,12 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
     async onPostPublished(p: { postId: string; groupId: string; authorUserId: string }) {
       const post = await prisma.post.findUnique({
         where: { id: p.postId },
-        select: { title: true, deletedAt: true, group: { select: { name: true } } },
+        select: { title: true, body: true, deletedAt: true, group: { select: { name: true } } },
       });
       if (!post || post.deletedAt) return;
+      // Tematy szukamy też w tytule — w poście grupowym to często tam trafia
+      // słowo kluczowe całej dyskusji.
+      await syncTopics('group', p.postId, `${post.title} ${post.body}`);
       await this.recordActivity({
         actorId: p.authorUserId,
         type: 'POST_PUBLISHED',
@@ -717,6 +756,7 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
         select: { body: true, deletedAt: true },
       });
       if (!post || post.deletedAt) return;
+      await syncTopics('social', p.postId, post.body);
       await this.recordActivity({
         actorId: p.authorUserId,
         type: 'SOCIAL_POST_PUBLISHED',
@@ -742,6 +782,134 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
         subjectId: p.achievementId,
         meta: { level: p.level },
       });
+    },
+
+    /**
+     * Strona tematu — CHRONOLOGICZNIE (ADR-010: bez rankingu treści).
+     * Łączy wpisy portalowe i posty w grupach, bo dla czytelnika „#HR" to jedna
+     * rozmowa, niezależnie od tego, w której części Portalu się toczy.
+     */
+    async getTopic(slug: string, limit = 30) {
+      const topic = await prisma.topic.findUnique({ where: { slug } });
+      if (!topic) return null;
+
+      const [socialLinks, groupLinks] = await Promise.all([
+        prisma.socialPostTopic.findMany({
+          where: { topicId: topic.id },
+          select: { postId: true },
+          take: 200,
+        }),
+        prisma.postTopic.findMany({
+          where: { topicId: topic.id },
+          select: { postId: true },
+          take: 200,
+        }),
+      ]);
+
+      const [socialPosts, groupPosts] = await Promise.all([
+        socialLinks.length
+          ? prisma.socialPost.findMany({
+              where: { id: { in: socialLinks.map((l) => l.postId) }, deletedAt: null },
+              orderBy: [{ createdAt: 'desc' }],
+              take: limit,
+            })
+          : Promise.resolve([]),
+        groupLinks.length
+          ? prisma.post.findMany({
+              where: {
+                id: { in: groupLinks.map((l) => l.postId) },
+                deletedAt: null,
+                moderationStatus: 'VISIBLE',
+              },
+              orderBy: [{ createdAt: 'desc' }],
+              take: limit,
+              select: {
+                id: true,
+                title: true,
+                body: true,
+                createdAt: true,
+                authorUserId: true,
+                groupId: true,
+                group: { select: { name: true } },
+              },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const authorIds = [
+        ...new Set([
+          ...socialPosts.map((p) => p.authorUserId),
+          ...groupPosts.map((p) => p.authorUserId),
+        ]),
+      ];
+      const [users, levels] = await Promise.all([
+        identity.getPublicUsers(authorIds),
+        ladder.getLevels(authorIds),
+      ]);
+      const person = (id: string) => ({
+        id,
+        displayName: users.get(id)?.displayName ?? 'Użytkownik',
+        handle: users.get(id)?.handle ?? null,
+        avatarFileId: users.get(id)?.avatarFileId ?? null,
+        level: levels.get(id) ?? 0,
+      });
+
+      // Scalamy i sortujemy po czasie — jedna oś, nie dwie listy obok siebie.
+      const items = [
+        ...socialPosts.map((p) => ({
+          kind: 'social' as const,
+          id: p.id,
+          title: null as string | null,
+          body: p.body,
+          createdAt: p.createdAt,
+          groupId: null as string | null,
+          groupName: null as string | null,
+          author: person(p.authorUserId),
+        })),
+        ...groupPosts.map((p) => ({
+          kind: 'group' as const,
+          id: p.id,
+          title: p.title,
+          body: p.body,
+          createdAt: p.createdAt,
+          groupId: p.groupId,
+          groupName: p.group.name,
+          author: person(p.authorUserId),
+        })),
+      ]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, limit);
+
+      return { topic: { name: topic.name, slug: topic.slug }, items };
+    },
+
+    /**
+     * Najczęściej używane tematy — WYŁĄCZNIE jako podpowiedź nawigacyjna.
+     * ADR-010 zabrania rankingu TREŚCI; to jest ranking etykiet, tak samo jak
+     * chipy popularnych tagów w katalogu usług.
+     */
+    async getPopularTopics(limit = 12) {
+      const [socialCounts, groupCounts] = await Promise.all([
+        prisma.socialPostTopic.groupBy({ by: ['topicId'], _count: { topicId: true } }),
+        prisma.postTopic.groupBy({ by: ['topicId'], _count: { topicId: true } }),
+      ]);
+      const totals = new Map<string, number>();
+      for (const row of [...socialCounts, ...groupCounts]) {
+        totals.set(row.topicId, (totals.get(row.topicId) ?? 0) + row._count.topicId);
+      }
+      if (totals.size === 0) return [];
+      const top = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+      const topics = await prisma.topic.findMany({
+        where: { id: { in: top.map(([id]) => id) } },
+        select: { id: true, name: true, slug: true },
+      });
+      const byId = new Map(topics.map((t) => [t.id, t]));
+      return top
+        .map(([id, count]) => {
+          const t = byId.get(id);
+          return t ? { name: t.name, slug: t.slug, count } : null;
+        })
+        .filter((t): t is { name: string; slug: string; count: number } => t !== null);
     },
 
     // Analityka (S12): moduł liczy WŁASNĄ tabelę i oddaje samą liczbę (ADR-002).

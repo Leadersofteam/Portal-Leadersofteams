@@ -203,6 +203,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     identity: identityService,
     ladder: ladderService,
     cache,
+    files: filesService,
     redis,
   });
   const communityService = createCommunityService({

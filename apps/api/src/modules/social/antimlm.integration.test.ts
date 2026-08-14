@@ -59,6 +59,7 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
     await ctx.prisma.socialReaction.deleteMany({ where: { userId: { in: [aId, bId] } } });
     await ctx.prisma.socialComment.deleteMany({ where: { authorUserId: { in: [aId, bId] } } });
     await ctx.prisma.socialPost.deleteMany({ where: { authorUserId: { in: [aId, bId] } } });
+    await ctx.prisma.topic.deleteMany({ where: { slug: { startsWith: 'antymlm' } } });
     await ctx.prisma.activityItem.deleteMany({ where: { actorId: { in: [aId, bId] } } });
     await ctx.prisma.user.deleteMany({ where: { email: { in: emails } } });
     await ctx.close();
@@ -115,6 +116,18 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
       },
     });
     expect(quote.statusCode).toBe(201);
+
+    // Wpis z #TEMATEM. Ten krok dołożony w S17 z tego samego powodu co krok
+    // z cytowaniem: tematy to nowa powierzchnia społeczna, a test strzeże
+    // WYŁĄCZNIE tego, przez co realnie przeszedł. Bez tego kroku zieleniłby się
+    // przez pominięcie nowej funkcji.
+    const tagged = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/social/posts',
+      headers: { cookie: bCookie },
+      payload: { body: `Podsumowanie tygodnia #antymlm${run} — wnioski w komentarzu.` },
+    });
+    expect(tagged.statusCode).toBe(201);
 
     // Zbierz WSZYSTKIE zdarzenia wypuszczone przez tę ścieżkę.
     const events = await ctx.prisma.outboxEvent.findMany({

@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
+import { ImagePicker } from '@/components/image-picker';
 import { ApiRequestError, apiFetch } from '@/lib/api';
+import { useImageUpload } from '@/lib/use-image-upload';
 
 function useAction() {
   const router = useRouter();
@@ -69,6 +71,7 @@ export function JoinLeaveButton({
 
 export function PostForm({ groupId }: { groupId: string }) {
   const { run, error, pending } = useAction();
+  const upload = useImageUpload();
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,9 +84,11 @@ export function PostForm({ groupId }: { groupId: string }) {
           type: form.get('type'),
           title: form.get('title'),
           body: form.get('body'),
+          ...(upload.images.length > 0 ? { imageFileIds: upload.images.map((i) => i.fileId) } : {}),
         }),
       });
       el.reset();
+      upload.reset();
     });
   }
 
@@ -107,10 +112,18 @@ export function PostForm({ groupId }: { groupId: string }) {
         <div className="field">
           <label htmlFor="body">Treść</label>
           <textarea id="body" name="body" required minLength={10} maxLength={20000} />
+          <p className="muted field-hint">
+            Użyj <code>#tematu</code>, żeby dyskusja trafiła na stronę tematu, i{' '}
+            <code>@uchwytu</code>, żeby kogoś powiadomić.
+          </p>
         </div>
-        <button className="btn" type="submit" disabled={pending}>
-          {pending ? 'Publikowanie…' : 'Opublikuj'}
-        </button>
+        {upload.error && <div className="error-box">{upload.error}</div>}
+        <div className="actions-row">
+          <ImagePicker id="group-post-images" upload={upload} />
+          <button className="btn" type="submit" disabled={pending || upload.uploading}>
+            {pending ? 'Publikowanie…' : 'Opublikuj'}
+          </button>
+        </div>
       </form>
     </div>
   );
