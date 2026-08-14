@@ -1,5 +1,16 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **📌 OD 2026-08-14 START SESJI WYGLĄDA INACZEJ.** Repo ma [`CLAUDE.md`](../CLAUDE.md)
+> (wczytywany automatycznie), [`docs/MINY.md`](MINY.md) — skonsolidowaną listę pułapek —
+> oraz **siedem Skilli projektowych** w `.claude/skills/` (mapa: [`docs/SKILLE.md`](SKILLE.md)).
+> Skille włączają się same przy wdrożeniu, migracji, bramkach, danych demo, zrzutach,
+> funkcjach społecznych i domykaniu sesji. Prompt startowy jest przez to KRÓTKI —
+> wiedza żyje w repo, nie w kopiowanym bloku tekstu.
+>
+> **Stan produkcji 2026-08-14:** 1 realne konto (właściciel) + komplet danych demo.
+> Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
+> Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
+
 > **✅ S17 — punkty 1–2 (2026-08-14): „Tematy i obrazy w grupach"** (`a5cfdf0`).
 > Wdrożone na staging i **produkcję**, dane demo przesiane z tematami.
 >
