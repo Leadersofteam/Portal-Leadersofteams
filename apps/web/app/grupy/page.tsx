@@ -46,7 +46,15 @@ export default async function GroupsPage({
 
   return (
     <main>
-      <h1>Grupy branżowe</h1>
+      <div className="list-row">
+        <h1>Grupy branżowe</h1>
+        {/* ZASTANE do S17: trasa `POST /groups` istniała od Sprintu 4, ale nie
+            miała ŻADNEGO wejścia w interfejsie — grupę dało się założyć tylko
+            curl-em. */}
+        <Link className="btn" href="/grupy/nowa">
+          + Załóż grupę
+        </Link>
+      </div>
       <p className="muted">
         Wymieniaj się doświadczeniami, case studies i pomysłami w grupach sektorowych. Aktywność w
         grupach nie generuje punktów Drabinki — liczy się realna praca i mentoring.

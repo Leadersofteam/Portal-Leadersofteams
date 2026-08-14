@@ -9,6 +9,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { loadConfig } from '../../shared/config';
 import { buildServer } from '../../server';
 import type { AppContext } from '../../server';
+import { ladderSubscriptions } from '../ladder/events';
+import type { LadderService } from '../ladder/index';
 
 const hasInfra = Boolean(process.env.DATABASE_URL && process.env.REDIS_URL);
 const run = Date.now();
@@ -207,6 +209,207 @@ describe.skipIf(!hasInfra)('groups — grupy branżowe, posty, komentarze, reakc
     expect(secondPage.json().posts[0].id).not.toBe(firstPage.json().posts[0].id);
   });
 
+  // --- pierwsza linia moderacji (S17) ---------------------------------------
+
+  it('przypinanie: tylko moderator grupy, najwyżej jeden post, bez duplikatu w liście', async () => {
+    const denied = await post(memberCookie, `/api/v1/posts/${postId}/pin`);
+    expect(denied.statusCode).toBe(403);
+    expect(denied.json().error.code).toBe('NOT_GROUP_MODERATOR');
+
+    expect((await post(founderCookie, `/api/v1/posts/${postId}/pin`)).statusCode).toBe(200);
+
+    const feed = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/feed`,
+    });
+    expect(feed.json().pinned?.id).toBe(postId);
+    // Przypięty post NIE MOŻE stać jednocześnie w liście chronologicznej —
+    // inaczej ta sama treść byłaby w grupie dwa razy.
+    expect(feed.json().posts.map((p: { id: string }) => p.id)).not.toContain(postId);
+
+    // Drugi pin odpina pierwszy (jeden „zacznij tutaj" na grupę).
+    const second = await post(memberCookie, `/api/v1/groups/${openGroupId}/posts`, {
+      type: 'DISCUSSION',
+      title: `Drugi kandydat na przypięcie ${run}`,
+      body: 'Treść drugiego postu, wystarczająco długa dla walidacji.',
+    });
+    const secondId = second.json().id;
+    expect((await post(founderCookie, `/api/v1/posts/${secondId}/pin`)).statusCode).toBe(200);
+    expect(
+      await ctx.prisma.post.count({ where: { groupId: openGroupId, pinnedAt: { not: null } } }),
+    ).toBe(1);
+
+    const unpin = await ctx.app.inject({
+      method: 'DELETE',
+      url: `/api/v1/posts/${secondId}/pin`,
+      headers: { cookie: founderCookie },
+    });
+    expect(unpin.statusCode).toBe(200);
+    const afterUnpin = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/feed`,
+    });
+    expect(afterUnpin.json().pinned).toBeNull();
+  });
+
+  it('ukrycie posta przez moderatora GRUPY zdejmuje go z feedu', async () => {
+    const created = await post(memberCookie, `/api/v1/groups/${openGroupId}/posts`, {
+      type: 'DISCUSSION',
+      title: `Post do ukrycia ${run}`,
+      body: 'Treść, która zaraz zniknie z listy grupy.',
+    });
+    const hideId = created.json().id;
+
+    const denied = await post(outsiderCookie, `/api/v1/posts/${hideId}/hide`);
+    expect(denied.statusCode).toBe(403);
+
+    expect((await post(founderCookie, `/api/v1/posts/${hideId}/hide`)).statusCode).toBe(200);
+
+    const feed = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/feed`,
+    });
+    expect(feed.json().posts.map((p: { id: string }) => p.id)).not.toContain(hideId);
+    // Ta sama ścieżka co w panelu platformy: zdarzenie dla projekcji feedu.
+    const events = await ctx.prisma.outboxEvent.findMany({
+      where: { type: 'groups.post_deleted' },
+      select: { payload: true },
+    });
+    expect(JSON.stringify(events)).toContain(hideId);
+  });
+
+  it('skład grupy i role: awans, blokada ostatniego moderatora, degradacja', async () => {
+    const denied = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/members`,
+      headers: { cookie: memberCookie },
+    });
+    expect(denied.statusCode).toBe(403);
+
+    const list = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/members`,
+      headers: { cookie: founderCookie },
+    });
+    expect(list.statusCode).toBe(200);
+    const founderRow = list
+      .json()
+      .members.find((m: { userId: string }) => m.userId === founderId) as { role: string };
+    expect(founderRow.role).toBe('MODERATOR');
+    const memberRow = list
+      .json()
+      .members.find((m: { userId: string }) => m.userId === memberId) as {
+      membershipId: string;
+      role: string;
+    };
+    expect(memberRow.role).toBe('MEMBER');
+
+    // Grupa nie może zostać bez opieki: degradacja jedynego moderatora → 409.
+    const founderMembership = await ctx.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId: openGroupId, userId: founderId } },
+    });
+    const lastMod = await post(founderCookie, `/api/v1/memberships/${founderMembership!.id}/role`, {
+      role: 'MEMBER',
+    });
+    expect(lastMod.statusCode).toBe(409);
+    expect(lastMod.json().error.code).toBe('LAST_MODERATOR');
+
+    const promote = await post(
+      founderCookie,
+      `/api/v1/memberships/${memberRow.membershipId}/role`,
+      {
+        role: 'MODERATOR',
+      },
+    );
+    expect(promote.statusCode).toBe(200);
+
+    // Awansowany dowiaduje się o roli — inaczej uprawnienie jest martwe.
+    const roleEvents = await ctx.prisma.outboxEvent.findMany({
+      where: { type: 'groups.membership_role_changed' },
+      select: { payload: true },
+    });
+    expect(JSON.stringify(roleEvents)).toContain(memberId);
+
+    // Teraz moderatorów jest dwoje, więc degradacja przechodzi.
+    const demote = await post(founderCookie, `/api/v1/memberships/${memberRow.membershipId}/role`, {
+      role: 'MEMBER',
+    });
+    expect(demote.statusCode).toBe(200);
+  });
+
+  it('moderator PLATFORMY może wyznaczyć gospodarza grupy, ale nie wyprasza', async () => {
+    // Powód istnienia tej furtki: grupy systemowe z seeda nie mają założyciela,
+    // więc nie mają ANI JEDNEGO moderatora (produkcja 2026-08-14: 10 grup,
+    // 57 członkostw, 0 moderatorów). Bez tego pierwszego gospodarza nie miałby
+    // kto wyznaczyć i cała warstwa moderatora grupy byłaby martwa.
+    await ctx.prisma.user.update({ where: { id: outsiderId }, data: { role: 'MODERATOR' } });
+    // Rola jest ZAMROŻONA w migawce sesji — bez ponownego logowania nowa rola
+    // nie działa (mina z docs/MINY.md, kosztowała kiedyś 5 czerwonych testów).
+    const relogin = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { email: emails.outsider, password: 'super-tajne-haslo-1' },
+    });
+    const raw = relogin.headers['set-cookie'];
+    const platformCookie = String(Array.isArray(raw) ? raw[0] : raw).split(';')[0] ?? '';
+
+    const members = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/members`,
+      headers: { cookie: platformCookie },
+    });
+    expect(members.statusCode).toBe(200);
+    const row = members.json().members.find((m: { userId: string }) => m.userId === memberId) as {
+      membershipId: string;
+    };
+
+    const promote = await post(platformCookie, `/api/v1/memberships/${row.membershipId}/role`, {
+      role: 'MODERATOR',
+    });
+    expect(promote.statusCode).toBe(200);
+
+    // Ale wyproszenie to NIE jest jego droga — ma na to panel moderacji ze
+    // śladem w ModerationCase. Tu wolno mu wyłącznie wyznaczyć gospodarza.
+    const ban = await post(platformCookie, `/api/v1/memberships/${row.membershipId}/ban`);
+    expect(ban.statusCode).toBe(403);
+
+    // Sprzątamy po sobie: rola grupowa i platformowa wracają do stanu wyjścia.
+    await post(founderCookie, `/api/v1/memberships/${row.membershipId}/role`, { role: 'MEMBER' });
+    await ctx.prisma.user.update({ where: { id: outsiderId }, data: { role: 'USER' } });
+  });
+
+  it('wyproszenie: nie moderatora, nie siebie, a wyproszony nie wraca jednym kliknięciem', async () => {
+    const membership = await ctx.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId: moderatedGroupId, userId: memberId } },
+    });
+    const founderMembership = await ctx.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId: moderatedGroupId, userId: founderId } },
+    });
+
+    const self = await post(founderCookie, `/api/v1/memberships/${founderMembership!.id}/ban`);
+    expect(self.statusCode).toBe(409);
+    expect(self.json().error.code).toBe('SELF_BAN');
+
+    const banned = await post(founderCookie, `/api/v1/memberships/${membership!.id}/ban`);
+    expect(banned.statusCode).toBe(200);
+    const after = await ctx.prisma.groupMembership.findUnique({ where: { id: membership!.id } });
+    expect(after?.status).toBe('BANNED');
+
+    // ZASTANE do S17: powrót wpadał w kolizję unikatu i mówił „Jesteś już
+    // członkiem" — komunikat, który w tej sytuacji kłamał.
+    const rejoin = await post(memberCookie, `/api/v1/groups/${moderatedGroupId}/join`);
+    expect(rejoin.statusCode).toBe(403);
+    expect(rejoin.json().error.code).toBe('BANNED_FROM_GROUP');
+
+    // Wyproszony traci prawo publikowania w tej grupie.
+    const blocked = await post(memberCookie, `/api/v1/groups/${moderatedGroupId}/posts`, {
+      type: 'DISCUSSION',
+      title: 'Post po wyproszeniu',
+      body: 'Nie powinien się opublikować po wyproszeniu z grupy.',
+    });
+    expect(blocked.statusCode).toBe(403);
+  });
+
   it('outbox zawiera zdarzenia groups.* cyklu życia', async () => {
     const events = await ctx.prisma.outboxEvent.findMany({
       where: { type: { startsWith: 'groups.' } },
@@ -219,17 +422,42 @@ describe.skipIf(!hasInfra)('groups — grupy branżowe, posty, komentarze, reakc
       'groups.membership_accepted',
       'groups.post_published',
       'groups.comment_added',
+      // S17 — moderator grupy: awans i zdjęcie treści. Oba konsumuje WYŁĄCZNIE
+      // notifications/social; żadne nie ma prawa trafić do laddera (test niżej).
+      'groups.membership_role_changed',
+      'groups.post_deleted',
     ]) {
       expect(types).toContain(expected);
     }
   });
 
   it('ANTY-MLM: pełna aktywność w grupach NIE tworzy żadnego PointEvent', async () => {
-    // Ani jeden punkt Drabinki za posty/komentarze/reakcje/członkostwo/założenie.
+    // Ani jeden punkt Drabinki za posty/komentarze/reakcje/członkostwo/założenie
+    // ani za MODERACJĘ (S17): rola w grupie to obowiązek, nie status.
     const points = await ctx.prisma.pointEvent.count({
       where: { userId: { in: [founderId, memberId, outsiderId] } },
     });
     expect(points).toBe(0);
+
+    // Dowód STRUKTURALNY, nie tylko na danych: żadne zdarzenie groups.* nie jest
+    // kluczem w subskrypcjach laddera. Bez tego dołożenie nowego zdarzenia
+    // (jak `membership_role_changed` w S17) mogłoby kiedyś otworzyć drogę
+    // do punktów, a test dalej świeciłby na zielono.
+    const groupEventTypes = [
+      ...new Set(
+        (
+          await ctx.prisma.outboxEvent.findMany({
+            where: { type: { startsWith: 'groups.' } },
+            select: { type: true },
+          })
+        ).map((e) => e.type),
+      ),
+    ];
+    expect(groupEventTypes.length).toBeGreaterThan(0);
+    const ladderTypes = Object.keys(ladderSubscriptions({} as LadderService));
+    for (const type of groupEventTypes) {
+      expect(ladderTypes, `ladder subskrybuje "${type}" — to złamanie ADR-004`).not.toContain(type);
+    }
 
     // Poziom niezmieniony: założyciel wciąż 2 (ustawiony wprost), reszta 0.
     const founderState = await ctx.prisma.ladderState.findUnique({ where: { userId: founderId } });

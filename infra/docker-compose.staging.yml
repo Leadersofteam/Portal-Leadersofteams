@@ -10,9 +10,13 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
+      args:
+        # Jednoznaczny cel: patrz komentarz w Dockerfile.web. Sama nazwa `api`
+        # jest na tym serwerze DWUZNACZNA (staging + prod w sieci n8n_default).
+        API_INTERNAL_URL: http://api-staging:3001
     restart: unless-stopped
     environment:
-      API_INTERNAL_URL: http://api:3001
+      API_INTERNAL_URL: http://api-staging:3001
     depends_on:
       api:
         condition: service_healthy
@@ -24,12 +28,15 @@ services:
           memory: 640M
     healthcheck:
       # Next.js standalone nasłuchuje na :3000 wewnątrz kontenera (basic-auth jest
-      # w Traefiku, nie tu). Sonda mirror wzorca `api`. Jeśli dodacie dedykowaną
-      # trasę /healthz w web, podmieńcie ścieżkę '/' poniżej.
+      # w Traefiku, nie tu). Sonda mirror wzorca `api`.
+      #
+      # ⚠️ Ścieżka `/healthz` (S18), NIE `/`: sonda w `/` była liczona jako
+      # odsłona i zalewała analitykę 5760 wejściami na dobę. Trasa jest
+      # wykluczona z matchera middleware — patrz apps/web/middleware.ts.
       test:
         [
           'CMD-SHELL',
-          'node -e "fetch(''http://127.0.0.1:3000/'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+          'node -e "fetch(''http://127.0.0.1:3000/healthz'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
         ]
       interval: 15s
       timeout: 5s
@@ -51,6 +58,11 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.api
     restart: unless-stopped
+    # Alias jednoznaczny w skali CAŁEGO serwera — `api` koliduje z produkcją
+    # w sieci Traefika i staging trafiał do produkcyjnego API.
+    networks:
+      internal:
+        aliases: [api-staging]
     environment:
       NODE_ENV: production
       PORT: '3001'
@@ -75,7 +87,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [internal]
     deploy:
       resources:
         limits:
@@ -99,18 +110,23 @@ services:
       dockerfile: infra/Dockerfile.api
     restart: unless-stopped
     command: ['node', 'dist/worker.js']
-    # HEALTHCHECK (świadomie pominięty): worker to proces BullMQ BEZ portu HTTP,
-    # więc sonda `fetch` jak w `api`/`web` nie ma zastosowania. Rzetelny healthcheck
-    # wymaga HEARTBEATU — worker cyklicznie zapisuje klucz w Redis (np.
-    # `SET portal:worker:heartbeat <ts> EX 60`), a healthcheck sprawdza jego świeżość:
-    #   test: ['CMD-SHELL', 'node -e "const Redis=require(''ioredis'');const r=new Redis(process.env.REDIS_URL);r.get(''portal:worker:heartbeat'').then(v=>process.exit(v?0:1)).catch(()=>process.exit(1))"']
-    # To zmiana w KODZIE workera (dopisanie heartbeatu) — poza zakresem przygotowań;
-    # do wdrożenia przy hardeningu przed go-live (patrz docs/GO-LIVE-CHECKLIST.md §1).
     environment:
       NODE_ENV: production
       DATABASE_URL: mysql://portal:${MYSQL_PASSWORD}@mysql:3306/portal
       REDIS_URL: redis://redis:6379
       LOG_LEVEL: debug
+      # ⚠️ Do S12 tych zmiennych TU NIE BYŁO, choć `api` wyżej ma je od dawna.
+      # Worker wysyła własne maile (dzienny digest), więc rozjazd konfiguracji
+      # oznaczał staging, na którym poczta „działa przy rejestracji i milczy
+      # w tle" — usterka widoczna dopiero po dobie i tylko przez nieobecność.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
+      APP_BASE_URL: ${APP_BASE_URL:-https://staging.leadersofteams.pl}
     depends_on:
       mysql:
         condition: service_healthy
@@ -122,6 +138,19 @@ services:
         limits:
           cpus: '0.25'
           memory: 384M
+    # Worker nie ma portu HTTP, więc sonda `fetch` jak w api/web nie ma zastosowania.
+    # Dowodem życia jest świeży klucz w Redisie, odnawiany TYLKO gdy pętla dispatchera
+    # faktycznie się obraca (patrz apps/api/src/shared/heartbeat.ts).
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "const R=require(''ioredis'');const r=new R(process.env.REDIS_URL);r.get(''portal:worker:heartbeat'').then(v=>{r.disconnect();process.exit(v?0:1)}).catch(()=>{r.disconnect();process.exit(1)})"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   migrate:
     image: ${API_IMAGE:-portal-api:staging}

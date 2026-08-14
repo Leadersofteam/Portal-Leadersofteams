@@ -25,6 +25,24 @@ services:
         limits:
           cpus: '1.5'
           memory: 1536M
+    # Ten sam wzorzec co na stagingu (GO-LIVE-CHECKLIST §1). Do S12 prod `web`
+    # nie miał sondy w ogóle: kontener z zawieszonym Next.js pokazywał „Up",
+    # a Traefik dalej kierował do niego ruch.
+    #
+    # ⚠️ Sonda MUSI iść w `/healthz`, nie w `/` (S18). Do 14.08 uderzała w `/`
+    # i była LICZONA JAKO ODSŁONA — 3926 sztucznych wejść na dobę przy 2–3
+    # realnych na każdej innej stronie. `/healthz` jest wykluczone z matchera
+    # middleware, więc nie dolicza się do niczego.
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3000/healthz'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik_public
@@ -56,7 +74,6 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-true}
-      BREVO_API_KEY: ${BREVO_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
       UPLOADS_DIR: /app/uploads
@@ -111,7 +128,6 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-true}
-      BREVO_API_KEY: ${BREVO_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@leadersofteams.pl}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Leaders of Teams}
     depends_on:
@@ -125,6 +141,21 @@ services:
         limits:
           cpus: '1'
           memory: 768M
+    # Worker nie ma portu HTTP, więc sonda `fetch` jak w api/web nie ma zastosowania.
+    # Dowodem życia jest świeży klucz w Redisie, odnawiany TYLKO gdy pętla dispatchera
+    # faktycznie się obraca (patrz apps/api/src/shared/heartbeat.ts). Bez tego cicha
+    # śmierć workera nie dawała ŻADNEGO sygnału: `docker ps` pokazywał „Up", a wpisy
+    # przestawały pojawiać się w feedzie i punkty przestawały dojrzewać.
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "const R=require(''ioredis'');const r=new R(process.env.REDIS_URL);r.get(''portal:worker:heartbeat'').then(v=>{r.disconnect();process.exit(v?0:1)}).catch(()=>{r.disconnect();process.exit(1)})"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   # Jednorazowe migracje (krok release'u, ADR-008):
   # docker compose -p portal run --rm migrate

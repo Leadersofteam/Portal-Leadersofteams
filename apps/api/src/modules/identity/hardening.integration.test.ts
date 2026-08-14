@@ -145,7 +145,7 @@ describe.skipIf(!hasInfra)('Sprint 6 — hardening (cache, RODO, zgłoś, e-mail
   it('RODO: DELETE /me anonimizuje konto, ZACHOWUJE ledger i unieważnia sesję', async () => {
     const victim = await register(emails.victim, 'Ofiara RODO');
     // Treści + wpis punktowy (ledger) użytkownika.
-    await ctx.prisma.leaderProfile.create({
+    const victimProfile = await ctx.prisma.leaderProfile.create({
       data: { userId: victim.userId, industryId, headline: 'Mój prawdziwy nagłówek', bio: 'Bio' },
     });
     const group = await ctx.prisma.group.create({
@@ -174,6 +174,28 @@ describe.skipIf(!hasInfra)('Sprint 6 — hardening (cache, RODO, zgłoś, e-mail
         rulesetVersion: 'v1',
       },
     });
+
+    // Prywatne półki: ulubiona usługa i zakładka. MUSZĄ realnie powstać —
+    // asercja „po usunięciu jest zero" na pustym zbiorze przechodzi przez
+    // POMINIĘCIE i nie sprawdza niczego (ta mina wystąpiła w tym repo).
+    const listing = await ctx.prisma.serviceListing.create({
+      data: {
+        leaderProfileId: victimProfile.id,
+        industryId,
+        title: `Usługa RODO ${run}`,
+        slug: `usluga-rodo-${run}`,
+        description: 'Opis usługi na potrzeby testu RODO',
+        status: 'PUBLISHED',
+      },
+    });
+    await ctx.prisma.listingFavorite.create({
+      data: { userId: victim.userId, listingId: listing.id },
+    });
+    await ctx.prisma.bookmark.create({
+      data: { userId: victim.userId, subjectType: 'POST', subjectId: post1.id },
+    });
+    expect(await ctx.prisma.listingFavorite.count({ where: { userId: victim.userId } })).toBe(1);
+    expect(await ctx.prisma.bookmark.count({ where: { userId: victim.userId } })).toBe(1);
 
     // Eksport zwraca dane ze wszystkich modułów.
     const exp = await ctx.app.inject({
@@ -213,6 +235,11 @@ describe.skipIf(!hasInfra)('Sprint 6 — hardening (cache, RODO, zgłoś, e-mail
     expect((await ctx.prisma.thread.findUnique({ where: { id: thread.id } }))?.body).toBe(
       '[treść usunięta]',
     );
+
+    // Prywatne półki znikają w całości — `/panel/konto` obiecuje to wprost,
+    // a obietnica prawna musi mieć pokrycie w kodzie, nie w copy (S18).
+    expect(await ctx.prisma.listingFavorite.count({ where: { userId: victim.userId } })).toBe(0);
+    expect(await ctx.prisma.bookmark.count({ where: { userId: victim.userId } })).toBe(0);
 
     // Sesja unieważniona — stary cookie już nie działa.
     const me = await ctx.app.inject({

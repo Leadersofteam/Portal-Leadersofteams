@@ -11,6 +11,12 @@ export function createListingsAccountData(prisma: PrismaClient): AccountDataModu
         where: { authorId: userId },
         data: { body: '[treść usunięta]' },
       });
+      // Ulubione to prywatna półka jednej osoby — po usunięciu konta nie ma czego
+      // zachowywać (dokładnie ten sam powód co przy zakładkach w module social).
+      // Dołożone w S18 razem ze stroną `/panel/ulubione`: skoro użytkownik widzi
+      // tę półkę i czyta w `/panel/konto`, że prywatne listy znikają, to muszą
+      // znikać naprawdę.
+      await prisma.listingFavorite.deleteMany({ where: { userId } });
       // Usługi anonimizowanego Lidera znikają z katalogu.
       const profile = await prisma.leaderProfile.findUnique({ where: { userId } });
       if (profile) {

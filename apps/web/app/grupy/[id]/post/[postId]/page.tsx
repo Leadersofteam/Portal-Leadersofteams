@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { BookmarkButton } from '@/components/bookmark-button';
 import { ReportButton } from '@/components/report-button';
 import { POST_TYPE_LABELS } from '@/lib/labels';
+import { MentionText } from '@/components/mention-text';
+import { PostMedia } from '@/components/post-media';
 import { serverApi } from '@/lib/server-api';
 
-import { ReactButton } from '../../group-actions';
+import { HidePostButton, PinButton, ReactButton } from '../../group-actions';
 import { CommentForm } from './comment-form';
 import { OwnCommentDelete, OwnPostActions } from './own-actions';
 
@@ -16,9 +19,13 @@ interface PostDetail {
     type: string;
     title: string;
     body: string;
+    imageFileIds: string[];
     authorName: string;
     reactionsCount: number;
     viewerReacted: boolean;
+    viewerBookmarked: boolean;
+    pinned: boolean;
+    viewerIsGroupModerator: boolean;
     isOwn: boolean;
     editedAt: string | null;
     createdAt: string;
@@ -70,9 +77,13 @@ export default async function PostPage({
 
       <article className="card">
         <span className="badge">{POST_TYPE_LABELS[post.type] ?? post.type}</span>
+        {post.pinned && <span className="badge">📌 Przypięte w grupie</span>}
         <h1>{post.title}</h1>
         <div className="meta">{post.authorName}</div>
-        <p className="description">{post.body}</p>
+        <p className="description">
+          <MentionText>{post.body}</MentionText>
+        </p>
+        <PostMedia fileIds={post.imageFileIds ?? []} alt={`Obraz do dyskusji — ${post.title}`} />
         <div className="actions-row">
           {canParticipate ? (
             <ReactButton
@@ -83,8 +94,20 @@ export default async function PostPage({
           ) : (
             <span className="badge">👏 {post.reactionsCount}</span>
           )}
+          <BookmarkButton
+            subjectType="POST"
+            subjectId={post.id}
+            initialActive={post.viewerBookmarked}
+          />
           {canParticipate && <ReportButton subjectType="POST" subjectId={post.id} />}
         </div>
+        {post.viewerIsGroupModerator && (
+          <div className="actions-row mt-1">
+            <span className="badge">Moderator grupy</span>
+            <PinButton postId={post.id} pinned={post.pinned} />
+            {!post.isOwn && <HidePostButton postId={post.id} />}
+          </div>
+        )}
         {post.isOwn && (
           <OwnPostActions
             postId={post.id}

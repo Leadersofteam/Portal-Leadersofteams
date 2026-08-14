@@ -12,7 +12,9 @@ import {
 import type { FastifyInstance } from 'fastify';
 
 import type { AuthHelpers } from '../../shared/auth';
+import { NotFoundError } from '../../shared/errors';
 import { parseBody } from '../../shared/validation';
+import type { IdentityService } from '../identity/index';
 import type { LadderService } from '../ladder/index';
 import type { OrdersService } from './orders.service';
 import type { ProfilesService } from './profiles.service';
@@ -23,10 +25,14 @@ export interface MarketplaceRoutesDeps {
   orders: OrdersService;
   reviews: ReviewsService;
   ladder: Pick<LadderService, 'getLevel' | 'getLevels'>;
+  // Dane firmy do publicznego profilu — przez publiczne API identity (ADR-002),
+  // marketplace nie czyta tabeli `companies`.
+  identity: Pick<IdentityService, 'getCompanyMeta' | 'getPublicUsers'>;
   auth: AuthHelpers;
 }
 
 export function marketplaceRoutes({
+  identity,
   profiles,
   orders,
   reviews,
@@ -37,6 +43,46 @@ export function marketplaceRoutes({
     // --- słownik branż -----------------------------------------------------
     app.get('/industries', async (_request, reply) => {
       return reply.send({ industries: await profiles.listIndustries() });
+    });
+
+    /**
+     * Publiczny profil Firmy (/firmy/:id).
+     *
+     * Powstał, bo Lider składający ofertę widział DO TEJ PORY wyłącznie nazwę
+     * firmy — czyli decydował w ciemno, komu poświęci czas na przygotowanie
+     * oferty. Tu dostaje staż, historię zleceń i oceny z OBU stron.
+     */
+    app.get<{ Params: { id: string } }>('/companies/:id', async (request, reply) => {
+      const company = await identity.getCompanyMeta(request.params.id);
+      if (!company) throw new NotFoundError('Firma nie istnieje');
+      const [stats, recentReviews, recentOrders] = await Promise.all([
+        reviews.getCompanyPublicStats(company.id),
+        reviews.getCompanyReviews(company.id),
+        orders.listPublicByCompany(company.id),
+      ]);
+      const authors = await identity.getPublicUsers(recentReviews.map((r) => r.authorUserId));
+      return reply.send({
+        company: {
+          id: company.id,
+          name: company.name,
+          createdAt: company.createdAt,
+          nipVerifiedAt: company.nipVerifiedAt ?? null,
+        },
+        stats,
+        reviews: recentReviews.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          publishedAt: r.publishedAt,
+          orderTitle: r.order?.title ?? null,
+          orderId: r.order?.id ?? null,
+          author: {
+            displayName: authors.get(r.authorUserId)?.displayName ?? 'Lider',
+            handle: authors.get(r.authorUserId)?.handle ?? null,
+          },
+        })),
+        orders: recentOrders,
+      });
     });
 
     // --- profile Liderów ---------------------------------------------------

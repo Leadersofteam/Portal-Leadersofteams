@@ -21,7 +21,7 @@ export type FileVariant = keyof typeof FILE_VARIANTS;
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-export type FileKind = 'AVATAR' | 'PORTFOLIO' | 'LISTING';
+export type FileKind = 'AVATAR' | 'PORTFOLIO' | 'LISTING' | 'SOCIAL';
 
 export interface FilesDeps {
   uploadsDir: string;
@@ -53,6 +53,15 @@ export interface FilesService {
   removeAllForUser(userId: string): Promise<void>;
   /** Wewnętrzne (inne moduły przez composition root): walidacja własności. */
   assertOwned(fileId: string, ownerId: string, kind?: FileKind): Promise<void>;
+  /**
+   * Czy katalog uploadów jest ZAPISYWALNY dla procesu.
+   *
+   * Powstało po realnej awarii na produkcji: podkatalog miesięczny w wolumenie
+   * należał do roota, a API działa jako `node` — każdy upload kończył się 500,
+   * ale dowiadywaliśmy się o tym dopiero, gdy ktoś próbował wgrać zdjęcie.
+   * Teraz niesprawność widać w /healthz i w logu startowym.
+   */
+  checkWritable(): Promise<boolean>;
 }
 
 export function createFilesService(prisma: PrismaClient, deps: FilesDeps): FilesService {
@@ -70,6 +79,20 @@ export function createFilesService(prisma: PrismaClient, deps: FilesDeps): Files
   }
 
   return {
+    async checkWritable() {
+      // Sprawdzamy realnym zapisem, nie `access()`: prawa do KATALOGU nie
+      // gwarantują prawa zapisu pliku przy nietypowych właścicielach i maskach.
+      const probe = path.join(root, `.writable-${process.pid}`);
+      try {
+        await mkdir(root, { recursive: true });
+        await writeFile(probe, 'ok');
+        await rm(probe, { force: true });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+
     async store({ ownerId, kind, originalName, mime, buffer }) {
       if (!ALLOWED_MIME.has(mime)) {
         throw new DomainError('UNSUPPORTED_FILE_TYPE', 'Dozwolone formaty: JPEG, PNG, WebP', 415);

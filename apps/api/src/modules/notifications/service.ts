@@ -94,6 +94,12 @@ interface MembershipAcceptedPayload {
   groupId: string;
   requesterUserId: string;
 }
+interface MembershipRoleChangedPayload {
+  groupId: string;
+  userId: string;
+  role: 'MEMBER' | 'MODERATOR';
+  actorUserId: string;
+}
 interface AnswerCreatedPayload {
   answerId: string;
   threadId: string;
@@ -159,6 +165,25 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
             threadId: p.threadId,
             socialPostId: p.socialPostId,
           },
+        },
+      ]);
+    },
+
+    // Ktoś podał dalej Twój wpis z własnym komentarzem. Powiadomienie prowadzi
+    // do NOWEGO wpisu (tego z cytatem), nie do oryginału — inaczej autor nie
+    // zobaczyłby tego, co ktoś o nim napisał.
+    async onPostQuoted(p: {
+      postId: string;
+      quotedPostId: string;
+      quotedAuthorUserId: string;
+      actorUserId: string;
+    }) {
+      return deliver([
+        {
+          userId: p.quotedAuthorUserId,
+          type: 'post_quoted',
+          dedupeKey: `post_quoted:${p.postId}`,
+          payload: { socialPostId: p.postId, quotedPostId: p.quotedPostId },
         },
       ]);
     },
@@ -279,6 +304,25 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
       ]);
     },
 
+    /**
+     * Awans na moderatora grupy (S17). Bez tego powiadomienia człowiek dostaje
+     * uprawnienia i nie ma jak się o tym dowiedzieć — rola bez wiedzy o roli
+     * jest martwa. O degradacji NIE powiadamiamy: to komunikat, który upokarza,
+     * a moderator, który ją nadał, powinien powiedzieć o niej sam.
+     * ANTY-MLM: rola w grupie to obowiązek, nie status — ZERO punktów.
+     */
+    async onMembershipRoleChanged(p: MembershipRoleChangedPayload) {
+      if (p.role !== 'MODERATOR') return 0;
+      return deliver([
+        {
+          userId: p.userId,
+          type: 'group_moderator_granted',
+          dedupeKey: `group_moderator:${p.groupId}:${p.userId}`,
+          payload: { groupId: p.groupId },
+        },
+      ]);
+    },
+
     // Community (Q&A): powiadom autora pytania o nowej odpowiedzi. To fan-out
     // powiadomień — ZERO logiki punktowej (punkty żyją tylko w ladder).
     async onAnswerCreated(p: AnswerCreatedPayload) {
@@ -345,7 +389,7 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
     },
 
     // Dzienny digest (D4, ADR-009): jeden zbiorczy e-mail zamiast wielu — trzyma
-    // wolumen poniżej darmowego limitu Brevo. No-op gdy wysyłka wyłączona.
+    // wolumen w zasięgu zwykłej skrzynki pocztowej. No-op gdy wysyłka wyłączona.
     async sendDailyDigests(
       mail: MailService,
       getEmails: (userIds: string[]) => Promise<Map<string, string>>,

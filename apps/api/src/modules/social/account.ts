@@ -20,16 +20,20 @@ export function createSocialAccountData(prisma: PrismaClient): AccountDataModule
         data: { deletedAt: new Date(), body: '' },
       });
       await prisma.socialReaction.deleteMany({ where: { userId } });
+      // Zakładki to prywatna półka jednej osoby — po usunięciu konta nie ma
+      // czego zachowywać (w przeciwieństwie do ledgera punktów).
+      await prisma.bookmark.deleteMany({ where: { userId } });
       await prisma.user.updateMany({ where: { id: userId }, data: { handle: null } });
     },
 
     async exportUserData(userId) {
-      const [following, followers, activity, posts, comments] = await Promise.all([
+      const [following, followers, activity, posts, comments, bookmarks] = await Promise.all([
         prisma.follow.findMany({ where: { followerId: userId } }),
         prisma.follow.findMany({ where: { followedId: userId } }),
         prisma.activityItem.findMany({ where: { actorId: userId } }),
         prisma.socialPost.findMany({ where: { authorUserId: userId } }),
         prisma.socialComment.findMany({ where: { authorUserId: userId } }),
+        prisma.bookmark.findMany({ where: { userId } }),
       ]);
       return {
         following,
@@ -37,6 +41,7 @@ export function createSocialAccountData(prisma: PrismaClient): AccountDataModule
         activityItems: activity,
         socialPosts: posts,
         socialComments: comments,
+        bookmarks,
       };
     },
   };

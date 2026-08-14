@@ -1,10 +1,393 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
-**Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s8-s11-kieszonkowa-drabina`
-**Wykonawca:** Opus 5 (sesja S8–S11) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
-(certy LE, backup cron 03:45). **▶ NASTĘPNY KROK: [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)**
-(„Pierwszych dwudziestu"), start sesji: **[PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md)**.
-Poprzednia roadmapa S8–S12 jest zrealizowana poza S12: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md).
+> **📌 OD 2026-08-14 START SESJI WYGLĄDA INACZEJ.** Repo ma [`CLAUDE.md`](../CLAUDE.md)
+> (wczytywany automatycznie), [`docs/MINY.md`](MINY.md) — skonsolidowaną listę pułapek —
+> oraz **siedem Skilli projektowych** w `.claude/skills/` (mapa: [`docs/SKILLE.md`](SKILLE.md)).
+> Skille włączają się same przy wdrożeniu, migracji, bramkach, danych demo, zrzutach,
+> funkcjach społecznych i domykaniu sesji. Prompt startowy jest przez to KRÓTKI —
+> wiedza żyje w repo, nie w kopiowanym bloku tekstu.
+>
+> **Stan produkcji 2026-08-14:** 1 realne konto (właściciel) + komplet danych demo.
+> Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
+> Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
+
+> **▶ NASTĘPNY KROK: S19 „Pierwszych dwudziestu"** w [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md).
+> ⚠️ Ten sprint **zaczyna się od decyzji właściciela**, której nie da się rozstrzygnąć z kodu:
+> czy dane demo zostają na produkcji, gdy przyjdą realni Liderzy (R-17), i kogo zapraszamy.
+
+> **✅ S18 DOMKNIĘTY (2026-08-15): „Prawda o Portalu"** (`0af32c3`, `5012178`, `60e20b8`, `53fa760`).
+> Wdrożone na staging **i produkcję**, przejście ścieżki wykonane NA ŻYWO kontem testowym
+> (skasowanym własnym przyciskiem „Usuń konto" — testowana funkcja była jednocześnie
+> sprzątaniem). Sprint higieniczny: zero nowych funkcji, wszystko o zgodność deklaracji
+> ze stanem faktycznym. **Bez migracji** — zero zmian w Prismie.
+>
+> **1. Analityka przestała liczyć samą siebie.** Sonda kontenera `web` uderzała w `/` co 15 s
+> i była liczona jako odsłona. Sonda celuje dziś w `/healthz` (nowa trasa `force-dynamic`,
+> żeby dalej dowodziła RENDEROWANIA), wykluczoną z matchera middleware — nie z białej listy,
+> bo wtedy kłamstwo przeniosłoby się z `/` na `/inne`.
+> **Dowód z produkcji:** przed zmianą `/` = 3926/dobę przy 2–3 na każdej innej stronie;
+> po zmianie **0 przyrostu w kontrolowanym oknie 4 minut** przy kontenerze `healthy`
+> (gdyby sonda dalej liczyła, byłoby +16).
+>
+> **2. DRUGI POWÓD, dla którego analityka kłamała — nieopisany w roadmapie.** Biała lista
+> `KNOWN_PATHS` była za kodem o dwa sprinty: siedem istniejących stron wpadało do `/inne`,
+> w tym `/reset-hasla` i `/weryfikacja`, czyli dokładnie te sygnały, których szukamy przy
+> pierwszej mili. Gorzej: heurystyka identyfikatorów milczała przy `/profil/<uchwyt>` —
+> uchwyt to `displayName` przycięty do 24 znaków **bez sufiksu**, więc realny uchwyt jest
+> zwykle KRÓTSZY niż próg długości. Istniejący test przechodził wyłącznie dlatego, że użyto
+> w nim 27-znakowej atrapy. To samo dotyczyło `/tematy/<hashtag>` i `/uslugi/<slug>`.
+> **Wniosek do zapamiętania: atrapa dobrana pod implementację potrafi zazielenić test
+> na dane, które w produkcji nie występują.**
+>
+> **3. RODO dostało ścieżkę użytkownika (R-10).** `GET /me/export` i `DELETE /me` działały
+> od D6 bez ANI JEDNEGO wywołania w aplikacji, a `/prywatnosc` §5 twierdziła, że „w panelu
+> konta możesz pobrać komplet swoich danych". Nowe `/panel/konto`: eksport (blob +
+> `<a download>`, NIE `window.open` — w PWA nowa karta nie pobiera pliku) i usunięcie konta
+> z potwierdzeniem przez WPISANIE słowa (natywnego `confirm()` nie da się uczciwie przejść
+> w e2e, a odruchowe „OK" nie jest decyzją). Opis „co zostaje" napisany z kodu
+> `anonymizeAccount` i `anonymizeUserContent` każdego modułu — deklaracja prawna rozjeżdżająca
+> się z implementacją jest gorsza niż jej brak.
+>
+> **4. `/panel/ulubione`** — `GET /me/favorites` istniało od Sprintu 7 bez strony.
+> **`/me/social`** też nie miało wejścia: wzmianki `@handle` działały, a użytkownik nie miał
+> jak poznać własnego uchwytu. Panel pokazuje go z linkiem do publicznego profilu.
+>
+> **5. STRAŻNIK `shared/web-contract.test.ts`.** Porównuje trasy API z literałami ścieżek
+> w `apps/web` — nie tylko z argumentami `apiFetch`, bo strona zlecenia podaje ścieżkę
+> PROPSEM (`<ActionButton path={…}>`) i cały cykl życia zlecenia byłby przegapiony.
+> Zweryfikowany próbą: usunięcie `/panel/ulubione` czerwieni suitę na `GET /me/favorites`.
+> **🔴 ZNALAZŁ DWIE ZASTANE MARTWE TRASY, o których nikt nie wiedział:**
+> `POST /offers/:id/withdraw` (od Sprintu 3 — złożonej oferty NIE DAŁO SIĘ wycofać inaczej
+> niż curl-em; naprawione przyciskiem w `/panel/oferty`) oraz **`PATCH /listings/:id` —
+> opublikowanej usługi NIE DA SIĘ edytować**. To drugie zostawiam świadomie: edycja to
+> funkcja, a ten sprint jest higieniczny. Wpisane do wyjątków z uzasadnieniem i dopisane
+> do S21.
+>
+> **🔴 ZASTANY BŁĄD 1: `public/robots.txt` przesłaniał `app/robots.ts`.** Next serwuje
+> statyki przed trasami aplikacji, więc plik sprzed Sprintu G1 wygrywał od miesiąca:
+> `/logowanie` i `/rejestracja` NIE były wyłączone z indeksacji, a linia `Sitemap:` **nigdy
+> nie trafiła do crawlerów** — czyli główny efekt pracy nad odkrywalnością z G1 nie działał.
+> Naprawione; strażnik porównuje teraz `public/` z trasami metadanych w `app/`.
+>
+> **🔴 ZASTANY BŁĄD 2, złapany na zrzucie nowej strony i potwierdzony POMIAREM: KAŻDY
+> główny przycisk Portalu był przezroczysty.** `.btn` miał `background-color: rgba(0,0,0,0)`,
+> bo warstwa „połysku" z `climb.css` (wyższa swoistość) nadpisywała `background-image`
+> ustawiony skrótem `background` w `globals.css`. „Filtruj", „Utwórz konto", „Zaloguj się"
+> renderowały się jako sam biały napis — od S9/S10. Nikt nie zgłosił, bo biały tekst na
+> ciemnym tle nadal się czyta. Wypełnienie żyje dziś w zmiennej `--btn-fill`, połysk jest
+> DRUGĄ warstwą, a `background-color` jest siatką bezpieczeństwa.
+>
+> **6. Moduł `analytics` przestał być jedynym bez testów.** ⚠️ Sprostowanie do roadmapy:
+> `shared/analytics.test.ts` istniał i pokrywał `normalizePath`/`dayKey` — brakowało testów
+> SERWISU modułu (agregacja dób, źródła liczb).
+>
+> **7. Rejestr ryzyk przestał kłamać:** dane demo na produkcji to dziś **R-17**, kursy
+> zostają przy R-16 (starsze, cytowane w ADR-012/013).
+>
+> **Bramki: 203/203 testów API** (było 182), **17/17 e2e** (było 16), lint, typecheck, build.
+> Backup prod przed wdrożeniem: `portal-20260814-170916.sql.gz`.
+>
+> **⚠️ DO WIADOMOŚCI: konta testowe usuwane przyciskiem zostawiają ślad z definicji.**
+> `anonymizeAccount` działa W MIEJSCU (wiersz zostaje, PII znika), więc po każdym takim
+> przejściu w bazie jest wiersz `deleted-*@deleted.invalid`. **Licząc „ilu realnych
+> użytkowników", odfiltruj tę domenę** — inaczej wróci mina „konta testowe liczone jako
+> realni użytkownicy".
+
+> **✅ S17 DOMKNIĘTY — punkty 3–4 (2026-08-14): „Zakładki i moderatorzy grup"**
+> (`3cdf582`, `c69e64f`). Wdrożone na staging i **produkcję**, przejrzane na żywo
+> kontami testowymi (skasowane po sobie).
+>
+> **Zakładki.** Prywatna półka „na później" nad OBIEMA tabelami treści; właścicielem jest
+> `social`, dokładnie jak przy tematach. Klucz złożony `(userId, subjectType, subjectId)`
+> daje idempotencję za darmo; polimorf świadomie BEZ klucza obcego na treść — odczyt
+> filtruje treść usuniętą i ukrytą, więc wiszący wiersz jest niewidoczny i tani.
+> **ADR-010 pilnowany testem, nie deklaracją:** suita czyta SUROWE ciała pięciu odpowiedzi
+> i sprawdza, że nie ma w nich liczby zapisań — asercja na kształt obiektu przepuściłaby
+> pole dołożone kiedyś „bo się przyda".
+> **ANTY-MLM:** zapisanie do zakładek nie emituje ŻADNEGO zdarzenia (jak
+> `identity.updateOnboarding`). Ścieżka strażnika rozszerzona o ten krok, ale asercja jest
+> ODWROTNA niż przy cytowaniu: porównujemy zbiór typów zdarzeń przed i po, bo pilnujemy
+> CISZY, a ciszy nie da się sprawdzić przez `toContain`.
+>
+> **Moderatorzy grup.** RBAC (`GroupMembership.role`) istniał od Sprintu 4, ale używała go
+> WYŁĄCZNIE akceptacja wniosków; `GroupMemberStatus.BANNED` stał nieużywany. Doszły: skład
+> grupy (tylko dla moderatora — publiczna lista nazwisk to dane o ludziach, nie treść),
+> awans/degradacja z powiadomieniem, wyproszenie, ukrycie posta, przypięcie.
+> Degradacja i wyproszenie OSTATNIEGO moderatora → 409. Ukrycie ma JEDNĄ implementację
+> (`hideGroupPost`) dla moderatora grupy i platformy — wzorzec `takeDownSocialPost`.
+> Przypinamy POST, nie wątek Q&A (uzasadnienie w SPRINTY-S15-S19), najwyżej jeden na grupę,
+> wykluczony z listy chronologicznej na WSZYSTKICH stronach — inaczej wypłynąłby ponownie
+> przy kursorze.
+>
+> **🔴 ZASTANY BRAK, znaleziony dopiero przy przechodzeniu na żywo: `POST /groups` NIE MIAŁA
+> ŻADNEGO WEJŚCIA W UI.** Trasa z bramką poziomu 2 i testami istniała od Sprintu 4; grupę
+> dało się założyć wyłącznie curl-em. Dlatego produkcja miała 10 grup — wszystkie systemowe
+> z seeda, 57 członkostw i **ZERO moderatorów** (grupa systemowa nie ma założyciela).
+> Bez `/grupy/nowa` cały punkt 4 byłby funkcją, do której nikt nie ma jak dojść. Dodatkowo
+> moderator PLATFORMY może teraz nadać rolę moderatora w każdej grupie — wąsko i celowo,
+> żeby grupy systemowe miały jak dostać pierwszego gospodarza (wyproszenie i ukrywanie
+> zostają u moderatora grupy; platforma ma `/panel/moderacja` ze śladem w ModerationCase).
+>
+> **🔴 ZASTANY BŁĄD 1: `SiteHeader` NIGDY nie czytał sesji** — zalogowany widział na każdej
+> stronie „Zaloguj się / Dołącz". Zgłoszone przy S12 jako „bardzo mylący papierek", otwarte
+> do dziś. Sesję czyta teraz hook kliencki (`lib/use-session.ts`), NIE layout: `serverApi`
+> czyta cookies, więc odczyt w root layoucie uczyniłby dynamiczną każdą stronę, łącznie
+> z landingiem i regulaminem (sprawdzone: 14 tras nadal prerenderuje się statycznie).
+> Do rozstrzygnięcia slot zostaje pusty — nagłówek, który przez pół sekundy milczy, jest
+> lepszy niż taki, który przez pół sekundy kłamie.
+>
+> **🔴 ZASTANY BŁĄD 2:** feed miał na sztywno `initialActive={false}` przy „Doceniam", więc
+> docenione wpisy wyglądały na niedocenione, a ponowne kliknięcie kasowało własne docenienie.
+>
+> **Nowe miny w [MINY.md](MINY.md):** trasa API bez wejścia w UI, `waitFor` nie odświeży
+> strony renderowanej na serwerze, `waitForURL(/regex/)` łapie też adres bieżący, `.first()`
+> w liście, w której akcja zmienia liczbę kontrolek (odebrałem sobie moderację).
+>
+> Bramki: **182/182 testów API** (było 170), **16/16 e2e** (było 15), lint, typecheck, build.
+> Migracja expand-only: nowa tabela `bookmarks`, nowy enum, `posts.pinnedAt` + indeks.
+> Backup prod przed migracją: `portal-20260814-123451.sql.gz`.
+>
+> **⚠️ DO WIADOMOŚCI WŁAŚCICIELA:** na produkcji jest konto `kuchar21ski@gmail.com`
+> („Macix", 13.08 wieczorem) — z profilem Lidera, bez potwierdzonego adresu, bez treści.
+> Nie jest moje i nie usuwam go. Jeśli to nie Ty, **to pierwszy realny użytkownik Portalu**
+> i wtedy decyzja o danych demo (R-17) przestaje być hipotetyczna.
+
+> **✅ S17 — punkty 1–2 (2026-08-14): „Tematy i obrazy w grupach"** (`a5cfdf0`).
+> Wdrożone na staging i **produkcję**, dane demo przesiane z tematami.
+>
+> **Tematy (#hashtagi).** Własny model `Topic` — świadomie NIE współdzielony z `Tag`
+> z modułu listings: tag przy usłudze to deklaracja sprzedawcy o kategorii oferty,
+> temat we wpisie to swobodne słowo w rozmowie; zlanie ich oznaczałoby, że „popularne
+> tagi" w katalogu usług zaczynają mieszać kategorie ofert z tematami dyskusji.
+> Właścicielem jest moduł `social`: tematy wydobywa TEN SAM konsument, który buduje oś
+> aktywności (`onSocialPostPublished` / `onPostPublished`) — jedno miejsce, w którym
+> „opublikowana treść" zamienia się w to, co widać w nawigacji.
+> Strona `/tematy/[slug]` jest CHRONOLOGICZNA (ADR-010) i łączy wpisy portalowe
+> z postami w grupach: dla czytelnika „#HR" to jedna rozmowa. Ranking wyłącznie dla
+> etykiet (chipy na feedzie), nigdy dla treści.
+> Po co to, skoro jest wyszukiwarka: `innodb_ft_min_token_size` = 3, więc „HR", „AI"
+> i „UX" NIGDY nie wejdą do FULLTEXT — temat jest jedyną drogą do tych rozmów.
+>
+> **Obrazy w postach grupowych.** `PostImage` wzorowany na `SocialPostImage`; odczyt
+> dla całej strony listy jednym zapytaniem (N+1 na tym widoku nie widać w testach,
+> tylko na produkcji). Duplikacja uploadu usunięta — wspólny `lib/use-image-upload.ts`
+> i `components/image-picker.tsx` dla obu formularzy.
+>
+> **Błąd czasu wykonania złapany po drodze:** `SOCIAL_POST_MAX_IMAGES` było zdefiniowane
+> NIŻEJ niż jego pierwsze użycie w tym samym module kontraktów, a `const` nie jest
+> hoistowany — schemat wywracałby moduł na starcie. Stała przeniesiona do sekcji wspólnej.
+>
+> **ANTY-MLM:** ścieżka w `antimlm.integration.test.ts` rozszerzona o wpis z tematem,
+> z tego samego powodu co wcześniej o cytowanie — test strzeże wyłącznie tego, przez co
+> realnie przeszedł.
+>
+> Bramki: 170/170 testów API (było 157), 15/15 e2e, lint, typecheck, build.
+> Migracja expand-only: 4 nowe tabele, zero zmian w istniejących kolumnach.
+
+> **✅ SESJA S15 + S16 (2026-08-13, wieczór): „Pierwsza mila i portal pełen życia"**
+> (`5c03258`, `e30e05b`, `5e18ed5`). Wdrożone na staging i **produkcję**.
+> **▶ NASTĘPNY KROK: S17 w [SPRINTY-S15-S19.md](SPRINTY-S15-S19.md)**, prompt startowy:
+> [PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md).
+>
+> **🔴 SPROSTOWANIE, KTÓRE MUSI TU STAĆ NA WIERZCHU.** Ten dokument twierdził, że poczta
+> jest „ZROBIONA 13.08, zweryfikowane na produkcji dla rejestracji i resetu". Zweryfikowane
+> było WYŁĄCZNIE to, że e-mail wychodzi (`mail.sent` w logu). **Nikt nie kliknął linku.**
+> Właściciel kliknął — i dostał 404. Okazało się, że nie istniały ANI `/weryfikacja`,
+> ANI `/reset-hasla`, a `/logowanie` nie miało nawet linku „nie pamiętam hasła".
+> Front nie wołał ŻADNEGO z trzech gotowych endpointów auth. „Martwy reset hasła",
+> odhaczony jako zamknięty bloker pierwszej mili, był otwarty przez cały czas — przesunął
+> się z „mail nie wychodzi" na „mail prowadzi donikąd".
+> **Lekcja do zapamiętania: „backend gotowy" ≠ „funkcja działa". Jeśli funkcja ma ścieżkę
+> użytkownika, trzeba ją PRZEJŚĆ.**
+>
+> **S15 — pierwsza mila.** Dodane `/weryfikacja`, `/reset-hasla`, `/nie-pamietam-hasla`,
+> link na logowaniu, baner potwierdzenia adresu + `POST /auth/resend-verification`
+> (bez tego po wygaśnięciu tokenu jedyną drogą było drugie konto na ten sam adres).
+> Nowy `e2e/email-flows.spec.ts` przechodzi obie ścieżki końcem-końcem.
+> Stan potwierdzenia czytamy z BAZY, nie z migawki sesji — sesja jest zamrożona przy
+> logowaniu, więc baner oparty na sesji wisiałby po kliknięciu w link.
+> **Błąd złapany przez ten nowy test, dotyczący też realnych użytkowników:** bramka
+> anty-botowa odrzucała rejestracje z `TOO_FAST`, bo klient odliczał minimalny czas
+> wypełniania formularza od WYSŁANIA żądania o wyzwanie, a serwer od jego UTWORZENIA —
+> o całą latencję sieci później.
+>
+> **S16 — dane demo z warstwą społecznościową.** `seed-demo.ts` powstał przed modułem
+> `social`, więc siał marketplace i Q&A, ale feed oraz grupy zostawały puste nawet na
+> stagingu. Nowy `prisma/seed-demo-social.ts`: 13 wpisów (5 z obrazami, 2 z cytowaniem),
+> 4 dyskusje w grupach, 18 obserwowań, reakcje. Obrazy rysowane u nas w SVG.
+> Przechodzimy PRAWDZIWĄ ŚCIEŻKĄ KODU: obrazy przez `filesService.store()`, oś aktywności
+> przez `socialService.onSocialPostPublished` (ten sam konsument co w workerze).
+>
+> **DECYZJA WŁAŚCICIELA: dane demo są na PRODUKCJI.** Zgłosiłem ryzyko (fikcyjni Liderzy
+> z punktami vs obietnica ADR-004) — decyzja podtrzymana. Bezpieczniki: druga flaga
+> `SEED_DEMO_ALLOW_PRODUCTION=1` i `--purge` zdejmujący komplet jedną komendą.
+> Ryzyko zapisane jako **R-17** w [RISKS.md](RISKS.md).
+>
+> **🔴 ZASTANY BŁĄD INFRASTRUKTURY: staging pokazywał dane PRODUKCJI.** Staging i prod
+> dzielą sieć Traefika `n8n_default`, a compose nadaje alias równy nazwie usługi — nazwa
+> `api` istniała w obu projektach naraz i `portal-staging-web` rozwiązywał ją na kontener
+> produkcyjny. Każda weryfikacja „na stagingu" mogła być weryfikacją produkcji.
+> Naprawione aliasem `api-staging` + `ARG API_INTERNAL_URL` w `Dockerfile.web`
+> (cel rewrite'u jest zapiekany w buildzie, więc sam runtime env by nie wystarczył).
+> Produkcja była bezpieczna — tam `api` wskazuje jej własny kontener.
+>
+> **Stan produkcji:** 2 realne konta (właściciel + jedno pomyłkowe) + komplet danych demo.
+> Bramki: 157/157 testów API, 15/15 e2e (było 12), lint, typecheck, build.
+
+> **✅ PRZYROST S14 (2026-08-13, po S12): „Obrazy, cytowanie i twarz Firmy"**
+> (`105c907`, `883975b`). Wdrożone na staging i **produkcję**, przejrzane na żywo.
+> Właściciel poprosił o funkcje z X i marketplace'u; wybrałem takie, które pracują
+> na wąskie gardło (pusty portal ma wyglądać żywo, Firma ma dać się sprawdzić),
+> a nie tylko wydłużają listę.
+>
+> **Warstwa X:** obrazy przy wpisie (do 4) i „podaj dalej z komentarzem".
+>
+> - `FileKind.SOCIAL` dopisany NA KOŃCU enuma (MySQL trzyma enum jako liczbę
+>   porządkową — wstawienie w środek przemapowałoby istniejące pliki).
+> - Cytat cytatu SPŁASZCZA się do oryginału; usunięcie oryginału NIE kasuje
+>   cudzego komentarza (`onDelete: SetNull` + jawne „wpis niedostępny").
+> - Własność obrazu sprawdzana PRZED transakcją — cudzy identyfikator pliku
+>   odbija się od walidacji, zamiast wyciec w feedzie (jest na to test).
+> - **ANTY-MLM:** rozszerzyłem ścieżkę w `antimlm.integration.test.ts` o krok
+>   cytowania i dodałem `expect(types).toContain('social.post_quoted')`. Bez tego
+>   test byłby zielony przez POMINIĘCIE nowej funkcji.
+>
+> **Marketplace (dług z S11):** publiczny profil Firmy `/firmy/[id]` (staż,
+> historia zleceń, oceny z OBU stron — jednostronna karta zachęcałaby do
+> wybielania), `Company.nipVerifiedAt` + odznaka „NIP — suma kontrolna OK"
+> (copy istotne prawnie: NIE „zweryfikowany"), `GET /listings/tags/popular`
+>
+> - chipy. Nazwa firmy na stronie zlecenia jest teraz LINKIEM.
+>
+> **🔴 ZASTANY BŁĄD ZNALEZIONY PRZY PRZECHODZENIU NA ŻYWO: uploady na produkcji
+> zwracały 500.** Podkatalog miesięczny w wolumenie należał do `root`, a API
+> działa jako `node` → EACCES. Dotyczyło WSZYSTKICH uploadów (awatary, portfolio),
+> nie tylko nowych obrazów. Na stagingu ten sam katalog należy do `node`, więc
+> rozjazd był wyłącznie produkcyjny i niewidoczny do pierwszej próby wgrania
+> zdjęcia. Naprawione (chown) + dołożony SYGNAŁ: `filesService.checkWritable()`
+> (realny zapis, nie `access()`), głośny log przy starcie i pole `uploads`
+> w `/healthz` — informacyjne, poza `checks`, z tego samego powodu co puls workera.
+>
+> **⚠️ KOREKTA WCZEŚNIEJSZEGO WPISU: produkcja NIE MIAŁA 3 realnych kont.**
+> Wszystkie trzy (`s8-test-…`, `final-…`, plus moje) to były konta testowe
+> z poprzednich sesji, których nikt nie posprzątał. Usunięte razem z treściami.
+> Zostało JEDNO konto: `asfsaf@gmail.com` (nazwa „HydroSpark Maps API Key") —
+> prawdziwy gmail, wygląda na pomyłkową rejestrację właściciela. **Nie usuwam go
+> bez decyzji.** Realnych użytkowników: zero. To nie zmienia diagnozy z roadmapy,
+> tylko ją zaostrza.
+>
+> Bramki: 157/157 testów API na realnym MySQL/Redis (było 145), 12/12 e2e, lint,
+> typecheck, build. Dwie migracje, obie expand-only. Backup prod przed migracją
+> (`portal-20260813-132123.sql.gz`).
+
+**Ostatnia aktualizacja:** 2026-08-13 · **Branch tej sesji:** `feat/s12-widziec-i-reagowac`
+(oparty na `feat/s8-s11-kieszonkowa-drabina` — oba czekają na PR właściciela, `main` jest
+starszy o obie gałęzie).
+**Wykonawca:** Opus 5 (sesja S12) · **Stan:** 🟢 **PRODUKCJA PUBLICZNIE ŻYWA** na leadersofteams.pl
+(certy LE, backup cron 03:45). **▶ NASTĘPNY KROK: S13 w [SPRINTY-S12-S15.md](SPRINTY-S12-S15.md)**
+(dług z S11 + pierwsze wrażenie Firmy). Poprzednia roadmapa S8–S12: [SPRINTY-S8-S12.md](SPRINTY-S8-S12.md).
+
+> **✅ SESJA S12 (2026-08-13): „Widzieć i reagować".** Jeden commit (`c4ec600`), wdrożony
+> na staging **i na produkcję**, przeklikany na żywo kontami testowymi (usunięte po sobie
+> — na prodzie zostały 3 realne konta, tyle co przed sesją).
+>
+> **Kolejność wdrożeń była INNA niż w roadmapie i to było celowe:** najpierw puls workera
+> (bo przez resztę dnia wielokrotnie wdrażałem — martwy worker objawia się CISZĄ i kosztowałby
+> godziny diagnozowania nie tego, co trzeba), potem analityka (jedyna rzecz, której nie da się
+> nadrobić wstecz: niepoliczona odsłona przepada na zawsze), na końcu moderacja (największa,
+> ale jej wartość jest „na żądanie", a przy ~0 kontach jest ~0 zgłoszeń).
+>
+> 1. **Moderacja przestała być ślepa** (bloker nr 1). `/panel/moderacja` pokazuje typ
+>    zgłoszenia, fragment treści, autora, link „Otwórz zgłoszoną treść ↗" i akcję
+>    **„Ukryj treść"**. Wzorzec `ModerationSubjectModule` (`modules/antifraud/subjects.ts`)
+>    jest LUSTREM `AccountDataModule` z RODO — antifraud nie czyta cudzych tabel (ADR-002),
+>    każdy moduł wnosi `moderation.ts` dla swojego typu.
+>    - `SOCIAL_POST` → wspólny `takeDownSocialPost` (jedna implementacja dla usunięcia przez
+>      autora i ukrycia przez moderatora; dwie kopie rozjechałyby się i zostawiły sierotę w feedzie),
+>    - `POST` → `moderationStatus=HIDDEN` + **istniejące** zdarzenie `groups.post_deleted`,
+>      które `social` już konsumuje (zero nowych typów zdarzeń),
+>    - `THREAD` → nowe `hiddenAt` (jedyna migracja, expand-only). Ukrycie odcina TAKŻE
+>      akceptację odpowiedzi i głosowanie — inaczej moderator zdejmowałby treść, a farmienie
+>      punktów szłoby dalej, czyli akcja byłaby kosmetyką. Q&A to jedyna punktowana ścieżka
+>      społeczna, więc to tam skoncentruje się nadużycie,
+>    - `ORDER` → **świadomie BEZ ukrywania**: zlecenie to umowa dwóch stron, nie publiczna treść.
+>      Ukrycie zerwałoby pracę ludziom, którzy nie są przedmiotem zgłoszenia.
+>      Akcje rozdzielone: `RELEASE`/`REJECT` (punkty) i `HIDE`/`DISMISS` (treść); akcja punktowa
+>      na sprawie bez punktu daje teraz 400 zamiast po cichu zamykać sprawę.
+> 2. **Puls workera.** `portal:worker:heartbeat` + healthcheck w compose prod i staging.
+>    **Puls jest odnawiany TYLKO gdy obraca się pętla dispatchera** (`lastLoopAt`) — zwykły
+>    `setInterval` dowodziłby jedynie, że proces istnieje, i świeciłby na zielono przy
+>    zakleszczeniu, czyli przy dokładnie tej awarii, którą ma łapać. `/healthz` raportuje puls
+>    INFORMACYJNIE, bez wpływu na 200/503: gdyby śmierć workera czerwieniła api, Traefik
+>    wyrzuciłby zdrowe api z puli i awaria kolejki stałaby się awarią portalu.
+>    Zweryfikowane próbą awarii na stagingu (SIGSTOP z hosta → `unhealthy` po ~170 s → `kill -CONT`
+>    → `healthy` w < 45 s).
+> 3. **Analityka za 0 zł**, bez cookies i bez danych osobowych. Odsłony w Redisie (35 dni),
+>    ale **rejestracje i publikacje liczone z BAZY** po `createdAt` — odejście od planu, bo
+>    licznik byłby drugim, gorszym źródłem prawdy. Biała lista ścieżek w `shared/analytics.ts`
+>    to bariera pamięciowa, nie kosmetyka: bez niej bot skanujący tysiąc adresów tworzy tysiąc
+>    pól w dobowym hashu. Podgląd `/panel/analityka`. Zweryfikowane na prodzie przez Traefika.
+>    Świadomie bez unikalnych użytkowników (wymagałyby haszowania IP).
+> 4. **Anty-bot — WŁASNA bramka zamiast Cloudflare** (`747b180`, dodane po decyzji właściciela
+>    w trakcie sesji: „Wykluczam Cloudflare, minimalizujemy dostawców po API").
+>    `shared/humancheck.ts` — proof-of-work na naszym Redisie, **włączony domyślnie**
+>    (Turnstile bez kluczy stał wyłączony, więc de facto nigdy nie chronił produkcji).
+>    Mechanizm: serwer losuje sekretną liczbę i podaje `sha256(salt+n)`, przeglądarka
+>    szuka `n` licząc od zera, serwer porównuje liczbę i KASUJE wyzwanie (`GETDEL`, atomowo).
+>    - **Wariant „zgadnij liczbę", nie „N zer z przodu"** — praca jest ograniczona z góry.
+>      Przy zerach czas rozwiązania ma długi ogon, a za pechowe losowanie płaci CZŁOWIEK
+>      ze słabym telefonem, nie atakujący z serwerownią.
+>    - **Parametry z pomiaru:** `crypto.subtle` w Chromium na tym VPS robi ~112 tys. hashy/s
+>      (ręcznie napisany synchroniczny SHA-256 ~143 tys./s — 28% szybciej, ale nie warto
+>      utrzymywać własnego prymitywu kryptograficznego dla ułamka sekundy). `maxNumber`
+>      40 000 → ~0,2 s na laptopie, ~1,3 s na słabym telefonie, liczone W TLE podczas
+>      wypełniania formularza, więc użytkownik czeka 0 s.
+>    - Warstwy poza samym PoW: jednorazowość wyzwania, minimalny czas wypełniania (2 s),
+>      pole-pułapka, **eskalacja kosztu po IP** (×2/×4/×16 w oknie godziny — tego Turnstile
+>      nie dawał nam wcale, bo licznik był po jego stronie).
+>    - **Uczciwie o skuteczności:** PoW nie rozpoznaje człowieka, tylko podnosi koszt próby.
+>      Zatrzyma pętlę curl-a i gotowy skrypt, nie zatrzyma solvera w C. Realną barierą
+>      pozostają limity świeżego konta, weryfikacja e-maila i moderacja treści.
+>      **Przy okazji usunięte Brevo** — martwy kod drugiego dostawcy po API (SMTP zawsze miał
+>      pierwszeństwo). **Portal nie odpytuje już ŻADNEGO zewnętrznego API** poza SMTP własnej
+>      skrzynki, którego zastąpić się nie da (własny serwer pocztowy = świeże IP = spam-folder).
+>
+> **Naprawione po drodze — wszystko ZASTANE, potwierdzone przed zmianą:**
+>
+> - **W całej aplikacji nie było ANI JEDNEGO linku do `/panel/moderacja`.** Moderator musiał
+>   znać adres na pamięć, więc zgłoszenie mogło czekać tygodniami nie dlatego, że ktoś je
+>   zignorował, tylko dlatego, że nie miał jak się o nim dowiedzieć. Panel ma teraz sekcję
+>   „Moderacja" z licznikiem otwartych spraw (widoczną tylko dla MODERATOR/ADMIN).
+> - **Moduł `antifraud` nie miał ANI JEDNEGO testu** — jedyny taki moduł. Ma 6.
+> - **Staging: `worker` nie dostawał zmiennych SMTP**, choć `api` ma je od dawna. Dokładnie
+>   ta pułapka, przed którą ostrzega runbook: „działa przy rejestracji, milczy w tle" (digest).
+> - **`/prywatnosc` §4 twierdziła, że nie korzystamy z zewnętrznych dostawców poczty** i obiecywała
+>   aktualizację PRZED włączeniem. SMTP ruszył 13.08 i sekcja została nieaktualna — dopisany
+>   Hostinger jako procesor + opis własnej statystyki. ⚠️ To copy prawne: warto, żeby przeczytał
+>   je prawnik razem z resztą R-10/R-15.
+> - **`Dockerfile.web` nie miał `ARG` na `NEXT_PUBLIC_TURNSTILE_SITE_KEY`** — backend Turnstile
+>   był gotowy, ale klucz publiczny NIE MIAŁ JAK trafić do obrazu, więc „kod gotowy, brakuje
+>   tylko kluczy" było nieprawdą. Dodałem przelot, a kilka godzin później **usunąłem go razem
+>   z całym Turnstile** (decyzja właściciela o wykluczeniu Cloudflare). Zostawiam ten wpis,
+>   bo wnioskiem nie jest ARG, tylko to, że deklaracja gotowości nie została nigdy sprawdzona
+>   końcem-końca. Własna bramka nie ma klucza publicznego, więc problem zniknął u źródła.
+> - **Prod `web` nie miał healthchecku** (staging miał) — dodany, prod ma komplet `(healthy)`.
+>
+> **⚠️ PUŁAPKA, na którą wpadłem i którą trzeba znać:** rola użytkownika jest ZAMROŻONA
+> w migawce sesji w Redisie, nie czytana z bazy przy żądaniu. Nadanie komuś roli MODERATOR
+> `UPDATE`-em **nie działa, dopóki ta osoba się nie przeloguje** — do tego czasu widzi 403.
+> Kosztowało mnie 5 czerwonych testów, zanim to zrozumiałem.
+>
+> **⚠️ ZNALEZIONE, ŚWIADOMIE NIETKNIĘTE (kandydat na S13):** `SiteHeader` **nigdy** nie czyta
+> sesji — zalogowany użytkownik na każdej stronie widzi w nagłówku „Zaloguj się / Dołącz".
+> Widać to na zrzutach z tej sesji. Nie ruszałem, bo to globalny komponent poza zakresem S12,
+> ale dla pierwszych dwudziestu osób to bardzo mylący papierek.
+>
+> **Bramki:** 149/149 testów API na realnym MySQL/Redis (było 132 — liczba WYKONANYCH, nie
+> pominiętych), 12/12 e2e, lint z granicami modułów (`analytics` dopisany do `API_MODULES`
+> razem z modułem, nie po fakcie), typecheck, build. Jedna migracja, expand-only. Zrzuty
+> 390 i 1440 px trzech widoków. Backup bazy prod zrobiony PRZED migracją
+> (`portal-20260813-091331.sql.gz`).
 
 > **✅ SESJA S8–S11 (2026-08-13): „Kieszonkowa Drabina".** Cztery przyrosty, każdy osobno
 > zweryfikowany bramkami, wdrożony na staging i **na produkcję**, i przeklikany na żywo
@@ -220,7 +603,9 @@ wtedy twarde limity pamięci prod-MySQL w compose + pilnowanie swapu (4 G).
 | ~~D7~~  | ✅ **ZROBIONE** — rate-limity świeżych kont (`shared/quota.ts`) + „zgłoś" (`POST /reports` → `ModerationCase` REPORT, soft-dedup) + **Turnstile flag-gated** (`shared/turnstile.ts`, wpięty w `/auth/register`, widget na `/rejestracja`; OFF bez kluczy). Aktywacja = klucze Cloudflare przy launchu                                                                                                                                         | — (aktywacja: launch) |
 | D8      | Rating na profilu zlicza oceny wszystkimi kanałami poprawnie, ale brak listy „opinie o Liderze" na profilu                                                                                                                                                                                                                                                                                                                                    | niski priorytet       |
 | ~~D9~~  | ✅ **CZĘŚCIOWO (2026-07-11)** — STAGING wdrożony i zweryfikowany na VPS (ręcznie, §0). Zostaje: **launch** — prod (decyzja: zostajemy na 8 GB z limitami RAM) + zdjęcie basic-auth                                                                                                                                                                                                                                                            | Launch                |
-| **D10** | ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony                                                                                                                                                                                                                                                                                                                                                                      | Sprint 6, opcjonalnie |
+| **D10** | ❌ **GAP (opcjonalne)** — panel Bull Board (wgląd w kolejki) niewdrożony. **Po S12:** najostrzejszą potrzebę (czy worker w ogóle żyje) zaspokaja już puls + healthcheck, więc Bull Board zjechał w priorytecie                                                                                                                                                                                                                                | Sprint 6, opcjonalnie |
+| ~~D11~~ | ✅ **ZROBIONE (S12)** — moderacja zgłoszeń z podglądem treści, linkiem i akcją „ukryj"; puls workera; analityka 0 zł (baner sesji S12 na górze)                                                                                                                                                                                                                                                                                               | —                     |
+| **D12** | ❌ **NOWY (znaleziony w S12, nietknięty)** — `SiteHeader` nie czyta sesji: zalogowany użytkownik widzi „Zaloguj się / Dołącz" na KAŻDEJ stronie                                                                                                                                                                                                                                                                                               | S13                   |
 
 > **Audyt stanu kodu vs docs (2026-07-12):** przy wejściu w Sprint 6 potwierdzono, że backend Sprintu 6
 > jest w większości ZROBIONY i zielony (73 testy): cache-aside (D3), e-mail flag-gated + weryfikacja/reset

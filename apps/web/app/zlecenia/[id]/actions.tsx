@@ -1,31 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { ApiRequestError, apiFetch } from '@/lib/api';
-
-function useAction() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-
-  async function run(fn: () => Promise<unknown>) {
-    setError(null);
-    setPending(true);
-    try {
-      await fn();
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : 'Coś poszło nie tak.');
-    } finally {
-      setPending(false);
-    }
-  }
-
-  return { run, error, pending };
-}
+import { useAction } from '@/components/action-button';
+import { apiFetch } from '@/lib/api';
 
 export function OfferForm({ orderId }: { orderId: string }) {
   const { run, error, pending } = useAction();
@@ -74,30 +52,6 @@ export function OfferForm({ orderId }: { orderId: string }) {
   );
 }
 
-export function ActionButton({
-  path,
-  label,
-  variant = 'primary',
-}: {
-  path: string;
-  label: string;
-  variant?: 'primary' | 'secondary';
-}) {
-  const { run, error, pending } = useAction();
-  return (
-    <span>
-      <button
-        className={variant === 'primary' ? 'btn' : 'btn secondary'}
-        disabled={pending}
-        onClick={() => void run(() => apiFetch(path, { method: 'POST' }))}
-      >
-        {pending ? '…' : label}
-      </button>
-      {error && (
-        <span className="error-box" style={{ display: 'inline-block', marginLeft: 8 }}>
-          {error}
-        </span>
-      )}
-    </span>
-  );
-}
+// `ActionButton` przeniesiony do `components/action-button.tsx` (S18) — używa go
+// też panel ofert. Re-eksport zostaje, żeby nie ruszać importów strony zlecenia.
+export { ActionButton } from '@/components/action-button';

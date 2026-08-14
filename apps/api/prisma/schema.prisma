@@ -79,6 +79,7 @@ model User {
   answerVotes        AnswerVote[]
   notifications      Notification[]
   verificationTokens VerificationToken[]
+  bookmarks          Bookmark[]
 
   @@map("users")
 }
@@ -108,9 +109,13 @@ model VerificationToken {
 model Company {
   id          String   @id @default(cuid())
   name        String
-  // NIP opcjonalny — brak weryfikacji Firm na starcie (brief 3.4),
-  // pole gotowe pod przyszłą weryfikację-odznakę.
+  // NIP opcjonalny — brak weryfikacji Firm na starcie (brief 3.4).
   nip         String?
+  // Znacznik POPRAWNOŚCI FORMALNEJ numeru (suma kontrolna mod 11), a NIE
+  // potwierdzenie istnienia firmy w rejestrze. Trwały ślad zamiast liczenia
+  // sumy przy każdym renderze — i miejsce, w którym kiedyś stanie data
+  // weryfikacji w Białej Liście MF, gdy potwierdzimy limity darmowego API.
+  nipVerifiedAt DateTime?
   description String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -200,6 +205,10 @@ enum FileKind {
   AVATAR
   PORTFOLIO
   LISTING
+  // Obrazy przy wpisach portalowych. Dopisane NA KOŃCU: MySQL trzyma ENUM jako
+  // liczbę porządkową, więc wstawienie w środek po cichu przemapowałoby
+  // istniejące pliki na sąsiednie rodzaje.
+  SOCIAL
 }
 
 model UploadedFile {
@@ -219,6 +228,8 @@ model UploadedFile {
   avatarOfUser   User?           @relation("UserAvatar")
   portfolioItems PortfolioItem[]
   listingImages  ListingImage[]
+  socialImages   SocialPostImage[]
+  postImages     PostImage[]
 
   @@index([ownerId, kind])
   @@map("uploaded_files")
@@ -572,19 +583,28 @@ model Post {
   // FK celowo pominięty do czasu istnienia modułu teams.
   teamId           String?
   moderationStatus PostModerationStatus @default(VISIBLE)
+  // Przypięcie przez moderatora grupy (S17). NAJWYŻEJ JEDEN post na grupę —
+  // egzekwowane w domenie (przypięcie nowego odpina poprzedni w transakcji),
+  // nie unikatem, bo unikat częściowy („tylko gdy NOT NULL") nie istnieje
+  // w MySQL. Dwa przypięcia byłyby drugim feedem, a ADR-010 zabrania rankingu
+  // treści: jeden pin to nawigacja („zacznij tutaj"), nie kolejność.
+  pinnedAt         DateTime?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
-  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  author    User       @relation(fields: [authorUserId], references: [id])
+  group     Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author    User        @relation(fields: [authorUserId], references: [id])
   comments  Comment[]
   reactions Reaction[]
+  images    PostImage[]
+  topics    PostTopic[]
 
   // Edycja/usunięcie własnych treści (moduł social, S4) — soft delete.
   editedAt  DateTime?
   deletedAt DateTime?
 
   @@index([groupId, createdAt])
+  @@index([groupId, pinnedAt])
   @@index([authorUserId])
   @@fulltext([title, body])
   @@map("posts")
@@ -655,6 +675,11 @@ model Thread {
   status           ThreadStatus @default(OPEN)
   // Wskaźnik na zaakceptowaną odpowiedź (jedna na wątek — egzekwowane w domenie).
   acceptedAnswerId String?
+  // Ukrycie przez moderatora (S12). Osobne od `status`: CLOSED to decyzja
+  // autora o zamknięciu dyskusji, a to jest decyzja moderatora o zdjęciu treści.
+  // Nullable i bez domyślnej wartości — migracja expand-only, rollback aplikacji
+  // nie wymaga cofania schematu.
+  hiddenAt         DateTime?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -931,6 +956,75 @@ model ActivityItem {
   @@map("activity_items")
 }
 
+// Obrazy przy poście w grupie (S17). Ten sam wzorzec co SocialPostImage —
+// dyskusja branżowa bez możliwości pokazania zrzutu czy schematu jest kaleka.
+model PostImage {
+  id       String @id @default(cuid())
+  postId   String
+  fileId   String
+  position Int    @default(0)
+
+  post Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  file UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, fileId])
+  @@index([postId, position])
+  @@map("post_images")
+}
+
+// ---------------------------------------------------------------------------
+// Tematy (#hashtagi) — S17
+//
+// WŁASNY model, a NIE współdzielenie `Tag` z modułu listings. Tag przy usłudze
+// to deklaracja sprzedawcy o kategorii oferty; temat we wpisie to swobodne
+// słowo w rozmowie. Zlanie ich w jedną tabelę oznaczałoby, że „popularne tagi"
+// w katalogu usług zaczynają mieszać kategorie ofert z tematami dyskusji.
+//
+// WŁAŚCICIELEM jest moduł `social`: tematy wydobywa ten sam konsument, który
+// buduje oś aktywności (`onSocialPostPublished` / `onPostPublished`), więc
+// projekcja tematów powstaje dokładnie tam, gdzie projekcja feedu.
+//
+// ADR-010: strona tematu jest CHRONOLOGICZNA. Liczba użyć służy wyłącznie do
+// podpowiedzi nawigacyjnych, nigdy do kolejności treści.
+// ---------------------------------------------------------------------------
+
+model Topic {
+  id        String   @id @default(cuid())
+  // Pisownia z pierwszego użycia — pokazujemy ją, żeby „#AI" nie stało się „#ai".
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  socialPosts SocialPostTopic[]
+  posts       PostTopic[]
+
+  @@map("topics")
+}
+
+model SocialPostTopic {
+  postId  String
+  topicId String
+
+  post  SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  topic Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([postId, topicId])
+  @@index([topicId])
+  @@map("social_post_topics")
+}
+
+model PostTopic {
+  postId  String
+  topicId String
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([postId, topicId])
+  @@index([topicId])
+  @@map("post_topics")
+}
+
 // ---------------------------------------------------------------------------
 // social — wpis portalowy (X-lite, S8)
 //
@@ -949,18 +1043,42 @@ model SocialPost {
   id           String    @id @default(cuid())
   authorUserId String
   body         String    @db.Text
+  // Cytowany wpis („podaj dalej z komentarzem"). NULL = zwykły wpis.
+  // Świadomie BEZ kaskady: usunięcie cytowanego wpisu nie może skasować cudzej
+  // wypowiedzi, która go komentuje — pokazujemy wtedy „wpis niedostępny".
+  quotedPostId String?
   editedAt     DateTime?
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
 
-  author    User             @relation("SocialAuthor", fields: [authorUserId], references: [id])
-  comments  SocialComment[]
-  reactions SocialReaction[]
+  author     User              @relation("SocialAuthor", fields: [authorUserId], references: [id])
+  comments   SocialComment[]
+  reactions  SocialReaction[]
+  images     SocialPostImage[]
+  topics     SocialPostTopic[]
+  quotedPost SocialPost?       @relation("SocialQuote", fields: [quotedPostId], references: [id], onDelete: SetNull)
+  quotedBy   SocialPost[]      @relation("SocialQuote")
 
   @@index([authorUserId, createdAt])
   @@index([createdAt])
+  @@index([quotedPostId])
   @@fulltext([body])
   @@map("social_posts")
+}
+
+// Obrazy przy wpisie portalowym (do 4, jak w X). Wzorzec ListingImage.
+model SocialPostImage {
+  id       String @id @default(cuid())
+  postId   String
+  fileId   String
+  position Int    @default(0)
+
+  post SocialPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  file UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, fileId])
+  @@index([postId, position])
+  @@map("social_post_images")
 }
 
 model SocialComment {
@@ -995,4 +1113,46 @@ model SocialReaction {
   @@id([postId, userId])
   @@index([userId])
   @@map("social_posts_reactions")
+}
+
+// ---------------------------------------------------------------------------
+// Zakładki (S17) — PRYWATNE zapisywanie treści na później.
+//
+// ADR-010: zakładka nie ma i NIE BĘDZIE mieć publicznego licznika. Widzi ją
+// wyłącznie jej właściciel; nigdzie nie zwracamy „ile osób zapisało". To nie
+// przeoczenie — licznik zamieniłby prywatną półkę w kolejną walutę popularności
+// obok „doceniam", a Portal ma jedną walutę i jest nią zapracowany status.
+//
+// ANTY-MLM: zapisanie do zakładek nie emituje ŻADNEGO zdarzenia do outboxa —
+// tak samo jak `identity.updateOnboarding`. Brak zdarzenia to brak drogi do
+// laddera, czyli zabezpieczenie z architektury, a nie z regulaminu.
+//
+// WŁAŚCICIELEM jest moduł `social` — ten sam, który trzyma tematy nad OBIEMA
+// tabelami treści. Zakładka, jak temat, jest projekcją nad wpisem portalowym
+// i postem w grupie naraz.
+// ---------------------------------------------------------------------------
+
+enum BookmarkSubjectType {
+  SOCIAL_POST
+  POST
+}
+
+model Bookmark {
+  userId String
+  // Polimorf BEZ klucza obcego na treść — dwa różne rodzaje treści nie zmieszczą
+  // się w jednym FK. Wiersz po skasowanej treści zostaje wiszący, ale odczyt
+  // filtruje treść usuniętą i ukrytą, więc jest niewidoczny i tani. Świadomy
+  // wybór: alternatywą były dwie bliźniacze tabele albo kaskada z każdej strony.
+  subjectType BookmarkSubjectType
+  subjectId   String
+  createdAt   DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Klucz złożony daje idempotencję za darmo — powtórne zapisanie tej samej
+  // treści nie mnoży wierszy (ten sam wzorzec co SocialReaction).
+  @@id([userId, subjectType, subjectId])
+  // Lista „Zapisane" jest chronologiczna po czasie ZAPISANIA, nie publikacji.
+  @@index([userId, createdAt])
+  @@map("bookmarks")
 }

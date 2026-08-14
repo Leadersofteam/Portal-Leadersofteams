@@ -2,29 +2,51 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Script from 'next/script';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { ApiRequestError, apiFetch } from '@/lib/api';
+import { prepareHumancheck, waitForHumancheck } from '@/lib/humancheck';
+import type { PreparedHumancheck } from '@/lib/humancheck';
 
-// Anty-bot Turnstile (D7). Widget renderujemy TYLKO gdy podano publiczny site-key
-// (flaga; jak backendowy TURNSTILE_SECRET_KEY). Brak klucza = brak widgetu, a backend
-// z wyłączoną ochroną przepuszcza rejestrację — bezpieczny domyślny stan otwarty.
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+// Bramka człowieka (R-03/R-13) — WŁASNA, bez Cloudflare i bez żadnego dostawcy
+// po API. Nie ma tu widgetu do klikania ani obrazków do przepisywania: zagadkę
+// liczy przeglądarka w tle, gdy człowiek wypełnia formularz. Dla użytkownika
+// bramka jest NIEWIDOCZNA — i to jest jej największa zaleta nad captchą,
+// szczególnie dla osób korzystających z czytników ekranu.
+// Szczegóły mechanizmu: apps/api/src/shared/humancheck.ts
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Rozwiązanie trzymamy w ref, nie w state: jego zmiana nie ma nic
+  // przerysowywać, a przerysowanie formularza w trakcie pisania gubiłoby fokus.
+  const prepared = useRef<PreparedHumancheck | null>(null);
+  const solving = useRef<Promise<PreparedHumancheck | null> | null>(null);
+
+  useEffect(() => {
+    // Start liczenia natychmiast po wejściu na stronę. Zanim ktokolwiek wpisze
+    // e-mail i hasło, wynik jest gotowy — koszt bramki wynosi dla niego 0 s.
+    solving.current = prepareHumancheck()
+      .then((result) => {
+        prepared.current = result;
+        return result;
+      })
+      .catch(() => null);
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setPending(true);
     const form = new FormData(event.currentTarget);
-    // Widget Turnstile wstrzykuje ukryte pole `cf-turnstile-response` do formularza.
-    const turnstileToken = form.get('cf-turnstile-response');
+    // Gdyby ktoś zdążył wysłać formularz szybciej, niż policzyła się zagadka —
+    // czekamy na trwające liczenie zamiast wysyłać żądanie bez rozwiązania.
+    if (!prepared.current && solving.current) await solving.current;
+    // …a jeśli wypełnił go szybciej niż w 2 s (autouzupełnianie, Enter, test
+    // automatyczny), doczekujemy próg zamiast pokazywać mu błąd o automacie.
+    await waitForHumancheck(prepared.current);
     try {
       await apiFetch('/auth/register', {
         method: 'POST',
@@ -32,7 +54,9 @@ export default function RegisterPage() {
           email: form.get('email'),
           password: form.get('password'),
           displayName: form.get('displayName'),
-          ...(turnstileToken ? { turnstileToken } : {}),
+          // Pole-pułapka: człowiek go nie widzi, więc zawsze przyjdzie puste.
+          nazwaFirmy: form.get('nazwaFirmy') ?? '',
+          ...(prepared.current?.solution ? { humancheck: prepared.current.solution } : {}),
         }),
       });
       // Świeże konto trafia do kreatora, nie do pustego panelu — na pustym
@@ -78,12 +102,14 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
           </div>
-          {TURNSTILE_SITE_KEY && (
-            <>
-              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-              <div className="cf-turnstile field" data-sitekey={TURNSTILE_SITE_KEY} />
-            </>
-          )}
+          {/* POLE-PUŁAPKA na automaty wypełniające wszystkie inputy. Ukryte
+              przed wzrokiem I przed czytnikami ekranu (aria-hidden + tabIndex),
+              żeby nie zmyliło osoby korzystającej z klawiatury. Nazwa jest
+              celowo wiarygodna — „honeypot" w atrybucie zdradzałby zasadzkę. */}
+          <div className="hp-field" aria-hidden="true">
+            <label htmlFor="nazwaFirmy">Nazwa firmy (nie wypełniaj)</label>
+            <input id="nazwaFirmy" name="nazwaFirmy" type="text" tabIndex={-1} autoComplete="off" />
+          </div>
           <button className="btn full" type="submit" disabled={pending}>
             {pending ? 'Tworzenie konta…' : 'Utwórz konto'}
           </button>

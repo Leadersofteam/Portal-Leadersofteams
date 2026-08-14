@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { GlobalSearch } from '@/components/global-search';
 import { NotificationBell } from '@/components/notification-bell';
 import { LogoMark } from '@/components/ui/logo';
+import { useSession } from '@/lib/use-session';
 
 // Pełna nawigacja desktopu. Na mobile pięć najczęstszych miejsc przejmuje
 // dolny pasek (components/bottom-nav.tsx), a reszta zostaje pod hamburgerem —
@@ -25,6 +26,9 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const close = () => setOpen(false);
+  // ZASTANE do S17: nagłówek NIGDY nie czytał sesji, więc zalogowana osoba na
+  // każdej stronie widziała „Zaloguj się / Dołącz". Zgłoszone przy S12.
+  const { user } = useSession();
 
   return (
     <header className="site-header">
@@ -61,12 +65,25 @@ export function SiteHeader() {
           </Link>
         ))}
         <NotificationBell />
-        <Link href="/logowanie" onClick={close}>
-          Zaloguj się
-        </Link>
-        <Link href="/rejestracja" className="btn secondary" onClick={close}>
-          Dołącz
-        </Link>
+        {/* Dopóki nie wiadomo, kto patrzy (`undefined`), slot zostaje PUSTY.
+            Domyślne „Zaloguj się" mignęłoby zalogowanym przy każdym wejściu,
+            a nagłówek, który kłamie przez pół sekundy, jest gorszy niż
+            nagłówek, który przez pół sekundy milczy. */}
+        {user === null && (
+          <>
+            <Link href="/logowanie" onClick={close}>
+              Zaloguj się
+            </Link>
+            <Link href="/rejestracja" className="btn secondary" onClick={close}>
+              Dołącz
+            </Link>
+          </>
+        )}
+        {user && (
+          <Link href="/panel" className="btn secondary" onClick={close}>
+            {user.displayName.split(' ')[0]}
+          </Link>
+        )}
       </nav>
     </header>
   );

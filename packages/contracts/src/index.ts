@@ -6,6 +6,13 @@ import { z } from 'zod';
 
 export const idSchema = z.string().cuid();
 
+// Maksymalna liczba obrazów przy jednej treści (wpis portalowy, post w grupie).
+// Limit świadomy: więcej nie mieści się w siatce na 390 px bez zamiany feedu
+// w galerię. Stała stoi TUTAJ, w sekcji wspólnej, bo używają jej schematy
+// z dwóch różnych miejsc pliku — a `const` nie jest hoistowany, więc przy
+// definicji niżej pierwsze użycie wywracało moduł na starcie.
+export const SOCIAL_POST_MAX_IMAGES = 4;
+
 export const apiErrorSchema = z.object({
   error: z.object({
     code: z.string(),
@@ -159,7 +166,7 @@ export type PortfolioItemInput = z.infer<typeof portfolioItemInputSchema>;
 // Files — upload obrazów (awatary, portfolio, galerie usług)
 // ---------------------------------------------------------------------------
 
-export const fileKindSchema = z.enum(['AVATAR', 'PORTFOLIO', 'LISTING']);
+export const fileKindSchema = z.enum(['AVATAR', 'PORTFOLIO', 'LISTING', 'SOCIAL']);
 export type FileKind = z.infer<typeof fileKindSchema>;
 
 export const uploadedFileSchema = z.object({
@@ -343,16 +350,56 @@ export type ReviewInput = z.infer<typeof reviewInputSchema>;
 export const pointEventStatusSchema = z.enum(['PENDING', 'CONFIRMED', 'HOLD', 'REVERSED']);
 export type PointEventStatus = z.infer<typeof pointEventStatusSchema>;
 
+// Sprawy moderacyjne mają DWA różne światy i do S12 obsługiwała je jedna para
+// akcji, przez co panel oferował „Zwolnij punkty"/„Odrzuć punkty" także przy
+// zgłoszeniu treści, w którym żadnych punktów nie ma. Etykieta kłamała, a akcja
+// po cichu zamykała sprawę nie robiąc nic z treścią.
+//
+//  - RELEASE / REJECT — sprawy punktowe (źródło FRAUD_SIGNAL): zwolnienie punktu
+//    do karencji albo trwałe cofnięcie. Wymagają `pointEventId`.
+//  - HIDE / DISMISS   — zgłoszenia treści (źródło REPORT): ukrycie zgłoszonej
+//    treści albo zamknięcie sprawy bez działania.
 export const moderationResolveInputSchema = z.object({
-  action: z.enum(['RELEASE', 'REJECT']),
+  action: z.enum(['RELEASE', 'REJECT', 'HIDE', 'DISMISS']),
   note: z.string().trim().min(5, 'Uzasadnienie: min. 5 znaków').max(2000),
 });
 export type ModerationResolveInput = z.infer<typeof moderationResolveInputSchema>;
+export type ModerationAction = ModerationResolveInput['action'];
+
+// Podgląd zgłoszonej treści dołączany do sprawy (S12) — front buduje z tego
+// link do treści i pokazuje fragment, żeby moderator nie decydował w ciemno.
+export interface ModerationSubjectView {
+  exists: boolean;
+  hidden: boolean;
+  title: string | null;
+  excerpt: string | null;
+  authorUserId: string | null;
+  authorDisplayName: string | null;
+  context?: { groupId?: string };
+  /** Czy dla tego typu treści w ogóle istnieje akcja „ukryj". */
+  canHide: boolean;
+}
 
 // Zgłoszenie treści przez użytkownika (D7) → ModerationCase źródło REPORT.
 // SOCIAL_POST jest osobnym typem, a nie POST: id wpisu portalowego wskazuje
 // tabelę social_posts, więc wrzucenie go pod „POST" kierowałoby moderatora do
 // nieistniejącego posta w grupie.
+// Bramka człowieka (własna, po wykluczeniu Cloudflare) — rozwiązanie zagadki
+// proof-of-work dołączane do rejestracji. `id` wskazuje wyzwanie w Redisie,
+// `number` to znaleziona liczba. Szczegóły: apps/api/src/shared/humancheck.ts.
+export const humancheckSolutionSchema = z.object({
+  id: z.string().min(1).max(64),
+  number: z.number().int().min(0),
+});
+export type HumancheckSolution = z.infer<typeof humancheckSolutionSchema>;
+
+export interface HumancheckChallenge {
+  id: string;
+  salt: string;
+  target: string;
+  maxNumber: number;
+}
+
 export const reportSubjectTypeSchema = z.enum(['POST', 'THREAD', 'ORDER', 'SOCIAL_POST']);
 export type ReportSubjectType = z.infer<typeof reportSubjectTypeSchema>;
 
@@ -394,6 +441,10 @@ export const createPostInputSchema = z.object({
   type: postTypeSchema.default('DISCUSSION'),
   title: z.string().trim().min(5, 'Tytuł: min. 5 znaków').max(140),
   body: z.string().trim().min(10, 'Treść: min. 10 znaków').max(20000),
+  // Obrazy przy poście w grupie (S17) — ten sam limit i ta sama mechanika
+  // co przy wpisie portalowym. Dyskusja branżowa bez możliwości pokazania
+  // zrzutu albo schematu jest kaleka.
+  imageFileIds: z.array(idSchema).max(SOCIAL_POST_MAX_IMAGES).optional(),
 });
 export type CreatePostInput = z.infer<typeof createPostInputSchema>;
 
@@ -420,6 +471,15 @@ export const createCommentInputSchema = z.object({
   parentId: idSchema.optional(),
 });
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
+
+// Moderatorzy grup jako PIERWSZA LINIA (S17). Rola istniała w schemacie od
+// Sprintu 4, ale używała jej wyłącznie akceptacja wniosków o członkostwo —
+// grupa nie miała jak awansować moderatora ani zdjąć treści u siebie.
+export const groupMemberRoleSchema = z.enum(['MEMBER', 'MODERATOR']);
+export type GroupMemberRole = z.infer<typeof groupMemberRoleSchema>;
+
+export const updateMembershipRoleInputSchema = z.object({ role: groupMemberRoleSchema });
+export type UpdateMembershipRoleInput = z.infer<typeof updateMembershipRoleInputSchema>;
 
 // ---------------------------------------------------------------------------
 // Community — Q&A / mentoring (moduł community, ADR-010 / brief 3.3).
@@ -484,7 +544,24 @@ export const socialPostBodySchema = z
   .min(1, 'Wpis nie może być pusty')
   .max(600, 'Wpis: maksymalnie 600 znaków');
 
-export const createSocialPostInputSchema = z.object({ body: socialPostBodySchema });
+// Treść wpisu, gdy niesie go obraz albo cytat — wtedy sam tekst może być pusty
+// (udostępnienie czyjegoś wpisu bez komentarza to normalny gest, nie błąd).
+export const socialPostBodyOptionalSchema = z
+  .string()
+  .trim()
+  .max(600, 'Wpis: maksymalnie 600 znaków');
+
+export const createSocialPostInputSchema = z.object({
+  // Tekst może być pusty, JEŚLI wpis niesie obraz albo cytat — udostępnienie
+  // czyjegoś wpisu bez własnego komentarza to normalny gest. Warunek „coś musi
+  // być" egzekwuje serwis, bo zod nie widzi tu relacji między polami czytelnie.
+  body: socialPostBodyOptionalSchema,
+  imageFileIds: z.array(idSchema).max(SOCIAL_POST_MAX_IMAGES).optional(),
+  // „Podaj dalej z komentarzem" — cytowany wpis. Cytowanie NIE DAJE PUNKTÓW
+  // (ADR-004): to sposób, żeby dwadzieścia osób mogło się nawzajem wzmacniać
+  // bez DM-ów, a nie kolejna waluta do farmienia.
+  quotedPostId: idSchema.optional(),
+});
 export type CreateSocialPostInput = z.infer<typeof createSocialPostInputSchema>;
 
 export const updateSocialPostInputSchema = z.object({ body: socialPostBodySchema });
@@ -508,6 +585,18 @@ export const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 export type FeedQuery = z.infer<typeof feedQuerySchema>;
+
+// Zakładki (S17) — PRYWATNA półka „na później". Te same dwa rodzaje treści co
+// przy tematach: wpis portalowy i post w grupie. ADR-010: nigdzie nie ma i nie
+// będzie liczby zapisań — zakładka jest dla jednej osoby, nie sygnałem dla tłumu.
+export const bookmarkSubjectTypeSchema = z.enum(['SOCIAL_POST', 'POST']);
+export type BookmarkSubjectType = z.infer<typeof bookmarkSubjectTypeSchema>;
+
+export const bookmarksQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type BookmarksQuery = z.infer<typeof bookmarksQuerySchema>;
 
 // ---------------------------------------------------------------------------
 // Onboarding — pierwsza mila (S10)

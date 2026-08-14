@@ -489,6 +489,35 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
         createdAt: o.createdAt,
       }));
     },
+
+    /** Publiczna historia zleceń Firmy — do jej profilu. Bez szkiców. */
+    async listPublicByCompany(companyId: string, limit = 10) {
+      const rows = await prisma.order.findMany({
+        where: { companyId, publishedAt: { not: null } },
+        orderBy: [{ publishedAt: 'desc' }],
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          publishedAt: true,
+          industry: { select: { name: true } },
+        },
+      });
+      return rows.map((o) => ({
+        id: o.id,
+        title: o.title,
+        status: o.status,
+        publishedAt: o.publishedAt,
+        industry: o.industry.name,
+      }));
+    },
+
+    // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
+    // Po `publishedAt`: zlecenie w szkicu nie jest jeszcze popytem na rynku.
+    async countOrdersPublishedBetween(from: Date, to: Date): Promise<number> {
+      return prisma.order.count({ where: { publishedAt: { gte: from, lt: to } } });
+    },
   };
 }
 

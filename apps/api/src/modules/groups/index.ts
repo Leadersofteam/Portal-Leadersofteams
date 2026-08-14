@@ -4,8 +4,9 @@
 // do notifications/moderacji — NIGDY do ladder. Aktywność w grupach (posty,
 // komentarze, reakcje, członkostwo) = 0 punktów Drabinki. Ten moduł nie eksportuje
 // żadnej logiki punktowej i nie jest subskrybowany przez ladder.
-export { createGroupsService, GROUP_CREATION_MIN_LEVEL } from './service';
+export { createGroupsService, GROUP_CREATION_MIN_LEVEL, hideGroupPost } from './service';
 export type { GroupsService, GroupsServiceDeps } from './service';
 export { groupsRoutes } from './routes';
 export type { GroupsRoutesDeps } from './routes';
 export { createGroupsAccountData } from './account';
+export { createGroupsModerationSubject } from './moderation';

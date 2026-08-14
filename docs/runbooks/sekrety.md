@@ -28,7 +28,6 @@ w trybie no-op. Ustawia się je w `/opt/portal/.env` (nie w GitHub Secrets).
 | --------------------------------------- | -------------------------------------------------------------- | --------------------------------------------- |
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | **Wysyłka e-mail przez WŁASNĄ skrzynkę (droga domyślna)**      | Brak wysyłki; reset zwraca devToken poza prod |
 | `SMTP_PORT` / `SMTP_SECURE`             | Port i TLS skrzynki                                            | `465` / `true`                                |
-| `BREVO_API_KEY`                         | Alternatywa: Brevo (300/dzień). SMTP ma PIERWSZEŃSTWO          | Nieużywane, gdy skonfigurowany SMTP           |
 | `MAIL_FROM`                             | Adres nadawcy — **musi** być adresem uwierzytelnionej skrzynki | `no-reply@leadersofteams.pl`                  |
 | `APP_BASE_URL`                          | Bazowy URL w linkach e-mail                                    | `https://leadersofteams.pl`                   |
 
@@ -37,7 +36,9 @@ w trybie no-op. Ustawia się je w `/opt/portal/.env` (nie w GitHub Secrets).
 Produkcja wysyła przez `smtp.hostinger.com` na koncie `kontakt@leadersofteams.com` —
 **tę samą skrzynkę, której od dawna używa App**. Jest opłacona w ramach hostingu domeny,
 więc to zero nowego kosztu i zero powierzania adresów e-mail użytkowników trzeciej stronie.
-Wybór transportu w `shared/mail.ts`: kompletny SMTP → Brevo → no-op.
+Wybór transportu w `shared/mail.ts`: kompletny SMTP → no-op. Brevo USUNIĘTE 2026-08-13
+(decyzja właściciela: minimalizujemy dostawców po API). Był to martwy kod — SMTP zawsze
+miał pierwszeństwo i Brevo nigdy nie wysłało nic z produkcji.
 
 ⚠️ **`MAIL_FROM` musi równać się `SMTP_USER`.** Nadawca z innej domeny niż uwierzytelniona
 skrzynka nie przejdzie SPF/DMARC — poczta zostanie odrzucona albo wpadnie do spamu. Dlatego
@@ -52,8 +53,13 @@ a poczta ze świeżego IP bez historii ląduje w spamie mimo poprawnego SPF/DKIM
 **Otwarte do rozważenia:** osobna skrzynka `portal@leadersofteams.pl` — wyrówna domenę
 nadawcy z domeną Portalu i rozdzieli reputację od poczty transakcyjnej App. Podmiana to
 trzy zmienne. Uwaga na limit wysyłki Hostingera (rzędu setek/dobę) przy dziennym digeście.
-| `TURNSTILE_SECRET_KEY` | Antybot Turnstile na rejestracji (ZAIMPLEMENTOWANE, flag-gated) | Ochrona OFF (rejestracja przepuszcza) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Klucz publiczny widgetu (BUILD-time obrazu web) | Brak widgetu na `/rejestracja` |
+| `HUMANCHECK` | Wyłącznik AWARYJNY własnej bramki anty-bot (`off`) | Bramka WŁĄCZONA — i tak ma być |
+
+> **Anty-bot nie wymaga już żadnego sekretu.** Cloudflare Turnstile został wykluczony
+> 2026-08-13; bramkę liczymy sami (`apps/api/src/shared/humancheck.ts`) na własnym Redisie.
+> Nie ma klucza publicznego, więc nie ma też problemu `NEXT_PUBLIC_*` zapiekanego w buildzie:
+> włączenie ochrony nie wymaga przebudowy obrazu `web`. `HUMANCHECK=off` służy wyłącznie
+> do diagnozowania rejestracji i nie wolno go zostawiać na produkcji.
 
 ## Checklista podłączenia SSH (co dostarcza właściciel)
 

@@ -51,14 +51,19 @@ export default async function ListingsPage({
     if (typeof value === 'string' && value) query.set(key, value);
   }
 
-  const [data, industriesData] = await Promise.all([
+  const [data, industriesData, tagsData] = await Promise.all([
     serverApi<{ listings: ListingCard[]; nextCursor: string | null }>(
       `/listings?${query.toString()}`,
     ),
     serverApi<{ industries: Industry[] }>('/industries'),
+    serverApi<{ tags: Array<{ name: string; slug: string; count: number }> }>(
+      '/listings/tags/popular',
+    ),
   ]);
   const listings = data?.listings ?? [];
   const industries = industriesData?.industries ?? [];
+  const popularTags = tagsData?.tags ?? [];
+  const activeTag = typeof params.tag === 'string' ? params.tag : '';
 
   const nextParams = new URLSearchParams(query);
   if (data?.nextCursor) nextParams.set('cursor', data.nextCursor);
@@ -70,6 +75,32 @@ export default async function ListingsPage({
         Konkretny zakres, deklarowane ceny i poziom w Drabince, którego nie da się kupić. Zapytanie
         możesz jednym kliknięciem przekształcić w zlecenie z pełnym cyklem ocen.
       </p>
+
+      {/* Chipy popularnych tagów. To nie ozdoba: `innodb_ft_min_token_size`
+          wynosi 3, więc frazy „HR", „IT", „AI" NIGDY nie wejdą do indeksu
+          FULLTEXT i nie da się ich wyszukać — tag jest jedyną drogą do tych
+          kategorii. Filtrowanie zwykłym linkiem, więc działa też bez JS. */}
+      {popularTags.length > 0 && (
+        <ul className="tag-chips" aria-label="Popularne tagi">
+          {activeTag && (
+            <li>
+              <Link className="tag-chip" href="/uslugi">
+                × Wyczyść tag
+              </Link>
+            </li>
+          )}
+          {popularTags.map((tag) => (
+            <li key={tag.slug}>
+              <Link
+                className={activeTag === tag.slug ? 'tag-chip active' : 'tag-chip'}
+                href={`/uslugi?tag=${encodeURIComponent(tag.slug)}`}
+              >
+                {tag.name} <span className="muted">({tag.count})</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <form className="filters" method="get">
         <div className="field">

@@ -32,7 +32,9 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
 
   async function requireThread(threadId: string) {
     const thread = await prisma.thread.findUnique({ where: { id: threadId } });
-    if (!thread) throw new NotFoundError('Wątek nie istnieje');
+    // Wątek ukryty przez moderatora jest dla domeny nieistniejący — inaczej
+    // dałoby się dopisywać do niego odpowiedzi mimo zdjęcia treści.
+    if (!thread || thread.hiddenAt) throw new NotFoundError('Wątek nie istnieje');
     return thread;
   }
 
@@ -126,6 +128,11 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
       });
       if (!answer) throw new NotFoundError('Odpowiedź nie istnieje');
       const thread = answer.thread;
+      // KLUCZOWE dla sensu ukrywania: akceptacja odpowiedzi to jedna z dwóch
+      // dróg zdobycia punktu. Gdyby działała w ukrytym wątku, moderator zdjąłby
+      // treść, a farmienie punktów szłoby dalej — czyli akcja moderacyjna
+      // byłaby kosmetyką. To samo niżej przy głosowaniu.
+      if (thread.hiddenAt) throw new NotFoundError('Wątek nie istnieje');
       if (thread.authorUserId !== userId) {
         throw new ForbiddenError(
           'NOT_THREAD_AUTHOR',
@@ -176,9 +183,10 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
     async voteAnswer(userId: string, answerId: string) {
       const answer = await prisma.answer.findUnique({
         where: { id: answerId },
-        include: { thread: { select: { groupId: true } } },
+        include: { thread: { select: { groupId: true, hiddenAt: true } } },
       });
       if (!answer) throw new NotFoundError('Odpowiedź nie istnieje');
+      if (answer.thread.hiddenAt) throw new NotFoundError('Wątek nie istnieje');
       await requireMembership(userId, answer.thread.groupId);
       if (answer.authorUserId === userId) {
         throw new DomainError('CANNOT_VOTE_OWN', 'Nie możesz głosować na własną odpowiedź', 400);
@@ -227,7 +235,12 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
         : null;
 
       const rows = await prisma.thread.findMany({
-        where: ids ? { id: { in: ids } } : { title: { contains: q } },
+        // hiddenAt: wątek zdjęty przez moderatora nie może wracać przez
+        // wyszukiwarkę — to ta sama treść, tylko innym wejściem.
+        where: {
+          hiddenAt: null,
+          ...(ids ? { id: { in: ids } } : { title: { contains: q } }),
+        },
         select: { id: true, title: true, status: true, groupId: true },
         orderBy: [{ createdAt: 'desc' }],
         take: limit,
@@ -239,6 +252,7 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
       const limit = filters.limit ?? PAGE_DEFAULT;
       const where: Prisma.ThreadWhereInput = {
         groupId,
+        hiddenAt: null,
         ...(filters.status ? { status: filters.status } : {}),
       };
       // Feed chronologiczny (ADR-010): bez rankingu algorytmicznego.
@@ -277,7 +291,9 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
           },
         },
       });
-      if (!thread) throw new NotFoundError('Wątek nie istnieje');
+      // Wątek ukryty przez moderatora zachowuje się jak nieistniejący: to samo
+      // 404 co dla złego id, bez ujawniania, że treść była i została zdjęta.
+      if (!thread || thread.hiddenAt) throw new NotFoundError('Wątek nie istnieje');
       const userIds = [thread.authorUserId, ...thread.answers.map((a) => a.authorUserId)];
       const users = await identity.getPublicUsers(userIds);
       const votedSet = viewerId
@@ -313,6 +329,11 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
           createdAt: a.createdAt,
         })),
       };
+    },
+
+    // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
+    async countThreadsBetween(from: Date, to: Date): Promise<number> {
+      return prisma.thread.count({ where: { createdAt: { gte: from, lt: to } } });
     },
   };
 }

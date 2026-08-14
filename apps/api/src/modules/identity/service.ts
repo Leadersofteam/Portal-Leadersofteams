@@ -27,6 +27,9 @@ export interface PublicUser {
 export interface CompanySummary {
   id: string;
   name: string;
+  // Ustawione, gdy NIP przeszedł sumę kontrolną. UWAGA na copy w UI: to jest
+  // poprawność FORMALNA, nie potwierdzenie istnienia firmy w rejestrze.
+  nipVerifiedAt?: Date | null;
 }
 
 // Kontrakt modułu na potrzeby RODO (D6): każdy moduł czyści/eksportuje WYŁĄCZNIE
@@ -69,11 +72,19 @@ export interface IdentityService {
   // Wiek konta użytkownika — dla progu dojrzałości głosu Q&A i limitów świeżych
   // kont (kwalifikacja/limit rozstrzygana w modułach; identity tylko dostarcza datę).
   getUserCreatedAt(userId: string): Promise<Date | null>;
+  // Analityka (S12): sama LICZBA rejestracji w oknie — bez żadnych danych osoby.
+  countRegistrationsBetween(from: Date, to: Date): Promise<number>;
   // RODO (D6): anonimizacja W MIEJSCU (ledger zachowany) + eksport danych.
   anonymizeAccount(userId: string): Promise<void>;
   exportAccount(userId: string): Promise<Record<string, unknown>>;
   // E-mail (D4): weryfikacja adresu i reset hasła (za flagą; wysyłka no-op gdy off).
   sendEmailVerification(userId: string, email: string): Promise<string>;
+  /**
+   * Stan potwierdzenia adresu — czytany Z BAZY, nie z migawki sesji.
+   * Sesja jest zamrożona przy logowaniu (ta sama pułapka co z rolą MODERATOR),
+   * więc gdyby baner zależał od sesji, nie zniknąłby po kliknięciu w link.
+   */
+  getVerificationStatus(userId: string): Promise<{ email: string; verified: boolean } | null>;
   verifyEmail(rawToken: string): Promise<{ verified: boolean }>;
   requestPasswordReset(email: string): Promise<{ rawToken: string | null }>;
   resetPassword(rawToken: string, newPassword: string): Promise<{ reset: boolean }>;
@@ -232,6 +243,10 @@ export function createIdentityService(
           data: {
             name: input.name,
             nip: input.nip ?? null,
+            // Kontrakt (`createCompanyInputSchema`) już odrzucił numer z błędną
+            // sumą kontrolną, więc obecność NIP-u tutaj ZNACZY, że przeszedł.
+            // Zapisujemy znacznik, zamiast przeliczać sumę przy każdym renderze.
+            nipVerifiedAt: input.nip ? new Date() : null,
             description: input.description ?? null,
             members: { create: { userId: ownerId, role: 'OWNER' } },
           },
@@ -244,10 +259,15 @@ export function createIdentityService(
     async listCompanies(userId) {
       const memberships = await prisma.companyMember.findMany({
         where: { userId },
-        include: { company: { select: { id: true, name: true } } },
+        include: { company: { select: { id: true, name: true, nipVerifiedAt: true } } },
         orderBy: { createdAt: 'asc' },
       });
-      return memberships.map((m) => ({ id: m.company.id, name: m.company.name, role: m.role }));
+      return memberships.map((m) => ({
+        id: m.company.id,
+        name: m.company.name,
+        nipVerifiedAt: m.company.nipVerifiedAt,
+        role: m.role,
+      }));
     },
 
     async isCompanyMember(userId, companyId) {
@@ -319,15 +339,17 @@ export function createIdentityService(
       if (companyIds.length === 0) return new Map();
       const companies = await prisma.company.findMany({
         where: { id: { in: companyIds } },
-        select: { id: true, name: true },
+        select: { id: true, name: true, nipVerifiedAt: true },
       });
-      return new Map(companies.map((c) => [c.id, { id: c.id, name: c.name }]));
+      return new Map(
+        companies.map((c) => [c.id, { id: c.id, name: c.name, nipVerifiedAt: c.nipVerifiedAt }]),
+      );
     },
 
     async getCompanyMeta(companyId) {
       const company = await prisma.company.findUnique({
         where: { id: companyId },
-        select: { id: true, name: true, createdAt: true },
+        select: { id: true, name: true, createdAt: true, nipVerifiedAt: true },
       });
       return company;
     },
@@ -338,6 +360,13 @@ export function createIdentityService(
         select: { createdAt: true },
       });
       return user?.createdAt ?? null;
+    },
+
+    // Analityka (S12) — moduł liczy własną tabelę i oddaje samą liczbę (ADR-002).
+    // Konta zanonimizowane (RODO, D6) zostają w liczniku: rejestracja się wydarzyła,
+    // a licznik nie mówi KTO ani nie pozwala nikogo wskazać.
+    async countRegistrationsBetween(from, to) {
+      return prisma.user.count({ where: { createdAt: { gte: from, lt: to } } });
     },
 
     // --- pierwsza mila (S10) -------------------------------------------------
@@ -455,6 +484,15 @@ export function createIdentityService(
     },
 
     // --- E-mail (D4) --------------------------------------------------------
+    async getVerificationStatus(userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, emailVerifiedAt: true },
+      });
+      if (!user) return null;
+      return { email: user.email, verified: user.emailVerifiedAt !== null };
+    },
+
     sendEmailVerification(userId, email) {
       return sendVerification(userId, email);
     },

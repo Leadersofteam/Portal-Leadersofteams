@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
+import { ImagePicker } from '@/components/image-picker';
 import { ApiRequestError, apiFetch } from '@/lib/api';
+import { useImageUpload } from '@/lib/use-image-upload';
 
 function useAction() {
   const router = useRouter();
@@ -69,6 +71,7 @@ export function JoinLeaveButton({
 
 export function PostForm({ groupId }: { groupId: string }) {
   const { run, error, pending } = useAction();
+  const upload = useImageUpload();
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,9 +84,11 @@ export function PostForm({ groupId }: { groupId: string }) {
           type: form.get('type'),
           title: form.get('title'),
           body: form.get('body'),
+          ...(upload.images.length > 0 ? { imageFileIds: upload.images.map((i) => i.fileId) } : {}),
         }),
       });
       el.reset();
+      upload.reset();
     });
   }
 
@@ -107,10 +112,18 @@ export function PostForm({ groupId }: { groupId: string }) {
         <div className="field">
           <label htmlFor="body">Treść</label>
           <textarea id="body" name="body" required minLength={10} maxLength={20000} />
+          <p className="muted field-hint">
+            Użyj <code>#tematu</code>, żeby dyskusja trafiła na stronę tematu, i{' '}
+            <code>@uchwytu</code>, żeby kogoś powiadomić.
+          </p>
         </div>
-        <button className="btn" type="submit" disabled={pending}>
-          {pending ? 'Publikowanie…' : 'Opublikuj'}
-        </button>
+        {upload.error && <div className="error-box">{upload.error}</div>}
+        <div className="actions-row">
+          <ImagePicker id="group-post-images" upload={upload} />
+          <button className="btn" type="submit" disabled={pending || upload.uploading}>
+            {pending ? 'Publikowanie…' : 'Opublikuj'}
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -136,6 +149,114 @@ export function ReactButton({
     >
       👏 Doceniam ({count})
     </button>
+  );
+}
+
+// --- pierwsza linia moderacji: akcje moderatora GRUPY (S17) ------------------
+// Rola w grupie to co innego niż rola platformowa — te przyciski widzi
+// moderator grupy, a nie moderator Portalu.
+
+export function PinButton({ postId, pinned }: { postId: string; pinned: boolean }) {
+  const { run, error, pending } = useAction();
+  return (
+    <span>
+      <button
+        className="btn secondary"
+        disabled={pending}
+        onClick={() =>
+          void run(() => apiFetch(`/posts/${postId}/pin`, { method: pinned ? 'DELETE' : 'POST' }))
+        }
+      >
+        {pending ? '…' : pinned ? 'Odepnij' : 'Przypnij w grupie'}
+      </button>
+      {error && <span className="error-box">{error}</span>}
+    </span>
+  );
+}
+
+export function HidePostButton({ postId }: { postId: string }) {
+  const { run, error, pending } = useAction();
+  return (
+    <span>
+      <button
+        className="btn secondary"
+        disabled={pending}
+        onClick={() => {
+          // Ukrycie cudzej treści jest odwracalne tylko przez bazę, więc pytamy
+          // wprost. Świadomie natywny confirm: to akcja rzadka i moderatorska,
+          // własny modal byłby kosztem bez zysku.
+          if (!confirm('Ukryć ten post w grupie? Zniknie z listy i z osi aktywności.')) return;
+          void run(() => apiFetch(`/posts/${postId}/hide`, { method: 'POST' }));
+        }}
+      >
+        {pending ? '…' : 'Ukryj post'}
+      </button>
+      {error && <span className="error-box">{error}</span>}
+    </span>
+  );
+}
+
+export function MemberRoleActions({
+  membershipId,
+  role,
+  status,
+  isSelf,
+}: {
+  membershipId: string;
+  role: 'MEMBER' | 'MODERATOR';
+  status: 'ACTIVE' | 'PENDING' | 'BANNED';
+  isSelf: boolean;
+}) {
+  const { run, error, pending } = useAction();
+
+  if (status === 'BANNED') return <span className="badge">Wyproszony(a)</span>;
+
+  // Zdjęcie roli SOBIE jest dozwolone (można zrezygnować), ale to jedyna akcja
+  // w tej sekcji, która odbiera dostęp klikającemu — bez ostrzeżenia wygląda
+  // jak zwykły przycisk obok innych i wylatuje się z panelu przez pomyłkę.
+  const isStepDown = isSelf && role === 'MODERATOR';
+  const roleLabel = isStepDown
+    ? 'Zrezygnuj z moderacji'
+    : role === 'MODERATOR'
+      ? 'Odbierz moderację'
+      : 'Zrób moderatorem';
+
+  return (
+    <span className="actions-row">
+      <button
+        className="btn secondary"
+        disabled={pending}
+        onClick={() => {
+          if (
+            isStepDown &&
+            !confirm('Zrezygnować z moderacji tej grupy? Stracisz dostęp do składu i przypinania.')
+          ) {
+            return;
+          }
+          void run(() =>
+            apiFetch(`/memberships/${membershipId}/role`, {
+              method: 'POST',
+              body: JSON.stringify({ role: role === 'MODERATOR' ? 'MEMBER' : 'MODERATOR' }),
+            }),
+          );
+        }}
+      >
+        {pending ? '…' : roleLabel}
+      </button>
+      {!isSelf && role === 'MEMBER' && (
+        <button
+          className="btn secondary"
+          disabled={pending}
+          onClick={() => {
+            if (!confirm('Wyprosić tę osobę z grupy? Nie będzie mogła dołączyć ponownie.')) return;
+            void run(() => apiFetch(`/memberships/${membershipId}/ban`, { method: 'POST' }));
+          }}
+        >
+          Wyproś
+        </button>
+      )}
+      {error && <span className="error-box">{error}</span>}
+    </span>
   );
 }
 

@@ -18,3 +18,10 @@ test-results/
 playwright-report/
 .last-run.json
 infra/prod.override.yml
+
+# Lokalne ustawienia Claude Code — skille i CLAUDE.md commitujemy, ustawienia nie.
+.claude/settings.local.json
+
+# Uploady z lokalnych przebiegów testów — na produkcji to wolumen dockerowy.
+# 48 takich plików trafiło do repo przez przypadek (S17, zastane).
+apps/api/uploads/
