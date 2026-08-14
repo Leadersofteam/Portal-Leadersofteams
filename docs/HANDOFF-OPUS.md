@@ -11,6 +11,65 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ S17 DOMKNIĘTY — punkty 3–4 (2026-08-14): „Zakładki i moderatorzy grup"**
+> (`3cdf582`, `c69e64f`). Wdrożone na staging i **produkcję**, przejrzane na żywo
+> kontami testowymi (skasowane po sobie).
+>
+> **Zakładki.** Prywatna półka „na później" nad OBIEMA tabelami treści; właścicielem jest
+> `social`, dokładnie jak przy tematach. Klucz złożony `(userId, subjectType, subjectId)`
+> daje idempotencję za darmo; polimorf świadomie BEZ klucza obcego na treść — odczyt
+> filtruje treść usuniętą i ukrytą, więc wiszący wiersz jest niewidoczny i tani.
+> **ADR-010 pilnowany testem, nie deklaracją:** suita czyta SUROWE ciała pięciu odpowiedzi
+> i sprawdza, że nie ma w nich liczby zapisań — asercja na kształt obiektu przepuściłaby
+> pole dołożone kiedyś „bo się przyda".
+> **ANTY-MLM:** zapisanie do zakładek nie emituje ŻADNEGO zdarzenia (jak
+> `identity.updateOnboarding`). Ścieżka strażnika rozszerzona o ten krok, ale asercja jest
+> ODWROTNA niż przy cytowaniu: porównujemy zbiór typów zdarzeń przed i po, bo pilnujemy
+> CISZY, a ciszy nie da się sprawdzić przez `toContain`.
+>
+> **Moderatorzy grup.** RBAC (`GroupMembership.role`) istniał od Sprintu 4, ale używała go
+> WYŁĄCZNIE akceptacja wniosków; `GroupMemberStatus.BANNED` stał nieużywany. Doszły: skład
+> grupy (tylko dla moderatora — publiczna lista nazwisk to dane o ludziach, nie treść),
+> awans/degradacja z powiadomieniem, wyproszenie, ukrycie posta, przypięcie.
+> Degradacja i wyproszenie OSTATNIEGO moderatora → 409. Ukrycie ma JEDNĄ implementację
+> (`hideGroupPost`) dla moderatora grupy i platformy — wzorzec `takeDownSocialPost`.
+> Przypinamy POST, nie wątek Q&A (uzasadnienie w SPRINTY-S15-S19), najwyżej jeden na grupę,
+> wykluczony z listy chronologicznej na WSZYSTKICH stronach — inaczej wypłynąłby ponownie
+> przy kursorze.
+>
+> **🔴 ZASTANY BRAK, znaleziony dopiero przy przechodzeniu na żywo: `POST /groups` NIE MIAŁA
+> ŻADNEGO WEJŚCIA W UI.** Trasa z bramką poziomu 2 i testami istniała od Sprintu 4; grupę
+> dało się założyć wyłącznie curl-em. Dlatego produkcja miała 10 grup — wszystkie systemowe
+> z seeda, 57 członkostw i **ZERO moderatorów** (grupa systemowa nie ma założyciela).
+> Bez `/grupy/nowa` cały punkt 4 byłby funkcją, do której nikt nie ma jak dojść. Dodatkowo
+> moderator PLATFORMY może teraz nadać rolę moderatora w każdej grupie — wąsko i celowo,
+> żeby grupy systemowe miały jak dostać pierwszego gospodarza (wyproszenie i ukrywanie
+> zostają u moderatora grupy; platforma ma `/panel/moderacja` ze śladem w ModerationCase).
+>
+> **🔴 ZASTANY BŁĄD 1: `SiteHeader` NIGDY nie czytał sesji** — zalogowany widział na każdej
+> stronie „Zaloguj się / Dołącz". Zgłoszone przy S12 jako „bardzo mylący papierek", otwarte
+> do dziś. Sesję czyta teraz hook kliencki (`lib/use-session.ts`), NIE layout: `serverApi`
+> czyta cookies, więc odczyt w root layoucie uczyniłby dynamiczną każdą stronę, łącznie
+> z landingiem i regulaminem (sprawdzone: 14 tras nadal prerenderuje się statycznie).
+> Do rozstrzygnięcia slot zostaje pusty — nagłówek, który przez pół sekundy milczy, jest
+> lepszy niż taki, który przez pół sekundy kłamie.
+>
+> **🔴 ZASTANY BŁĄD 2:** feed miał na sztywno `initialActive={false}` przy „Doceniam", więc
+> docenione wpisy wyglądały na niedocenione, a ponowne kliknięcie kasowało własne docenienie.
+>
+> **Nowe miny w [MINY.md](MINY.md):** trasa API bez wejścia w UI, `waitFor` nie odświeży
+> strony renderowanej na serwerze, `waitForURL(/regex/)` łapie też adres bieżący, `.first()`
+> w liście, w której akcja zmienia liczbę kontrolek (odebrałem sobie moderację).
+>
+> Bramki: **182/182 testów API** (było 170), **16/16 e2e** (było 15), lint, typecheck, build.
+> Migracja expand-only: nowa tabela `bookmarks`, nowy enum, `posts.pinnedAt` + indeks.
+> Backup prod przed migracją: `portal-20260814-123451.sql.gz`.
+>
+> **⚠️ DO WIADOMOŚCI WŁAŚCICIELA:** na produkcji jest konto `kuchar21ski@gmail.com`
+> („Macix", 13.08 wieczorem) — z profilem Lidera, bez potwierdzonego adresu, bez treści.
+> Nie jest moje i nie usuwam go. Jeśli to nie Ty, **to pierwszy realny użytkownik Portalu**
+> i wtedy decyzja o danych demo (R-16) przestaje być hipotetyczna.
+
 > **✅ S17 — punkty 1–2 (2026-08-14): „Tematy i obrazy w grupach"** (`a5cfdf0`).
 > Wdrożone na staging i **produkcję**, dane demo przesiane z tematami.
 >

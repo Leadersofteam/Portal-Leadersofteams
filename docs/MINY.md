@@ -37,6 +37,29 @@ Zanim zaczniesz czytać kod: `ss -ltnp | grep :3000`. Proces `next-server` prze�
 `pkill -f "next start"` — trzeba zabić po PID. Testy przeciwko poprzedniemu buildowi
 objawiają się niezrozumiałymi błędami w losowych miejscach.
 
+### `waitFor` nie odświeży strony renderowanej na serwerze
+
+Powiadomienie powstaje dopiero, gdy worker przetworzy zdarzenie. `page.goto()` + `waitFor()`
+na element nigdy go nie zobaczy: strona jest już wczytana, a Next nie dociągnie nowego
+rekordu sam. **Ponawiaj WEJŚCIE (`goto` w pętli), nie czekaj na element.** Objaw: funkcja
+działa (rekord jest w bazie, worker zalogował „Zdarzenie przetworzone"), a test/skrypt
+uparcie melduje brak.
+
+### `waitForURL(/regex/)` dopasowuje TAKŻE bieżący adres
+
+`waitForURL(/\/grupy\/[a-z0-9]+$/)` po kliknięciu na `/grupy/nowa` przechodzi natychmiast —
+bo `nowa` też pasuje do wzorca. Skrypt jedzie dalej z adresem formularza zamiast adresu
+utworzonego zasobu i wywala się kilka kroków później, w niezwiązanym miejscu. Wykluczaj
+stronę startową wprost (predykat zamiast wyrażenia regularnego).
+
+### `.first()` na liście, w której akcja zmienia liczbę kontrolek
+
+Po awansie drugiej osoby na moderatora obie mają przycisk „Odbierz moderację", a `.first()`
+to wiersz WŁASNY — kliknięcie odbierało uprawnienia sobie i sekcja znikała ze strony.
+Celuj w wiersz (`locator('.list-row').filter({ hasText: nazwa })`), nie w „pierwszy taki
+przycisk na stronie". Przy okazji: to był sygnał, że akcja na własnym wierszu potrzebuje
+innej nazwy i potwierdzenia — dziś nazywa się „Zrezygnuj z moderacji".
+
 ### Tryb strict Playwrighta
 
 „Zaloguj się" występuje w nagłówku, treści i stopce naraz. Zawężaj do
@@ -156,6 +179,14 @@ multipart, inaczej upload psuje się po cichu. `apiFetch` już to obsługuje.
 
 Raport „3 realne konta na produkcji" był nieprawdą — wszystkie trzy zostały po poprzednich
 sesjach. **Sprzątaj po sobie** i przed policzeniem użytkowników sprawdź domeny adresów.
+
+### Trasa API bez wejścia w interfejsie
+
+`POST /groups` istniała od Sprintu 4 z pełną bramką poziomu 2 i testami — i przez cztery
+sprinty NIE MIAŁA w całej aplikacji ani jednego linku. Grupę dało się założyć wyłącznie
+curl-em, więc na produkcji były same grupy systemowe z seeda: bez założyciela, czyli bez
+ani jednego moderatora. **Nowa trasa bez wejścia w UI to funkcja, której nie ma.**
+Ten sam wzorzec co martwy reset hasła — tylko cichszy, bo nikt nie dostaje 404.
 
 ### Dokumentacja bywa za kodem
 
