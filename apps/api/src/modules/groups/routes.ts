@@ -81,17 +81,27 @@ export function groupsRoutes({ groups, auth }: GroupsRoutesDeps) {
     // Uprawnienia sprawdza serwis (`requireGroupModerator`), nie trasa — rola
     // w grupie to co innego niż rola platformowa z sesji.
 
+    // Moderator PLATFORMY widzi skład i może nadać rolę w każdej grupie —
+    // inaczej 10 grup systemowych (bez założyciela, więc bez moderatora)
+    // nie miałoby jak dostać pierwszego gospodarza. Reszta akcji jest wyłącznie
+    // dla moderatora grupy.
+    const isPlatformModerator = (role: string) => ['MODERATOR', 'ADMIN'].includes(role);
+
     app.get('/groups/:id/members', async (request, reply) => {
       const user = await auth.requireUser(request);
       const { id } = request.params as { id: string };
-      return reply.send({ members: await groups.listMembers(user.id, id) });
+      return reply.send({
+        members: await groups.listMembers(user.id, id, isPlatformModerator(user.role)),
+      });
     });
 
     app.post('/memberships/:id/role', async (request, reply) => {
       const user = await auth.requireUser(request);
       const { id } = request.params as { id: string };
       const input = parseBody(updateMembershipRoleInputSchema, request.body);
-      return reply.send(await groups.setMemberRole(user.id, id, input.role));
+      return reply.send(
+        await groups.setMemberRole(user.id, id, input.role, isPlatformModerator(user.role)),
+      );
     });
 
     app.post('/memberships/:id/ban', async (request, reply) => {

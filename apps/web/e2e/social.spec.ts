@@ -80,21 +80,29 @@ test('wpis portalowy: kompozytor → feed społeczności → permalink → docen
   // wystarczył, żeby uznać funkcję za gotową — i przez tydzień prowadziła w 404.
   // Kotwiczymy na pozytywnym śladzie: nazwa przycisku po zapisaniu i treść
   // wpisu na prywatnej półce.
-  await reader.getByRole('button', { name: 'Zapisz na później' }).click();
-  await expect(reader.getByRole('button', { name: 'Usuń z zapisanych' })).toBeVisible({
-    timeout: 15_000,
-  });
+  // Klik owinięty w `toPass`: kliknięcie przed hydracją po prostu PRZEPADA
+  // (bramka `portal-bramki` ostrzega przed tym wprost). Bez tego test padał
+  // raz na kilka przebiegów na czekaniu na stan „Zapisane".
+  await expect(async () => {
+    await reader.getByRole('button', { name: 'Zapisz na później' }).click({ timeout: 2_000 });
+    await expect(reader.getByRole('button', { name: 'Usuń z zapisanych' })).toBeVisible({
+      timeout: 3_000,
+    });
+  }).toPass({ timeout: 30_000 });
 
   await reader.goto('/panel/zapisane');
   await expect(reader.getByRole('heading', { name: 'Zapisane' })).toBeVisible();
   await expect(reader.getByText(body).first()).toBeVisible({ timeout: 15_000 });
 
   // Zdjęcie z półki działa z samej listy — i wpis z niej znika.
-  await reader.getByRole('button', { name: 'Usuń z zapisanych' }).first().click();
   await expect(async () => {
+    await reader
+      .getByRole('button', { name: 'Usuń z zapisanych' })
+      .first()
+      .click({ timeout: 2_000 });
     await reader.goto('/panel/zapisane');
     await expect(reader.getByText(body)).toHaveCount(0);
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 30_000 });
 
   // ADR-010: prywatna półka nie może wyciekać na zewnątrz. Autor wpisu nie widzi
   // ŻADNEGO licznika zapisań pod swoją treścią.

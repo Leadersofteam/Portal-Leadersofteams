@@ -215,7 +215,7 @@ export default async function GroupPage({
                 ) : (
                   m.displayName
                 )}
-                {m.role === 'MODERATOR' && <span className="badge">Moderator</span>}
+                {m.role === 'MODERATOR' && <span className="badge ml-1">Moderator</span>}
                 {m.isSelf && <span className="muted"> — to Ty</span>}
               </span>
               <MemberRoleActions
@@ -229,14 +229,16 @@ export default async function GroupPage({
         </section>
       )}
 
-      {viewer.membershipStatus === 'ACTIVE' && <PostForm groupId={group.id} />}
-
+      {/* Przypięte STOI NAD kompozytorem: „zacznij tutaj" ma zostać przeczytane
+          zanim ktoś zacznie pisać, a nie dopiero pod formularzem publikacji. */}
       {pinned && (
         <section className="mt-4">
           <h2>Przypięte</h2>
           <PostCard post={pinned} groupId={group.id} canParticipate={isActiveMember} />
         </section>
       )}
+
+      {viewer.membershipStatus === 'ACTIVE' && <PostForm groupId={group.id} />}
 
       <h2 className="mt-4">Aktualności</h2>
       {posts.length === 0 ? (

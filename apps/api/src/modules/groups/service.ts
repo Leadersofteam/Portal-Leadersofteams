@@ -119,6 +119,26 @@ export function createGroupsService({
     return m;
   }
 
+  /**
+   * Wyjątek dla moderatora PLATFORMY — wyłącznie przy odczycie składu i nadaniu
+   * roli. Powód jest konkretny, nie teoretyczny: 10 grup systemowych z seeda
+   * nie ma założyciela, więc nie ma w nich ANI JEDNEGO moderatora i bez tej
+   * furtki pierwszego nie miałby kto wyznaczyć (sprawdzone na produkcji
+   * 2026-08-14: 10 grup, 57 członkostw, 0 moderatorów).
+   *
+   * Świadomie NIE dotyczy wyproszenia ani ukrywania treści: moderator platformy
+   * ma na to własną ścieżkę w `/panel/moderacja`, ze śladem w ModerationCase.
+   * Tutaj chodzi o jedno — żeby grupa dostała gospodarza.
+   */
+  async function requireGroupModeratorOrPlatform(
+    userId: string,
+    groupId: string,
+    isPlatformModerator: boolean,
+  ) {
+    if (isPlatformModerator) return null;
+    return requireGroupModerator(userId, groupId);
+  }
+
   /** Liczba aktywnych moderatorów — bramka „grupa nie może zostać bez opieki". */
   async function activeModeratorCount(groupId: string): Promise<number> {
     return prisma.groupMembership.count({
@@ -310,8 +330,8 @@ export function createGroupsService({
 
     // --- pierwsza linia moderacji: skład grupy (S17) --------------------------
 
-    async listMembers(moderatorUserId: string, groupId: string) {
-      await requireGroupModerator(moderatorUserId, groupId);
+    async listMembers(moderatorUserId: string, groupId: string, isPlatformModerator = false) {
+      await requireGroupModeratorOrPlatform(moderatorUserId, groupId, isPlatformModerator);
       // Świadomie widok WYŁĄCZNIE dla moderatora: publiczna lista członków
       // grupy to dane o ludziach, a nie treść — Portal pokazuje na zewnątrz
       // liczbę członków, nie ich nazwiska.
@@ -338,10 +358,15 @@ export function createGroupsService({
      * w grupie to obowiązek, nie status (ADR-004: status daje wyłącznie drugi
      * człowiek za realną pracę).
      */
-    async setMemberRole(moderatorUserId: string, membershipId: string, role: GroupMemberRole) {
+    async setMemberRole(
+      moderatorUserId: string,
+      membershipId: string,
+      role: GroupMemberRole,
+      isPlatformModerator = false,
+    ) {
       const target = await prisma.groupMembership.findUnique({ where: { id: membershipId } });
       if (!target) throw new NotFoundError('Członkostwo nie istnieje');
-      await requireGroupModerator(moderatorUserId, target.groupId);
+      await requireGroupModeratorOrPlatform(moderatorUserId, target.groupId, isPlatformModerator);
       if (target.status !== 'ACTIVE') {
         throw new ConflictError('MEMBER_NOT_ACTIVE', 'To członkostwo nie jest aktywne');
       }

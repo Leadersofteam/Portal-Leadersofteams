@@ -1699,6 +1699,10 @@ main tbody tr:hover {
 .mt-4 {
   margin-top: 2rem;
 }
+/* Odznaka doklejona do nazwiska (skład grupy) — bez tego „Jan KowalskiModerator". */
+.ml-1 {
+  margin-left: 0.5rem;
+}
 
 /* ===================== Mobile: nowe sekcje ===================== */
 @media (max-width: 768px) {

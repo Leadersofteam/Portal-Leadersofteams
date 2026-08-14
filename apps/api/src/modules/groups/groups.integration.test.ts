@@ -337,6 +337,47 @@ describe.skipIf(!hasInfra)('groups — grupy branżowe, posty, komentarze, reakc
     expect(demote.statusCode).toBe(200);
   });
 
+  it('moderator PLATFORMY może wyznaczyć gospodarza grupy, ale nie wyprasza', async () => {
+    // Powód istnienia tej furtki: grupy systemowe z seeda nie mają założyciela,
+    // więc nie mają ANI JEDNEGO moderatora (produkcja 2026-08-14: 10 grup,
+    // 57 członkostw, 0 moderatorów). Bez tego pierwszego gospodarza nie miałby
+    // kto wyznaczyć i cała warstwa moderatora grupy byłaby martwa.
+    await ctx.prisma.user.update({ where: { id: outsiderId }, data: { role: 'MODERATOR' } });
+    // Rola jest ZAMROŻONA w migawce sesji — bez ponownego logowania nowa rola
+    // nie działa (mina z docs/MINY.md, kosztowała kiedyś 5 czerwonych testów).
+    const relogin = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { email: emails.outsider, password: 'super-tajne-haslo-1' },
+    });
+    const raw = relogin.headers['set-cookie'];
+    const platformCookie = String(Array.isArray(raw) ? raw[0] : raw).split(';')[0] ?? '';
+
+    const members = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/groups/${openGroupId}/members`,
+      headers: { cookie: platformCookie },
+    });
+    expect(members.statusCode).toBe(200);
+    const row = members.json().members.find((m: { userId: string }) => m.userId === memberId) as {
+      membershipId: string;
+    };
+
+    const promote = await post(platformCookie, `/api/v1/memberships/${row.membershipId}/role`, {
+      role: 'MODERATOR',
+    });
+    expect(promote.statusCode).toBe(200);
+
+    // Ale wyproszenie to NIE jest jego droga — ma na to panel moderacji ze
+    // śladem w ModerationCase. Tu wolno mu wyłącznie wyznaczyć gospodarza.
+    const ban = await post(platformCookie, `/api/v1/memberships/${row.membershipId}/ban`);
+    expect(ban.statusCode).toBe(403);
+
+    // Sprzątamy po sobie: rola grupowa i platformowa wracają do stanu wyjścia.
+    await post(founderCookie, `/api/v1/memberships/${row.membershipId}/role`, { role: 'MEMBER' });
+    await ctx.prisma.user.update({ where: { id: outsiderId }, data: { role: 'USER' } });
+  });
+
   it('wyproszenie: nie moderatora, nie siebie, a wyproszony nie wraca jednym kliknięciem', async () => {
     const membership = await ctx.prisma.groupMembership.findUnique({
       where: { groupId_userId: { groupId: moderatedGroupId, userId: memberId } },

@@ -211,21 +211,37 @@ export function MemberRoleActions({
 
   if (status === 'BANNED') return <span className="badge">Wyproszony(a)</span>;
 
+  // Zdjęcie roli SOBIE jest dozwolone (można zrezygnować), ale to jedyna akcja
+  // w tej sekcji, która odbiera dostęp klikającemu — bez ostrzeżenia wygląda
+  // jak zwykły przycisk obok innych i wylatuje się z panelu przez pomyłkę.
+  const isStepDown = isSelf && role === 'MODERATOR';
+  const roleLabel = isStepDown
+    ? 'Zrezygnuj z moderacji'
+    : role === 'MODERATOR'
+      ? 'Odbierz moderację'
+      : 'Zrób moderatorem';
+
   return (
     <span className="actions-row">
       <button
         className="btn secondary"
         disabled={pending}
-        onClick={() =>
+        onClick={() => {
+          if (
+            isStepDown &&
+            !confirm('Zrezygnować z moderacji tej grupy? Stracisz dostęp do składu i przypinania.')
+          ) {
+            return;
+          }
           void run(() =>
             apiFetch(`/memberships/${membershipId}/role`, {
               method: 'POST',
               body: JSON.stringify({ role: role === 'MODERATOR' ? 'MEMBER' : 'MODERATOR' }),
             }),
-          )
-        }
+          );
+        }}
       >
-        {pending ? '…' : role === 'MODERATOR' ? 'Odbierz moderację' : 'Zrób moderatorem'}
+        {pending ? '…' : roleLabel}
       </button>
       {!isSelf && role === 'MEMBER' && (
         <button
