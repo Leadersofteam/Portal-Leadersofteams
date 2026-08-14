@@ -39,9 +39,10 @@ Sprint o tym, żeby to, co Portal **twierdzi**, było prawdą.
    problem do S12). Minimum: biała lista odsiewa śmieci, healthcheck się nie liczy,
    rejestracje/publikacje idą Z BAZY, nie z licznika.
 3. **RODO dostaje ścieżkę użytkownika.** `GET /me/export` i `DELETE /me` działają od D6
-   i nie mają ANI JEDNEGO wejścia w UI. Nowa strona `/panel/konto`: „Pobierz swoje dane"
-   - „Usuń konto" z realnym potwierdzeniem i opisem, co zostaje (ledger zanonimizowany,
-     treści `[treść usunięta]`). To **R-10 — obowiązek prawny**, dziś żyjący tylko w backendzie.
+   i nie mają ANI JEDNEGO wejścia w UI. Nowa strona `/panel/konto` z dwoma akcjami:
+   „Pobierz swoje dane" oraz „Usuń konto" — z realnym potwierdzeniem i opisem, co zostaje
+   (ledger zanonimizowany, treści `[treść usunięta]`). To **R-10 — obowiązek prawny**,
+   dziś żyjący wyłącznie w backendzie.
 4. **„Moje ulubione"** — `GET /me/favorites` bez strony. Gwiazdka w `/uslugi` działa, ale
    ulubionych nie da się nigdzie zobaczyć. Wzorzec gotowy: `/panel/zapisane` (S17).
 5. **Strażnik „trasa bez wejścia w UI" jako TEST.** Porównuje trasy z
