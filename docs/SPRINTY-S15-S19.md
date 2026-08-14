@@ -54,16 +54,21 @@ Decyzja podtrzymana, wykonana z dwoma bezpiecznikami: druga flaga
 
 ---
 
-## S17 — Społeczność i grupy (NASTĘPNY)
+## S17 — Społeczność i grupy (punkty 1–2 ZROBIONE 2026-08-14)
 
 Cel: to, co dziś jest tylko na feedzie portalowym, ma działać też w grupach — bo grupy są
 miejscem, gdzie zdobywa się punkty (Q&A) i gdzie toczy się rozmowa branżowa.
 
-1. **Obrazy w postach grupowych.** Dziś ma je wyłącznie wpis portalowy. Wzorzec gotowy:
-   `SocialPostImage` → analogiczne `PostImage`, `FileKind.SOCIAL` już istnieje, komponent
-   `PostMedia` do ponownego użycia bez zmian.
-2. **Tematy (hashtagi) + strona tematu.** Chronologicznie (ADR-010: bez rankingu treści).
-   Rola ta sama co tagi w usługach: frazy krótsze niż 3 znaki nigdy nie wejdą do FULLTEXT.
+1. ✅ **Obrazy w postach grupowych — ZROBIONE.** `PostImage` wzorowany na `SocialPostImage`,
+   własność pliku sprawdzana przed transakcją, odczyt dla całej strony JEDNYM zapytaniem.
+   Przy okazji zniknęła duplikacja: logika uploadu wyjechała do `lib/use-image-upload.ts`
+   - `components/image-picker.tsx` i jest wspólna dla kompozytora feedu i formularza grupy.
+2. ✅ **Tematy (#hashtagi) — ZROBIONE.** Własny model `Topic` (świadomie NIE współdzielony
+   z `Tag` z listings: tag przy usłudze to deklaracja o kategorii oferty, temat we wpisie to
+   swobodne słowo w rozmowie). Właścicielem jest `social`: tematy wydobywa TEN SAM konsument,
+   który buduje oś aktywności. Strona `/tematy/[slug]` jest chronologiczna i łączy wpisy
+   portalowe z postami w grupach. Ranking istnieje wyłącznie dla ETYKIET (chipy), nigdy dla treści.
+   `#Rekrutacja` i `#rekrutacja` to jeden temat; `#2026` tematem nie jest.
 3. **Zakładki** — prywatne zapisywanie wpisów. **Bez publicznego licznika**, żeby nie zrobić
    z tego kolejnej waluty popularności.
 4. **Przypięty wątek w grupie** + **moderatorzy grup** jako pierwsza linia. RBAC już jest

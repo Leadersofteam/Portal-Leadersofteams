@@ -1,5 +1,37 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **✅ S17 — punkty 1–2 (2026-08-14): „Tematy i obrazy w grupach"** (`a5cfdf0`).
+> Wdrożone na staging i **produkcję**, dane demo przesiane z tematami.
+>
+> **Tematy (#hashtagi).** Własny model `Topic` — świadomie NIE współdzielony z `Tag`
+> z modułu listings: tag przy usłudze to deklaracja sprzedawcy o kategorii oferty,
+> temat we wpisie to swobodne słowo w rozmowie; zlanie ich oznaczałoby, że „popularne
+> tagi" w katalogu usług zaczynają mieszać kategorie ofert z tematami dyskusji.
+> Właścicielem jest moduł `social`: tematy wydobywa TEN SAM konsument, który buduje oś
+> aktywności (`onSocialPostPublished` / `onPostPublished`) — jedno miejsce, w którym
+> „opublikowana treść" zamienia się w to, co widać w nawigacji.
+> Strona `/tematy/[slug]` jest CHRONOLOGICZNA (ADR-010) i łączy wpisy portalowe
+> z postami w grupach: dla czytelnika „#HR" to jedna rozmowa. Ranking wyłącznie dla
+> etykiet (chipy na feedzie), nigdy dla treści.
+> Po co to, skoro jest wyszukiwarka: `innodb_ft_min_token_size` = 3, więc „HR", „AI"
+> i „UX" NIGDY nie wejdą do FULLTEXT — temat jest jedyną drogą do tych rozmów.
+>
+> **Obrazy w postach grupowych.** `PostImage` wzorowany na `SocialPostImage`; odczyt
+> dla całej strony listy jednym zapytaniem (N+1 na tym widoku nie widać w testach,
+> tylko na produkcji). Duplikacja uploadu usunięta — wspólny `lib/use-image-upload.ts`
+> i `components/image-picker.tsx` dla obu formularzy.
+>
+> **Błąd czasu wykonania złapany po drodze:** `SOCIAL_POST_MAX_IMAGES` było zdefiniowane
+> NIŻEJ niż jego pierwsze użycie w tym samym module kontraktów, a `const` nie jest
+> hoistowany — schemat wywracałby moduł na starcie. Stała przeniesiona do sekcji wspólnej.
+>
+> **ANTY-MLM:** ścieżka w `antimlm.integration.test.ts` rozszerzona o wpis z tematem,
+> z tego samego powodu co wcześniej o cytowanie — test strzeże wyłącznie tego, przez co
+> realnie przeszedł.
+>
+> Bramki: 170/170 testów API (było 157), 15/15 e2e, lint, typecheck, build.
+> Migracja expand-only: 4 nowe tabele, zero zmian w istniejących kolumnach.
+
 > **✅ SESJA S15 + S16 (2026-08-13, wieczór): „Pierwsza mila i portal pełen życia"**
 > (`5c03258`, `e30e05b`, `5e18ed5`). Wdrożone na staging i **produkcję**.
 > **▶ NASTĘPNY KROK: S17 w [SPRINTY-S15-S19.md](SPRINTY-S15-S19.md)**, prompt startowy:

@@ -70,24 +70,24 @@ const POSTS: Array<{
   {
     leaderIdx: 0,
     hours: 190,
-    body: 'Skończyliśmy migrację 40-osobowego zespołu na nowy proces rekrutacyjny. Największa zmiana nie była w narzędziu, tylko w tym, że rekruter przestał być listonoszem między działami.',
+    body: 'Skończyliśmy migrację 40-osobowego zespołu na nowy proces rekrutacyjny. Największa zmiana nie była w narzędziu, tylko w tym, że rekruter przestał być listonoszem między działami. #HR #rekrutacja',
     image: { title: 'Rekrutacja: 34 dni → 18', subtitle: 'Skrócenie procesu bez cięcia jakości' },
   },
   {
     leaderIdx: 1,
     hours: 176,
-    body: 'Pytanie do zespołów sprzedaży: ile z Waszych etapów lejka istnieje dlatego, że są potrzebne, a ile dlatego, że kiedyś ktoś je dodał i nikt nie odważył się usunąć?',
+    body: 'Pytanie do zespołów sprzedaży: ile z Waszych etapów lejka istnieje dlatego, że są potrzebne, a ile dlatego, że kiedyś ktoś je dodał i nikt nie odważył się usunąć? #sprzedaz #procesy',
   },
   {
     leaderIdx: 2,
     hours: 168,
-    body: 'Trzy rzeczy, które powtarzam każdemu zespołowi wdrażającemu automatyzację: zacznij od procesu, który boli; zmierz go PRZED zmianą; nie automatyzuj wyjątków w pierwszym miesiącu.',
+    body: 'Trzy rzeczy, które powtarzam każdemu zespołowi wdrażającemu automatyzację: zacznij od procesu, który boli; zmierz go PRZED zmianą; nie automatyzuj wyjątków w pierwszym miesiącu. #AI #automatyzacja #procesy',
     image: { title: 'Automatyzacja bez chaosu', subtitle: 'Kolejność, która ratuje wdrożenie' },
   },
   {
     leaderIdx: 3,
     hours: 150,
-    body: 'Dwa tygodnie z zespołem e-commerce: przepisaliśmy opisy 200 produktów pod realne pytania klientów z czatu, nie pod frazy z narzędzia. Konwersja w kategorii wzrosła, ale ważniejsze — spadła liczba zwrotów.',
+    body: 'Dwa tygodnie z zespołem e-commerce: przepisaliśmy opisy 200 produktów pod realne pytania klientów z czatu, nie pod frazy z narzędzia. Konwersja w kategorii wzrosła, ale ważniejsze — spadła liczba zwrotów. #ecommerce #UX',
   },
   {
     leaderIdx: 1,
@@ -98,13 +98,13 @@ const POSTS: Array<{
   {
     leaderIdx: 4,
     hours: 120,
-    body: 'Najtrudniejsza część pracy z zarządem to nie przygotowanie danych, tylko pokazanie ich tak, żeby decyzja była oczywista. Jeden slajd, jedna liczba, jedna rekomendacja.',
+    body: 'Najtrudniejsza część pracy z zarządem to nie przygotowanie danych, tylko pokazanie ich tak, żeby decyzja była oczywista. Jeden slajd, jedna liczba, jedna rekomendacja. #dane #przywodztwo',
     image: { title: 'Jeden slajd, jedna decyzja', subtitle: 'Jak rozmawiać z zarządem o danych' },
   },
   {
     leaderIdx: 5,
     hours: 96,
-    body: 'Zrobiłem przegląd 12 procesów onboardingowych w firmach produkcyjnych. Wniosek: te, które działają, mają jedną wspólną cechę — konkretną osobę odpowiedzialną za pierwsze 30 dni nowego pracownika.',
+    body: 'Zrobiłem przegląd 12 procesów onboardingowych w firmach produkcyjnych. Wniosek: te, które działają, mają jedną wspólną cechę — konkretną osobę odpowiedzialną za pierwsze 30 dni nowego pracownika. #onboarding #HR',
   },
   {
     leaderIdx: 0,
@@ -115,18 +115,18 @@ const POSTS: Array<{
   {
     leaderIdx: 2,
     hours: 60,
-    body: 'Krótka obserwacja z ostatniego kwartału: zespoły, które mają rytm cotygodniowego przeglądu, wdrażają zmiany dwa razy szybciej niż te, które „spotykają się, gdy trzeba".',
+    body: 'Krótka obserwacja z ostatniego kwartału: zespoły, które mają rytm cotygodniowego przeglądu, wdrażają zmiany dwa razy szybciej niż te, które „spotykają się, gdy trzeba". #procesy #przywodztwo',
   },
   {
     leaderIdx: 6,
     hours: 48,
-    body: 'Skończyłem audyt UX sklepu z branży wyposażenia wnętrz. Trzy zmiany na karcie produktu, zero zmian w silniku — i o 20% mniej porzuceń koszyka. Czasem nie trzeba przebudowy.',
+    body: 'Skończyłem audyt UX sklepu z branży wyposażenia wnętrz. Trzy zmiany na karcie produktu, zero zmian w silniku — i o 20% mniej porzuceń koszyka. Czasem nie trzeba przebudowy. #UX #ecommerce',
     image: { title: 'Trzy zmiany, 20% mniej porzuceń', subtitle: 'Audyt UX karty produktu' },
   },
   {
     leaderIdx: 3,
     hours: 36,
-    body: 'Szukam kogoś, kto ogarnia logistykę zwrotów w e-commerce przy skali ~2000 paczek miesięcznie. Jeśli robiliście to u siebie — odezwijcie się, mam konkretny problem do rozwiązania.',
+    body: 'Szukam kogoś, kto ogarnia logistykę zwrotów w e-commerce przy skali ~2000 paczek miesięcznie. Jeśli robiliście to u siebie — odezwijcie się, mam konkretny problem do rozwiązania. #ecommerce #logistyka',
   },
   {
     leaderIdx: 4,
@@ -136,7 +136,7 @@ const POSTS: Array<{
   {
     leaderIdx: 5,
     hours: 8,
-    body: 'Kończę tydzień z zespołem produkcyjnym. Wdrożyliśmy tablicę stanu zmiany — zwykłą, fizyczną. Cyfryzacja przyjdzie później, najpierw musieli zobaczyć własny proces.',
+    body: 'Kończę tydzień z zespołem produkcyjnym. Wdrożyliśmy tablicę stanu zmiany — zwykłą, fizyczną. Cyfryzacja przyjdzie później, najpierw musieli zobaczyć własny proces. #procesy #produkcja',
     image: { title: 'Najpierw zobacz proces', subtitle: 'Tablica zmiany przed cyfryzacją' },
   },
 ];
@@ -154,7 +154,7 @@ const GROUP_POSTS: Array<{
     leaderIdx: 0,
     industrySlug: 'hr',
     hours: 160,
-    title: 'Jak mierzycie jakość rekrutacji poza czasem zatrudnienia?',
+    title: 'Jak mierzycie jakość rekrutacji poza czasem zatrudnienia? #HR',
     body: 'Czas zatrudnienia jest łatwy do policzenia i dlatego wszyscy go raportują. Ale nie mówi nic o tym, czy zatrudniliśmy dobrze. U nas zaczęliśmy patrzeć na odsetek osób, które zostają dłużej niż rok, i na ocenę przełożonego po trzech miesiącach. Co działa u Was?',
     comments: [
       {
@@ -171,7 +171,7 @@ const GROUP_POSTS: Array<{
     leaderIdx: 2,
     industrySlug: 'ai-automatyzacja',
     hours: 130,
-    title: 'Automatyzacja procesu, który nie jest opisany — da się?',
+    title: 'Automatyzacja procesu, który nie jest opisany — da się? #automatyzacja',
     body: 'Klasyka: firma chce zautomatyzować obieg dokumentów, ale nikt nie potrafi opisać, jak on dziś wygląda. Moje podejście: dwa tygodnie obserwacji i nagrywania ekranu (za zgodą), potem mapa, dopiero potem narzędzie. Wolniej na starcie, dużo taniej na końcu.',
     comments: [
       {
@@ -188,7 +188,7 @@ const GROUP_POSTS: Array<{
     leaderIdx: 1,
     industrySlug: 'sprzedaz',
     hours: 90,
-    title: 'Lejek sprzedażowy: ile etapów to za dużo?',
+    title: 'Lejek sprzedażowy: ile etapów to za dużo? #sprzedaz',
     body: 'Widzę u klientów lejki po 9–11 etapów. Handlowcy przestają je uzupełniać, dane przestają być prawdziwe, a zarząd podejmuje decyzje na fikcji. Moja teza: powyżej 6 etapów tracisz jakość danych szybciej, niż zyskujesz na precyzji.',
     comments: [
       {
@@ -201,7 +201,7 @@ const GROUP_POSTS: Array<{
     leaderIdx: 6,
     industrySlug: 'design-ux',
     hours: 40,
-    title: 'Badania z użytkownikami przy budżecie bliskim zeru',
+    title: 'Badania z użytkownikami przy budżecie bliskim zeru #UX',
     body: 'Nie każdy klient ma na panel badawczy. Robię wtedy pięć rozmów po 30 minut z realnymi klientami z listy obsługi posprzedażowej — zwykle wystarcza, żeby zobaczyć te same trzy problemy. Jak Wy sobie radzicie bez budżetu?',
     comments: [
       {
