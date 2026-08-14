@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { ConfirmActionButton } from '@/components/action-button';
 import { OFFER_STATUS_LABELS, ORDER_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -44,6 +45,19 @@ export default async function MyOffersPage() {
             </div>
             <div className="list-row-aside">
               <span className="badge">{OFFER_STATUS_LABELS[offer.status] ?? offer.status}</span>
+              {/* ZASTANY BRAK znaleziony przez strażnika kontraktu w S18:
+                  `POST /offers/:id/withdraw` istniał od Sprintu 3 i nie miał
+                  ŻADNEGO wejścia w interfejsie — złożonej oferty nie dało się
+                  wycofać inaczej niż curl-em. Widoczny tylko dla ofert
+                  złożonych, bo serwis przepuszcza wyłącznie status SUBMITTED. */}
+              {offer.status === 'SUBMITTED' && (
+                <ConfirmActionButton
+                  path={`/offers/${offer.id}/withdraw`}
+                  label="Wycofaj ofertę"
+                  confirmLabel="Tak, wycofaj"
+                  question="Do tego zlecenia nie złożysz już drugiej oferty."
+                />
+              )}
             </div>
           </div>
         ))

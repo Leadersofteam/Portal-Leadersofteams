@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export const metadata = {
   title: 'Polityka prywatności — Leaders of Teams',
   description: 'Polityka prywatności platformy leadersofteams.pl.',
@@ -80,15 +82,20 @@ export default function PrivacyPage() {
       </p>
 
       <h2>5. Twoje prawa</h2>
+      {/* Do S18 ta sekcja OBIECYWAŁA funkcję, której nie było: `/panel/konto`
+          nie istniało, a eksport i usunięcie konta dało się wywołać wyłącznie
+          curl-em. Odkąd strona istnieje, link jest tu obowiązkowy — prawo, do
+          którego nie ma drogi, nie jest realizowane. */}
       <ul>
         <li>
-          <strong>Eksport danych:</strong> w panelu konta możesz pobrać komplet swoich danych (art.
-          20 RODO).
+          <strong>Eksport danych:</strong> w <Link href="/panel/konto">panelu konta</Link>{' '}
+          pobierzesz komplet swoich danych jako plik JSON (art. 20 RODO).
         </li>
         <li>
-          <strong>Usunięcie konta:</strong> anonimizuje dane osobowe w miejscu; jawny rejestr
-          punktów pozostaje bez powiązania z osobą (art. 17 RODO z uwzględnieniem integralności
-          systemu ocen).
+          <strong>Usunięcie konta:</strong> w <Link href="/panel/konto">panelu konta</Link>;
+          anonimizuje dane osobowe w miejscu, treści zostają jako „[treść usunięta]", a jawny
+          rejestr punktów pozostaje bez powiązania z osobą (art. 17 RODO z uwzględnieniem
+          integralności systemu ocen).
         </li>
         <li>Prawo dostępu, sprostowania, ograniczenia przetwarzania i skargi do PUODO.</li>
       </ul>

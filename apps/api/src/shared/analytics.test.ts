@@ -46,6 +46,40 @@ describe('normalizePath', () => {
     // /profil/[handle] to dane o osobie — do statystyk wystarczy sam fakt odsłony.
     expect(normalizePath('/profil/maciej-nowak-1234567890123')).toBe('/profil/:id');
   });
+
+  it('zwija KRÓTKIE identyfikatory tam, gdzie segment jest zawsze dynamiczny', () => {
+    // Regresja z S18. Powyższy test przechodził, bo użyto w nim 27-znakowej
+    // atrapy uchwytu — a realny uchwyt to `displayName` przycięty do 24 znaków
+    // BEZ sufiksu, więc zwykle jest krótszy niż próg długości. Skutek: profile,
+    // tematy i większość usług lądowały w wiadrze `/inne`, czyli najczęściej
+    // odwiedzane strony treści były niepoliczalne.
+    expect(normalizePath('/profil/macix')).toBe('/profil/:id');
+    expect(normalizePath('/tematy/hr')).toBe('/tematy/:id');
+    expect(normalizePath('/uslugi/seo-audyt-a1b2c3')).toBe('/uslugi/:id');
+  });
+
+  it('segment statyczny wygrywa z regułą dynamicznego rodzica', () => {
+    // Gdyby reguła rodzica miała pierwszeństwo, formularz dodawania usługi
+    // zlałby się z kartą usługi i lejek „ilu zaczęło wystawiać usługę" zniknąłby.
+    expect(normalizePath('/uslugi/nowa')).toBe('/uslugi/nowa');
+  });
+
+  it('zna strony dodane w S14–S17', () => {
+    // Biała lista była za kodem o dwa sprinty — to jest ten dług.
+    expect(normalizePath('/reset-hasla')).toBe('/reset-hasla');
+    expect(normalizePath('/weryfikacja')).toBe('/weryfikacja');
+    expect(normalizePath('/nie-pamietam-hasla')).toBe('/nie-pamietam-hasla');
+    expect(normalizePath('/panel/zapisane')).toBe('/panel/zapisane');
+    expect(normalizePath('/grupy/nowa')).toBe('/grupy/nowa');
+    expect(normalizePath('/firmy/clh3k2j9x0000abcdefghijkl')).toBe('/firmy/:id');
+  });
+
+  it('sonda zdrowia NIE jest znaną ścieżką', () => {
+    // Druga linia obrony. Pierwszą jest wykluczenie `/healthz` z matchera
+    // middleware (apps/web/middleware.ts) — gdyby ktoś je kiedyś usunął,
+    // sonda ma wpaść do `/inne`, a nie urosnąć we własne pole hasha.
+    expect(normalizePath('/healthz')).toBe(OTHER_PATH);
+  });
 });
 
 describe('dayKey', () => {

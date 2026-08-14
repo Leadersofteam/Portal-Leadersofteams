@@ -638,6 +638,61 @@ main {
   width: 100%;
 }
 
+/* Akcja nieodwracalna ma WYGLĄDAĆ na nieodwracalną. Do S18 usunięcie konta
+   nie miało w ogóle przycisku, więc i stylu — a „Usuń konto na zawsze"
+   w kolorze marki wyglądałoby jak zaproszenie. */
+.btn.danger {
+  background: linear-gradient(135deg, var(--danger), #fb7185);
+  color: #fff;
+}
+
+.btn.danger:hover {
+  box-shadow: 0 0 0 3px rgb(244 63 94 / 0.25);
+}
+
+.danger-zone {
+  border-color: rgb(244 63 94 / 0.35);
+}
+
+/* Potwierdzenie w miejscu przycisku. Zawija się na 390 px, zamiast wypychać
+   wiersz listy poza ekran. */
+.confirm-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.danger-zone ul {
+  margin: 0.25rem 0 1rem 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.danger-zone li {
+  margin-bottom: 0.3rem;
+}
+
+/* Fakty o koncie: etykieta nad wartością, żeby na 390 px nic się nie łamało
+   w pół słowa (adres e-mail bywa długi). */
+.account-facts {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.account-facts dt {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.account-facts dd {
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+}
+
 /* =========================== Elementy =========================== */
 .error-box {
   border: 1px solid rgb(244 63 94 / 0.4);

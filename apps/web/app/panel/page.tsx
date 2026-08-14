@@ -20,7 +20,7 @@ export default async function PanelPage() {
   // Stan checklisty liczymy TUTAJ, z istniejących endpointów. Agregat po
   // stronie API musiałby czytać tabele czterech modułów naraz i złamałby
   // granice z ADR-002 — a /me/onboarding trzyma wyłącznie stan własny usera.
-  const [profile, companies, ladder, listings, onboarding] = await Promise.all([
+  const [profile, companies, ladder, listings, onboarding, social] = await Promise.all([
     serverApi<{ profile: { id: string; headline: string } | null }>('/me/leader-profile'),
     serverApi<{ companies: Array<{ id: string; name: string }> }>('/me/companies'),
     serverApi<{
@@ -40,6 +40,10 @@ export default async function PanelPage() {
     }>('/me/ladder'),
     serverApi<{ listings: Array<{ id: string }> }>('/me/listings'),
     serverApi<{ checklistDismissedAt: string | null }>('/me/onboarding'),
+    // `/me/social` też było trasą bez wejścia w UI (S18). Skutek był drobny,
+    // ale absurdalny: wzmianki `@handle` działały, a użytkownik nie miał jak
+    // poznać WŁASNEGO uchwytu ani trafić na swój publiczny profil.
+    serverApi<{ handle: string; followers: number; following: number }>('/me/social'),
   ]);
 
   // Do S12 NIE BYŁO w całej aplikacji ani jednego linku do /panel/moderacja —
@@ -96,6 +100,12 @@ export default async function PanelPage() {
           <p className="climber-kicker">Baza wspinacza</p>
           <h1>Cześć, {user.displayName}</h1>
           <p className="muted">{user.email}</p>
+          {social?.handle && (
+            <p className="muted">
+              Twój uchwyt: <Link href={`/profil/${social.handle}`}>@{social.handle}</Link> ·{' '}
+              {social.followers} obserwujących · obserwujesz {social.following}
+            </p>
+          )}
         </div>
 
         {ladder && (
@@ -128,6 +138,12 @@ export default async function PanelPage() {
         </Link>
         <Link className="btn secondary" href="/panel/zapisane">
           Zapisane
+        </Link>
+        <Link className="btn secondary" href="/panel/ulubione">
+          Ulubione usługi
+        </Link>
+        <Link className="btn secondary" href="/panel/konto">
+          Konto i dane
         </Link>
         <Link className="btn" href="/zlecenia/nowe">
           + Nowe zlecenie

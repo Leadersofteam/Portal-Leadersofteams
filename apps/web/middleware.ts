@@ -48,5 +48,13 @@ export function middleware(request: NextRequest) {
 export const config = {
   // Wykluczamy wszystko, co nie jest stroną: proxy do API, zasoby Next.js,
   // service worker, manifest i pliki z rozszerzeniem (ikony, obrazy, robots).
-  matcher: ['/((?!api|_next/static|_next/image|sw\\.js|manifest\\.webmanifest|.*\\.[\\w]+$).*)'],
+  //
+  // `healthz` wykluczamy TUTAJ, a nie przez pominięcie w białej liście po
+  // stronie API (S18). Gdyby sonda przechodziła przez middleware, wpadłaby do
+  // wiadra `/inne` — przenieślibyśmy kłamstwo z `/` na `/inne` zamiast je
+  // usunąć. NIE USUWAJ tego wykluczenia: 15-sekundowy healthcheck kontenera
+  // to 5760 sztucznych odsłon na dobę przy 2–3 realnych na stronę.
+  matcher: [
+    '/((?!api|healthz|_next/static|_next/image|sw\\.js|manifest\\.webmanifest|.*\\.[\\w]+$).*)',
+  ],
 };

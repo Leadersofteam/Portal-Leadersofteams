@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/panel', '/panel/', '/powiadomienia', '/logowanie', '/rejestracja'],
+      // `/healthz` to sonda kontenera, nie treść — nie ma czego indeksować.
+      disallow: ['/panel', '/panel/', '/powiadomienia', '/logowanie', '/rejestracja', '/healthz'],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
