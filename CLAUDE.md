@@ -60,7 +60,8 @@ pnpm build && bash infra/e2e.sh                              # + odtworzenie baz
 zrzuty 390 i 1440 px → commit → staging → prod → wpis w HANDOFF
 ```
 
-Skille: `portal-bramki` (weryfikacja), `portal-wdrozenie` (deploy), `portal-zrzuty` (zrzuty).
+Skille: `portal-bramki` (weryfikacja), `portal-wdrozenie` (deploy), `portal-zrzuty` (zrzuty),
+`portal-awaria` (rollback/restore), `portal-stan-zastany` (zanim uznasz coś za zrobione/brakujące).
 
 ## Czego oczekuje właściciel
 

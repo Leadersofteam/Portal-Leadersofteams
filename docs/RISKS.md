@@ -53,3 +53,5 @@ Jawny status każdego ryzyka względem stanu na 2026-07-20. Legenda: **mitygowan
 
 **Blokery przed go-live Portalu (podsumowanie):** R-04 (k6), R-06 (seeding), R-10 (regulamin/RODO).
 R-13 przestał być blokerem 2026-08-13 — anty-bot działa i nie czeka na niczyje klucze. Szczegóły i kolejność: [GO-LIVE-CHECKLIST.md](GO-LIVE-CHECKLIST.md).
+
+| R-18 | **zmaterializowane 2026-08-18, naprawione doraźnie 2026-08-19 (decyzja właściciela)** | Wystawiony na świat `portal-dev-redis-1` (6379, bez hasła) dostał z zewnątrz `SLAVEOF` i stał się repliką hosta 175.24.232.83. Sync się nie powiódł, dane całe; przywrócono `SLAVEOF NO ONE`. Ryzyko akceptowane dotąd jako teoretyczne — przestało być. Odwrócenie: zdjąć publikację portu / dodać `requirepass` w compose dev. |

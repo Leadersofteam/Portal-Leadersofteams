@@ -17,6 +17,10 @@ w dokumentacji i staje się Skillem.** Dokumentacja opisuje STAN, Skill opisuje 
 | **portal-dane-demo**        | zasianie/zdjęcie danych przykładowych                       | dwie flagi na produkcji, `--purge`, `chown` po seedzie, prawdziwa ścieżka kodu                        |
 | **portal-zrzuty**           | po każdej zmianie w UI                                      | 390 i 1440 px, `waitUntil: 'load'`, `chrome-linux64`, kasowanie pliku tymczasowego                    |
 | **portal-zamkniecie-sesji** | „domknij", „przygotuj do następnej sesji"                   | sprzątanie kont testowych, sprostowania w HANDOFF, push                                               |
+| **portal-awaria**           | produkcja nie działa po wdrożeniu, „wycofaj", „przywróć"    | rollback obrazów bez cofania migracji (expand-only), restore z kopii z drillem, worker.alive ≠ Up     |
+| **portal-stan-zastany**     | start sesji, pozycja z roadmapy, raport „zamknięte"         | `git log -S`/grep przed kodowaniem, skutek w bazie zamiast logu wysyłki, ścieżka z KLIKNIĘCIEM linku  |
+| playwright-cli / -trace     | automatyzacja przeglądarki z CLI, inspekcja trace'ów        | kopie oficjalnych skilli z `node_modules/playwright-core` (odśwież po upgradzie Playwrighta)          |
+| prisma-cli                  | referencja składni komend Prisma                            | oficjalny skill Prismy (opisuje 7.x; repo ma 6.19 — flagi sprawdzaj przy rozjeździe)                  |
 
 ## Czego w skillach świadomie NIE MA
 

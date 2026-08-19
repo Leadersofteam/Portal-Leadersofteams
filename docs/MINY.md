@@ -239,3 +239,23 @@ test wywala się na wyjątku wskazującym trasę, która już nie istnieje.
 W jednej sesji trzy razy: „digest do zrobienia" (był), „ślad zaufania na kartach do zrobienia"
 (był), „kod anty-bota gotowy, brakuje kluczy" (klucz nie miał jak trafić do obrazu).
 **Potwierdzaj w kodzie, nie w docs** — również listy „✅".
+
+### Zdublowany Content-Type daje 415 przy zielonych testach (19.08)
+
+`apiFetch` sam ustawia `content-type: application/json`, gdy jest body. Komponent, który
+dodatkowo przekazał `headers: { 'Content-Type': … }`, tworzył w obiekcie nagłówków DWA
+klucze różniące się wielkością liter — fetch skleja je do
+`application/json, application/json`, a Fastify odpowiada **415** na każdy POST.
+Testy integracyjne były komplet zielone, bo `app.inject` nie idzie przez fetch
+przeglądarki. **Nie ustawiaj Content-Type w wywołaniach `apiFetch` — i przechodź ścieżkę
+w przeglądarce, nie tylko injectem.**
+
+### Wystawiony dev Redis został realnie przejęty (18.08)
+
+`portal-dev-redis-1` (port 6379 na świat, bez hasła — ryzyko akceptowane przez właściciela)
+dostał 18.08 07:03 UTC komendę `SLAVEOF 175.24.232.83:26738` z zewnątrz i stał się repliką
+tylko-do-odczytu. Objaw: cała suita testów pada na
+`READONLY You can't write against a read only replica` — wygląda jak zepsuty kod, a to
+incydent. Diagnoza: `redis-cli info replication` (rola `slave` + obcy `master_host`).
+Naprawa: `redis-cli slaveof no one` + sprawdź `config get dir/dbfilename` (atak przez
+`CONFIG SET` pisze pliki poza /data) i `docker logs` po `REPLICAOF enabled`.

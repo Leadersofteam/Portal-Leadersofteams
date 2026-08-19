@@ -11,6 +11,49 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-19 (PM infrastruktury): digest naprawiony + role z UI** (`380bd08`, `c562583`).
+> Wdrożone na staging i produkcję (migracja expand-only: `users.digestOptOutAt`,
+> `users.digestToken`, tabela `worker_state`), przejście ścieżek NA ŻYWO kontami testowymi
+> (posprzątane ścieżką RODO — stąd 6 nowych wierszy `deleted-*@deleted.invalid` z 19.08).
+>
+> **1. Digest miał dwie zastane usterki.** (a) `setInterval(24h)` liczony od startu procesu —
+> każdy deploy resetował licznik, więc digest wychodził losowo albo wcale. Teraz: znacznik
+> `digest:lastSentDate` w `worker_state`, sprawdzenie co 10 min, wysyłka raz na dobę po
+> 06:00 UTC. Dowód z produkcji: wiersz `2026-08-19` zapisany przy pierwszym przebiegu,
+> restart workera nie wysyła drugi raz. (b) **Zero drogi wypisu** — grep po
+> `optOut|unsubscribe` dawał zero trafień, a przy realnych użytkownikach to RODO, nie
+> kosmetyka. Teraz: link „wypisz się" w mailu (trwały token per user, strona `/wypis-digest`
+> bez logowania) + przełącznik w `/panel/konto`. Zweryfikowane na żywo: wypis tokenem
+> ustawia `digestOptOutAt`, zły token dostaje uczciwy komunikat.
+>
+> **2. Role moderatora z UI zamiast SQL-a.** `GET /admin/users` + `POST /admin/users/:id/role`
+> (tylko ADMIN) + strona `/panel/uzytkownicy` (link w karcie Moderacji panelu). Zmiana roli
+> od razu niszczy sesje tej osoby (rola jest zamrożona w sesji — pułapka z S12). ADMIN
+> celowo POZA zasięgiem tras: przejęte konto admina nie mianuje kolejnych adminów.
+> ⚠️ **Produkcja nie ma dziś ŻADNEGO konta ADMIN ani MODERATOR** (jedyne „ADMINY" w bazie
+> były moimi kontami testowymi, posprzątane). Żeby użyć panelu, właściciel nadaje sobie rolę
+> jednorazowo SQL-em: `UPDATE users SET role='ADMIN' WHERE email='<jego-mail>';` + ponowne
+> zalogowanie. Dalej wszystko idzie z UI.
+>
+> **3. Zastany incydent bezpieczeństwa: dev Redis przejęty.** 18.08 07:03 UTC ktoś z
+> 175.24.232.83 wykonał `SLAVEOF` na wystawionym na świat `portal-dev-redis-1` (port 6379,
+> bez hasła — ryzyko akceptowane przez właściciela dla portal-dev). Synchronizacja z hostem
+> atakującego NIGDY się nie powiodła (2248 nieudanych prób), dane nietknięte, ataku przez
+> `CONFIG SET dir` brak. Naprawione `SLAVEOF NO ONE` 19.08. **Prod-owe Redisy nie są
+> wystawione.** Objaw, po którym to wyszło: cała suita testów padała na
+> „READONLY You can't write against a read only replica". Decyzja o dalszym wystawianiu
+> portu należy do właściciela — ryzyko przestało być teoretyczne (wpis R-18 w RISKS.md).
+>
+> **4. Nowa mina złapana ścieżką na żywo:** zdublowany `Content-Type` w kliencie dawał 415
+> na POST-ach przy komplecie zielonych testów (`app.inject` nie idzie przez fetch
+> przeglądarki) — patrz MINY.md. Plus dwa nowe skille: `portal-awaria` (rollback/restore)
+> i `portal-stan-zastany`, oraz skopiowane `playwright-cli`/`playwright-trace`/`prisma-cli`.
+>
+> **Poza zakresem, do wiadomości:** flagi `unlocksAppAccess`/`unlocksTeamCreation` w
+> `ladder/rules.ts` wciąż obiecują na /drabince „założenie własnego zespołu" (L7) —
+> integracja z App porzucona, a grupy zakłada dziś każdy; copy do decyzji właściciela.
+> Zastany `GET /me/listings → 400` dla świeżych kont — osobne zadanie (chip w sesji).
+
 > **▶ NASTĘPNY KROK: S19 „Pierwszych dwudziestu"** w [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md).
 > ⚠️ Ten sprint **zaczyna się od decyzji właściciela**, której nie da się rozstrzygnąć z kodu:
 > czy dane demo zostają na produkcji, gdy przyjdą realni Liderzy (R-17), i kogo zapraszamy.
