@@ -54,6 +54,16 @@
 > integracja z App porzucona, a grupy zakłada dziś każdy; copy do decyzji właściciela.
 > Zastany `GET /me/listings → 400` dla świeżych kont — osobne zadanie (chip w sesji).
 
+> **✅ SESJA 2026-08-19 (wieczór): zastany 400 na `GET /me/listings` naprawiony** (`58b8932`).
+> `myListings` wymagało profilu Lidera (`PROFILE_REQUIRED`), a panel (SSR,
+> `panel/page.tsx` i `panel/uslugi`) odpytuje tę trasę dla KAŻDEGO zalogowanego —
+> każde świeże konto od rejestracji generowało 400 w logach api. Strona się nie
+> wywalała (`serverApi` łyka nie-OK jako `null`), więc objaw był tylko w logach.
+> Naprawa: brak profilu = pusta lista (wzorzec `listMyInquiries`); bramka profilu
+> zostaje w `createDraft`. Test integracyjny pokrywa oba przypadki (212 testów API).
+> Potwierdzone na żywo: prod PRZED naprawą 400 → po wdrożeniu 200 `[]` (staging
+> i prod, konta testowe `claude-test-me-listings-*@test.invalid` usunięte z obu baz).
+
 > **▶ NASTĘPNY KROK: S19 „Pierwszych dwudziestu"** w [SPRINTY-S18-S21.md](SPRINTY-S18-S21.md).
 > ⚠️ Ten sprint **zaczyna się od decyzji właściciela**, której nie da się rozstrzygnąć z kodu:
 > czy dane demo zostają na produkcji, gdy przyjdą realni Liderzy (R-17), i kogo zapraszamy.
