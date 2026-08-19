@@ -347,7 +347,12 @@ export function createListingsService({ prisma, identity, orders, files, redis }
     },
 
     async myListings(userId: string) {
-      const profile = await requireOwnProfile(userId);
+      // Brak profilu Lidera to brak usług, NIE błąd: panel (SSR) odpytuje tę
+      // trasę dla każdego zalogowanego, a świeże konto dostawało tu 400
+      // (PROFILE_REQUIRED). Bramka profilu zostaje przy tworzeniu (createDraft),
+      // gdzie profil jest realnie potrzebny — ten sam wzorzec co listMyInquiries.
+      const profile = await prisma.leaderProfile.findUnique({ where: { userId } });
+      if (!profile) return [];
       const rows = await prisma.serviceListing.findMany({
         where: { leaderProfileId: profile.id, status: { not: 'ARCHIVED' } },
         include: fullInclude,

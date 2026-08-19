@@ -122,6 +122,30 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
     expect(published.statusCode).toBe(200);
   });
 
+  // Zastany błąd (naprawiony 19.08.2026): /me/listings rzucało 400
+  // PROFILE_REQUIRED dla konta bez profilu Lidera, a panel (SSR) odpytuje
+  // tę trasę dla KAŻDEGO zalogowanego — świeże konto od rejestracji
+  // generowało błędy. Brak profilu = pusta lista, nie błąd.
+  it('/me/listings: świeże konto bez profilu Lidera dostaje pustą listę, Lider swoje usługi', async () => {
+    const fresh = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/v1/me/listings',
+      headers: { cookie: companyCookie },
+    });
+    expect(fresh.statusCode).toBe(200);
+    expect((fresh.json() as { listings: unknown[] }).listings).toEqual([]);
+
+    const mine = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/v1/me/listings',
+      headers: { cookie: leaderCookie },
+    });
+    expect(mine.statusCode).toBe(200);
+    expect(
+      (mine.json() as { listings: Array<{ id: string }> }).listings.map((l) => l.id),
+    ).toContain(listingId);
+  });
+
   it('katalog zwraca usługę z metadanymi Lidera; filtry cen działają', async () => {
     const list = await ctx.app.inject({ method: 'GET', url: '/api/v1/listings?sort=price_asc' });
     expect(list.statusCode).toBe(200);
