@@ -10,7 +10,16 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
       // `/healthz` to sonda kontenera, nie treść — nie ma czego indeksować.
-      disallow: ['/panel', '/panel/', '/powiadomienia', '/logowanie', '/rejestracja', '/healthz'],
+      // `/wypis-digest` nosi token wypisu w URL — nie może wylądować w indeksie.
+      disallow: [
+        '/panel',
+        '/panel/',
+        '/powiadomienia',
+        '/logowanie',
+        '/rejestracja',
+        '/healthz',
+        '/wypis-digest',
+      ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

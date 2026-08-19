@@ -206,6 +206,13 @@ export default async function PanelPage() {
             <Link className="btn secondary" href="/panel/analityka">
               Ruch w portalu
             </Link>
+            {/* Nadanie roli moderatora wymagało do 19.08 SQL-a na produkcji —
+                strona bez wejścia z panelu powtórzyłaby minę „trasa bez UI". */}
+            {user.role === 'ADMIN' && (
+              <Link className="btn secondary" href="/panel/uzytkownicy">
+                Użytkownicy i role
+              </Link>
+            )}
           </nav>
         </section>
       )}
