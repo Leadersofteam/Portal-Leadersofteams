@@ -390,9 +390,13 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
 
     // Dzienny digest (D4, ADR-009): jeden zbiorczy e-mail zamiast wielu — trzyma
     // wolumen w zasięgu zwykłej skrzynki pocztowej. No-op gdy wysyłka wyłączona.
+    // Odbiorców (z tokenem wypisu) dostarcza identity — tam siedzi filtr kont
+    // zanonimizowanych i wypisanych. Mail MUSI zawierać link wypisu działający
+    // bez logowania: do 19.08 nie było ŻADNEJ drogi wyłączenia tych maili.
     async sendDailyDigests(
       mail: MailService,
-      getEmails: (userIds: string[]) => Promise<Map<string, string>>,
+      getRecipients: (userIds: string[]) => Promise<Map<string, { email: string; token: string }>>,
+      appBaseUrl: string,
     ): Promise<number> {
       if (!mail.enabled) return 0;
       const groups = await prisma.notification.groupBy({
@@ -401,15 +405,22 @@ export function createNotificationsService({ prisma, identity, signal }: Notific
         _count: { _all: true },
       });
       if (groups.length === 0) return 0;
-      const emails = await getEmails(groups.map((g) => g.userId));
+      const recipients = await getRecipients(groups.map((g) => g.userId));
       let sent = 0;
       for (const g of groups) {
-        const email = emails.get(g.userId);
-        if (!email) continue;
+        const recipient = recipients.get(g.userId);
+        if (!recipient) continue;
         await mail.send({
-          to: email,
+          to: recipient.email,
           subject: 'Twoje powiadomienia — Leaders of Teams',
-          text: `Masz ${g._count._all} nieprzeczytanych powiadomień w portalu leadersofteams.pl.`,
+          text: [
+            `Masz ${g._count._all} nieprzeczytanych powiadomień w portalu Leaders of Teams.`,
+            '',
+            `Zobacz: ${appBaseUrl}/powiadomienia`,
+            '',
+            'Nie chcesz tych maili? Wypiszesz się jednym kliknięciem:',
+            `${appBaseUrl}/wypis-digest?token=${recipient.token}`,
+          ].join('\n'),
         });
         sent += 1;
       }

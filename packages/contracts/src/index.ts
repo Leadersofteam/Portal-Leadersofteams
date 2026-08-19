@@ -620,3 +620,43 @@ export const updateOnboardingInputSchema = z
     message: 'Podaj co najmniej jedno pole',
   });
 export type UpdateOnboardingInput = z.infer<typeof updateOnboardingInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Digest e-mail (19.08)
+//
+// Digest jest domyślnie WŁĄCZONY (to zbiorczy mail o własnych powiadomieniach),
+// ale wypis musi działać jednym kliknięciem z maila — bez logowania. Stąd token:
+// trwały, per użytkownik, dowód posiadania skrzynki.
+// ---------------------------------------------------------------------------
+
+export const digestOptOutInputSchema = z.object({ optedOut: z.boolean() });
+export type DigestOptOutInput = z.infer<typeof digestOptOutInputSchema>;
+
+export const digestUnsubscribeInputSchema = z.object({
+  token: z.string().trim().min(16).max(64),
+});
+export type DigestUnsubscribeInput = z.infer<typeof digestUnsubscribeInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Administracja użytkownikami (19.08)
+//
+// Do tej pory nadanie roli MODERATOR wymagało ręcznego SQL-a na produkcji —
+// dokładnie ta klasa „funkcji bez wejścia w UI", którą tępi strażnik tras.
+// ADMIN celowo POZA zasięgiem tych tras: rolą ADMIN zarządza się poza aplikacją,
+// żeby przejęte konto admina nie mogło mianować kolejnych adminów.
+// ---------------------------------------------------------------------------
+
+export const adminSetRoleInputSchema = z.object({
+  role: z.enum(['USER', 'MODERATOR']),
+});
+export type AdminSetRoleInput = z.infer<typeof adminSetRoleInputSchema>;
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  displayName: string;
+  handle: string | null;
+  role: 'USER' | 'MODERATOR' | 'ADMIN';
+  createdAt: string;
+  emailVerifiedAt: string | null;
+}

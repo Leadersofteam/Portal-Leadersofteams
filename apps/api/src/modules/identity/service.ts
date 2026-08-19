@@ -9,7 +9,12 @@ import type {
 } from '@lot/contracts';
 
 import type { PrismaClient } from '../../shared/db';
-import { EmailTakenError, InvalidCredentialsError } from '../../shared/errors';
+import {
+  EmailTakenError,
+  ForbiddenError,
+  InvalidCredentialsError,
+  NotFoundError,
+} from '../../shared/errors';
 import type { MailService } from '../../shared/mail';
 import { emitEvent } from '../../shared/outbox';
 import type { SessionStore } from '../../shared/session';
@@ -67,6 +72,18 @@ export interface IdentityService {
   getUserIdsByHandles(handles: string[]): Promise<Map<string, string>>;
   // Adresy e-mail (dla digestu powiadomień) — pomija konta zanonimizowane.
   getUserEmails(userIds: string[]): Promise<Map<string, string>>;
+  // Digest (19.08): odbiorcy dziennego digestu — bez zanonimizowanych i bez
+  // wypisanych; token wypisu (dowód posiadania skrzynki) generowany leniwie
+  // przy pierwszej wysyłce, żeby nie płodzić sekretów kontom, do których
+  // nigdy nie piszemy.
+  getDigestRecipients(userIds: string[]): Promise<Map<string, { email: string; token: string }>>;
+  getDigestState(userId: string): Promise<{ optedOut: boolean }>;
+  setDigestOptOut(userId: string, optedOut: boolean): Promise<void>;
+  digestOptOutByToken(token: string): Promise<boolean>;
+  // Administracja (19.08): nadawanie roli MODERATOR z UI zamiast SQL-em na
+  // produkcji. ADMIN poza zasięgiem — patrz komentarz przy adminSetRoleInputSchema.
+  listUsers(search?: string): Promise<AdminUserRow[]>;
+  setUserRole(actorId: string, userId: string, role: 'USER' | 'MODERATOR'): Promise<void>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
   getCompanyMeta(companyId: string): Promise<(CompanySummary & { createdAt: Date }) | null>;
   // Wiek konta użytkownika — dla progu dojrzałości głosu Q&A i limitów świeżych
@@ -91,6 +108,16 @@ export interface IdentityService {
   // Pierwsza mila (S10) — czysty stan UI, bez zdarzeń i bez punktów.
   getOnboarding(userId: string): Promise<OnboardingState>;
   updateOnboarding(userId: string, input: UpdateOnboardingInput): Promise<OnboardingState>;
+}
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  displayName: string;
+  handle: string | null;
+  role: 'USER' | 'MODERATOR' | 'ADMIN';
+  createdAt: Date;
+  emailVerifiedAt: Date | null;
 }
 
 export interface OnboardingState {
@@ -333,6 +360,105 @@ export function createIdentityService(
         select: { id: true, email: true },
       });
       return new Map(users.map((u) => [u.id, u.email]));
+    },
+
+    async getDigestRecipients(userIds) {
+      if (userIds.length === 0) return new Map();
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds }, anonymizedAt: null, digestOptOutAt: null },
+        select: { id: true, email: true, digestToken: true },
+      });
+      const recipients = new Map<string, { email: string; token: string }>();
+      for (const user of users) {
+        let token = user.digestToken;
+        if (!token) {
+          token = randomBytes(24).toString('base64url');
+          await prisma.user.update({ where: { id: user.id }, data: { digestToken: token } });
+        }
+        recipients.set(user.id, { email: user.email, token });
+      }
+      return recipients;
+    },
+
+    async getDigestState(userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { digestOptOutAt: true },
+      });
+      return { optedOut: user?.digestOptOutAt != null };
+    },
+
+    async setDigestOptOut(userId, optedOut) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { digestOptOutAt: optedOut ? new Date() : null },
+      });
+    },
+
+    async digestOptOutByToken(token) {
+      // updateMany zamiast find+update: idempotentnie i bez wyścigu. Token to
+      // dowód posiadania skrzynki — sesja nie jest tu wymagana, bo wypis musi
+      // działać jednym kliknięciem prosto z maila.
+      const result = await prisma.user.updateMany({
+        where: { digestToken: token, anonymizedAt: null },
+        data: { digestOptOutAt: new Date() },
+      });
+      return result.count > 0;
+    },
+
+    async listUsers(search) {
+      const query = search?.trim();
+      return prisma.user.findMany({
+        where: {
+          anonymizedAt: null,
+          ...(query
+            ? {
+                OR: [
+                  { email: { contains: query } },
+                  { displayName: { contains: query } },
+                  { handle: { contains: query } },
+                ],
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          handle: true,
+          role: true,
+          createdAt: true,
+          emailVerifiedAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        // Twardy limit z komunikatem po stronie UI — obcięcie listy nie może
+        // być ciche, ale przy 50+ kontach admin i tak szuka po frazie.
+        take: 50,
+      });
+    },
+
+    async setUserRole(actorId, userId, role) {
+      if (actorId === userId) {
+        throw new ForbiddenError(
+          'SELF_ROLE',
+          'Własnej roli nie zmienisz — poproś drugiego admina.',
+        );
+      }
+      const target = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, anonymizedAt: true },
+      });
+      if (!target || target.anonymizedAt) throw new NotFoundError('Nie ma takiego konta');
+      // ADMIN poza zasięgiem tras administracyjnych: przejęte konto admina nie
+      // może ani mianować kolejnych adminów, ani zdegradować istniejącego.
+      if (target.role === 'ADMIN' || role === ('ADMIN' as string)) {
+        throw new ForbiddenError('ADMIN_IMMUTABLE', 'Rolą ADMIN zarządza się poza aplikacją.');
+      }
+      await prisma.user.update({ where: { id: userId }, data: { role } });
+      // Rola jest ZAMROŻONA w sesji przy logowaniu (pułapka z S12) — bez
+      // unieważnienia sesji świeżo mianowany moderator nie zobaczyłby
+      // /panel/moderacja aż do samodzielnego wylogowania.
+      await sessions?.destroyAllForUser(userId);
     },
 
     async getPublicCompanies(companyIds) {

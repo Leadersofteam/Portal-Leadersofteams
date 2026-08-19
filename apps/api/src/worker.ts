@@ -27,7 +27,13 @@ import { createBullConnectionOptions, createRedis } from './shared/redis';
 const EVENTS_QUEUE = 'events';
 const POLL_INTERVAL_MS = 1000;
 const MAINTENANCE_INTERVAL_MS = 5 * 60_000;
-const DIGEST_INTERVAL_MS = 24 * 60 * 60_000;
+// Digest: SPRAWDZENIE co 10 min, wysyłka raz na dobę po stałej godzinie,
+// ze znacznikiem daty w bazie (worker_state). Poprzedni setInterval(24h)
+// liczył od STARTU procesu — każdy deploy resetował licznik, więc przy
+// codziennych wdrożeniach digest wychodził losowo albo wcale.
+const DIGEST_CHECK_MS = 10 * 60_000;
+const DIGEST_HOUR_UTC = 6; // 08:00 czasu polskiego latem, 07:00 zimą
+const DIGEST_STATE_KEY = 'digest:lastSentDate';
 const BATCH_SIZE = 50;
 
 const config = loadConfig();
@@ -198,17 +204,38 @@ async function runMaintenance() {
 const maintenanceTimer = setInterval(() => void runMaintenance(), MAINTENANCE_INTERVAL_MS);
 void runMaintenance();
 
-// Dzienny digest powiadomień (D4) — uruchamiany TYLKO gdy wysyłka włączona
-// (klucz Brevo obecny). Bez klucza: zero timerów, zero wysyłki (0 zł).
+// Dzienny digest powiadomień (D4) — uruchamiany TYLKO gdy wysyłka włączona.
+// Bez SMTP: zero timerów, zero wysyłki (0 zł).
+async function digestDue(): Promise<boolean> {
+  const now = new Date();
+  if (now.getUTCHours() < DIGEST_HOUR_UTC) return false;
+  const state = await prisma.workerState.findUnique({ where: { key: DIGEST_STATE_KEY } });
+  return state?.value !== now.toISOString().slice(0, 10);
+}
+
 async function runDigest() {
   try {
-    const sent = await notifications.sendDailyDigests(mail, identity.getUserEmails);
+    if (!(await digestDue())) return;
+    // Znacznik PRZED wysyłką: przy awarii w połowie lepiej zgubić jeden digest
+    // niż bombardować tych samych ludzi duplikatami co 10 minut do skutku.
+    const today = new Date().toISOString().slice(0, 10);
+    await prisma.workerState.upsert({
+      where: { key: DIGEST_STATE_KEY },
+      create: { key: DIGEST_STATE_KEY, value: today },
+      update: { value: today },
+    });
+    const sent = await notifications.sendDailyDigests(
+      mail,
+      identity.getDigestRecipients,
+      config.APP_BASE_URL,
+    );
     if (sent > 0) logger.info({ sent }, 'Wysłano dzienny digest powiadomień');
   } catch (err) {
     logger.error({ err }, 'Błąd wysyłki digestu');
   }
 }
-const digestTimer = mail.enabled ? setInterval(() => void runDigest(), DIGEST_INTERVAL_MS) : null;
+const digestTimer = mail.enabled ? setInterval(() => void runDigest(), DIGEST_CHECK_MS) : null;
+if (mail.enabled) void runDigest();
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, async () => {

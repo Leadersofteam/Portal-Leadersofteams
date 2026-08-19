@@ -6,6 +6,7 @@ import type { SessionUser } from '@lot/contracts';
 import { serverApi } from '@/lib/server-api';
 
 import { AccountActions } from './account-actions';
+import { DigestToggle } from './digest-toggle';
 
 export const metadata = { title: 'Konto i dane — Leaders of Teams' };
 
@@ -25,6 +26,7 @@ export default async function AccountPage() {
   const user = me.user;
 
   const verification = await serverApi<{ email: string; verified: boolean }>('/me/verification');
+  const digest = await serverApi<{ optedOut: boolean }>('/me/digest');
 
   return (
     <main>
@@ -65,6 +67,8 @@ export default async function AccountPage() {
           Nazwę zmienisz w <Link href="/panel/profil">profilu Lidera</Link>.
         </p>
       </section>
+
+      <DigestToggle initialOptedOut={digest?.optedOut ?? false} />
 
       <AccountActions />
     </main>

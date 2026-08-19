@@ -54,6 +54,14 @@ model User {
   onboardingCompletedAt DateTime?
   checklistDismissedAt  DateTime?
 
+  // Digest e-mail (S19-adjacent, 19.08). Wypis, nie zapis: digest to zbiorczy
+  // mail o WŁASNYCH powiadomieniach, więc domyślnie przychodzi, a wypis musi
+  // działać jednym kliknięciem z maila — bez logowania. Stąd trwały token
+  // per użytkownik (dowód posiadania skrzynki), generowany leniwie przy
+  // pierwszej wysyłce; null = jeszcze nie wysyłaliśmy do tej osoby.
+  digestOptOutAt DateTime?
+  digestToken    String?   @unique
+
   avatarFile    UploadedFile?  @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   uploadedFiles UploadedFile[] @relation("FileOwner")
 
@@ -1155,4 +1163,16 @@ model Bookmark {
   // Lista „Zapisane" jest chronologiczna po czasie ZAPISANIA, nie publikacji.
   @@index([userId, createdAt])
   @@map("bookmarks")
+}
+
+// Trwały stan procesów tła — np. znacznik ostatniej wysyłki digestu.
+// Do 19.08 digest wisiał na setInterval liczonym OD STARTU procesu, więc
+// każdy deploy resetował licznik: przy codziennych wdrożeniach digest
+// wychodził losowo albo wcale. Data w bazie przeżywa restart.
+model WorkerState {
+  key       String   @id
+  value     String   @db.VarChar(191)
+  updatedAt DateTime @updatedAt
+
+  @@map("worker_state")
 }

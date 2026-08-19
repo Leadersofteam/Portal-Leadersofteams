@@ -1,5 +1,8 @@
 import {
+  adminSetRoleInputSchema,
   createCompanyInputSchema,
+  digestOptOutInputSchema,
+  digestUnsubscribeInputSchema,
   loginInputSchema,
   registerInputSchema,
   requestPasswordResetInputSchema,
@@ -188,6 +191,47 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
           .send({ error: { code: 'INVALID_TOKEN', message: 'Token nieprawidłowy lub wygasł' } });
       }
       return reply.send({ ok: true });
+    });
+
+    // --- Digest e-mail (19.08): stan, przełącznik i wypis z linku w mailu ---
+    app.get('/me/digest', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      return reply.send(await service.getDigestState(user.id));
+    });
+
+    app.post('/me/digest', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const input = parseBody(digestOptOutInputSchema, request.body);
+      await service.setDigestOptOut(user.id, input.optedOut);
+      return reply.send({ ok: true, optedOut: input.optedOut });
+    });
+
+    // Wypis BEZ sesji — token z maila jest dowodem posiadania skrzynki.
+    // Limit jak przy auth: token da się zgadywać, więc nie dajemy nieskończonych
+    // prób. Odpowiedź nie rozróżnia „złego tokenu" od „już wypisany" ponad to,
+    // co konieczne — ok=false znaczy tylko „ten link nie zadziałał".
+    app.post('/digest/wypis', { config: authRateLimit }, async (request, reply) => {
+      const input = parseBody(digestUnsubscribeInputSchema, request.body);
+      const ok = await service.digestOptOutByToken(input.token);
+      return reply.send({ ok });
+    });
+
+    // --- Administracja użytkownikami (19.08, tylko ADMIN) -------------------
+    // Do tej pory nadanie roli MODERATOR = ręczny SQL na produkcji + pułapka
+    // roli zamrożonej w sesji. Trasa + ekran /panel/uzytkownicy zamykają temat.
+    app.get('/admin/users', async (request, reply) => {
+      await auth.requireRole(request, ['ADMIN']);
+      const { search } = request.query as { search?: string };
+      const users = await service.listUsers(search);
+      return reply.send({ users });
+    });
+
+    app.post('/admin/users/:id/role', async (request, reply) => {
+      const admin = await auth.requireRole(request, ['ADMIN']);
+      const { id } = request.params as { id: string };
+      const input = parseBody(adminSetRoleInputSchema, request.body);
+      await service.setUserRole(admin.id, id, input.role);
+      return reply.send({ ok: true, role: input.role });
     });
 
     // --- RODO (D6): eksport i usunięcie (anonimizacja) konta ----------------
