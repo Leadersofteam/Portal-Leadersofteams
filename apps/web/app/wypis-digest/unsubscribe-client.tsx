@@ -25,7 +25,6 @@ export function UnsubscribeClient() {
     }
     apiFetch<{ ok: boolean }>('/digest/wypis', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
     })
       .then((res) => setStan(res.ok ? 'done' : 'failed'))

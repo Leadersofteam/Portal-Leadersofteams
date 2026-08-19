@@ -46,7 +46,6 @@ export function UsersManager({
     try {
       await apiFetch(`/admin/users/${user.id}/role`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role }),
       });
       setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role } : u)));

@@ -19,7 +19,6 @@ export function DigestToggle({ initialOptedOut }: { initialOptedOut: boolean }) 
       const next = !optedOut;
       await apiFetch('/me/digest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ optedOut: next }),
       });
       setOptedOut(next);
