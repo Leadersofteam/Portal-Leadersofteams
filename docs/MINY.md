@@ -69,6 +69,18 @@ innej nazwy i potwierdzenia — dziś nazywa się „Zrezygnuj z moderacji".
 
 ## Infrastruktura
 
+### Deploy prod BEZ `--env-file .env.prod` podmienia środowisko wszystkim kontenerom
+
+(20.08) Wywołanie `docker compose -p portal-prod -f … up -d` spoza `infra/` i bez
+`--env-file .env.prod` NIE kończy się błędem: compose bierze domyślne `infra/.env` (dev),
+uznaje, że konfiguracja się zmieniła, i PRZETWARZA wszystkie kontenery — łącznie z mysql.
+API wstaje z poświadczeniami dev do bazy prod → `unhealthy`, produkcja leży do czasu
+poprawnego wywołania (dane w wolumenie nietknięte). **Komendy wdrożenia kopiuj ze skilla
+`portal-wdrozenie` co do znaku — z `cd /docker/portal-staging/infra` i `--env-file` włącznie.**
+
+**Objaw:** `run --rm migrate` kończy się „provide valid database credentials", choć nic
+w bazie się nie zmieniało; `mysql` ma nagle status „Up X seconds".
+
 ### Nazwa `api` jest DWUZNACZNA na tym serwerze
 
 Staging i produkcja dzielą sieć Traefika `n8n_default`, a compose nadaje każdej usłudze alias

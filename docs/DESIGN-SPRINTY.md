@@ -38,7 +38,15 @@ Portal przejmuje wybrane wartości w PD1, nie prowadzi osobnego konkursu palet. 
 Każdy sprint = wdrożenie + rytm repo: bramki → staging → prod → zrzuty 390/1440 →
 krytyka (`design:design-critique`) → HANDOFF. Pomiar przed/po.
 
-### PD1 — Tokeny, światło i pomiar bazowy
+### PD1 — Tokeny, światło i pomiar bazowy — ✅ WYKONANY 20.08 (HANDOFF, baner)
+
+> Pkt 1 i 3 zgodnie z planem (paleta A „cieplone indigo", kontrast 19/19 AA).
+> Pkt 2 skorygowany POMIAREM: LCP wszędzie tekstem — `fetchpriority`/`sizes` nie miały celu
+> (hero to inline SVG, feed `<img>` bez `srcset`); realną naprawą było zdjęcie `cookies()`
+> ze ścieżki landingu (`publicApi` + ISR) → `/` statyczne, CLS 0,058 → 0. Liczby w HANDOFF.
+> „Wzmocnienie widoczności temperatury poziomów" (pkt 1, część druga) NIE wykonane — to praca
+> na komponentach, przechodzi do PD2/PD3.
+
 1. Przejęcie palety wybranej w D1 App do `globals.css` (primary + semantyka), z zachowaniem
    i WZMOCNIENIEM skali `--level-1…7` — temperatura poziomu ma być widoczna w każdym
    miejscu, gdzie pojawia się poziom Lidera (karta, profil, drabinka, feed).
@@ -48,8 +56,10 @@ krytyka (`design:design-critique`) → HANDOFF. Pomiar przed/po.
 3. Kontrast AA całej nowej palety na ciemnym tle — zmierzony, nie oceniony na oko.
 
 ### PD2 — Pierwsza mila jak z produktu, nie z szablonu
+
 Ekrany, które zobaczy każdy z pierwszych dwudziestu, w kolejności pierwszego kontaktu:
 **strona główna → /rejestracja → kreator /start → /feed → /drabinka**.
+
 1. Hierarchia i liczby-bohaterowie Bricolage'em; własne ilustracje SVG stanów pustych
    (feed przed pierwszym wpisem, drabinka na poziomie 0) — stan pusty podpowiada ruch.
 2. Mikrointerakcje wg `anthropic-skills:emil-design-eng` — z ograniczeniem ADR-010:
@@ -58,6 +68,7 @@ Ekrany, które zobaczy każdy z pierwszych dwudziestu, w kolejności pierwszego 
    bez logo, albo sprint trwa dalej.
 
 ### PD3 — Marketplace i profile (wiarygodność)
+
 1. Karta usługi, profil Lidera, profil Firmy: ślad zaufania (oceny, poziom-światło,
    zrealizowane zlecenia) jako główny element wizualny — to jest wyróżnik produktu
    („status trzeba zapracować"), design ma go OPOWIADAĆ.
@@ -67,6 +78,7 @@ Ekrany, które zobaczy każdy z pierwszych dwudziestu, w kolejności pierwszego 
    strażnika w S18) dostaje UI przy okazji przebudowy karty.
 
 ### PD4 — Dostępność, offline i domknięcie
+
 1. Audyt `design:accessibility-review` (WCAG 2.1 AA) na 390 px.
 2. Offline przestaje być zaślepką (S20 pkt 3): ostatni feed z cache czytelny offline,
    w nowej skórze.
@@ -99,10 +111,10 @@ PD3 → D4 (App) → D5+PD4 (oba, dostępność i domknięcie).**
 
 ## Miary sukcesu
 
-| Miara | Przed (19.08) | Cel |
-|---|---|---|
-| Paleta primary = stockowy Tailwind | tak | nie (wspólna decyzja z D1 App) |
-| LCP/CLS na 390 px | nigdy nie zmierzone | zmierzone w PD1, nie gorsze po PD2–PD4 |
-| Stany puste z własną ilustracją SVG | brak | komplet na pierwszej mili |
-| Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia | rozpoznawalny |
-| Offline | zaślepka | ostatni feed czytelny |
+| Miara                                       | Przed (19.08)       | Cel                                    |
+| ------------------------------------------- | ------------------- | -------------------------------------- |
+| Paleta primary = stockowy Tailwind          | tak                 | nie (wspólna decyzja z D1 App)         |
+| LCP/CLS na 390 px                           | nigdy nie zmierzone | zmierzone w PD1, nie gorsze po PD2–PD4 |
+| Stany puste z własną ilustracją SVG         | brak                | komplet na pierwszej mili              |
+| Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | rozpoznawalny                          |
+| Offline                                     | zaślepka            | ostatni feed czytelny                  |

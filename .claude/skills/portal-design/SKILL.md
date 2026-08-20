@@ -43,6 +43,7 @@ Pełny audyt WCAG (`design:accessibility-review`) — na koniec sprintu.
 
 Zrzut naszego ekranu obok generycznego szablonu tej samej kategorii (feed, marketplace,
 profil) — bez logo. **Nierozpoznawalny = niedokończony.** Wyróżniki do wzmacniania:
+
 - światło poziomów Drabinki jako nić przewodnia,
 - Bricolage Grotesque na nagłówkach i liczbach-bohaterach,
 - własne ilustracje SVG (stany puste, onboarding) — spójna kreska, nie clipart,
@@ -51,15 +52,15 @@ profil) — bez logo. **Nierozpoznawalny = niedokończony.** Wyróżniki do wzma
 
 ## Które skille wołać do czego
 
-| Potrzeba | Skill |
-|---|---|
-| Nowy ekran / kierunek wizualny | `frontend-design` |
+| Potrzeba                                         | Skill                              |
+| ------------------------------------------------ | ---------------------------------- |
+| Nowy ekran / kierunek wizualny                   | `frontend-design`                  |
 | Animacje i mikrointerakcje (w granicach ADR-010) | `anthropic-skills:emil-design-eng` |
-| Ocena gotowego ekranu | `design:design-critique` |
-| Audyt WCAG na koniec sprintu | `design:accessibility-review` |
-| Teksty: CTA, stany puste, odmowy, błędy | `design:ux-copy` |
-| Wykresy analityki | `dataviz` |
-| Zrzuty | `portal-zrzuty` |
+| Ocena gotowego ekranu                            | `design:design-critique`           |
+| Audyt WCAG na koniec sprintu                     | `design:accessibility-review`      |
+| Teksty: CTA, stany puste, odmowy, błędy          | `design:ux-copy`                   |
+| Wykresy analityki                                | `dataviz`                          |
+| Zrzuty                                           | `portal-zrzuty`                    |
 
 ## Pułapki tego repo przy pracy nad UI
 

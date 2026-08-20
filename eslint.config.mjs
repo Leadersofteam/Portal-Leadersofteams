@@ -35,6 +35,9 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/prisma/generated/**',
       '**/next-env.d.ts',
+      // katalog roboczy narzędzia (git worktree Claude'a) — poza repo od
+      // 8eafa78, ale na dysku istnieje i lint bez tego wpisu po nim chodzi
+      '.claude/**',
     ],
   },
   js.configs.recommended,

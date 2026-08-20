@@ -47,6 +47,10 @@ Do czasu odpowiedzi rób punkty 3–5 z S19, które od niej nie zależą.
 
 ## Zadanie na tę sesję: S19 w docs/SPRINTY-S18-S21.md
 
+> **Korekta 20.08:** jeśli prowadzisz tor DESIGNU (docs/DESIGN-SPRINTY.md), właściwym
+> zadaniem jest **PD2 „Pierwsza mila"** — PD1 wykonany 20.08 (paleta A przejęta z App,
+> landing bez skeletonu, liczby bazowe w HANDOFF). PD2 idzie PRZED zaproszeniami S19.
+
 Zaproszenie Lidera bez cienia MLM (ścieżkę DOPISZ do antimlm.integration.test.ts —
 inaczej strażnik zazieleni się przez pominięcie), ślad zaufania w /szukaj,
 pierwsze 60 sekund oczami obcej osoby, mail powitalny + digest opt-in.

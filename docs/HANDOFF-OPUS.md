@@ -11,6 +11,35 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-20 (design, PD1): Portal przejął paletę „cieplone indigo" + landing bez
+> mignięcia skeletonu.** Wdrożone na staging i produkcję, wszystkie kontrole zielone.
+>
+> **1. Paleta.** Właściciel wybrał w D1 App kierunek A z trzech renderowanych na żywych
+> ekranach (materiał: repo App, `audyt/design/palety-d1/`). W Portalu weszła do `globals.css`
+> (primary/semantyka/orchidea zamiast violet; `--level-3` idzie za nowym primary-400) + sedem
+> literały `rgb(99 102 241 …)` → `rgb(131 113 244 …)` w 5 plikach CSS. Własne SVG (logo,
+> LadderArt) miały ZASZYTE hexy marki — inline SVG w HTML honoruje `var()`, więc teraz czytają
+> tokeny (statyczne `public/logo.svg`/`app/icon.svg` podmienione literalnie — tam var() nie
+> działa). Kontrast zmierzony: **19/19 par AA** (tekst/tło, semantyka, poziomy 1–7 na surface).
+>
+> **2. Pomiar bazowy PD1 obalił pkt 2 dokumentu.** LCP na `/`, `/feed`, `/drabince`
+> i `/rejestracji` to AKAPIT TEKSTU (300–850 ms), nie obraz — `fetchpriority`/`sizes` nie
+> miały czego przyspieszać (hero to inline SVG; feed ma `<img>` bez `srcset`, więc `sizes`
+> byłby no-opem). Realny problem znalazł się gdzie indziej: **`serverApi` czyta `cookies()`
+> i wyłącza prerender całej trasy** — gość na landingu dostawał skeleton z `loading.tsx`
+> i podmianę treści ~1,3 s po wejściu (stopka spadała o 3,7 tys. px; stąd CLS 0,058 na każdej
+> stronie). Naprawa: `publicApi` bez cookies z ISR 300 s → `/` jest `○ (Static)`,
+> **CLS 0** (bazowo zawsze 0,058; przy rewalidacji ISR pojedynczy przebieg może jeszcze
+> złapać 0,058 — zaakceptowane). Liczby bazowe (390 px, produkcja, 3 przebiegi/strona):
+> `/` FCP 320–384 · `/feed` FCP 380–1196, LCP do 1768 · `/drabinka` FCP 296–424 ·
+> `/rejestracja` FCP 296–460. Po wdrożeniu `/`: FCP 288–612, CLS 0–0.058.
+>
+> **3. Wdrożeniowa wpadka sesji (naprawiona w ~4 min):** deploy prod odpalony BEZ
+> `--env-file .env.prod` i spoza `infra/` — compose wziął domyślne `infra/.env` (dev),
+> przetworzył WSZYSTKIE kontenery (z mysql!) i api wstało z błędnymi poświadczeniami.
+> Dane nietknięte (wolumen; po naprawie 18 users / 4 posts). Lekcja w MINY: komendy wdrożenia
+> kopiować ZE SKILLA, nie z pamięci.
+>
 > **✅ SESJA 2026-08-19 (PM infrastruktury): digest naprawiony + role z UI** (`380bd08`, `c562583`).
 > Wdrożone na staging i produkcję (migracja expand-only: `users.digestOptOutAt`,
 > `users.digestToken`, tabela `worker_state`), przejście ścieżek NA ŻYWO kontami testowymi

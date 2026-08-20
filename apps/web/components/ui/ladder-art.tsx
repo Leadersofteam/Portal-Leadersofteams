@@ -3,7 +3,9 @@
  * się ku bursztynowi (te same tokeny co LevelBadge), lekko pochylonych jak
  * drabina oparta o ścianę. Czysty SVG, zero assetów zewnętrznych (ADR-009).
  */
-const LEVELS = ['#94a3b8', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#f472b6', '#fbbf24'];
+/* Inline SVG w HTML honoruje zmienne CSS — jedno źródło skali poziomów
+   w globals.css zamiast kopii hexów, która w PD1 została w tyle za paletą. */
+const LEVELS = [1, 2, 3, 4, 5, 6, 7].map((n) => `var(--level-${n})`);
 
 export function LadderArt() {
   return (
@@ -16,9 +18,9 @@ export function LadderArt() {
     >
       <defs>
         <linearGradient id="rail" x1="0" y1="480" x2="0" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#232838" />
-          <stop offset="0.55" stopColor="#4338ca" />
-          <stop offset="1" stopColor="#8b5cf6" />
+          <stop offset="0" stopColor="var(--border)" />
+          <stop offset="0.55" stopColor="var(--primary-700)" />
+          <stop offset="1" stopColor="var(--violet-500)" />
         </linearGradient>
         <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="14" result="b" />

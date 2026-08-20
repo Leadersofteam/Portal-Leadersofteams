@@ -98,7 +98,7 @@
 .composer textarea:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.25);
+  box-shadow: 0 0 0 3px rgb(131 113 244 / 0.25);
 }
 
 .composer-foot {
@@ -245,8 +245,8 @@
    nigdy bursztynem (ten należy wyłącznie do poziomu 7). */
 .appreciate.active {
   color: var(--primary-300);
-  border-color: rgb(99 102 241 / 0.35);
-  background: rgb(99 102 241 / 0.1);
+  border-color: rgb(131 113 244 / 0.35);
+  background: rgb(131 113 244 / 0.1);
 }
 
 .appreciate:disabled {

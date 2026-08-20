@@ -4,7 +4,7 @@ import { JsonLd } from '@/components/json-ld';
 import { LadderArt } from '@/components/ui/ladder-art';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
-import { serverApi } from '@/lib/server-api';
+import { publicApi } from '@/lib/server-api';
 
 interface LeaderRow {
   id: string;
@@ -29,7 +29,10 @@ const LEVEL_NAMES = [
 
 export default async function HomePage() {
   // Social proof: najlepsi realni Liderzy z katalogu (sekcja znika, gdy pusto).
-  const leadersData = await serverApi<{ leaders: LeaderRow[] }>('/leaders?limit=3').catch(
+  // publicApi (bez cookies, ISR 5 min) zamiast serverApi: dzięki temu landing
+  // się prerenderuje i gość dostaje pełny HTML od razu, bez mignięcia
+  // skeletonu z loading.tsx (PD1 — zmierzona podmiana treści ~1 s po wejściu).
+  const leadersData = await publicApi<{ leaders: LeaderRow[] }>('/leaders?limit=3').catch(
     () => null,
   );
   const topLeaders = (leadersData?.leaders ?? []).filter((l) => l.level >= 1).slice(0, 3);

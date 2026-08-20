@@ -23,7 +23,7 @@
 
 .global-search:focus-within {
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.2);
+  box-shadow: 0 0 0 3px rgb(131 113 244 / 0.2);
 }
 
 .global-search input {
@@ -78,7 +78,7 @@
 
 .search-field:focus-within {
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.25);
+  box-shadow: 0 0 0 3px rgb(131 113 244 / 0.25);
 }
 
 .search-field input {
@@ -141,7 +141,7 @@
 }
 
 .search-tabs a.active .search-tab-count {
-  background: rgb(99 102 241 / 0.18);
+  background: rgb(131 113 244 / 0.18);
   color: var(--primary-300);
 }
 

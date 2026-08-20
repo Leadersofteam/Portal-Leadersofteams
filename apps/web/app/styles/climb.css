@@ -28,7 +28,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(120% 140% at 100% 0%, rgb(99 102 241 / 0.1), transparent 60%), var(--surface);
+    radial-gradient(120% 140% at 100% 0%, rgb(131 113 244 / 0.1), transparent 60%), var(--surface);
 }
 
 .climber-kicker {
@@ -329,7 +329,7 @@
 .wizard-steps li.active span {
   border-color: var(--primary-500);
   color: var(--primary-300);
-  background: rgb(99 102 241 / 0.12);
+  background: rgb(131 113 244 / 0.12);
 }
 
 .wizard-steps li.done span {
@@ -482,7 +482,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(120% 140% at 100% 0%, rgb(99 102 241 / 0.08), transparent 60%), var(--surface);
+    radial-gradient(120% 140% at 100% 0%, rgb(131 113 244 / 0.08), transparent 60%), var(--surface);
 }
 
 .credential-main {

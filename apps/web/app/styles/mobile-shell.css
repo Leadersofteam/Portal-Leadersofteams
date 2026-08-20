@@ -206,8 +206,8 @@
   flex: none;
   border-radius: var(--radius-sm);
   color: var(--primary-300);
-  background: rgb(99 102 241 / 0.12);
-  border: 1px solid rgb(99 102 241 / 0.28);
+  background: rgb(131 113 244 / 0.12);
+  border: 1px solid rgb(131 113 244 / 0.28);
 }
 
 .create-sheet-action strong {
