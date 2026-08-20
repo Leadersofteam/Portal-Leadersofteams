@@ -25,6 +25,16 @@ użytkownika i funkcje bez wejścia w interfejsie.
 
 ⚠️ **Przenumerowanie:** stare S18 (marketplace) → **S21**, stare S19 (wygląd/mobile) → **S20**.
 
+⚠️ **Aktualizacja 2026-08-20 — program designu PD1–PD4** ([DESIGN-SPRINTY.md](DESIGN-SPRINTY.md))
+wchodzi jako główny tor na polecenie właściciela (koniec z generycznością, mobile-first,
+najwyższy poziom UX/UI) i częściowo wchłania ten plan:
+**PD1** przejmuje S20 pkt 1–2 (pomiar bazowy, `fetchpriority`/`sizes`), **PD2** poprzedza
+zaproszenia z S19 (pierwsza mila ma wyglądać jak produkt, ZANIM zobaczy ją pierwszych
+dwudziestu), **PD3** realizuje S21 pkt 0 (UI edycji opublikowanej usługi), **PD4** domyka
+S20 pkt 3–4 (offline, stany puste). Decyzje właściciela z S19 (dane demo R-17, lista
+zaproszeń) pozostają nadrzędne i nietknięte. Harmonogram wspólny z App (D1–D5) — opis
+w [DESIGN-SPRINTY.md](DESIGN-SPRINTY.md).
+
 ---
 
 ## S18 — „Prawda o Portalu" ✅ DOMKNIĘTY 2026-08-15

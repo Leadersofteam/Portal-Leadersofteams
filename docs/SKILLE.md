@@ -19,8 +19,30 @@ w dokumentacji i staje się Skillem.** Dokumentacja opisuje STAN, Skill opisuje 
 | **portal-zamkniecie-sesji** | „domknij", „przygotuj do następnej sesji"                   | sprzątanie kont testowych, sprostowania w HANDOFF, push                                               |
 | **portal-awaria**           | produkcja nie działa po wdrożeniu, „wycofaj", „przywróć"    | rollback obrazów bez cofania migracji (expand-only), restore z kopii z drillem, worker.alive ≠ Up     |
 | **portal-stan-zastany**     | start sesji, pozycja z roadmapy, raport „zamknięte"         | `git log -S`/grep przed kodowaniem, skutek w bazie zamiast logu wysyłki, ścieżka z KLIKNIĘCIEM linku  |
+| **portal-design**           | każda zmiana wyglądu, sprinty PD1–PD4, „popraw design"      | tokeny zamiast hexów, światło poziomów jako sygnatura, własne SVG, granice ADR-009/010, test anty-generyczności |
 | playwright-cli / -trace     | automatyzacja przeglądarki z CLI, inspekcja trace'ów        | kopie oficjalnych skilli z `node_modules/playwright-core` (odśwież po upgradzie Playwrighta)          |
 | prisma-cli                  | referencja składni komend Prisma                            | oficjalny skill Prismy (opisuje 7.x; repo ma 6.19 — flagi sprawdzaj przy rozjeździe)                  |
+
+## Skille zewnętrzne podnoszące jakość (z wtyczek właściciela)
+
+Nie są w repo — pochodzą z instalacji Claude Code właściciela. `portal-design` woła je
+w swojej pętli; poniżej mapa do użycia także poza sprintami designu:
+
+| Proces | Skill |
+| --- | --- |
+| Nowy ekran / kierunek wizualny | `frontend-design` |
+| Ocena gotowego ekranu (pętla zrzut → krytyka) | `design:design-critique` |
+| Kontrast, klawiatura, czytniki, cele dotyku (WCAG 2.1 AA) | `design:accessibility-review` |
+| Animacje i mikrointerakcje (w granicach ADR-010) | `anthropic-skills:emil-design-eng` |
+| Teksty: CTA, stany puste, odmowy, komunikaty błędów | `design:ux-copy` |
+| Wykresy analityki | `dataviz` |
+| Porządek i dokumentacja w `components/ui/` | `design:design-system` |
+| Pisanie i naprawa testów e2e (Playwright) | `anthropic-skills:playwright-expert` |
+| Prompt startowy, wybór modelu, pytania o API Claude'a | `claude-api` — nie odpowiadaj z pamięci |
+| Pisanie nowego skilla projektowego | `anthropic-skills:skill-creator` |
+
+Granica bez zmian: skille `sales:*`, `seo-*` na płatnych kontach i konektory OAuth
+(Figma, Slack…) są poza zasięgiem — ADR-009 („0 zł, zero zewnętrznych dostawców").
 
 ## Czego w skillach świadomie NIE MA
 
