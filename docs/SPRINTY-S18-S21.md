@@ -114,13 +114,20 @@ przed i po jest zgadywaniem.
 
 ## S21 — „Marketplace i dopasowanie" (dawne S18)
 
-0. **Edycja opublikowanej usługi** (dług z S18, znaleziony przez strażnika kontraktu).
+0. ✅ **WYKONANE w PD3 (21.08)** — edycja opublikowanej usługi ma UI: formularz
+   create/edit, strona `/uslugi/[slug]/edytuj`, wejścia w panelu i na stronie usługi;
+   wpis zdjęty z `EXCEPTIONS`, trasa w `KNOWN_PATHS`. Ścieżka przeszła na żywo na
+   stagingu i produkcji (PATCH → skutek widoczny publicznie → przywrócenie).
+   Pierwotny opis (dla historii):
+   Edycja opublikowanej usługi (dług z S18, znaleziony przez strażnika kontraktu).
    `PATCH /listings/:id` istnieje z walidacją i testami, ale panel ma wyłącznie
    publikuj/wstrzymaj/archiwizuj — **zmiana ceny albo opisu wymaga dziś zarchiwizowania
    usługi i wystawienia jej od nowa**, co kasuje jej adres i historię. To pierwszy punkt
    tego sprintu, bo dotyka pracy zarobkowej Lidera, a nie wygody.
    Po dodaniu UI **usuń wpis z `EXCEPTIONS`** w `shared/web-contract.test.ts`.
-1. **Licznik zrealizowanych zleceń przy Liderze** — odbicie logiki policzonej dla Firmy.
+1. ✅ **WYKONANE w PD3 (21.08)** — `completedOrders` w /leaders, /leaders/:id i /listings
+   (wersja wsadowa bez N+1); widoczny na karcie usługi (pas zaufania) i profilu Lidera
+   (karty lustrem profilu Firmy). Test doszyty do cyklu życia zlecenia (213. test API).
 2. **„Nowe zlecenie w Twojej branży"** — powiadomienie **opt-in**. Dopasowanie, nie przynęta.
 3. **Zapisane wyszukiwania** — przedłużenie zakładek z S17 (prywatne, bez licznika).
 4. **Q&A pod obciążeniem realnych ludzi** — to jedyna punktowana ścieżka społeczna, więc

@@ -282,3 +282,13 @@ liczby porównuj z bazą tylko przy niskim load; pierwszy przebieg po deployu od
 (zimny ISR/cache).** Osobna pułapka: sekwencyjne `await serverApi(...)` w server component
 sumują się w TTFB — dwa niezależne zapytania to `Promise.all`, nie dwa awaity
 (na /drabince kosztowało to gościa ~150 ms).
+
+### Stagingu po IP nie przetestujesz przeglądarką jako zalogowany (21.08)
+
+Cookie sesji (`lot_sid`) ma flagę `Secure` w buildzie produkcyjnym — przeglądarka
+odrzuca je na `http://<IP-kontenera>:3000`, więc formularz logowania „nie działa",
+choć API zwraca 200 i set-cookie. Wygląda jak zepsute logowanie, a to kanał
+weryfikacji. Ścieżki zalogowane na stagingu testuj przez API z ręcznie niesionym
+cookie (`curl -H "cookie: lot_sid=..."` — curl ignoruje Secure; działa też dla
+server-rendered stron Next, bo serwer czyta nagłówek bez oglądania flag), albo
+w przeglądarce dopiero na produkcyjnym HTTPS.

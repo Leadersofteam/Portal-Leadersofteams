@@ -76,7 +76,18 @@ Ekrany, które zobaczy każdy z pierwszych dwudziestu, w kolejności pierwszego 
 3. Twardy test: zrzut /feed obok generycznego szablonu „social feed" — rozpoznawalny
    bez logo, albo sprint trwa dalej.
 
-### PD3 — Marketplace i profile (wiarygodność)
+### PD3 — Marketplace i profile (wiarygodność) — ✅ WYKONANY 21.08 (HANDOFF, baner)
+
+> Test anty-generyczności katalogu ZDANY (mock „Marketplace usług" obok naszego /uslugi
+> bez logo): wyróżniki — odznaka poziomu z nazwą („Poziom 1 · Adept", szczeble) zamiast
+> kupowalnych plakietek TOP RATED/PRO, pas zaufania z LICZNIKIEM ZREALIZOWANYCH ZLECEŃ
+> (API rozszerzone: completedOrders — S21 pkt 1 wchłonięty), narracja ustrojowa pod
+> nagłówkiem, Bricolage, pasek 5 slotów. Pkt 3 (edycja usługi) wykonany w całości —
+> wyjątek zdjęty ze strażnika. Pkt 2 częściowo: --stack na listach marketplace'u
+> (/liderzy, /zlecenia, /panel/uslugi, /panel/zlecenia); tabele /panel/analityka
+> ŚWIADOMIE przeniesione do PD4 (admin, nie pierwsza mila zaufania). Filtry katalogu
+> zwinięte na 390 px (spychały pierwszą kartę o ekran). Naprawiona wisząca kropka na
+> profilu Lidera poziomu 0.
 
 1. Karta usługi, profil Lidera, profil Firmy: ślad zaufania (oceny, poziom-światło,
    zrealizowane zlecenia) jako główny element wizualny — to jest wyróżnik produktu

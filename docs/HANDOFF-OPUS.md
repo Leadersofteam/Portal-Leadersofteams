@@ -11,6 +11,38 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-21 wieczór (design, PD3): marketplace opowiada zaufanie — wdrożone
+> na staging i produkcję** (`982d26f` + docs), healthz/worker/uploads zielone, **213/213
+> API** (baza 212 + nowy test), 17/17 e2e. Test anty-generyczności katalogu ZDANY.
+>
+> **1. Lider wreszcie ma czym udowodnić pracę.** `completedOrders` w API (odbicie
+> licznika Firmy: CONFIRMED przez wygraną ofertę; wersja wsadowa bez N+1) → widoczny
+> w pasie zaufania karty usługi (`.trust-strip`: „★ 4/5 (1) · 1 zrealizowane zlecenie")
+> i na profilu Lidera jako karty lustrem profilu Firmy (feature-grid + stat-number).
+> Zasada pasa: tylko fakty ZAPRACOWANE — świeży Lider nie dostaje zer ani „brak ocen".
+> Gwiazdka światłem marki, nie bursztynem (bursztyn = poziom 7, jak przy docenieniach).
+> Weryfikacja NA ŻYWO: prod pokazuje Tomek/Ola/Piotr = 1 realizacja, Macix = 0.
+>
+> **2. Martwa trasa PATCH /listings/:id OŻYŁA** (dług S18, S21 pkt 0): formularz
+> create/edit (jeden plik, `initial` przełącza tryb; slug celowo STABILNY — komunikat
+> w UI), strona `/uslugi/[slug]/edytuj`, wejścia: „Edytuj" w panelu obok
+> Wstrzymaj/Archiwizuj i na stronie usługi dla właściciela. Wyjątek zdjęty ze
+> strażnika kontraktu, trasa dopisana do KNOWN_PATHS. Ścieżka przeszła na żywo
+> dwukrotnie (staging + prod: PATCH → skutek widoczny publicznie → przywrócenie
+> oryginału, zero śladu).
+>
+> **3. Mobile marketplace:** filtry /uslugi zwinięte za przyciskiem na 390 px (4 pola
+> spychały pierwszą kartę o cały ekran; desktop bez zmian), `list-row--stack` na
+> /liderzy, /zlecenia, /panel/zlecenia i /panel/uslugi. Karta usługi w JEDNYM
+> komponencie (`components/ui/listing-card`) zamiast kopii w katalogu i ulubionych.
+> Naprawiona wisząca kropka na profilu Lidera poziomu 0 (separator przy null-owym
+> LevelBadge). Nagłówek profilu Lidera klasą `.leader-head`, poziom z nazwą.
+>
+> **4. Pułapka weryfikacji (do MINY):** na stagingu po IP/HTTP przeglądarka NIE
+> zaloguje konta — cookie sesji ma `Secure` w buildzie produkcyjnym. Ścieżki
+> zalogowane testuj przez API z ręcznie niesionym cookie (curl ignoruje Secure)
+> albo w przeglądarce na produkcyjnym HTTPS.
+
 > **✅ SESJA 2026-08-21 (design, PD2): pierwsza mila jak z produktu — wdrożone na staging
 > i produkcję** (`0a85df2` + `bccc78b`), healthz/worker/uploads zielone, 212/212 API,
 > 17/17 e2e. **Twardy test „szablon czy produkt" ZDANY** (mock generycznego feedu obok
