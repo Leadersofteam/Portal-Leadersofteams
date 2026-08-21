@@ -27,6 +27,11 @@ export default async function OrdersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+  const hasFilters = Boolean(
+    (typeof params.q === 'string' && params.q) ||
+      (typeof params.industryId === 'string' && params.industryId) ||
+      (typeof params.budgetMin === 'string' && params.budgetMin),
+  );
   const query = new URLSearchParams();
   for (const key of ['industryId', 'q', 'budgetMin', 'budgetMax', 'cursor'] as const) {
     const value = params[key];
@@ -92,14 +97,26 @@ export default async function OrdersPage({
       </form>
 
       {orders.length === 0 ? (
-        <EmptyState
-          art="search"
-          title="Brak zleceń spełniających kryteria"
-          ctaHref="/zlecenia/nowe"
-          ctaLabel="Dodaj pierwsze zlecenie"
-        >
-          Zmień filtry — albo opublikuj własne zlecenie i pozwól Liderom złożyć oferty.
-        </EmptyState>
+        /* CTA zależne od kontekstu (ux-copy, PD4) — jak na /uslugi. */
+        hasFilters ? (
+          <EmptyState
+            art="search"
+            title="Brak zleceń spełniających kryteria"
+            ctaHref="/zlecenia"
+            ctaLabel="Wyczyść filtry"
+          >
+            Poluzuj kryteria — pełna lista zleceń czeka obok.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            art="lantern"
+            title="Nikt jeszcze nie dodał zlecenia"
+            ctaHref="/zlecenia/nowe"
+            ctaLabel="Dodaj pierwsze zlecenie"
+          >
+            Opublikuj własne zlecenie i pozwól Liderom złożyć oferty.
+          </EmptyState>
+        )
       ) : (
         <div>
           {orders.map((order) => (

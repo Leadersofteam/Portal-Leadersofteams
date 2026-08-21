@@ -8,7 +8,10 @@
  * osobie sięgającej po ten sam telefon. Cache'ujemy wyłącznie statyki
  * z odciskiem w nazwie i stronę offline.
  */
-const CACHE = 'lot-v1';
+// v2 (PD4): /offline dostał migawkę feedu — zmiana wersji wymusza reinstalację
+// SW i odświeżenie precache'owanego dokumentu (stary siedziałby w cache'u
+// do końca świata, bo instalacja idzie tylko za zmianą bajtów tego pliku).
+const CACHE = 'lot-v2';
 const PRECACHE = ['/offline', '/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {

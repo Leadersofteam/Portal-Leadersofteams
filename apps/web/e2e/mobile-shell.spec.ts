@@ -72,6 +72,34 @@ test.describe('PWA', () => {
     await page.goto('/offline');
     await expect(page.getByRole('heading', { name: /Jesteś offline/ })).toBeVisible();
   });
+
+  test('offline pokazuje zapisany obraz feedu z localStorage (PD4)', async ({ page }) => {
+    // Migawkę renderuje skrypt INLINE w dokumencie (nie React) — patrz
+    // komentarz w app/offline/page.tsx. Kotwiczymy na POZYTYWNYM śladzie:
+    // nagłówku sekcji i treści wpisu.
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'lot_offline_feed',
+        JSON.stringify({
+          savedAt: 1755810000000,
+          items: [
+            {
+              name: 'Osoba Testowa',
+              time: '2026-08-21T18:30:00.000Z',
+              text: 'Wpis próbny do czytania offline',
+              lv: 2,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto('/offline');
+    await expect(page.getByRole('heading', { name: 'Ostatni zapisany obraz feedu' })).toBeVisible();
+    await expect(
+      page.locator('.offline-feed-card').getByText('Wpis próbny do czytania offline'),
+    ).toBeVisible();
+    await expect(page.locator('.offline-feed-card strong')).toHaveText('Osoba Testowa');
+  });
 });
 
 test.describe('tabele na telefonie', () => {

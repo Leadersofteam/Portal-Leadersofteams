@@ -13,6 +13,8 @@ import { PostMedia } from '@/components/post-media';
 import { QuotedPost } from '@/components/quoted-post';
 import type { QuotedPostView } from '@/components/quoted-post';
 import { serverApi } from '@/lib/server-api';
+import { FeedOfflineSnapshot } from '@/components/feed-offline-snapshot';
+import type { OfflineFeedItem } from '@/components/feed-offline-snapshot';
 
 import { Composer } from './composer';
 
@@ -154,10 +156,26 @@ export default async function FeedPage({
   const items = data?.items ?? [];
   const followingCount = data?.followingCount ?? 0;
   const now = new Date();
+
+  // Migawka offline (PD4): tylko zakres „cała społeczność" i tylko pola,
+  // które widzi gość — uzasadnienie przy FeedOfflineSnapshot.
+  const offlineItems: OfflineFeedItem[] =
+    scope === 'all'
+      ? items.map((item) => ({
+          name: item.actor.displayName,
+          time: item.createdAt,
+          text:
+            item.type === 'SOCIAL_POST_PUBLISHED' && item.post
+              ? item.post.body.slice(0, 500)
+              : itemDescription(item).text,
+          lv: item.actor.level,
+        }))
+      : [];
   const hrefFor = (s: FeedScope) => (s === 'all' ? '/feed?zakres=wszyscy' : '/feed');
 
   return (
     <main>
+      {scope === 'all' && offlineItems.length > 0 && <FeedOfflineSnapshot items={offlineItems} />}
       <h1>Feed społeczności</h1>
       <p className="muted">
         Chronologicznie — bez algorytmu, bez nieskończonego scrolla. To Ty decydujesz, kogo

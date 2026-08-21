@@ -53,7 +53,33 @@ export default async function AnalyticsPage() {
         </div>
       )}
 
-      <div className="table-wrap">
+      {/* PD4 (dług z PD3): 2 + N kolumn zdarzeń nie mieści się na 390 px —
+          na telefonie doba jest kartą z odsłonami-bohaterem, a zdarzenia
+          jedną linią (tylko niezerowe — zero w każdej rubryce to szum,
+          nie informacja). Wzorzec .rung-cards z /drabinki, pilnowany przez
+          e2e mobile-shell. */}
+      <div className="day-cards">
+        {rows.map((row) => {
+          const nonZero = labels
+            .map((l) => ({ label: l.label, n: row.counts[l.key] ?? 0 }))
+            .filter((c) => c.n > 0);
+          return (
+            <div className="day-card" key={row.day}>
+              <p className="day-card-date">{row.day}</p>
+              <p className="day-card-views" aria-label={`Odsłony: ${row.views}`}>
+                {row.views}
+              </p>
+              <p className="day-card-counts">
+                {nonZero.length === 0
+                  ? 'Bez zdarzeń'
+                  : nonZero.map((c) => `${c.label}: ${c.n}`).join(' · ')}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="table-wrap desktop-only">
         <table>
           <thead>
             <tr>

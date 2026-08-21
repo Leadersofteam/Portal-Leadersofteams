@@ -46,6 +46,12 @@ export default async function ListingsPage({
   const industries = industriesData?.industries ?? [];
   const popularTags = tagsData?.tags ?? [];
   const activeTag = typeof params.tag === 'string' ? params.tag : '';
+  const hasFilters = Boolean(
+    activeTag ||
+      (typeof params.q === 'string' && params.q) ||
+      (typeof params.industryId === 'string' && params.industryId) ||
+      (typeof params.priceMax === 'string' && params.priceMax),
+  );
 
   const nextParams = new URLSearchParams(query);
   if (data?.nextCursor) nextParams.set('cursor', data.nextCursor);
@@ -141,14 +147,27 @@ export default async function ListingsPage({
       </ListingFilters>
 
       {listings.length === 0 ? (
-        <EmptyState
-          art="search"
-          title="Brak usług spełniających kryteria"
-          ctaHref="/uslugi/nowa"
-          ctaLabel="Opublikuj pierwszą usługę"
-        >
-          Zmień filtry — albo, jeśli jesteś Liderem, pokaż firmom, co potrafisz.
-        </EmptyState>
+        /* CTA zależne od kontekstu (ux-copy, PD4): przy aktywnych filtrach
+           „pierwszą usługę" byłoby nieprawdą — usługi są, tylko odfiltrowane. */
+        hasFilters ? (
+          <EmptyState
+            art="search"
+            title="Brak usług spełniających kryteria"
+            ctaHref="/uslugi"
+            ctaLabel="Wyczyść filtry"
+          >
+            Poluzuj kryteria — pełna lista usług czeka obok.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            art="rung"
+            title="Nikt jeszcze nie opublikował usługi"
+            ctaHref="/uslugi/nowa"
+            ctaLabel="Opublikuj pierwszą usługę"
+          >
+            Jeśli jesteś Liderem — pokaż firmom, co potrafisz. Twoja usługa będzie tu pierwsza.
+          </EmptyState>
+        )
       ) : (
         <div className="feature-grid">
           {listings.map((listing) => (

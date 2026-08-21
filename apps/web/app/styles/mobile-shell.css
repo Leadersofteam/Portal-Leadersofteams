@@ -353,3 +353,78 @@
     justify-content: center;
   }
 }
+
+/* ===================== Offline: zapisany obraz feedu (PD4) ===================== */
+/* Karty buduje skrypt inline w app/offline/page.tsx (poza Reactem — patrz
+   komentarz tam); tu tylko skóra. Lewa krawędź niesie temperaturę poziomu
+   autora przez var(--level-N) ustawiane na elemencie. */
+#offline-feed {
+  max-width: 40rem;
+  margin: 2rem auto 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.offline-feed-card {
+  margin: 0;
+}
+
+.offline-feed-head {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.offline-feed-body {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+/* ===================== Analityka: doby jako karty (PD4, dług PD3) ===================== */
+/* Tabela dób ma 2 + N kolumn zdarzeń — na 390 px zostaje w DOM jako
+   .desktop-only, a czyta się karty (ten sam wzorzec co .rung-cards). */
+.day-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .day-cards {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.25rem 0;
+  }
+}
+
+.day-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.9rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.day-card-date {
+  margin: 0;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.day-card-views {
+  margin: 0;
+  align-self: center;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-strong);
+}
+
+.day-card-counts {
+  grid-column: 1 / -1;
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

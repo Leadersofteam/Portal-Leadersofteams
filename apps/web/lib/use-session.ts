@@ -58,4 +58,12 @@ export function useSession(): SessionState {
 /** Po wylogowaniu migawka modułu jest nieaktualna — wołane przez wylogowanie. */
 export function clearSessionCache() {
   inflight = null;
+  // Migawka feedu do offline (PD4) trzyma wyłącznie treści publiczne, ale
+  // po wylogowaniu i tak znika — następna osoba przy tym samym telefonie
+  // zaczyna od zera, nie od cudzego „ostatnio czytane".
+  try {
+    localStorage.removeItem('lot_offline_feed');
+  } catch {
+    /* tryb prywatny — nie ma czego czyścić */
+  }
 }

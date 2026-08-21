@@ -29,7 +29,10 @@
   --text: #e9ecf3;
   --text-strong: #f6f8fc;
   --text-muted: #99a2b3;
-  --text-faint: #6b7488;
+  /* PD4: rozjaśniony z #6b7488 (3,91:1 na --surface — poniżej AA dla drobnego
+     tekstu, a faint niesie timestampy i podpowiedzi). 4,68–5,31:1 na
+     surface-raised/surface/bg; hierarchia zostaje (muted ma 7,13). */
+  --text-faint: #7b859c;
   --text-body: #c6cede;
 
   /* ---- Drabinka: 7 poziomów — „im wyżej, tym cieplejsze światło" ----
