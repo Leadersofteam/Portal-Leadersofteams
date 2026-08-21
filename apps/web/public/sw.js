@@ -15,7 +15,27 @@ const CACHE = 'lot-v2';
 const PRECACHE = ['/offline', '/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)));
+  event.waitUntil(
+    caches.open(CACHE).then(async (cache) => {
+      await cache.addAll(PRECACHE);
+      // /offline renderuje migawkę feedu klientowym Reactem (PD4) — bez jego
+      // chunków strona offline byłaby szkieletem bez treści u kogoś, kto nigdy
+      // nie odwiedził /offline z siecią. Nazwy chunków mają odcisk builda,
+      // więc bierzemy je z aktualnego HTML zamiast wpisywać na sztywno.
+      try {
+        const res = await fetch('/offline');
+        const html = await res.text();
+        const zasoby = [
+          ...new Set(
+            Array.from(html.matchAll(/(?:src|href)="(\/_next\/static\/[^"]+)"/g), (m) => m[1]),
+          ),
+        ];
+        await cache.addAll(zasoby);
+      } catch {
+        // brak sieci przy instalacji — precache bazowy wystarczy na zaślepkę
+      }
+    }),
+  );
   self.skipWaiting();
 });
 

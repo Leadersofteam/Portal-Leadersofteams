@@ -48,9 +48,9 @@ export default async function ListingsPage({
   const activeTag = typeof params.tag === 'string' ? params.tag : '';
   const hasFilters = Boolean(
     activeTag ||
-      (typeof params.q === 'string' && params.q) ||
-      (typeof params.industryId === 'string' && params.industryId) ||
-      (typeof params.priceMax === 'string' && params.priceMax),
+    (typeof params.q === 'string' && params.q) ||
+    (typeof params.industryId === 'string' && params.industryId) ||
+    (typeof params.priceMax === 'string' && params.priceMax),
   );
 
   const nextParams = new URLSearchParams(query);

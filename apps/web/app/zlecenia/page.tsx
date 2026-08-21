@@ -29,8 +29,8 @@ export default async function OrdersPage({
   const params = await searchParams;
   const hasFilters = Boolean(
     (typeof params.q === 'string' && params.q) ||
-      (typeof params.industryId === 'string' && params.industryId) ||
-      (typeof params.budgetMin === 'string' && params.budgetMin),
+    (typeof params.industryId === 'string' && params.industryId) ||
+    (typeof params.budgetMin === 'string' && params.budgetMin),
   );
   const query = new URLSearchParams();
   for (const key of ['industryId', 'q', 'budgetMin', 'budgetMax', 'cursor'] as const) {
