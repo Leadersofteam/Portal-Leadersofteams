@@ -120,10 +120,10 @@ PD3 → D4 (App) → D5+PD4 (oba, dostępność i domknięcie).**
 
 ## Miary sukcesu
 
-| Miara                                       | Przed (19.08)       | Cel                                    |
-| ------------------------------------------- | ------------------- | -------------------------------------- |
-| Paleta primary = stockowy Tailwind          | tak                 | nie (wspólna decyzja z D1 App)         |
+| Miara                                       | Przed (19.08)       | Cel                                                                                                                                      |
+| ------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Paleta primary = stockowy Tailwind          | tak                 | nie (wspólna decyzja z D1 App)                                                                                                           |
 | LCP/CLS na 390 px                           | nigdy nie zmierzone | zmierzone w PD1; po PD2 CLS bez zmian, FCP/LCP w bazie poza /drabinką (+~80 ms za pasek poziomu 0 — świadomy koszt; szczegóły w HANDOFF) |
-| Stany puste z własną ilustracją SVG         | brak                | ✅ PD2: komplet na pierwszej mili (feed CTA, drabinka błąd+poziom 0)   |
-| Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | ✅ PD2: rozpoznawalny (krytyka 21.08)  |
-| Offline                                     | zaślepka            | ostatni feed czytelny                  |
+| Stany puste z własną ilustracją SVG         | brak                | ✅ PD2: komplet na pierwszej mili (feed CTA, drabinka błąd+poziom 0)                                                                     |
+| Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | ✅ PD2: rozpoznawalny (krytyka 21.08)                                                                                                    |
+| Offline                                     | zaślepka            | ostatni feed czytelny                                                                                                                    |

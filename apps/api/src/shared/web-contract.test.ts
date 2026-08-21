@@ -125,13 +125,8 @@ const EXCEPTIONS = new Map<string, string>([
     'Woła middleware Next surowym fetch-em pod `${apiUrl}/api/v1/analytics/hit` — ' +
       'nie przez apiFetch i nie literałem zaczynającym się od `/`.',
   ],
-  [
-    'PATCH /listings/:x',
-    'ZASTANY BRAK (znaleziony przez ten strażnik 2026-08-15): opublikowanej usługi ' +
-      'NIE DA SIĘ w Portalu edytować — panel ma tylko publikuj/wstrzymaj/archiwizuj. ' +
-      'Świadomie nieuzupełnione w S18 (sprint higieniczny, zero nowych funkcji); ' +
-      'edycja usługi jest dopisana do S21 w docs/SPRINTY-S18-S21.md.',
-  ],
+  // PATCH /listings/:x zdjęte z wyjątków 2026-08-21 (PD3): edycja usługi ma UI
+  // (/uslugi/[slug]/edytuj + „Edytuj" w panelu) — strażnik znowu pilnuje trasy.
 ]);
 
 describe('każda trasa API ma wejście w interfejsie', () => {

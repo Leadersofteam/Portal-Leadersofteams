@@ -202,42 +202,75 @@ export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
     },
 
     async getLeaderReviewStats(leaderUserId: string) {
-      const agg = await prisma.review.aggregate({
-        where: {
-          subjectLeaderUserId: leaderUserId,
-          direction: 'COMPANY_TO_LEADER',
-          publishedAt: { not: null },
-        },
-        _avg: { rating: true },
-        _count: { _all: true },
-      });
+      const [agg, completedOrders] = await Promise.all([
+        prisma.review.aggregate({
+          where: {
+            subjectLeaderUserId: leaderUserId,
+            direction: 'COMPANY_TO_LEADER',
+            publishedAt: { not: null },
+          },
+          _avg: { rating: true },
+          _count: { _all: true },
+        }),
+        // Odbicie logiki policzonej dla Firmy (getCompanyPublicStats):
+        // zrealizowane = CONFIRMED, a Lidera wskazuje wygrana oferta.
+        // Zaplanowane jako S21 pkt 1, wchodzi w PD3 — „zrealizowane zlecenia"
+        // to trzon śladu zaufania na karcie usługi i profilu Lidera.
+        prisma.order.count({
+          where: { status: 'CONFIRMED', awardedOffer: { leaderProfile: { userId: leaderUserId } } },
+        }),
+      ]);
       return {
         averageRating: agg._avg.rating ? Math.round(agg._avg.rating * 10) / 10 : null,
         reviewCount: agg._count._all,
+        completedOrders,
       };
     },
 
-    // Wsadowa wersja statystyk ocen — do listingów (katalog Liderów), jeden zapyt.
+    // Wsadowa wersja statystyk ocen — do listingów (katalog Liderów), dwa
+    // zapytania niezależnie od liczby Liderów (bez N+1).
     async getLeaderReviewStatsMany(
       leaderUserIds: string[],
-    ): Promise<Map<string, { averageRating: number | null; reviewCount: number }>> {
+    ): Promise<
+      Map<string, { averageRating: number | null; reviewCount: number; completedOrders: number }>
+    > {
       if (leaderUserIds.length === 0) return new Map();
-      const rows = await prisma.review.groupBy({
-        by: ['subjectLeaderUserId'],
-        where: {
-          subjectLeaderUserId: { in: leaderUserIds },
-          direction: 'COMPANY_TO_LEADER',
-          publishedAt: { not: null },
-        },
-        _avg: { rating: true },
-        _count: { _all: true },
-      });
-      const map = new Map<string, { averageRating: number | null; reviewCount: number }>();
-      for (const r of rows) {
-        if (!r.subjectLeaderUserId) continue;
-        map.set(r.subjectLeaderUserId, {
-          averageRating: r._avg.rating ? Math.round(r._avg.rating * 10) / 10 : null,
-          reviewCount: r._count._all,
+      const [rows, confirmed] = await Promise.all([
+        prisma.review.groupBy({
+          by: ['subjectLeaderUserId'],
+          where: {
+            subjectLeaderUserId: { in: leaderUserIds },
+            direction: 'COMPANY_TO_LEADER',
+            publishedAt: { not: null },
+          },
+          _avg: { rating: true },
+          _count: { _all: true },
+        }),
+        // groupBy nie przechodzi przez relacje — liczymy w JS po zwężonym
+        // findMany (tylko CONFIRMED wskazanych Liderów, sam userId).
+        prisma.order.findMany({
+          where: {
+            status: 'CONFIRMED',
+            awardedOffer: { leaderProfile: { userId: { in: leaderUserIds } } },
+          },
+          select: { awardedOffer: { select: { leaderProfile: { select: { userId: true } } } } },
+        }),
+      ]);
+      const completed = new Map<string, number>();
+      for (const o of confirmed) {
+        const uid = o.awardedOffer?.leaderProfile.userId;
+        if (uid) completed.set(uid, (completed.get(uid) ?? 0) + 1);
+      }
+      const map = new Map<
+        string,
+        { averageRating: number | null; reviewCount: number; completedOrders: number }
+      >();
+      for (const id of leaderUserIds) {
+        const r = rows.find((row) => row.subjectLeaderUserId === id);
+        map.set(id, {
+          averageRating: r?._avg.rating ? Math.round(r._avg.rating * 10) / 10 : null,
+          reviewCount: r?._count._all ?? 0,
+          completedOrders: completed.get(id) ?? 0,
         });
       }
       return map;

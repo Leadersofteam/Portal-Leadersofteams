@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -7,9 +8,11 @@ import { ApiRequestError, apiFetch } from '@/lib/api';
 
 export function ListingActions({
   listingId,
+  slug,
   status,
 }: {
   listingId: string;
+  slug: string;
   status: 'DRAFT' | 'PUBLISHED' | 'PAUSED' | 'ARCHIVED';
 }) {
   const router = useRouter();
@@ -32,6 +35,14 @@ export function ListingActions({
   return (
     <div className="actions-row" style={{ margin: 0 }}>
       {error && <span className="badge warning">{error}</span>}
+      {/* Edycja (PD3): do 21.08 panel umiał tylko publikować/wstrzymywać/
+          archiwizować — PATCH /listings/:id był martwą trasą (strażnik, S18).
+          Zarchiwizowanej nie edytujemy — API i tak odmówi (InvalidTransition). */}
+      {status !== 'ARCHIVED' && (
+        <Link className="btn secondary" href={`/uslugi/${slug}/edytuj`}>
+          Edytuj
+        </Link>
+      )}
       {(status === 'DRAFT' || status === 'PAUSED') && (
         <button className="btn" disabled={pending} onClick={() => void act('publish')}>
           Opublikuj

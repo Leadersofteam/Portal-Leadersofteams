@@ -45,6 +45,7 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
           level: levels.get(leaderProfile.userId) ?? 0,
           averageRating: stats.get(leaderProfile.userId)?.averageRating ?? null,
           reviewCount: stats.get(leaderProfile.userId)?.reviewCount ?? 0,
+          completedOrders: stats.get(leaderProfile.userId)?.completedOrders ?? 0,
         },
       }));
     }

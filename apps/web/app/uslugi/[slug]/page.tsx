@@ -157,6 +157,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       </p>
       <PackageCompare packages={listing.packages} />
 
+      {isOwner && (
+        <p className="mt-2">
+          <Link className="btn secondary" href={`/uslugi/${listing.slug}/edytuj`}>
+            Edytuj tę usługę
+          </Link>
+        </p>
+      )}
+
       {!isOwner && (
         <>
           <h2>Zapytaj o tę usługę</h2>

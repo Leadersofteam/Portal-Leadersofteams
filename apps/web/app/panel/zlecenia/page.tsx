@@ -37,7 +37,7 @@ export default async function MyOrdersPage() {
         <p className="muted">Twoja firma nie ma jeszcze zleceń.</p>
       ) : (
         orders.map((order) => (
-          <div key={order.id} className="list-row">
+          <div key={order.id} className="list-row list-row--stack">
             <div>
               <h3>
                 <Link href={`/zlecenia/${order.id}`}>{order.title}</Link>
@@ -46,7 +46,9 @@ export default async function MyOrdersPage() {
                 {order.companyName} · {order.industry} · ofert: {order.offersCount}
               </div>
             </div>
-            <span className="badge">{ORDER_STATUS_LABELS[order.status] ?? order.status}</span>
+            <span className="badge list-row-aside">
+              {ORDER_STATUS_LABELS[order.status] ?? order.status}
+            </span>
           </div>
         ))
       )}

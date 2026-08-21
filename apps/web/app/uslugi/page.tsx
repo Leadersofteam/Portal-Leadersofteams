@@ -1,30 +1,14 @@
 import Link from 'next/link';
 
-import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
-import { LevelBadge } from '@/components/ui/level-badge';
+import { ListingCard, type ListingCardData } from '@/components/ui/listing-card';
 import { serverApi } from '@/lib/server-api';
 
-import { FavoriteStar } from './favorite-star';
+import { ListingFilters } from './listing-filters';
 
-export interface ListingCard {
-  id: string;
-  slug: string;
-  title: string;
-  priceFrom: number;
-  images: string[];
-  tags: Array<{ name: string; slug: string }>;
-  packages: Array<{ tier: string; priceDeclared: number; deliveryDays: number }>;
-  industry: { id: string; name: string };
-  isFavorite?: boolean;
-  leader: {
-    displayName: string;
-    avatarFileId: string | null;
-    level: number;
-    averageRating: number | null;
-    reviewCount: number;
-  };
-}
+// Typ karty żyje przy komponencie (components/ui/listing-card) — tu tylko alias
+// dla dotychczasowych importerów.
+export type { ListingCardData as ListingCard } from '@/components/ui/listing-card';
 
 interface Industry {
   id: string;
@@ -36,8 +20,6 @@ export const metadata = {
   description:
     'Katalog usług Liderów Leaders of Teams: jasny zakres, deklarowane widełki cen i poziom w Drabince zdobyty realną pracą. Wyślij zapytanie i przekształć je w zlecenie.',
 };
-
-const plnFormat = new Intl.NumberFormat('pl-PL');
 
 export default async function ListingsPage({
   searchParams,
@@ -52,7 +34,7 @@ export default async function ListingsPage({
   }
 
   const [data, industriesData, tagsData] = await Promise.all([
-    serverApi<{ listings: ListingCard[]; nextCursor: string | null }>(
+    serverApi<{ listings: ListingCardData[]; nextCursor: string | null }>(
       `/listings?${query.toString()}`,
     ),
     serverApi<{ industries: Industry[] }>('/industries'),
@@ -102,57 +84,61 @@ export default async function ListingsPage({
         </ul>
       )}
 
-      <form className="filters" method="get">
-        <div className="field">
-          <label htmlFor="q">Szukaj</label>
-          <input
-            id="q"
-            name="q"
-            defaultValue={typeof params.q === 'string' ? params.q : ''}
-            placeholder="np. automatyzacja sprzedaży"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="industryId">Branża</label>
-          <select
-            id="industryId"
-            name="industryId"
-            defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
-          >
-            <option value="">Wszystkie</option>
-            {industries.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="priceMax">Cena do (zł)</label>
-          <input
-            id="priceMax"
-            name="priceMax"
-            type="number"
-            min={0}
-            defaultValue={typeof params.priceMax === 'string' ? params.priceMax : ''}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="sort">Sortowanie</label>
-          <select
-            id="sort"
-            name="sort"
-            defaultValue={typeof params.sort === 'string' ? params.sort : 'newest'}
-          >
-            <option value="newest">Najnowsze</option>
-            <option value="price_asc">Cena: od najniższej</option>
-            <option value="price_desc">Cena: od najwyższej</option>
-          </select>
-        </div>
-        <button className="btn" type="submit">
-          Filtruj
-        </button>
-      </form>
+      {/* Na 390 px cztery pola filtrów spychały pierwszą kartę o cały ekran —
+          zwijamy je za przyciskiem (ListingFilters); desktop widzi je od razu. */}
+      <ListingFilters>
+        <form className="filters" method="get">
+          <div className="field">
+            <label htmlFor="q">Szukaj</label>
+            <input
+              id="q"
+              name="q"
+              defaultValue={typeof params.q === 'string' ? params.q : ''}
+              placeholder="np. automatyzacja sprzedaży"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="industryId">Branża</label>
+            <select
+              id="industryId"
+              name="industryId"
+              defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
+            >
+              <option value="">Wszystkie</option>
+              {industries.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="priceMax">Cena do (zł)</label>
+            <input
+              id="priceMax"
+              name="priceMax"
+              type="number"
+              min={0}
+              defaultValue={typeof params.priceMax === 'string' ? params.priceMax : ''}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="sort">Sortowanie</label>
+            <select
+              id="sort"
+              name="sort"
+              defaultValue={typeof params.sort === 'string' ? params.sort : 'newest'}
+            >
+              <option value="newest">Najnowsze</option>
+              <option value="price_asc">Cena: od najniższej</option>
+              <option value="price_desc">Cena: od najwyższej</option>
+            </select>
+          </div>
+          <button className="btn" type="submit">
+            Filtruj
+          </button>
+        </form>
+      </ListingFilters>
 
       {listings.length === 0 ? (
         <EmptyState
@@ -166,48 +152,7 @@ export default async function ListingsPage({
       ) : (
         <div className="feature-grid">
           {listings.map((listing) => (
-            <div key={listing.id} className="card listing-card">
-              {listing.images[0] && (
-                <img
-                  src={`/api/v1/files/${listing.images[0]}/full`}
-                  alt=""
-                  className="portfolio-image"
-                  loading="lazy"
-                />
-              )}
-              <div className="listing-fav">
-                <FavoriteStar listingId={listing.id} initial={listing.isFavorite ?? false} />
-              </div>
-              <h3>
-                <Link href={`/uslugi/${listing.slug}`}>{listing.title}</Link>
-              </h3>
-              <div
-                className="mt-1"
-                style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}
-              >
-                <Avatar
-                  name={listing.leader.displayName}
-                  size="sm"
-                  src={
-                    listing.leader.avatarFileId
-                      ? `/api/v1/files/${listing.leader.avatarFileId}/thumb`
-                      : null
-                  }
-                />
-                <span className="meta">{listing.leader.displayName}</span>
-                <LevelBadge level={listing.leader.level} />
-              </div>
-              <p className="muted mt-1">
-                {listing.industry.name}
-                {listing.leader.reviewCount > 0
-                  ? ` · ★ ${listing.leader.averageRating}/5 (${listing.leader.reviewCount})`
-                  : ''}
-              </p>
-              <p className="mt-1">
-                <strong>od {plnFormat.format(listing.priceFrom)} zł</strong>{' '}
-                <span className="muted">· {listing.packages.length} pakiet(y)</span>
-              </p>
-            </div>
+            <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
       )}

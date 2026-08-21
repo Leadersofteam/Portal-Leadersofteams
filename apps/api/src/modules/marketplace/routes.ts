@@ -106,6 +106,7 @@ export function marketplaceRoutes({
           level: levels.get(l.userId) ?? 0,
           averageRating: stats.get(l.userId)?.averageRating ?? null,
           reviewCount: stats.get(l.userId)?.reviewCount ?? 0,
+          completedOrders: stats.get(l.userId)?.completedOrders ?? 0,
         })),
         nextCursor,
       });

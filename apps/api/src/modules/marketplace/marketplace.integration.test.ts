@@ -347,6 +347,21 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     expect(order.json().order.status).toBe('CONFIRMED');
   });
 
+  it('zrealizowane zlecenie liczy się Liderowi publicznie (ślad zaufania, PD3)', async () => {
+    // Odbicie licznika Firmy (ordersCompleted): CONFIRMED wskazuje Lidera przez
+    // wygraną ofertę. Publiczny profil i katalog muszą to pokazywać — „status
+    // trzeba zapracować" wymaga, żeby zapracowane było widoczne.
+    const profile = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/leaders/${leaderProfileId}`,
+    });
+    expect(profile.json().profile.completedOrders).toBe(1);
+
+    const list = await ctx.app.inject({ method: 'GET', url: '/api/v1/leaders' });
+    const mine = list.json().leaders.find((l: { id: string }) => l.id === leaderProfileId);
+    expect(mine.completedOrders).toBe(1);
+  });
+
   it('outbox zawiera pełny ślad zdarzeń domenowych cyklu życia', async () => {
     const events = await ctx.prisma.outboxEvent.findMany({
       where: { payload: { path: '$.orderId', equals: orderId } },

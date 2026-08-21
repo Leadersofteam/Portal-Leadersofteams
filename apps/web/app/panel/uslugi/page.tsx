@@ -72,7 +72,9 @@ export default async function MyListingsPage() {
         </EmptyState>
       ) : (
         listings.map((listing) => (
-          <div key={listing.id} className="list-row">
+          /* --stack (PD3): z trzema akcjami prawa kolumna na 390 px spadała
+             pod lewą bez wyrównania — modyfikator robi z tego świadomy stos. */
+          <div key={listing.id} className="list-row list-row--stack">
             <div>
               <h3>
                 <Link href={`/uslugi/${listing.slug}`}>{listing.title}</Link>
@@ -82,7 +84,9 @@ export default async function MyListingsPage() {
                 <span className="badge">{STATUS_LABELS[listing.status]}</span>
               </div>
             </div>
-            <ListingActions listingId={listing.id} status={listing.status} />
+            <div className="list-row-aside">
+              <ListingActions listingId={listing.id} slug={listing.slug} status={listing.status} />
+            </div>
           </div>
         ))
       )}

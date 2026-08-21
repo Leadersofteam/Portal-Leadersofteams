@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { serverApi } from '@/lib/server-api';
 
-import { NewListingForm } from './new-listing-form';
+import { ListingForm } from '../listing-form';
 
 export const metadata = { title: 'Nowa usługa — Leaders of Teams' };
 
@@ -28,7 +28,7 @@ export default async function NewListingPage() {
             Opisz konkretny rezultat, podziel ofertę na pakiety i zadeklaruj ceny. Usługa trafi do
             katalogu po publikacji.
           </p>
-          <NewListingForm industries={industriesData?.industries ?? []} />
+          <ListingForm industries={industriesData?.industries ?? []} />
         </>
       ) : (
         <p className="muted">

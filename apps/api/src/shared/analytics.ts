@@ -79,6 +79,7 @@ const KNOWN_PATHS = new Set([
   '/uslugi',
   '/uslugi/nowa',
   '/uslugi/:id',
+  '/uslugi/:id/edytuj',
   '/watki/:id',
   '/weryfikacja',
   '/wpisy/:id',

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LevelBadge } from '@/components/ui/level-badge';
+import { levelName } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
 
 interface LeaderRow {
@@ -99,7 +100,7 @@ export default async function LeadersDirectoryPage({
       ) : (
         <div>
           {leaders.map((leader) => (
-            <div key={leader.id} className="list-row">
+            <div key={leader.id} className="list-row list-row--stack">
               <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                 <Avatar
                   name={leader.displayName}
@@ -113,8 +114,8 @@ export default async function LeadersDirectoryPage({
                   <div className="meta muted">{leader.industry.name}</div>
                 </div>
               </div>
-              <div className="text-right">
-                <LevelBadge level={leader.level} />
+              <div className="text-right list-row-aside">
+                <LevelBadge level={leader.level} name={levelName(leader.level)} />
                 {leader.reviewCount > 0 && (
                   <div className="mt-1">
                     <span className="badge">

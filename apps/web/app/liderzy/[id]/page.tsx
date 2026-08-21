@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/json-ld';
 import { Avatar } from '@/components/ui/avatar';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { leaderProfileJsonLd } from '@/lib/jsonld';
+import { levelName } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
 
 interface PublicProfile {
@@ -20,6 +21,7 @@ interface PublicProfile {
     level: number;
     averageRating: number | null;
     reviewCount: number;
+    completedOrders: number;
     industry: { name: string };
     portfolioItems: Array<{
       id: string;
@@ -110,23 +112,24 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
           industryName: profile.industry.name,
         })}
       />
-      <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* Nagłówek klasą, nie inline-flexem (PD3) — wspólny hook CSS z resztą
+          „wiarygodności". Do 21.08 poziom 0 zostawiał wiszącą kropkę po branży
+          (LevelBadge zwraca null), a ocena tonęła w meta — separator stawiamy
+          tylko przy realnej odznace. */}
+      <header className="leader-head">
         <Avatar
           name={profile.displayName}
           size="lg"
           src={profile.avatarFileId ? `/api/v1/files/${profile.avatarFileId}/thumb` : null}
         />
-        <div>
-          <h1 style={{ margin: 0 }}>{profile.displayName}</h1>
-          <p className="meta muted" style={{ margin: '0.45rem 0 0' }}>
-            {profile.industry.name} · <LevelBadge level={profile.level} />
-            {profile.reviewCount > 0 && (
+        <div className="leader-head-main">
+          <h1>{profile.displayName}</h1>
+          <p className="leader-head-meta">
+            {profile.industry.name}
+            {profile.level >= 1 && (
               <>
-                {' '}
-                <span className="badge">
-                  ★ {profile.averageRating}/5 ({profile.reviewCount}{' '}
-                  {profile.reviewCount === 1 ? 'ocena' : 'ocen'})
-                </span>
+                {' · '}
+                <LevelBadge level={profile.level} name={levelName(profile.level)} />
               </>
             )}
           </p>
@@ -134,11 +137,36 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
         {me?.user && !isSelf && (
           <FollowButton userId={profile.userId} initiallyFollowing={initiallyFollowing} />
         )}
-      </div>
+      </header>
       <p className="mt-2" style={{ fontSize: '1.1rem' }}>
         {profile.headline}
       </p>
       {profile.bio && <p className="description">{profile.bio}</p>}
+
+      {/* Pas zaufania — lustro kart z profilu Firmy (feature-grid + stat-number):
+          jeden język wiarygodności po obu stronach rynku. Karta pojawia się
+          tylko dla ZAPRACOWANEGO faktu — świeżemu Liderowi nie wystawiamy zer. */}
+      {(profile.reviewCount > 0 || profile.completedOrders > 0) && (
+        <section className="feature-grid mt-2">
+          {profile.completedOrders > 0 && (
+            <div className="card">
+              <h3>Zrealizowane zlecenia</h3>
+              <p className="stat-number">{profile.completedOrders}</p>
+              <p className="muted">potwierdzone przez Firmy po odbiorze</p>
+            </div>
+          )}
+          {profile.reviewCount > 0 && (
+            <div className="card">
+              <h3>Ocena od Firm</h3>
+              <p className="stat-number">★ {profile.averageRating}/5</p>
+              <p className="muted">
+                {profile.reviewCount} {profile.reviewCount === 1 ? 'ocena' : 'ocen'} — publikowane
+                symultanicznie, bez odwetu
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
       {reviewsData && reviewsData.reviews.length > 0 && (
         <section>

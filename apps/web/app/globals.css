@@ -1724,6 +1724,87 @@ main tbody tr:hover {
   position: relative;
 }
 
+/* Nagłówek profilu Lidera (PD3) — klasa zamiast inline-flexów. */
+.leader-head {
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.leader-head-main h1 {
+  margin: 0;
+}
+
+.leader-head-meta {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0.45rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+/* Zwijane filtry katalogu: telefon widzi przycisk, desktop zawsze pełny
+   formularz (przycisk znika). Klasa .open odsłania body na mobile. */
+.filters-toggle {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.filters-disclosure:not(.open) .filters-body {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .filters-toggle {
+    display: none;
+  }
+
+  .filters-disclosure:not(.open) .filters-body {
+    display: block;
+  }
+}
+
+.listing-author {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+/* Pas zaufania (PD3): fakty zapracowane — ocena i zrealizowane zlecenia.
+   Osobny pas zamiast dopisku w `muted`, bo to na te liczby patrzy Firma,
+   zanim spojrzy na cenę. Kropka rozdziela fakty, każdy fakt w jednym kawałku. */
+.trust-strip {
+  display: flex;
+  gap: 0.35rem 0.9rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin: 0.55rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.trust-strip .trust-fact {
+  white-space: nowrap;
+}
+
+/* Gwiazdka światłem marki, nie bursztynem — bursztyn należy wyłącznie do
+   poziomu 7 (ta sama zasada co przy docenieniach w feedzie). */
+.trust-strip .trust-fact > span[aria-hidden] {
+  color: var(--primary-300);
+}
+
+.listing-price {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
 .listing-fav {
   position: absolute;
   top: 0.65rem;

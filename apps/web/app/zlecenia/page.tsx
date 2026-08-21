@@ -103,7 +103,7 @@ export default async function OrdersPage({
       ) : (
         <div>
           {orders.map((order) => (
-            <div key={order.id} className="list-row">
+            <div key={order.id} className="list-row list-row--stack">
               <div>
                 <h3>
                   <Link href={`/zlecenia/${order.id}`}>{order.title}</Link>
@@ -112,7 +112,7 @@ export default async function OrdersPage({
                   {order.companyName} · {order.industry.name}
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div className="list-row-aside" style={{ textAlign: 'right' }}>
                 <div>{formatBudget(order.budgetMin, order.budgetMax)}</div>
                 {order.minLevel > 0 && (
                   <span className="badge accent">wymagany poziom {order.minLevel}+</span>

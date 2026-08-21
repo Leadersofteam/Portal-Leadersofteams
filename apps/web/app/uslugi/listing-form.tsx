@@ -36,16 +36,52 @@ async function uploadListingImage(file: File): Promise<string> {
   return res.file.id;
 }
 
-export function NewListingForm({
+/** Dane startowe trybu edycji (PD3) — kształt zgodny z PATCH /listings/:id. */
+export interface ListingInitial {
+  id: string;
+  slug: string;
+  title: string;
+  industryId: string;
+  description: string;
+  tags: string[];
+  packages: Array<{
+    tier: PackageDraft['tier'];
+    name: string;
+    priceDeclared: number;
+    scope: string;
+    deliveryDays: number;
+  }>;
+  imageFileIds: string[];
+}
+
+/**
+ * Jeden formularz dla tworzenia i edycji usługi. Tryb edycji (PD3) domyka
+ * martwą trasę PATCH /listings/:id znalezioną przez strażnika kontraktu
+ * w S18 — opublikowanej usługi nie dało się w Portalu poprawić.
+ */
+export function ListingForm({
   industries,
+  initial,
 }: {
   industries: Array<{ id: string; name: string }>;
+  initial?: ListingInitial;
 }) {
   const router = useRouter();
+  const isEdit = Boolean(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [packages, setPackages] = useState<PackageDraft[]>([EMPTY_PACKAGE('BASIC')]);
-  const [imageIds, setImageIds] = useState<string[]>([]);
+  const [packages, setPackages] = useState<PackageDraft[]>(
+    initial && initial.packages.length > 0
+      ? initial.packages.map((p) => ({
+          tier: p.tier,
+          name: p.name,
+          priceDeclared: String(p.priceDeclared),
+          scope: p.scope,
+          deliveryDays: String(p.deliveryDays),
+        }))
+      : [EMPTY_PACKAGE('BASIC')],
+  );
+  const [imageIds, setImageIds] = useState<string[]>(initial?.imageFileIds ?? []);
   const [uploading, setUploading] = useState(false);
 
   function setPackage(index: number, patch: Partial<PackageDraft>) {
@@ -84,26 +120,38 @@ export function NewListingForm({
       .map((t) => t.trim())
       .filter((t) => t.length >= 2)
       .slice(0, 5);
+    const payload = {
+      industryId: form.get('industryId'),
+      title: form.get('title'),
+      description: form.get('description'),
+      tags,
+      packages: packages.map((p) => ({
+        tier: p.tier,
+        name: p.name,
+        priceDeclared: Number(p.priceDeclared),
+        scope: p.scope,
+        deliveryDays: Number(p.deliveryDays),
+      })),
+      imageFileIds: imageIds,
+    };
     try {
-      const created = await apiFetch<{ id: string; slug: string }>('/listings', {
-        method: 'POST',
-        body: JSON.stringify({
-          industryId: form.get('industryId'),
-          title: form.get('title'),
-          description: form.get('description'),
-          tags,
-          packages: packages.map((p) => ({
-            tier: p.tier,
-            name: p.name,
-            priceDeclared: Number(p.priceDeclared),
-            scope: p.scope,
-            deliveryDays: Number(p.deliveryDays),
-          })),
-          imageFileIds: imageIds,
-        }),
-      });
-      await apiFetch(`/listings/${created.id}/publish`, { method: 'POST' });
-      router.push(`/uslugi/${created.slug}`);
+      if (initial) {
+        await apiFetch(`/listings/${initial.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        // Slug jest STABILNY z założenia (service nie przelicza go przy
+        // zmianie tytułu) — wracamy pod ten sam adres.
+        router.push(`/uslugi/${initial.slug}`);
+        router.refresh();
+      } else {
+        const created = await apiFetch<{ id: string; slug: string }>('/listings', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        await apiFetch(`/listings/${created.id}/publish`, { method: 'POST' });
+        router.push(`/uslugi/${created.slug}`);
+      }
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Coś poszło nie tak.');
       setPending(false);
@@ -122,12 +170,18 @@ export function NewListingForm({
           required
           minLength={10}
           maxLength={120}
+          defaultValue={initial?.title}
           placeholder="np. Zbuduję i wdrożę automatyzację lejka sprzedaży"
         />
+        {isEdit && (
+          <p className="muted mt-1">
+            Adres usługi (link) pozostaje bez zmian — także po zmianie tytułu.
+          </p>
+        )}
       </div>
       <div className="field">
         <label htmlFor="l-industry">Branża</label>
-        <select id="l-industry" name="industryId" required defaultValue="">
+        <select id="l-industry" name="industryId" required defaultValue={initial?.industryId ?? ''}>
           <option value="" disabled>
             Wybierz branżę
           </option>
@@ -140,11 +194,23 @@ export function NewListingForm({
       </div>
       <div className="field">
         <label htmlFor="l-desc">Opis (min. 50 znaków — co dokładnie dostarczysz?)</label>
-        <textarea id="l-desc" name="description" required minLength={50} maxLength={10000} />
+        <textarea
+          id="l-desc"
+          name="description"
+          required
+          minLength={50}
+          maxLength={10000}
+          defaultValue={initial?.description}
+        />
       </div>
       <div className="field">
         <label htmlFor="l-tags">Tagi (po przecinku, max 5)</label>
-        <input id="l-tags" name="tags" placeholder="np. automatyzacja, CRM, sprzedaż" />
+        <input
+          id="l-tags"
+          name="tags"
+          defaultValue={initial?.tags.join(', ')}
+          placeholder="np. automatyzacja, CRM, sprzedaż"
+        />
       </div>
 
       <h3 className="mt-3">Pakiety (1–3)</h3>
@@ -263,7 +329,13 @@ export function NewListingForm({
       )}
 
       <button className="btn mt-2" type="submit" disabled={pending || uploading}>
-        {pending ? 'Publikowanie…' : 'Opublikuj usługę'}
+        {isEdit
+          ? pending
+            ? 'Zapisywanie…'
+            : 'Zapisz zmiany'
+          : pending
+            ? 'Publikowanie…'
+            : 'Opublikuj usługę'}
       </button>
     </form>
   );
