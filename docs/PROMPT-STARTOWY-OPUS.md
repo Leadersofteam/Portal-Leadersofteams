@@ -47,9 +47,11 @@ Do czasu odpowiedzi rób punkty 3–5 z S19, które od niej nie zależą.
 
 ## Zadanie na tę sesję: S19 w docs/SPRINTY-S18-S21.md
 
-> **Korekta 20.08:** jeśli prowadzisz tor DESIGNU (docs/DESIGN-SPRINTY.md), właściwym
-> zadaniem jest **PD2 „Pierwsza mila"** — PD1 wykonany 20.08 (paleta A przejęta z App,
-> landing bez skeletonu, liczby bazowe w HANDOFF). PD2 idzie PRZED zaproszeniami S19.
+> **Korekta 21.08:** PD2 „Pierwsza mila" WYKONANY i wdrożony na produkcję (twardy test
+> „szablon czy produkt" zdany — baner w HANDOFF). Tor designu wg harmonogramu ekosystemu
+> przechodzi teraz do **D2 w App** (`/docker/leaders-of-teams-app`, brief w tamtejszym
+> `docs/SESJA-NASTEPNA.md`); w Portalu następny jest PD3 „Marketplace i profile" (po D2).
+> Tor funkcjonalny S19 bez zmian — czeka na decyzje właściciela niżej.
 
 Zaproszenie Lidera bez cienia MLM (ścieżkę DOPISZ do antimlm.integration.test.ts —
 inaczej strażnik zazieleni się przez pominięcie), ślad zaufania w /szukaj,

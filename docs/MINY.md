@@ -271,3 +271,14 @@ tylko-do-odczytu. Objaw: cała suita testów pada na
 incydent. Diagnoza: `redis-cli info replication` (rola `slave` + obcy `master_host`).
 Naprawa: `redis-cli slaveof no one` + sprawdź `config get dir/dbfilename` (atak przez
 `CONFIG SET` pisze pliki poza /data) i `docker logs` po `REPLICAOF enabled`.
+
+### Pomiar wydajności na tym VPS kłamie pod obciążeniem (21.08)
+
+Trzy sesje pomiarowe FCP/LCP tego samego builda dały trzy różne obrazy — winne nie były
+zmiany w kodzie, tylko **load 6–9 na 2 rdzeniach**: równoległy `next build` innego projektu
+i osierocony Chromium Playwrighta żujący CPU od poprzedniego dnia. Statyczny landing
+„zwolnił" o 1000 ms bez żadnej zmiany. **Przed pomiarem: `uptime` + `ps aux --sort=-%cpu`;
+liczby porównuj z bazą tylko przy niskim load; pierwszy przebieg po deployu odrzucaj
+(zimny ISR/cache).** Osobna pułapka: sekwencyjne `await serverApi(...)` w server component
+sumują się w TTFB — dwa niezależne zapytania to `Promise.all`, nie dwa awaity
+(na /drabince kosztowało to gościa ~150 ms).

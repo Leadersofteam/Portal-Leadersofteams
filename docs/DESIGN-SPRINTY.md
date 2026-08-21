@@ -55,7 +55,16 @@ krytyka (`design:design-critique`) → HANDOFF. Pomiar przed/po.
    zgadywaniem". `fetchpriority` na hero, `sizes` na obrazach feedu (S20 pkt 2).
 3. Kontrast AA całej nowej palety na ciemnym tle — zmierzony, nie oceniony na oko.
 
-### PD2 — Pierwsza mila jak z produktu, nie z szablonu
+### PD2 — Pierwsza mila jak z produktu, nie z szablonu — ✅ WYKONANY 21.08 (HANDOFF, baner)
+
+> Twardy test (pkt 3) ZDANY: krytyka wskazała nasz /feed bez logo obok generycznego mocka
+> i wymieniła wyróżniki (temperatura poziomów + etykieta, separator dni jako widoczna
+> chronologia ADR-010, Bricolage, atmosfera tła, pasek 5 slotów). Zrzuty i mock:
+> sesja 21.08. Korekta stanu zastanego względem tego dokumentu: `LevelBadge` już PRZED PD2
+> czytał `--level-1…7` (nie była to „stara odznaka") — dług polegał na słabej sile rażenia
+> (0.78rem, brak nazwy poziomu poza tabelą /drabinki); `.ladder-visual` miał już temperaturę
+> wszystkich 7 szczebli na desktopie, złamana była tylko para kolor+etykieta na 390 px
+> (`display:none` na nazwach). Część ilustracji istniała od wcześniej (`illustrations.tsx`).
 
 Ekrany, które zobaczy każdy z pierwszych dwudziestu, w kolejności pierwszego kontaktu:
 **strona główna → /rejestracja → kreator /start → /feed → /drabinka**.
@@ -114,7 +123,7 @@ PD3 → D4 (App) → D5+PD4 (oba, dostępność i domknięcie).**
 | Miara                                       | Przed (19.08)       | Cel                                    |
 | ------------------------------------------- | ------------------- | -------------------------------------- |
 | Paleta primary = stockowy Tailwind          | tak                 | nie (wspólna decyzja z D1 App)         |
-| LCP/CLS na 390 px                           | nigdy nie zmierzone | zmierzone w PD1, nie gorsze po PD2–PD4 |
-| Stany puste z własną ilustracją SVG         | brak                | komplet na pierwszej mili              |
-| Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | rozpoznawalny                          |
+| LCP/CLS na 390 px                           | nigdy nie zmierzone | zmierzone w PD1; po PD2 CLS bez zmian, FCP/LCP w bazie poza /drabinką (+~80 ms za pasek poziomu 0 — świadomy koszt; szczegóły w HANDOFF) |
+| Stany puste z własną ilustracją SVG         | brak                | ✅ PD2: komplet na pierwszej mili (feed CTA, drabinka błąd+poziom 0)   |
+| Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | ✅ PD2: rozpoznawalny (krytyka 21.08)  |
 | Offline                                     | zaślepka            | ostatni feed czytelny                  |

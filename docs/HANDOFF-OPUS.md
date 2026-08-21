@@ -11,6 +11,38 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-21 (design, PD2): pierwsza mila jak z produktu — wdrożone na staging
+> i produkcję** (`0a85df2` + `bccc78b`), healthz/worker/uploads zielone, 212/212 API,
+> 17/17 e2e. **Twardy test „szablon czy produkt" ZDANY** (mock generycznego feedu obok
+> naszego /feed bez logo; wyróżniki: temperatura poziomów z etykietą, separatory dni,
+> Bricolage, atmosfera tła, pasek 5 slotów).
+>
+> **1. Co weszło.** Feed: separatory dni (Dziś/Wczoraj/data — chronologia ADR-010 jako
+> WIDOCZNA cecha), karta autora z poziomem ma lewą krawędź w kolorze szczebla
+> (`--actor-lv`), chip poziomu z nazwą („Poziom 2 · Praktyk", `lib/levels.ts` — lustro
+> `ladder/rules.ts`), awans celebruje odznaka `LevelBadge size="md"` (jedyna celebracja,
+> ADR-004), pusty stan „cisza" dostał CTA, chipy tematów przycięte do 6 (11 spychało treść
+> o ekran na 390 px). Landing: drabinka na 390 px kładzie się na bok (column-reverse,
+> bursztyn NA GÓRZE, nazwy widoczne — wcześniej `display:none` łamał parę kolor+etykieta),
+> pasek liczb 7/2/0. Rejestracja ≥1024: kolumna „po co konto" z latarnią. Kreator: wejścia
+> kroków `rise` w nowej skali ruchu (`--dur-fast/--dur-slow/--ease-out` w `:root`), karty
+> „Pierwszego ruchu" z miniaturami ART. Drabinka: próg punktów liczbą-bohaterem karty,
+> `levels=[]` → EmptyState, zalogowany poziom 0 widzi pasek „Twoje miejsce czeka".
+> Kontrast nowych par zmierzony: 6.7–11:1 (wszystko ≥AA).
+>
+> **2. Wydajność.** CLS bez zmian (0–0.058, ten sam shift shellu). FCP/LCP w bazie PD1
+> poza `/drabinką`: FCP ~480–530 ms vs baza 296–424 — świadomy koszt dwóch nowych zapytań
+> (`/auth/me` dla paska poziomu 0); pierwsza wersja robiła je SEKWENCYJNIE (620–836 ms),
+> `Promise.all` w `bccc78b` zbił to o ~150 ms. UWAGA na pomiar: trzy sesje pomiarowe dały
+> trzy obrazy, bo VPS (2 rdzenie) miał load 6–9 — równoległy `next build` Zodiamo z innej
+> sesji ORAZ osierocony Chromium Playwrighta z 20.08 (PID 48660/48562, ~416 min CPU,
+> NIE ubity — może należeć do żywej sesji; **właściciel: warto sprawdzić i ubić**).
+> Liczby porównywać tylko przy niskim load.
+>
+> **3. Pełny audyt WCAG** (`design:accessibility-review`) świadomie NIE zrobiony — to
+> zakres PD4; w PD2 przeszedł szybki pas (kontrasty zmierzone, focus states, etykiety przy
+> temperaturze, cele ≥44 px pilnowane przez e2e mobile-shell).
+
 > **✅ SESJA 2026-08-20 (design, PD1): Portal przejął paletę „cieplone indigo" + landing bez
 > mignięcia skeletonu.** Wdrożone na staging i produkcję, wszystkie kontrole zielone.
 >
