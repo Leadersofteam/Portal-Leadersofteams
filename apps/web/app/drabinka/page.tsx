@@ -34,13 +34,16 @@ export const metadata = {
 };
 
 export default async function LadderRulesPage() {
-  const data = await serverApi<{ levels: LevelRow[] }>('/ladder/levels');
-  const levels = data?.levels ?? [];
-
   // „Drabinka na poziomie 0" (PD2): zalogowany bez poziomu widzi swoje
   // miejsce, nie tylko regulamin. Gość — stronę jak dotąd. Zapis odporny na
   // błąd API: brak odpowiedzi = po prostu brak paska, nigdy błąd strony.
-  const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
+  // Poziomy i sesję pobieramy RÓWNOLEGLE — sekwencja kosztowała gościa ~200 ms
+  // TTFB (zmierzone po pierwszym wdrożeniu PD2).
+  const [data, me] = await Promise.all([
+    serverApi<{ levels: LevelRow[] }>('/ladder/levels'),
+    serverApi<{ user: { id: string } | null }>('/auth/me'),
+  ]);
+  const levels = data?.levels ?? [];
   const ladder = me?.user
     ? await serverApi<{ state: { level: number; totalPoints: number } }>('/me/ladder')
     : null;
