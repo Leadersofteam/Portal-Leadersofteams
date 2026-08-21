@@ -97,7 +97,17 @@ Ekrany, które zobaczy każdy z pierwszych dwudziestu, w kolejności pierwszego 
 3. Edycja opublikowanej usługi (`PATCH /listings/:id` — martwa trasa znaleziona przez
    strażnika w S18) dostaje UI przy okazji przebudowy karty.
 
-### PD4 — Dostępność, offline i domknięcie
+### PD4 — Dostępność, offline i domknięcie — ✅ WYKONANY 21.08 (HANDOFF, baner)
+
+> Pkt 2 z ważną lekcją: migawka feedu renderowana skryptem inline była ZDEJMOWANA
+> przez hydrację Reacta (e2e kłamał na zielono, prawdę pokazał zrzut) — finalnie
+> renderuje ją klientowy React, a SW parsuje chunki /offline do precache (MINY).
+> Migawka trzyma WYŁĄCZNIE zakres „cała społeczność" (publiczny) i znika przy
+> wylogowaniu. Pkt 1: kontrast 23 par zmierzony, jedyna poniżej AA (--text-faint
+> 3,91) naprawiona tokenem do 4,68–5,31. Pkt 3: CTA pustych stanów /uslugi
+> i /zlecen przestały obiecywać „pierwszą" przy aktywnych filtrach. Dług PD3
+> domknięty: /panel/analityka dobami-kartami na 390 px (wzorzec .rung-cards).
+
 
 1. Audyt `design:accessibility-review` (WCAG 2.1 AA) na 390 px.
 2. Offline przestaje być zaślepką (S20 pkt 3): ostatni feed z cache czytelny offline,
@@ -137,4 +147,4 @@ PD3 → D4 (App) → D5+PD4 (oba, dostępność i domknięcie).**
 | LCP/CLS na 390 px                           | nigdy nie zmierzone | zmierzone w PD1; po PD2 CLS bez zmian, FCP/LCP w bazie poza /drabinką (+~80 ms za pasek poziomu 0 — świadomy koszt; szczegóły w HANDOFF) |
 | Stany puste z własną ilustracją SVG         | brak                | ✅ PD2: komplet na pierwszej mili (feed CTA, drabinka błąd+poziom 0)                                                                     |
 | Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | ✅ PD2: rozpoznawalny (krytyka 21.08)                                                                                                    |
-| Offline                                     | zaślepka            | ostatni feed czytelny                                                                                                                    |
+| Offline                                     | zaślepka            | ✅ PD4: ostatni feed czytelny (migawka publiczna)                                                                                                                    |

@@ -47,13 +47,12 @@ Do czasu odpowiedzi rób punkty 3–5 z S19, które od niej nie zależą.
 
 ## Zadanie na tę sesję: S19 w docs/SPRINTY-S18-S21.md
 
-> **Korekta 21.08 wieczór:** PD2 ORAZ PD3 wykonane i wdrożone na produkcję (banery
-> w HANDOFF; PD3 wchłonął S21 pkt 0 i 1 — edycja usługi żyje, licznik realizacji
-> widoczny). D2 i D3 App też domknięte. Tor designu wg harmonogramu przechodzi do
-> **D4 w App** (dług: BoardPage, warianty kartowe tabel — brief w tamtejszym
-> `docs/SESJA-NASTEPNA.md`); w Portalu ostatni został **PD4** (dostępność, offline,
-> ux-copy + tabele /panel/analityka przeniesione z PD3). Tor funkcjonalny S19 bez
-> zmian — czeka na decyzje właściciela niżej.
+> **Korekta 21.08 noc:** program designu Portalu (PD1–PD4) jest DOMKNIĘTY —
+> PD4 wykonany i wdrożony na produkcję (baner w HANDOFF: offline z migawką feedu,
+> kontrast AA, karty analityki, ux-copy pustych stanów). W App domknięte D1–D4;
+> tor designu przechodzi do **D5 w App** (finał: dostępność WCAG + wykresy dataviz —
+> brief w tamtejszym `docs/SESJA-NASTEPNA.md`). Tor funkcjonalny S19 bez zmian —
+> czeka na decyzje właściciela niżej.
 
 Zaproszenie Lidera bez cienia MLM (ścieżkę DOPISZ do antimlm.integration.test.ts —
 inaczej strażnik zazieleni się przez pominięcie), ślad zaufania w /szukaj,

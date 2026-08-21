@@ -292,3 +292,20 @@ weryfikacji. Ścieżki zalogowane na stagingu testuj przez API z ręcznie niesio
 cookie (`curl -H "cookie: lot_sid=..."` — curl ignoruje Secure; działa też dla
 server-rendered stron Next, bo serwer czyta nagłówek bez oglądania flag), albo
 w przeglądarce dopiero na produkcyjnym HTTPS.
+
+### Hydracja Reacta zdejmuje DOM wstrzyknięty skryptem inline (21.08, PD4)
+
+Migawka feedu na /offline była budowana skryptem inline przy parsowaniu HTML
+(żeby działała bez chunków Reacta). Karty ISTNIAŁY w DOM — a potem hydracja
+App Routera odtwarzała drzewo serwerowe i sekcja wracała do pustego stanu.
+Najgorsze: **e2e przechodził na zielono**, bo asercje łapały moment sprzed
+wyczyszczenia; kłamstwo pokazał dopiero zrzut ze stagingu i pomiar
+`children.length` w trzech punktach czasu. Zasady: (1) w drzewie zarządzanym
+przez Reacta treść renderuje REACT (klientowy komponent + useEffect), nie
+goły skrypt; (2) test „element widoczny" tuż po nawigacji nie dowodzi, że
+element PRZEŻYJE hydrację — sprawdź stan także po niej; (3) zasoby, których
+strona potrzebuje offline, dokładaj do precache SW parsując realny HTML
+(nazwy chunków mają odcisk builda — nie da się ich wpisać na sztywno).
+Do kompletu: precache'owany dokument odświeża się TYLKO przy zmianie bajtów
+`sw.js` — każda zmiana strony z PRECACHE wymaga podbicia wersji cache
+(`lot-v1` → `lot-v2`), inaczej stary HTML zostaje na urządzeniach na zawsze.

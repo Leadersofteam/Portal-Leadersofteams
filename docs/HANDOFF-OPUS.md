@@ -11,6 +11,22 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-21 noc (design, PD4 — FINAŁ programu Portalu): offline przestał być
+> zaślepką, dostępność domknięta — wdrożone na staging i produkcję.**
+> (1) **Offline z ostatnim obrazem feedu**: migawka w localStorage — wyłącznie zakres
+> „cała społeczność" (to, co widzi gość; skład „obserwowanych" zdradzałby graf obserwacji),
+> czyszczona przy wylogowaniu; strona /offline renderuje ją klientowym Reactem, a instalacja
+> SW parsuje z HTML /offline nazwy chunków i dokłada je do precache (lot-v2). **Lekcja
+> sesji:** pierwsza wersja wstrzykiwała karty skryptem inline i hydracja Reacta zdejmowała
+> je z DOM — e2e kłamał na zielono (łapał stan sprzed wyczyszczenia), prawdę pokazał dopiero
+> zrzut ze stagingu; pełny mechanizm w MINY. (2) **WCAG**: 23 pary tokenów zmierzone, jedyna
+> poniżej AA (--text-faint 3,91:1) naprawiona do 4,68–5,31:1 jednym tokenem. (3) **Dług PD3**:
+> /panel/analityka — doby kartami na 390 px (.day-cards, wzorzec .rung-cards), tabela zostaje
+> jako .desktop-only. (4) **ux-copy**: puste stany /uslugi i /zlecen z kontekstowym CTA
+> („Wyczyść filtry" przy aktywnych filtrach zamiast fałszywego „Opublikuj pierwszą").
+> Bramki: 213/213 API, **18/18 e2e** (nowy test migawki). Programy designu App (D1–D4)
+> i Portalu (PD1–PD4) są DOMKNIĘTE poza D5 App (dostępność/dataviz — brief w repo App).
+
 > **✅ SESJA 2026-08-21 wieczór (design, PD3): marketplace opowiada zaufanie — wdrożone
 > na staging i produkcję** (`982d26f` + docs), healthz/worker/uploads zielone, **213/213
 > API** (baza 212 + nowy test), 17/17 e2e. Test anty-generyczności katalogu ZDANY.

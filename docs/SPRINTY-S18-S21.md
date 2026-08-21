@@ -31,7 +31,7 @@ najwyższy poziom UX/UI) i częściowo wchłania ten plan:
 **PD1** przejmuje S20 pkt 1–2 (pomiar bazowy, `fetchpriority`/`sizes`), **PD2** poprzedza
 zaproszenia z S19 (pierwsza mila ma wyglądać jak produkt, ZANIM zobaczy ją pierwszych
 dwudziestu), **PD3** realizuje S21 pkt 0 (UI edycji opublikowanej usługi), **PD4** domyka
-S20 pkt 3–4 (offline, stany puste). Decyzje właściciela z S19 (dane demo R-17, lista
+S20 pkt 3–4 (offline, stany puste). **✅ PD4 wykonany 21.08** — offline z migawką feedu (S20 pkt 3 domknięty; kontrola „/api/* nigdy do cache" trzyma się w sw.js), stany puste przeszły przegląd ux-copy. Decyzje właściciela z S19 (dane demo R-17, lista
 zaproszeń) pozostają nadrzędne i nietknięte. Harmonogram wspólny z App (D1–D5) — opis
 w [DESIGN-SPRINTY.md](DESIGN-SPRINTY.md).
 
