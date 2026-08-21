@@ -66,9 +66,16 @@
   --radius-lg: 16px;
   --radius-pill: 999px;
 
-  /* ---- Ruch ---- */
+  /* ---- Ruch (PD2: jedna skala zamiast liczb w komponentach) ----
+     --dur-fast: feedback dotyku (:active) — ma być odczuwalny, nie oglądany.
+     --dur: zmiany koloru/obrysu (stan zastany, ~20 użyć — nie ruszać).
+     --dur-slow + --ease-out: elementy WCHODZĄCE (kroki kreatora, sekcje);
+     ease-out do wejść, bo ruch wytraca prędkość jak obiekt fizyczny. */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 100ms;
   --dur: 160ms;
+  --dur-slow: 260ms;
 
   --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Display — Bricolage Grotesque: charakterny grotesk nagłówków; tekst zostaje w Inter. */
@@ -625,8 +632,11 @@ main {
   transform: translateY(-1px);
 }
 
+/* Feedback dotyku: dociśnięcie w --dur-fast — wolniejszy czas robi z przycisku
+   galaretę, brak feedbacku każe zgadywać, czy dotyk zadziałał. */
 .btn:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--dur-fast);
 }
 
 .btn:disabled {
@@ -1202,6 +1212,26 @@ main tbody tr:hover {
   box-shadow: 0 0 14px -4px color-mix(in srgb, var(--level-7) 60%, transparent);
 }
 
+/* Odznaka-bohater (awans w feedzie, nagłówki pierwszej mili): większa, numer
+   Bricolage'em. Nazwa poziomu przychodzi w treści (props `name`), więc
+   temperatura nigdy nie występuje bez etykiety. */
+.level-badge--md {
+  padding: 0.4rem 0.95rem;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-family: var(--font-display);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lv) 20%, transparent),
+    color-mix(in srgb, var(--lv) 9%, transparent)
+  );
+}
+
+.level-badge--md .rungs {
+  width: 0.78rem;
+  gap: 3px;
+}
+
 .level-badge .rungs {
   display: inline-flex;
   flex-direction: column;
@@ -1573,6 +1603,39 @@ main tbody tr:hover {
   white-space: nowrap;
 }
 
+/* Liczby-bohaterowie hero (PD2): trzy zasady ustrojowe jako liczby
+   Bricolage'em. To narracja („tak tu jest"), nie metryki — więc liczby są
+   zaszyte w treści strony, nie pobierane z API. */
+.hero-stats {
+  display: flex;
+  gap: clamp(1.2rem, 4vw, 2.6rem);
+  flex-wrap: wrap;
+  margin: 2rem 0 0;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--border);
+}
+
+.hero-stats > div {
+  flex: 0 1 auto;
+}
+
+.hero-stats dt {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+}
+
+.hero-stats dd {
+  margin: 0.3rem 0 0;
+  max-width: 11rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 /* FAQ — natywne details/summary, zero JS. */
 .faq {
   display: grid;
@@ -1795,13 +1858,56 @@ main tbody tr:hover {
   }
 }
 
+/* Na 390 px drabinka kładzie się na bok: rzędy rosnące ku dołowi zamiast
+   kolumn. Poprzednio etykiety były chowane (`display: none`) — a kolor poziomu
+   bez nazwy łamie zasadę „temperatura zawsze w parze z etykietą". */
 @media (max-width: 640px) {
+  /* column-reverse: DOM idzie 1→7, ale wzrok ma widzieć bursztyn szczytu NA
+     GÓRZE — „im wyżej, tym cieplejsze światło" musi działać też w pionie. */
   .ladder-visual {
-    gap: 0.3rem;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.35rem;
+    align-items: flex-start;
+  }
+
+  .ladder-visual .rung:nth-child(n) {
+    height: auto;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.85rem;
   }
 
   .ladder-visual .rung span {
-    display: none;
+    position: static;
+    transform: none;
+    font-size: 0.8rem;
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  /* Szczebel rośnie z poziomem — wspinaczka czytelna też w poziomie. */
+  .ladder-visual .rung:nth-child(1) {
+    width: 58%;
+  }
+  .ladder-visual .rung:nth-child(2) {
+    width: 65%;
+  }
+  .ladder-visual .rung:nth-child(3) {
+    width: 72%;
+  }
+  .ladder-visual .rung:nth-child(4) {
+    width: 79%;
+  }
+  .ladder-visual .rung:nth-child(5) {
+    width: 86%;
+  }
+  .ladder-visual .rung:nth-child(6) {
+    width: 93%;
+  }
+  .ladder-visual .rung:nth-child(7) {
+    width: 100%;
   }
 
   .hero-cta .btn {

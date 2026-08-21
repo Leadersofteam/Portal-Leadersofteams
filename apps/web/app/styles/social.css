@@ -33,6 +33,7 @@
   align-items: center;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   color: var(--text-muted);
+  font-family: var(--font-display);
   font-size: 0.94rem;
   font-weight: 550;
   text-decoration: none;
@@ -132,6 +133,29 @@
   margin-top: 0.5rem;
 }
 
+/* Separator dnia (PD2): chronologia to zasada ustrojowa feedu (ADR-010) —
+   separator robi z niej widoczną cechę, jakiej algorytmiczne feedy nie mają.
+   Przy okazji karty nie muszą powtarzać pełnej daty — wystarczy godzina. */
+.feed-day {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.9rem 0 0.1rem;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.feed-day::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-strong), transparent);
+}
+
 .feed-card {
   display: flex;
   gap: 0.85rem;
@@ -143,8 +167,24 @@
   transition: border-color var(--dur) var(--ease);
 }
 
+/* Nić temperatury (PD2): karta autora z poziomem dostaje lewą krawędź w kolorze
+   jego szczebla (--actor-lv ustawia strona). Etykietą koloru jest LevelBadge
+   w nagłówku karty — temperatura nigdy nie występuje sama. Poziom 0 = brak
+   akcentu, bez piętnowania. */
+.feed-card--lv {
+  border-left: 3px solid color-mix(in srgb, var(--actor-lv) 55%, transparent);
+}
+
+.feed-card-achievement {
+  margin: 0.55rem 0 0;
+}
+
 .feed-card:hover {
   border-color: var(--border-strong);
+}
+
+.feed-card--lv:hover {
+  border-left-color: color-mix(in srgb, var(--actor-lv) 80%, transparent);
 }
 
 /* Wpis na własnej stronie — mocniejszy, bez efektu hover listy. */

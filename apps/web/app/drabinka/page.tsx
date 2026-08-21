@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { EmptyState } from '@/components/ui/empty-state';
+import { ArtFreeRung } from '@/components/ui/illustrations';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { serverApi } from '@/lib/server-api';
 
@@ -34,6 +36,15 @@ export const metadata = {
 export default async function LadderRulesPage() {
   const data = await serverApi<{ levels: LevelRow[] }>('/ladder/levels');
   const levels = data?.levels ?? [];
+
+  // „Drabinka na poziomie 0" (PD2): zalogowany bez poziomu widzi swoje
+  // miejsce, nie tylko regulamin. Gość — stronę jak dotąd. Zapis odporny na
+  // błąd API: brak odpowiedzi = po prostu brak paska, nigdy błąd strony.
+  const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
+  const ladder = me?.user
+    ? await serverApi<{ state: { level: number; totalPoints: number } }>('/me/ladder')
+    : null;
+  const viewerLevel = ladder?.state.level ?? null;
 
   return (
     <main>
@@ -86,7 +97,38 @@ export default async function LadderRulesPage() {
         </li>
       </ul>
 
+      {viewerLevel === 0 && (
+        <div className="ladder-your-spot">
+          <div>
+            <h2>Twoje miejsce czeka</h2>
+            <p>
+              Masz {ladder?.state.totalPoints ?? 0} pkt — pierwszy szczebel zaczyna się od
+              pierwszego uznania Twojej pracy. Weź zlecenie albo odpowiedz komuś w grupie.
+            </p>
+            <p className="ladder-your-spot-cta">
+              <Link className="btn" href="/zlecenia">
+                Znajdź zlecenie
+              </Link>
+              <Link className="btn secondary" href="/grupy">
+                Wejdź do grup
+              </Link>
+            </p>
+          </div>
+          <ArtFreeRung className="ladder-your-spot-art" />
+        </div>
+      )}
+
       <h2>Poziomy i progi</h2>
+      {levels.length === 0 && (
+        <EmptyState
+          art="ladder"
+          title="Nie udało się wczytać poziomów"
+          ctaHref="/drabinka"
+          ctaLabel="Spróbuj ponownie"
+        >
+          Zasady się nie zmieniły — po prostu nie dotarły. Odśwież stronę za chwilę.
+        </EmptyState>
+      )}
       {levels.length === 7 && (
         <div className="ladder-visual" aria-hidden="true">
           {levels.map((lvl) => (
@@ -109,7 +151,9 @@ export default async function LadderRulesPage() {
             <span className="rung-card-level">{lvl.level}</span>
             <h3 className="rung-card-name">{lvl.name}</h3>
             <p className="rung-card-meta">
-              {lvl.pointsRequired} pkt
+              {/* Próg punktów jest liczbą-bohaterem karty (PD2): to jedyna
+                  liczba, którą wspinacz naprawdę porównuje między szczeblami. */}
+              <strong className="rung-card-points">{lvl.pointsRequired}</strong> pkt
               {lvl.minPathSharePct > 0 ? ` · min. ${lvl.minPathSharePct}% z każdej ścieżki` : ''}
             </p>
             <p className="rung-card-unlock">{levelUnlocks(lvl)}</p>

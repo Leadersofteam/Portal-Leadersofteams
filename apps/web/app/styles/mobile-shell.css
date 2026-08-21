@@ -296,6 +296,16 @@
   color: var(--text-muted);
 }
 
+/* Próg punktów jako liczba-bohater karty (PD2). Kolor szczebla ma obok siebie
+   dwie etykiety (numer i nazwę poziomu), więc para temperatura+tekst zostaje. */
+.rung-card-points {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--rung-color, var(--text-strong));
+}
+
 .rung-card-unlock {
   margin: 0.3rem 0 0;
   font-size: 0.85rem;

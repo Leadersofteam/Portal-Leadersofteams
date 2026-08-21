@@ -293,6 +293,97 @@
   }
 }
 
+/* ===================== Rejestracja (PD2) ===================== */
+/* Dwie kolumny od 1024 px: formularz + cicha kolumna „po co to konto".
+   Poniżej — sam formularz; ilustracja nie ma prawa spychać pól na telefonie. */
+.auth-aside {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .auth-split {
+    display: grid;
+    grid-template-columns: minmax(0, 27rem) minmax(0, 19rem);
+    justify-content: center;
+    align-items: center;
+    gap: 3.5rem;
+  }
+
+  .auth-split .form-card {
+    margin-inline: 0;
+  }
+
+  .auth-aside {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .auth-aside-art {
+    max-width: 150px;
+    margin-bottom: 1.1rem;
+    color: var(--text-faint);
+  }
+}
+
+/* ===================== Drabinka: Twoje miejsce (PD2) ===================== */
+/* Pasek dla zalogowanego na poziomie 0 — pusty stan CZŁOWIEKA, nie danych:
+   ta sama kreskówka co empty-state (kropkowana rama), bo znaczenie jest to
+   samo: „miejsce czeka, podpowiadamy ruch". */
+.ladder-your-spot {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.25rem;
+  align-items: center;
+  margin: 1.75rem 0;
+  padding: 1.5rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.ladder-your-spot h2 {
+  margin: 0 0 0.4rem;
+}
+
+.ladder-your-spot p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Podwójna klasa zamiast !important: sąsiadująca reguła `p { margin: 0 }`
+   jest bardziej swoista (klasa+element) i wygrałaby z samą klasą. */
+.ladder-your-spot .ladder-your-spot-cta {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.ladder-your-spot-art {
+  width: 8.5rem;
+  max-width: none;
+  color: var(--text-faint);
+}
+
+@media (max-width: 640px) {
+  .ladder-your-spot {
+    grid-template-columns: 1fr;
+    padding: 1.1rem;
+  }
+
+  .ladder-your-spot-art {
+    display: none;
+  }
+
+  .ladder-your-spot-cta .btn {
+    flex: 1 1 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
 .wizard {
   padding: 1.5rem;
   border: 1px solid var(--border);
@@ -321,9 +412,14 @@
   height: 2rem;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
+  font-family: var(--font-display);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-faint);
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
 }
 
 .wizard-steps li.active span {
@@ -335,6 +431,13 @@
 .wizard-steps li.done span {
   border-color: var(--success);
   color: var(--success);
+}
+
+/* Wejście kroku: jednorazowy `rise` w skali ruchu (--dur-slow/--ease-out) —
+   orientacja „poszedłem dalej", nie fajerwerk. Keyframe z `both`, więc przy
+   prefers-reduced-motion (0.001 ms) sekcja po prostu stoi w stanie końcowym. */
+.wizard section {
+  animation: rise var(--dur-slow) var(--ease-out) both;
 }
 
 .wizard-choices {
@@ -368,7 +471,28 @@
 }
 
 .wizard-choice:active {
-  transform: scale(0.995);
+  transform: scale(0.99);
+  transition-duration: var(--dur-fast);
+}
+
+/* Karty „Pierwszego ruchu" z miniaturą sceny z rejestru ART. */
+.wizard-choice--art {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.wizard-choice-art {
+  flex-shrink: 0;
+  width: 3.4rem;
+  max-width: none;
+  height: auto;
+  color: var(--text-faint);
+  transition: color var(--dur) var(--ease);
+}
+
+.wizard-choice:hover .wizard-choice-art {
+  color: var(--primary-400);
 }
 
 .wizard-choice strong {

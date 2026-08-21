@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Fragment } from 'react';
 
 import { AppreciateButton } from '@/components/appreciate-button';
 import { BookmarkButton } from '@/components/bookmark-button';
@@ -7,7 +8,7 @@ import { ShareButton } from '@/components/share-button';
 import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LevelBadge } from '@/components/ui/level-badge';
-import { formatFeedTime } from '@/lib/labels';
+import { levelName } from '@/lib/levels';
 import { PostMedia } from '@/components/post-media';
 import { QuotedPost } from '@/components/quoted-post';
 import type { QuotedPostView } from '@/components/quoted-post';
@@ -70,13 +71,39 @@ function itemDescription(item: FeedItem): { text: string; href: string | null } 
         href: meta.threadId ? `/watki/${meta.threadId}` : null,
       };
     case 'LEVEL_ACHIEVED':
+      // Numer poziomu niesie odznaka-bohater pod spodem — tekst go nie
+      // powtarza, żeby karta nie mówiła tego samego trzy razy.
       return {
-        text: `zdobył(a) poziom ${String(meta.level ?? '')} w Drabince Lidera`,
+        text: 'wspiął/wspięła się na nowy poziom w Drabince Lidera',
         href: '/drabinka',
       };
     default:
       return { text: 'nowa aktywność', href: null };
   }
+}
+
+// Feed jest jawnie chronologiczny (ADR-010) — separatory dni robią z tej
+// zasady WIDOCZNĄ cechę, a przy okazji zdejmują z każdej karty powtarzaną
+// pełną datę: pod separatorem wystarczy godzina.
+function dayKey(iso: string): string {
+  return new Date(iso).toDateString();
+}
+
+function dayLabel(iso: string, now: Date): string {
+  const date = new Date(iso);
+  if (date.toDateString() === now.toDateString()) return 'Dziś';
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return 'Wczoraj';
+  return date.toLocaleDateString('pl-PL', {
+    day: 'numeric',
+    month: 'long',
+    ...(date.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}),
+  });
+}
+
+function timeLabel(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
 
 export default async function FeedPage({
@@ -120,10 +147,13 @@ export default async function FeedPage({
   const topicsData = await serverApi<{
     topics: Array<{ name: string; slug: string; count: number }>;
   }>('/topics/popular');
-  const topics = topicsData?.topics ?? [];
+  // Sześć chipów = maks. dwa rzędy na 390 px. Jedenaście spychało pierwszą
+  // treść o cały ekran w dół — nawigacja nie może przesłaniać rozmowy.
+  const topics = (topicsData?.topics ?? []).slice(0, 6);
 
   const items = data?.items ?? [];
   const followingCount = data?.followingCount ?? 0;
+  const now = new Date();
   const hrefFor = (s: FeedScope) => (s === 'all' ? '/feed?zakres=wszyscy' : '/feed');
 
   return (
@@ -180,96 +210,144 @@ export default async function FeedPage({
             tutaj.
           </EmptyState>
         ) : (
-          <EmptyState art="inbox" title="Na razie cisza">
+          // Pusty stan podpowiada ruch (PD2): zalogowany ma kompozytor na tej
+          // samej stronie, gość — rejestrację. CTA nigdy nie zaprasza do
+          // zapraszania (ADR-004).
+          <EmptyState
+            art="inbox"
+            title="Na razie cisza"
+            ctaHref={isLoggedIn ? '#composer' : '/rejestracja'}
+            ctaLabel={isLoggedIn ? 'Napisz pierwszy wpis' : 'Załóż konto i napisz pierwszy wpis'}
+          >
             {scope === 'following'
-              ? `Obserwowani (${followingCount}) nie opublikowali jeszcze nic nowego.`
-              : 'Nikt jeszcze nic nie opublikował. Możesz być pierwszy.'}
+              ? `Obserwowani (${followingCount}) nie opublikowali jeszcze nic nowego. Zajrzyj do całej społeczności albo zacznij rozmowę.`
+              : 'Nikt jeszcze nic nie opublikował. Pierwszy wpis będzie tu na Ciebie czekał.'}
           </EmptyState>
         )
       ) : (
         <div className="feed-list">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const isPost = item.type === 'SOCIAL_POST_PUBLISHED' && item.post;
             const { text, href } = itemDescription(item);
+            const previous = index > 0 ? items[index - 1] : null;
+            const newDay = !previous || dayKey(previous.createdAt) !== dayKey(item.createdAt);
+            const achievedLevel = item.type === 'LEVEL_ACHIEVED' ? Number(item.meta.level ?? 0) : 0;
             return (
-              <article key={item.id} className="feed-card">
-                <Avatar
-                  name={item.actor.displayName}
-                  size="sm"
-                  src={
-                    item.actor.avatarFileId
-                      ? `/api/v1/files/${item.actor.avatarFileId}/thumb`
-                      : null
+              <Fragment key={item.id}>
+                {newDay && (
+                  <p
+                    className="feed-day"
+                    aria-label={`Wpisy z dnia: ${dayLabel(item.createdAt, now)}`}
+                  >
+                    {dayLabel(item.createdAt, now)}
+                  </p>
+                )}
+                <article
+                  className={item.actor.level >= 1 ? 'feed-card feed-card--lv' : 'feed-card'}
+                  style={
+                    item.actor.level >= 1
+                      ? ({
+                          '--actor-lv': `var(--level-${Math.min(item.actor.level, 7)})`,
+                        } as React.CSSProperties)
+                      : undefined
                   }
-                />
-                <div className="feed-card-body">
-                  <div className="feed-card-head">
-                    {item.actor.handle ? (
-                      <Link href={`/profil/${item.actor.handle}`}>
+                >
+                  <Avatar
+                    name={item.actor.displayName}
+                    size="sm"
+                    src={
+                      item.actor.avatarFileId
+                        ? `/api/v1/files/${item.actor.avatarFileId}/thumb`
+                        : null
+                    }
+                  />
+                  <div className="feed-card-body">
+                    <div className="feed-card-head">
+                      {item.actor.handle ? (
+                        <Link href={`/profil/${item.actor.handle}`}>
+                          <strong>{item.actor.displayName}</strong>
+                        </Link>
+                      ) : (
                         <strong>{item.actor.displayName}</strong>
-                      </Link>
-                    ) : (
-                      <strong>{item.actor.displayName}</strong>
-                    )}
-                    {item.actor.level >= 1 && <LevelBadge level={item.actor.level} />}
-                    <time dateTime={item.createdAt} className="feed-card-time">
-                      {formatFeedTime(item.createdAt)}
-                    </time>
-                  </div>
-
-                  {isPost ? (
-                    <>
-                      {item.post!.body && (
-                        <p className="feed-post-body">
-                          <MentionText>{item.post!.body}</MentionText>
-                        </p>
                       )}
-                      {item.post!.quoted && <QuotedPost quoted={item.post!.quoted} />}
-                      <PostMedia
-                        fileIds={item.post!.imageFileIds}
-                        alt={`Obraz do wpisu — ${item.actor.displayName}`}
-                      />
-                      <div className="feed-card-actions">
-                        {/* ZASTANE do S17: `initialActive` było tu na sztywno
+                      {/* W karcie awansu chip przy nazwisku by się dublował
+                        z odznaką-bohaterem niżej — zostaje tylko bohater. */}
+                      {item.actor.level >= 1 && item.type !== 'LEVEL_ACHIEVED' && (
+                        <LevelBadge level={item.actor.level} name={levelName(item.actor.level)} />
+                      )}
+                      <time dateTime={item.createdAt} className="feed-card-time">
+                        {timeLabel(item.createdAt)}
+                      </time>
+                    </div>
+
+                    {isPost ? (
+                      <>
+                        {item.post!.body && (
+                          <p className="feed-post-body">
+                            <MentionText>{item.post!.body}</MentionText>
+                          </p>
+                        )}
+                        {item.post!.quoted && <QuotedPost quoted={item.post!.quoted} />}
+                        <PostMedia
+                          fileIds={item.post!.imageFileIds}
+                          alt={`Obraz do wpisu — ${item.actor.displayName}`}
+                        />
+                        <div className="feed-card-actions">
+                          {/* ZASTANE do S17: `initialActive` było tu na sztywno
                             `false`, więc docenione wpisy wyglądały na
                             niedocenione, a ponowne kliknięcie kasowało własne
                             docenienie. Feed zwraca teraz stan widza. */}
-                        <AppreciateButton
-                          postId={item.subjectId}
-                          initialCount={item.post!.appreciations}
-                          initialActive={item.post!.viewerAppreciated}
-                        />
-                        <Link className="feed-action" href={`/wpisy/${item.subjectId}`}>
-                          {item.post!.comments > 0
-                            ? `Komentarze (${item.post!.comments})`
-                            : 'Skomentuj'}
-                        </Link>
-                        <BookmarkButton
-                          subjectType="SOCIAL_POST"
-                          subjectId={item.subjectId}
-                          initialActive={item.post!.viewerBookmarked}
-                        />
-                        {isLoggedIn && (
-                          <Link
-                            className="feed-action"
-                            href={`/feed?cytuj=${item.subjectId}#composer`}
-                          >
-                            Podaj dalej
+                          <AppreciateButton
+                            postId={item.subjectId}
+                            initialCount={item.post!.appreciations}
+                            initialActive={item.post!.viewerAppreciated}
+                          />
+                          <Link className="feed-action" href={`/wpisy/${item.subjectId}`}>
+                            {item.post!.comments > 0
+                              ? `Komentarze (${item.post!.comments})`
+                              : 'Skomentuj'}
                           </Link>
+                          <BookmarkButton
+                            subjectType="SOCIAL_POST"
+                            subjectId={item.subjectId}
+                            initialActive={item.post!.viewerBookmarked}
+                          />
+                          {isLoggedIn && (
+                            <Link
+                              className="feed-action"
+                              href={`/feed?cytuj=${item.subjectId}#composer`}
+                            >
+                              Podaj dalej
+                            </Link>
+                          )}
+                          <ShareButton
+                            url={`/wpisy/${item.subjectId}`}
+                            title={`Wpis ${item.actor.displayName} — Leaders of Teams`}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="feed-card-text">
+                          {href ? <Link href={href}>{text}</Link> : text}
+                        </p>
+                        {/* Awans to jedyne celebrowane zdarzenie — i celowo: dotyczy
+                          zapracowanego statusu, nie aktywności (ADR-004/010).
+                          Odznaka-bohater niesie temperaturę ZDOBYTEGO poziomu. */}
+                        {achievedLevel >= 1 && (
+                          <p className="feed-card-achievement">
+                            <LevelBadge
+                              level={achievedLevel}
+                              name={levelName(achievedLevel)}
+                              size="md"
+                            />
+                          </p>
                         )}
-                        <ShareButton
-                          url={`/wpisy/${item.subjectId}`}
-                          title={`Wpis ${item.actor.displayName} — Leaders of Teams`}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <p className="feed-card-text">
-                      {href ? <Link href={href}>{text}</Link> : text}
-                    </p>
-                  )}
-                </div>
-              </article>
+                      </>
+                    )}
+                  </div>
+                </article>
+              </Fragment>
             );
           })}
         </div>

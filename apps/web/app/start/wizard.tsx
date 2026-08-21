@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ApiRequestError, apiFetch } from '@/lib/api';
+import { ART, type ArtName } from '@/components/ui/illustrations';
 
 type Intent = 'LEADER' | 'COMPANY' | 'BOTH';
 
@@ -97,17 +98,20 @@ export function Wizard({ industries }: { industries: Array<{ id: string; name: s
     }
   }
 
-  const firstActions =
+  // Ilustracja dobrana do ZNACZENIA ruchu (rejestr ART, ADR-009): „rung" =
+  // wolne miejsce, które możesz zająć; „search" = szukasz dopasowania;
+  // „lantern" = mentoring, czyli światło dla kogoś innego.
+  const firstActions: Array<{ href: string; label: string; art: ArtName }> =
     intent === 'COMPANY'
       ? [
-          { href: '/zlecenia/nowe', label: 'Opisz pierwsze zlecenie' },
-          { href: '/liderzy', label: 'Przejrzyj katalog Liderów' },
-          { href: '/uslugi', label: 'Zobacz gotowe usługi' },
+          { href: '/zlecenia/nowe', label: 'Opisz pierwsze zlecenie', art: 'rung' },
+          { href: '/liderzy', label: 'Przejrzyj katalog Liderów', art: 'search' },
+          { href: '/uslugi', label: 'Zobacz gotowe usługi', art: 'ladder' },
         ]
       : [
-          { href: '/uslugi/nowa', label: 'Opublikuj pierwszą usługę' },
-          { href: '/grupy', label: 'Odpowiedz na pytanie w grupie' },
-          { href: '/zlecenia', label: 'Znajdź zlecenie dla siebie' },
+          { href: '/uslugi/nowa', label: 'Opublikuj pierwszą usługę', art: 'rung' },
+          { href: '/grupy', label: 'Odpowiedz na pytanie w grupie', art: 'lantern' },
+          { href: '/zlecenia', label: 'Znajdź zlecenie dla siebie', art: 'search' },
         ];
 
   return (
@@ -210,18 +214,22 @@ export function Wizard({ industries }: { industries: Array<{ id: string; name: s
             Wybierz jedną rzecz. Reszta poczeka — do wszystkiego wrócisz z panelu.
           </p>
           <div className="wizard-choices">
-            {firstActions.map((action) => (
-              <button
-                key={action.href}
-                type="button"
-                className="wizard-choice"
-                onClick={() => {
-                  void patch({ completed: true }).then(() => router.push(action.href));
-                }}
-              >
-                <strong>{action.label}</strong>
-              </button>
-            ))}
+            {firstActions.map((action) => {
+              const Art = ART[action.art];
+              return (
+                <button
+                  key={action.href}
+                  type="button"
+                  className="wizard-choice wizard-choice--art"
+                  onClick={() => {
+                    void patch({ completed: true }).then(() => router.push(action.href));
+                  }}
+                >
+                  <Art className="wizard-choice-art" />
+                  <strong>{action.label}</strong>
+                </button>
+              );
+            })}
           </div>
           <div className="wizard-actions">
             <button className="btn secondary" type="button" onClick={() => void finish()}>

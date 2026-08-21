@@ -4,6 +4,7 @@ import { JsonLd } from '@/components/json-ld';
 import { LadderArt } from '@/components/ui/ladder-art';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
+import { LEVEL_NAMES } from '@/lib/levels';
 import { publicApi } from '@/lib/server-api';
 
 interface LeaderRow {
@@ -15,17 +16,6 @@ interface LeaderRow {
   averageRating: number | null;
   reviewCount: number;
 }
-
-// Nazwy poziomów — lustro apps/api/src/modules/ladder/rules.ts (ruleset v1).
-const LEVEL_NAMES = [
-  'Adept',
-  'Praktyk',
-  'Specjalista',
-  'Ekspert',
-  'Mentor',
-  'Autorytet',
-  'Architekt Zespołów',
-];
 
 export default async function HomePage() {
   // Social proof: najlepsi realni Liderzy z katalogu (sekcja znika, gdy pusto).
@@ -62,6 +52,23 @@ export default async function HomePage() {
               Dodaj zlecenie jako Firma
             </Link>
           </div>
+          {/* Liczby-bohaterowie: statyczna narracja zasad, nie licznik metryk
+              (ADR-010). „0 za zapraszanie" to nasz najważniejszy wyróżnik —
+              stoi w jednym rzędzie z resztą, bo to zasada, nie przechwałka. */}
+          <dl className="hero-stats" aria-label="Zasady platformy w liczbach">
+            <div>
+              <dt>7</dt>
+              <dd>poziomów Drabinki</dd>
+            </div>
+            <div>
+              <dt>2</dt>
+              <dd>źródła punktów: praca i mentoring</dd>
+            </div>
+            <div>
+              <dt>0</dt>
+              <dd>punktów za zapraszanie</dd>
+            </div>
+          </dl>
         </div>
         <div className="hero-art-wrap">
           <LadderArt />

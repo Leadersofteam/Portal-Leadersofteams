@@ -7,10 +7,14 @@ export function LevelBadge({
   level,
   name,
   title,
+  size = 'sm',
 }: {
   level: number;
   name?: string;
   title?: string;
+  // `md` — odznaka-bohater (awans w feedzie, nagłówki): większa i zawsze
+  // z nazwą poziomu, bo sama liczba nie niesie znaczenia dla nowego gościa.
+  size?: 'sm' | 'md';
 }) {
   // Poziom 0 = jeszcze bez tytułu Lidera — odznaki nie pokazujemy (uczciwie,
   // ale bez piętnowania świeżych kont etykietą „Poziom 0").
@@ -18,7 +22,7 @@ export function LevelBadge({
   const clamped = Math.min(Math.max(level, 1), 7);
   return (
     <span
-      className="level-badge"
+      className={size === 'md' ? 'level-badge level-badge--md' : 'level-badge'}
       data-level={clamped}
       title={title ?? `Poziom ${level} w Drabince Lidera`}
     >
