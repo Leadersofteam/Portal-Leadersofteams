@@ -47,6 +47,12 @@ Do czasu odpowiedzi rób punkty 3–5 z S19, które od niej nie zależą.
 
 ## Zadanie na tę sesję: S19 w docs/SPRINTY-S18-S21.md
 
+> **Korekta 22.08 — PROGRAM DESIGNU ZAKOŃCZONY (D5 też).** Kolejne sesje ekosystemu
+> startują z NOWEGO promptu:
+> `/docker/leaders-of-teams-app/docs/PROMPT-STARTOWY-FABLE5-EKOSYSTEM.md`
+> (tor funkcjonalny, priorytet: launch „Pierwszych dwudziestu"; tam też tabela
+> planu i lista decyzji właściciela). Ten dokument zostaje dla kontekstu S19.
+>
 > **Korekta 21.08 noc:** program designu Portalu (PD1–PD4) jest DOMKNIĘTY —
 > PD4 wykonany i wdrożony na produkcję (baner w HANDOFF: offline z migawką feedu,
 > kontrast AA, karty analityki, ux-copy pustych stanów). W App domknięte D1–D4;
