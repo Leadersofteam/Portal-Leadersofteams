@@ -38,6 +38,9 @@ export default tseslint.config(
       // katalog roboczy narzędzia (git worktree Claude'a) — poza repo od
       // 8eafa78, ale na dysku istnieje i lint bez tego wpisu po nim chodzi
       '.claude/**',
+      // harness wyprawy: skrypty Node poza workspace'ami (globale node/browser
+      // mieszane celowo — page.evaluate); to samo wyłączenie ma audyt/ w App
+      'wyprawa/**',
     ],
   },
   js.configs.recommended,

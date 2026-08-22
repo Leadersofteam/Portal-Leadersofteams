@@ -47,13 +47,31 @@ const TYPE_LABELS: Record<string, string> = {
 
 export const metadata = { title: 'Moje punkty — Leaders of Teams' };
 
+interface LevelRow {
+  level: number;
+  name: string;
+  unlocksAppAccess: boolean;
+  unlocksTeamCreation: boolean;
+}
+
 export default async function MyPointsPage() {
   const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
   if (!me?.user) redirect('/logowanie');
 
-  const data = await serverApi<LadderData>('/me/ladder');
+  // Poziomy równolegle z drabinką — progi nagród czytamy z definicji poziomów
+  // (unlocksAppAccess/unlocksTeamCreation), nie z liczb zaszytych w widoku.
+  const [data, levelsData] = await Promise.all([
+    serverApi<LadderData>('/me/ladder'),
+    serverApi<{ levels: LevelRow[] }>('/ladder/levels'),
+  ]);
   if (!data) redirect('/logowanie');
   const { state, nextLevel, events } = data;
+
+  const levels = levelsData?.levels ?? [];
+  const progAppAccess = levels.find((l) => l.unlocksAppAccess)?.level ?? null;
+  const progTeam = levels.find((l) => l.unlocksTeamCreation)?.level ?? null;
+  const maAppAccess = progAppAccess !== null && state.level >= progAppAccess;
+  const maTeam = progTeam !== null && state.level >= progTeam;
 
   return (
     <main>
@@ -94,6 +112,39 @@ export default async function MyPointsPage() {
           </div>
         )}
       </section>
+
+      {/* Nagroda poziomów z unlocksAppAccess (brief założycielski, decyzja
+          właściciela 22.08): zdobyty dostęp do aplikacji LOT pokazujemy TUTAJ,
+          bo tu prowadzi powiadomienie o awansie. Czysto informacyjny unlock —
+          zero zdarzeń, zero punktów (ADR-004 nietknięty). */}
+      {maAppAccess && (
+        <section className="card reward-card">
+          <h2>🏔 Nagroda odblokowana: aplikacja LOT</h2>
+          <p>
+            Poziom {progAppAccess} otwiera Ci dostęp do <strong>aplikacji LOT</strong> — CRM-u, w
+            którym zespoły prowadzą leady, wyceny i zadania. To narzędzie pracy, nie odznaka:{' '}
+            {maTeam
+              ? 'jako Architekt Zespołów zakładasz w nim WŁASNY zespół i prowadzisz go od pierwszego leada.'
+              : `konto zakładasz od ręki, a na poziomie ${progTeam ?? 7} poprowadzisz w nim własny zespół.`}
+          </p>
+          <p>
+            <a
+              className="btn"
+              href="https://app.leadersofteams.com/register"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {maTeam ? 'Załóż swój zespół w LOT →' : 'Wejdź do aplikacji LOT →'}
+            </a>
+          </p>
+        </section>
+      )}
+      {!maAppAccess && progAppAccess !== null && nextLevel && (
+        <p className="muted">
+          Na poziomie {progAppAccess} czeka nagroda: dostęp do aplikacji LOT —{' '}
+          <Link href="/drabinka">zobacz, co odblokowują poziomy</Link>.
+        </p>
+      )}
 
       <h2>Historia punktów</h2>
       <p className="muted">

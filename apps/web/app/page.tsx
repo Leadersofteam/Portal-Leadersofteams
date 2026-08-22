@@ -96,8 +96,8 @@ export default async function HomePage() {
           <div className="step">
             <h3>Odblokowuj kolejne poziomy</h3>
             <p>
-              Wyższy poziom to większe zlecenia, pierwszeństwo w katalogu, prawo zakładania grup — a
-              na szczycie własny zespół w Portalu.
+              Wyższy poziom to większe zlecenia, prawo zakładania grup, a od poziomu Mentora —
+              dostęp do aplikacji LOT: CRM, w którym na szczycie prowadzisz własny zespół.
             </p>
           </div>
         </div>
@@ -211,9 +211,9 @@ export default async function HomePage() {
           <details>
             <summary>Co daje wyższy poziom w Drabince?</summary>
             <p>
-              Dostęp do większych zleceń, pierwszeństwo i wyróżnienie w katalogu Liderów, prawo
-              zakładania grup branżowych (od poziomu 2), a docelowo — własny zespół w Portalu
-              (poziom 7). Poziom raz zdobyty nie wygasa.
+              Dostęp do większych zleceń, prawo zakładania grup branżowych (od poziomu 2), od
+              poziomu 5 — dostęp do aplikacji LOT (CRM dla zespołów), a na poziomie 7 — własny
+              zespół prowadzony w tej aplikacji. Poziom raz zdobyty nie wygasa.
             </p>
           </details>
         </div>

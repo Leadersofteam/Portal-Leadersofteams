@@ -4,6 +4,19 @@
 **Data:** 2026-07-05
 **Decydenci:** Maciej Kucharski (wymagania), Fable 5 (projekt)
 
+> **Aktualizacja 2026-08-22 (decyzja właściciela — nagroda wraca do briefu założycielskiego):**
+> nagrodą poziomów z `unlocksAppAccess` (L5+) jest ponownie **dostęp do aplikacji LOT**
+> (app.leadersofteams.com), a `unlocksTeamCreation` (L7) — **własny zespół prowadzony w tej
+> aplikacji**. Zakres MINIMALNY, bez wskrzeszania ADR-003: żadnego OIDC, żadnej synchronizacji
+> poziomów, żadnych zmian w schemacie App — Portal pokazuje odblokowaną nagrodę na
+> `/panel/punkty` (panel z linkiem do rejestracji w App; App ma rejestrację otwartą, więc
+> „dostęp" jest dziś honorowy — ewentualne bramkowanie po stronie App to osobna, przyszła
+> decyzja). Copy `/drabinki` i landingu wróciło do prawdy briefu. Fragment o nagrodach
+> „Portal-native" z aktualizacji 2026-08-11 (wyróżnienie w katalogu, zespół w Portalu) jest
+> tym samym **nieaktualny**; moduł `teams` w Portalu pozostaje niezaimplementowany i nieobiecywany.
+> Nagroda nie emituje zdarzeń i nie daje punktów — ADR-004 nietknięty (asercja w
+> `antimlm.integration.test.ts`).
+
 > **Aktualizacja 2026-08-11 (po porzuceniu integracji Portal↔App, ADR-003 superseded):**
 > wszystkie fragmenty tego ADR odwołujące się do app.leadersofteams.com (wymaganie 2 w Kontekście,
 > `Team.appTeamRef` i „powiązanie z zespołem w app" w Decyzji 2, Decyzja 3 w części „zespoły z app")

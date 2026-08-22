@@ -130,6 +130,30 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
     });
     expect(tagged.statusCode).toBe(201);
 
+    // ODBIÓR NAGRODY DRABINKI (22.08, aktualizacja ADR-010). Panel nagrody na
+    // /panel/punkty czyta WYŁĄCZNIE /me/ladder + /ladder/levels — ścieżka
+    // odbioru nie ma prawa niczego emitować, inaczej „nagroda" stałaby się
+    // trzecim źródłem punktów obok pracy i mentoringu. Krok dołożony do
+    // ścieżki z tego samego powodu co cytowanie: strażnik strzeże tylko tego,
+    // przez co realnie przeszedł.
+    const przedNagroda = await ctx.prisma.outboxEvent.count({
+      where: { createdAt: { gte: startedAt } },
+    });
+    const ladderRes = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/v1/me/ladder',
+      headers: { cookie: aCookie },
+    });
+    expect(ladderRes.statusCode).toBe(200);
+    const levelsRes = await ctx.app.inject({ method: 'GET', url: '/api/v1/ladder/levels' });
+    expect(levelsRes.statusCode).toBe(200);
+    // Definicje poziomów NIOSĄ flagi nagród — panel czyta je stąd, nie z widoku.
+    const poziomy = (levelsRes.json() as { levels: Array<{ unlocksAppAccess: boolean }> }).levels;
+    if (poziomy.length > 0) expect(poziomy.some((l) => l.unlocksAppAccess)).toBe(true);
+    expect(await ctx.prisma.outboxEvent.count({ where: { createdAt: { gte: startedAt } } })).toBe(
+      przedNagroda,
+    );
+
     // Zbierz WSZYSTKIE zdarzenia wypuszczone przez ścieżkę DO TEJ PORY —
     // punkt odniesienia dla kroku z zakładką (niżej).
     const beforeBookmark = await ctx.prisma.outboxEvent.findMany({

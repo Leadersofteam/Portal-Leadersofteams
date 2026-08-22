@@ -17,11 +17,16 @@ interface LevelRow {
 // Jedno źródło opisu odblokowań — używane i przez tabelę (desktop), i przez
 // karty (mobile). Rozjazd tych dwóch list byłby niewidoczny do pierwszej skargi.
 function levelUnlocks(lvl: LevelRow): string {
+  // Decyzja właściciela 2026-08-22: nagroda wysokich poziomów wraca do briefu
+  // założycielskiego — DOSTĘP DO APLIKACJI LOT (app.leadersofteams.com), a na
+  // szczycie własny zespół prowadzony w tej aplikacji. Poprzednie copy
+  // („wyróżnienie w katalogu", „zespół w Portalu") opisywało nagrody, których
+  // nie było w kodzie — obietnica bez pokrycia jest gorsza niż jej brak.
   return [
     'większe zlecenia',
     lvl.level === 2 ? 'zakładanie grup branżowych' : null,
-    lvl.unlocksAppAccess ? 'wyróżnienie i pierwszeństwo w katalogu Liderów' : null,
-    lvl.unlocksTeamCreation ? 'założenie własnego zespołu w Portalu' : null,
+    lvl.unlocksAppAccess ? 'dostęp do aplikacji LOT — CRM dla Twojego zespołu' : null,
+    lvl.unlocksTeamCreation ? 'własny zespół prowadzony w aplikacji LOT' : null,
   ]
     .filter(Boolean)
     .join(', ');

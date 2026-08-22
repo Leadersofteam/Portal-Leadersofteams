@@ -1778,6 +1778,18 @@ main tbody tr:hover {
   margin-top: 0.35rem;
 }
 
+/* Karta nagrody (wyprawa 22.08): odebrany dostęp do aplikacji LOT.
+   Bursztyn szczytu (--level-7) jako sygnatura — nagrodę się ZDOBYWA, więc
+   wygląda jak światło poziomu, nie jak reklama. Sam kolor na obwódce:
+   treść zostaje w tokenach tekstu (kontrast AA bez wyjątków). */
+.reward-card {
+  border: 1px solid color-mix(in srgb, var(--level-7) 45%, transparent);
+  box-shadow: 0 0 18px -8px color-mix(in srgb, var(--level-7) 55%, transparent);
+}
+.reward-card h2 {
+  margin-top: 0;
+}
+
 /* Pas zaufania (PD3): fakty zapracowane — ocena i zrealizowane zlecenia.
    Osobny pas zamiast dopisku w `muted`, bo to na te liczby patrzy Firma,
    zanim spojrzy na cenę. Kropka rozdziela fakty, każdy fakt w jednym kawałku. */
