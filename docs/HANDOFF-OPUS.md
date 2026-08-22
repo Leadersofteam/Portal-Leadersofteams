@@ -11,6 +11,63 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-22 (tor funkcjonalny, S19 pkt 3+4): ślad zaufania wszedł do
+> wyszukiwarki, a pierwsza mila przestała chować akcję pod zgięciem — wdrożone na staging
+> i produkcję** (`40fa0ab`, `bd480ce`). Bramki: **216/216 API** (213 + 3 nowe), 18/18 e2e,
+> healthz/worker/uploads zielone, zero błędów w logach po deployu.
+>
+> **⚠️ NAJWAŻNIEJSZY POMIAR SESJI — nie funkcja, tylko liczba.** Na produkcji Portalu jest
+> **DOKŁADNIE JEDEN realny człowiek**: `kuchar21ski@gmail.com` („Macix", konto z 13.08,
+> intencja LEADER, profil Lidera założony). Reszta z 18 wierszy to 9 kont demo i 8 wcześniej
+> zanonimizowanych kont testowych. **Jego adres nie został potwierdzony ANI RAZU** — token
+> `EMAIL_VERIFY` wygasł 14.08 z `usedAt = NULL` i przez 9 dni nikt tego nie zauważył.
+> Do tego: **0 zapytań ofertowych** od zawsze, **0 powiadomień**, **0 kont ADMIN/MODERATOR**
+> (18/18 to `USER` — panel moderacji i zakładki moderatorów z S17 są niedostępne dla nikogo),
+> zero ruchu organicznego w logach api z ostatniej doby. To jest stan wejściowy launchu.
+>
+> **1. S19 pkt 3 — ślad zaufania w `/szukaj`.** Przyczyna była architektoniczna, nie
+> kosmetyczna: wzbogacanie o oceny żyło w warstwie TRAS (`listings/routes.ts` `withLeaderMeta`,
+> `marketplace/routes.ts`), a `/search` komponuje SERWISY i tamtędy nie przechodzi — dlatego
+> wyszukiwarka była jedynym miejscem w Portalu bez tego sygnału. Statystyki doklejane tam,
+> gdzie `/search` dokleja już poziom Drabinki: jeden batch `getLeaderReviewStatsMany` na
+> komplet Liderów z obu zakładek, bez N+1. Markup pasa wyprowadzony do
+> `components/ui/trust-strip.tsx`, żeby nie powstała druga kopia obok `listing-card`.
+> Zasada PD3 nietknięta (cisza zamiast piętna). **Na żywo:** `/szukaj?q=sprint` → 6 pasów,
+> `?q=Lead&zakladka=liderzy` → 2 pasy, odmiana polska poprawna („1 zrealizowane zlecenie",
+> „2 zrealizowane zlecenia", „4 zrealizowane zlecenia"), 390 i 1440 px.
+>
+> **2. S19 pkt 4 — pierwsza mila zmierzona, nie oceniona.** Na 390 px pierwszy element,
+> w który da się kliknąć na `/start` („Jestem Liderem"), leżał na **y = 981 px przy zgięciu
+> 844** — człowiek widział na pierwszym ekranie sam manifest i drabinę i musiał ZGADYWAĆ,
+> że jest tu cokolwiek do zrobienia. Ilustracja spychała wybór pod zgięcie; ten sam mechanizm
+> rozwiązuje już `.auth-aside` na `/rejestracja`. Po zmianie **y = 711**, strona 2269 → 1999 px.
+>
+> **3. Zastane, znalezione po drodze:** `/weryfikacja` przy wygasłym linku kazała się
+> ZALOGOWAĆ także komuś, kto był już zalogowany — instrukcja nie do wykonania, a nowy link
+> wisiał dwa ekrany dalej w banerze panelu. Zalogowany dostaje ponowną wysyłkę na miejscu;
+> wylogowanemu świadomie NIE dajemy formularza z adresem (enumeracja kont).
+> **Sprostowanie do planu tej sesji:** zakładałem „ślepy zaułek wygasłego linku" — pomiar
+> pokazał, że ślepego zaułka NIE MA (strona rozróżnia stany i prowadzi do logowania).
+> Prawdziwą wadą było złe polecenie dla zalogowanego.
+>
+> **4. Mail aktywacyjny przestał wyglądać jak spam.** Był jedną linijką z gołym URL-em.
+> Nowa treść mówi, skąd wiadomość, po co potwierdzenie, ile link jest ważny i co zrobić po
+> wygaśnięciu — bez ponaglania (ADR-010).
+>
+> **5. Decyzja właściciela wykonana:** do Macixa poszedł **JEDEN** link aktywacyjny, tą samą
+> ścieżką co produkcyjna, PO wdrożeniu poprawek (żeby prowadził już do naprawionej strony).
+> SMTP: `250 Ok: queued as 4hRfSk10jmz2xp5`, `accepted: [kuchar21ski@gmail.com]`.
+> Token `cmt3ow7i00001me3tca6yt0yc` ważny do 2026-08-23 01:18 UTC.
+> **Do sprawdzenia w następnej sesji: czy `usedAt` się wypełnił.** Jeśli nie — pytanie nie
+> brzmi „jak poprawić mail", tylko „czy ten człowiek w ogóle chce tu być".
+>
+> **6. Posprzątane:** 8 kont `@test.local` z produkcji i 2 ze stagingu (stan wrócił do
+> 18 wierszy: 9 demo, 8 zanonimizowanych, 1 realny). Skrypt jednorazowy usunięty z kontenera.
+>
+> **ADR-004 nietknięty:** zmiana jest projekcją danych marketplace, nie funkcją społeczną
+> i nie źródłem punktów — `antimlm.integration.test.ts` nie wymagał rozszerzenia, a istniejąca
+> asercja „wyszukiwanie nie tworzy zdarzeń ani punktów" pozostaje zielona.
+
 > **✅ SESJA 2026-08-21 noc (design, PD4 — FINAŁ programu Portalu): offline przestał być
 > zaślepką, dostępność domknięta — wdrożone na staging i produkcję.**
 > (1) **Offline z ostatnim obrazem feedu**: migawka w localStorage — wyłącznie zakres

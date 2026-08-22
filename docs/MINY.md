@@ -309,3 +309,27 @@ strona potrzebuje offline, dokładaj do precache SW parsując realny HTML
 Do kompletu: precache'owany dokument odświeża się TYLKO przy zmianie bajtów
 `sw.js` — każda zmiana strony z PRECACHE wymaga podbicia wersji cache
 (`lot-v1` → `lot-v2`), inaczej stary HTML zostaje na urządzeniach na zawsze.
+
+### `crypto.subtle` nie istnieje poza bezpiecznym kontekstem — bramka anty-bot milczy (22.08, S19)
+
+Skill `portal-zrzuty` słusznie podpowiada wejście na staging **prosto po IP kontenera**
+(`http://172.18.0.x:3000`), bo staging siedzi za basic-auth Traefika. Do zrzutów to
+działa. Do **rejestracji nie działa i nie mówi dlaczego**: własna bramka człowieka liczy
+proof-of-work przez `crypto.subtle`, a ten jest dostępny wyłącznie w _secure context_ —
+HTTPS albo `localhost`/`127.0.0.1`. Goły HTTP po adresie IP secure contextem NIE jest,
+więc `prepareHumancheck()` wywala się, `.catch(() => null)` połyka błąd, żądanie idzie
+BEZ rozwiązania, a API odpowiada `400` z `humancheck.rejected reason: MISSING`.
+Na ekranie widać „Nie udało się potwierdzić, że to nie automat" — czyli **objaw
+identyczny z awarią bramki**, choć bramka jest zdrowa.
+
+Rozwiązanie: przekierować port na pętlę zwrotną i wejść przez `127.0.0.1`
+(port dowolny — o secure context decyduje HOST, nie numer portu):
+
+```bash
+socat TCP-LISTEN:3010,fork,reuseaddr,bind=127.0.0.1 TCP:<IP-kontenera>:3000 &
+```
+
+Ta sama mina w drugą stronę: cookie `lot_sid` ma `Secure`, więc po IP nie utrzymasz
+sesji (patrz mina wyżej). **Wniosek ogólny: po IP kontenera testuj tylko ścieżki
+anonimowe i tylko odczyt.** Wszystko, co dotyka rejestracji, logowania albo WebCrypto —
+przez `127.0.0.1` albo produkcyjny HTTPS.

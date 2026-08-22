@@ -89,11 +89,19 @@ nie właściciel, pytanie przestało być hipotetyczne.
    **Zero punktów, zero nagrody, zero downline** (ADR-004/ADR-011). Ścieżkę zaproszenia
    DOPISAĆ do `social/antimlm.integration.test.ts` — inaczej strażnik zazieleni się przez
    pominięcie. To jedyna funkcja tego sprintu dotykająca granicy anty-MLM.
-3. **Ślad zaufania w `/szukaj`** — dziś wyniki mają `LevelBadge`, ale nie mają ocen ani
-   liczby zrealizowanych zleceń; to jedyne miejsce bez tego sygnału. Logika policzona
-   w `reviews.getCompanyPublicStats`.
-4. **Pierwsze 60 sekund** — przejść rejestrację → kreator → panel oczami obcej osoby
-   i usunąć wszystko, co każe zgadywać, co robić dalej. Zrzuty 390/1440 obowiązkowe.
+3. ✅ **ZROBIONE 22.08 — ślad zaufania w `/szukaj`** (`40fa0ab`). Sprostowanie do tego
+   punktu: logika NIE siedzi w `reviews.getCompanyPublicStats` (to statystyki _Firmy_),
+   tylko w `getLeaderReviewStats` / `getLeaderReviewStatsMany`. Przyczyna braku była
+   architektoniczna: `/search` komponuje SERWISY, a wzbogacanie o oceny żyło w warstwie
+   TRAS modułów `listings`/`marketplace`. Na żywo: `?q=sprint` → 6 pasów zaufania,
+   `?q=Lead&zakladka=liderzy` → 2 pasy, 390 i 1440 px.
+4. ✅ **ZROBIONE 22.08 — pierwsze 60 sekund** (`40fa0ab`, `bd480ce`). Zmierzone, nie ocenione:
+   pierwsza klikalna akcja na `/start` leżała na y = 981 px przy zgięciu 844 (390 px) → po
+   zmianie y = 711. Przy okazji: `/weryfikacja` kazała się zalogować komuś już zalogowanemu,
+   a mail aktywacyjny był jedną linijką z gołym URL-em — oba naprawione.
+   **Zostaje otwarte:** nic nie przypomina o niepotwierdzonym adresie po fakcie. Macix
+   dostał jeden link ręcznie (decyzja właściciela 22.08); mechanizm przypominania to
+   osobna decyzja — patrz HANDOFF.
 5. **Mail powitalny + digest tygodniowy opt-in** — bez streaków, bez „wróć do nas",
    z jednym kliknięciem wyłączenia (ADR-010).
 
