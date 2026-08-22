@@ -163,10 +163,32 @@ export function createIdentityService(
 
   async function sendVerification(userId: string, email: string): Promise<string> {
     const raw = await createToken(userId, 'EMAIL_VERIFY', EMAIL_VERIFY_TTL_MS);
+    // Treść, a nie sam link (S19 pkt 4). Poprzednia wersja była jedną linijką
+    // z gołym adresem — dla kogoś, kto zakłada konto wieczorem i wraca za
+    // tydzień, to wiadomość nie do odróżnienia od spamu. Pierwszy realny
+    // Lider na produkcji nie kliknął w nią ani razu i token wygasł mu po dobie.
+    // Mówimy więc wprost: skąd to jest, po co to jest i ile jest ważne.
     await mail?.send({
       to: email,
       subject: 'Potwierdź adres e-mail — Leaders of Teams',
-      text: `Potwierdź swój adres, otwierając: ${appBaseUrl}/weryfikacja?token=${raw}`,
+      text: [
+        'Cześć!',
+        '',
+        `Ktoś (mamy nadzieję, że Ty) założył konto na ${appBaseUrl} — portalu`,
+        'Leaders of Teams. Potwierdź adres, żebyśmy mogli odzyskać Ci konto,',
+        'gdy zapomnisz hasła:',
+        '',
+        `${appBaseUrl}/weryfikacja?token=${raw}`,
+        '',
+        'Link jest ważny przez dobę i działa jeden raz. Gdy wygaśnie, zaloguj',
+        'się na swoje konto — poprosimy Cię tam o nowy jednym kliknięciem.',
+        '',
+        'Konto działa też bez potwierdzenia — nic Ci nie blokujemy.',
+        '',
+        'Jeśli to nie Ty zakładałeś konto, po prostu zignoruj tę wiadomość.',
+        '',
+        '— Leaders of Teams',
+      ].join('\n'),
     });
     return raw;
   }
