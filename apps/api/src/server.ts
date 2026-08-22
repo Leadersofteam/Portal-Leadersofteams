@@ -301,6 +301,7 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     social: socialService,
     identity: identityService,
     ladder: ladderService,
+    reviews: reviewsService,
     cache,
   });
   await app.register(searchRoutes({ search: searchService, isTest: config.NODE_ENV === 'test' }), {

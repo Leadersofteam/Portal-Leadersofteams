@@ -32,7 +32,9 @@ export default async function StartPage() {
           </p>
           <p className="muted">Trzy krótkie kroki. Każdy możesz pominąć.</p>
         </div>
-        <LadderArt />
+        <div className="start-art">
+          <LadderArt />
+        </div>
       </div>
 
       <Wizard industries={industries?.industries ?? []} />

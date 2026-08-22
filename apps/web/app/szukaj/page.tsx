@@ -4,6 +4,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/ui/empty-state';
 import { IconSearch } from '@/components/ui/icons';
 import { LevelBadge } from '@/components/ui/level-badge';
+import { TrustStrip } from '@/components/ui/trust-strip';
 import { formatBudget } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
@@ -22,7 +23,14 @@ interface SearchResults {
     slug: string;
     title: string;
     priceFrom: number;
-    leader: { displayName: string; level: number; avatarFileId: string | null };
+    leader: {
+      displayName: string;
+      level: number;
+      avatarFileId: string | null;
+      averageRating: number | null;
+      reviewCount: number;
+      completedOrders: number;
+    };
   }>;
   leaders: Array<{
     id: string;
@@ -30,6 +38,9 @@ interface SearchResults {
     headline: string;
     level: number;
     avatarFileId: string | null;
+    averageRating: number | null;
+    reviewCount: number;
+    completedOrders: number;
   }>;
   orders: Array<{
     id: string;
@@ -144,6 +155,10 @@ export default async function SearchPage({
                         </>
                       )}
                     </div>
+                    {/* S19 pkt 3: ten sam pas zaufania co w katalogu usług.
+                        Wynik wyszukiwania był ostatnim miejscem w Portalu, gdzie
+                        nie dało się odczytać, czy komuś już zapłacono za pracę. */}
+                    <TrustStrip facts={l.leader} />
                   </div>
                   <div className="list-row-aside">
                     <strong>od {l.priceFrom} zł</strong>
@@ -169,6 +184,7 @@ export default async function SearchPage({
                         <Link href={`/liderzy/${p.id}`}>{p.displayName}</Link>
                       </h3>
                       <div className="meta">{p.headline}</div>
+                      <TrustStrip facts={p} />
                     </div>
                   </div>
                   <div className="list-row-aside">

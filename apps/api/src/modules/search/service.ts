@@ -4,7 +4,7 @@ import type { CommunityService } from '../community/index';
 import type { IdentityService } from '../identity/index';
 import type { ListingsService } from '../listings/index';
 import type { LadderService } from '../ladder/index';
-import type { OrdersService, ProfilesService } from '../marketplace/index';
+import type { OrdersService, ProfilesService, ReviewsService } from '../marketplace/index';
 import type { SocialService } from '../social/index';
 
 // Moduł search — jedno pole na cały Portal.
@@ -25,6 +25,12 @@ export interface SearchDeps {
   // Poziom Drabinki nie jest polem profilu — to projekcja modułu ladder,
   // doklejana w warstwie odczytu (tak samo robi to katalog Liderów).
   ladder: Pick<LadderService, 'getLevels'>;
+  // Ślad zaufania (S19 pkt 3) tą samą drogą co poziom: projekcja modułu
+  // marketplace, nie pole profilu. Do PD3 wyszukiwarka była JEDYNYM miejscem
+  // w Portalu, gdzie wynik nie mówił, czy komuś już zapłacono za pracę —
+  // bo /search nie przechodzi przez trasy listings/marketplace, w których
+  // wzbogacanie żyło (`withLeaderMeta`).
+  reviews: Pick<ReviewsService, 'getLeaderReviewStatsMany'>;
   cache?: Cache;
 }
 
@@ -42,6 +48,7 @@ export function createSearchService({
   social,
   identity,
   ladder,
+  reviews,
   cache,
 }: SearchDeps) {
   async function load(q: string, scope: SearchScope) {
@@ -69,16 +76,28 @@ export function createSearchService({
       ]),
     ];
 
-    const [authors, levels] = await Promise.all([
+    // Liderzy w wynikach: z zakładki „Liderzy" i stojący za usługami. Jeden
+    // zbiór karmi i poziomy, i statystyki — dwa batche zamiast N+1 na wiersz.
+    const leaderUserIds = [
+      ...new Set([
+        ...rawLeaders.map((l) => l.userId),
+        ...rawListings.map((l) => l.leaderProfile.userId),
+      ]),
+    ];
+
+    const [authors, levels, stats] = await Promise.all([
       peopleIds.length ? identity.getPublicUsers(peopleIds) : Promise.resolve(new Map()),
-      rawLeaders.length || rawListings.length
-        ? ladder.getLevels([
-            ...new Set([
-              ...rawLeaders.map((l) => l.userId),
-              ...rawListings.map((l) => l.leaderProfile.userId),
-            ]),
-          ])
+      leaderUserIds.length
+        ? ladder.getLevels(leaderUserIds)
         : Promise.resolve(new Map<string, number>()),
+      leaderUserIds.length
+        ? reviews.getLeaderReviewStatsMany(leaderUserIds)
+        : Promise.resolve(
+            new Map<
+              string,
+              { averageRating: number | null; reviewCount: number; completedOrders: number }
+            >(),
+          ),
     ]);
 
     return {
@@ -93,6 +112,9 @@ export function createSearchService({
           displayName: authors.get(l.leaderProfile.userId)?.displayName ?? 'Lider',
           level: levels.get(l.leaderProfile.userId) ?? 0,
           avatarFileId: authors.get(l.leaderProfile.userId)?.avatarFileId ?? null,
+          averageRating: stats.get(l.leaderProfile.userId)?.averageRating ?? null,
+          reviewCount: stats.get(l.leaderProfile.userId)?.reviewCount ?? 0,
+          completedOrders: stats.get(l.leaderProfile.userId)?.completedOrders ?? 0,
         },
       })),
       orders: orderRes?.orders ?? [],
@@ -102,6 +124,9 @@ export function createSearchService({
         headline: l.headline,
         avatarFileId: l.avatarFileId,
         level: levels.get(l.userId) ?? 0,
+        averageRating: stats.get(l.userId)?.averageRating ?? null,
+        reviewCount: stats.get(l.userId)?.reviewCount ?? 0,
+        completedOrders: stats.get(l.userId)?.completedOrders ?? 0,
       })),
       threads: threadRes ?? [],
       posts: posts.map((p) => ({

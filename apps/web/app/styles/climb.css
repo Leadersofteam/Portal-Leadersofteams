@@ -291,6 +291,17 @@
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+
+  /* S19 pkt 4 — pomiar na 390 px: pierwszy element, w który da się kliknąć
+     („Jestem Liderem”), leżał na y = 981 px przy zgięciu 844. Człowiek widział
+     na pierwszym ekranie sam manifest i drabinę, i musiał ZGADYWAĆ, że jest
+     tu w ogóle coś do zrobienia. Ilustracja spychała wybór poniżej zgięcia —
+     ten sam mechanizm, który `.auth-aside` rozwiązuje na /rejestracja
+     („ilustracja nie ma prawa spychać pól na telefonie”). Drabinę i tak widać
+     zaraz potem w panelu, na szynie poziomów. */
+  .start-art {
+    display: none;
+  }
 }
 
 /* ===================== Rejestracja (PD2) ===================== */
