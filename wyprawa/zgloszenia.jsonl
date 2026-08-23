@@ -1,0 +1,1 @@
+{"id":"W-01","rola":"lider","ekran":"/start krok 2 Profil","oczekiwane":"Komunikat wskazuje dokladnie brakujace pole","zaobserwowane":"Zbiorcze 'Wybierz branze i napisz jedno zdanie' mimo wybranej branzy","dowod":{"zrzut":"d0-04-kreator-krok3-390.png"},"powtorzone":true,"waga_agenta":"P3","status":"NAPRAWIONE 23.08 (komunikat per pole)"}

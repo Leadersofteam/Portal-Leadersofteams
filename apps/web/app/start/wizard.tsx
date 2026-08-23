@@ -70,8 +70,15 @@ export function Wizard({ industries }: { industries: Array<{ id: string; name: s
     setPending(true);
     try {
       if (intent !== 'COMPANY') {
-        if (!industryId || headline.trim().length < 5) {
-          setError('Wybierz branżę i napisz jedno zdanie o sobie (min. 5 znaków).');
+        // Komunikat per pole (wyprawa 22.08): zbiorcze „wybierz branżę i napisz…"
+        // kazało sprawdzać także to, co już było wypełnione — dwa razy wyszło
+        // w dzienniku wyprawy jako „szukałem błędu, którego nie było".
+        if (!industryId) {
+          setError('Wybierz branżę / kompetencję.');
+          return;
+        }
+        if (headline.trim().length < 5) {
+          setError('Napisz jedno zdanie o sobie (min. 5 znaków).');
           return;
         }
         await apiFetch('/me/leader-profile', {
