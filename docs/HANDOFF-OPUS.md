@@ -11,6 +11,8 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJA 2026-08-23 (wyprawa dogfoodingowa + nagroda Drabinki): przeszedłem Drabinkę jak Lider i odebrałem nagrodę — na produkcji** (`a91e57e`, `c1ada35`). Skróty: (1) nagroda „dostęp do aplikacji LOT" wróciła do briefu — copy `/drabinki`+landingu mówi prawdę, panel nagrody na `/panel/punkty` czyta flagi z `/ladder/levels`, ADR-010 zaktualizowany, anty-MLM rozszerzony o ścieżkę odbioru; (2) persona Konrad Jaworowski (konto wyprawy, `wyprawa/KONTA.md`) przeszła L0→L1 realnie: 3 cykle zleceń, Q&A, kompresja czasu `wyprawa-czas.ts`; ściana szerokości potwierdzona jako cecha anty-MLM; (3) App: zespół „Jaworowski Consulting", 5 leadów, kreator S18 OK, 2 wpisy w feedzie; (4) warsztat `wyprawa/` + skille `portal-wyprawa`/`lot-prowadzenie-zespolu`; W-01 (walidacja kreatora) naprawione. Sprzątanie z dowodem: realne konta = 5 person + Macix. **Wykluczaj `wyprawa/KONTA.md` przy liczeniu realnych.**
+
 > **✅ SESJA 2026-08-22 (tor funkcjonalny, S19 pkt 3+4): ślad zaufania wszedł do
 > wyszukiwarki, a pierwsza mila przestała chować akcję pod zgięciem — wdrożone na staging
 > i produkcję** (`40fa0ab`, `bd480ce`). Bramki: **216/216 API** (213 + 3 nowe), 18/18 e2e,
