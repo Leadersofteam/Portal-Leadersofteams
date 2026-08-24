@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { Avatar } from '@/components/ui/avatar';
+import { CollapsibleFilters } from '@/components/ui/collapsible-filters';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { levelName } from '@/lib/levels';
@@ -58,35 +59,37 @@ export default async function LeadersDirectoryPage({
         mentoringiem — to zweryfikowany dowód, nie deklaracja.
       </p>
 
-      <form className="filters" method="get">
-        <div className="field">
-          <label htmlFor="q">Szukaj</label>
-          <input
-            id="q"
-            name="q"
-            defaultValue={typeof params.q === 'string' ? params.q : ''}
-            placeholder="np. automatyzacja, performance marketing"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="industryId">Branża</label>
-          <select
-            id="industryId"
-            name="industryId"
-            defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
-          >
-            <option value="">Wszystkie</option>
-            {industries.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button className="btn" type="submit">
-          Filtruj
-        </button>
-      </form>
+      <CollapsibleFilters>
+        <form className="filters" method="get">
+          <div className="field">
+            <label htmlFor="q">Szukaj</label>
+            <input
+              id="q"
+              name="q"
+              defaultValue={typeof params.q === 'string' ? params.q : ''}
+              placeholder="np. automatyzacja, performance marketing"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="industryId">Branża</label>
+            <select
+              id="industryId"
+              name="industryId"
+              defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
+            >
+              <option value="">Wszystkie</option>
+              {industries.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button className="btn" type="submit">
+            Filtruj
+          </button>
+        </form>
+      </CollapsibleFilters>
 
       {leaders.length === 0 ? (
         <EmptyState

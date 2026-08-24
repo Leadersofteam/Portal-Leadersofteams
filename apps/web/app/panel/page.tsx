@@ -123,19 +123,31 @@ export default async function PanelPage() {
 
       {showChecklist && <StartHere steps={steps} />}
 
+      {/* Panel-nav świadomy persony (24.08): przyciski ZARZĄDZANIA pokazujemy
+          tylko, gdy jest czym zarządzać — „Moje usługi/oferty" dla Lidera
+          z profilem, „Zlecenia firmy" dla kogoś z firmą. Bez tego prowadziły
+          do pustych ekranów. Ścieżki utworzenia profilu/firmy są w sekcjach
+          „Strona Lidera"/„Strona Firmy" niżej, a „Dodaj zlecenie" w pasku „+",
+          więc zdublowane „+ Nowe zlecenie" znika stąd. */}
       <nav className="panel-nav">
         <Link className="btn secondary" href="/panel/profil">
-          Profil Lidera
+          {hasProfile ? 'Profil Lidera' : 'Zostań Liderem'}
         </Link>
-        <Link className="btn secondary" href="/panel/uslugi">
-          Moje usługi
-        </Link>
-        <Link className="btn secondary" href="/panel/oferty">
-          Moje oferty
-        </Link>
-        <Link className="btn secondary" href="/panel/zlecenia">
-          Zlecenia firmy
-        </Link>
+        {hasProfile && (
+          <Link className="btn secondary" href="/panel/uslugi">
+            Moje usługi
+          </Link>
+        )}
+        {hasProfile && (
+          <Link className="btn secondary" href="/panel/oferty">
+            Moje oferty
+          </Link>
+        )}
+        {hasCompany && (
+          <Link className="btn secondary" href="/panel/zlecenia">
+            Zlecenia firmy
+          </Link>
+        )}
         <Link className="btn secondary" href="/panel/zapisane">
           Zapisane
         </Link>
@@ -144,9 +156,6 @@ export default async function PanelPage() {
         </Link>
         <Link className="btn secondary" href="/panel/konto">
           Konto i dane
-        </Link>
-        <Link className="btn" href="/zlecenia/nowe">
-          + Nowe zlecenie
         </Link>
       </nav>
 
