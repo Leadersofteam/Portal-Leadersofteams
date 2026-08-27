@@ -38,6 +38,12 @@ a nie funkcją. Wymaga rozmowy z właścicielem, nie decyzji w trakcie sprintu.
   z jego powstaniem, nie po fakcie.
 - **Migracje expand-only.** Nowe tabele, kolumny nullable/z domyślną, wartości enuma
   **tylko na końcu** listy. Skill: `portal-migracja`.
+- **Blok „Ekosystem" w stopce ma cztery etykiety wspólne dla CZTERECH repozytoriów.**
+  `apps/web/lib/ecosystem.ts` niesie listę linków do pozostałych właściwości marki
+  (App, `leadersofteam.pl`, `leadersofteams.com`); ten sam plik z tymi samymi etykietami
+  i tą samą kolejnością leży w repo App i w obu repo marketingowych. Zmiana etykiety
+  tutaj bez zmiany w tamtych trzech kasuje jedyną rzecz, którą ta lista daje:
+  rozpoznawalność między domenami.
 
 ## Dwie lekcje, które kosztowały najwięcej
 
