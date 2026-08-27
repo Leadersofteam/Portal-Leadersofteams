@@ -147,3 +147,24 @@ PD3 → D4 (App) → D5+PD4 (oba, dostępność i domknięcie).**
 | Stany puste z własną ilustracją SVG         | brak                | ✅ PD2: komplet na pierwszej mili (feed CTA, drabinka błąd+poziom 0)                                                                     |
 | Test „szablon czy produkt" (/feed bez logo) | nie do odróżnienia  | ✅ PD2: rozpoznawalny (krytyka 21.08)                                                                                                    |
 | Offline                                     | zaślepka            | ✅ PD4: ostatni feed czytelny (migawka publiczna)                                                                                        |
+
+## P2 — motyw jasny (27.08, PO programie PD1–PD4)
+
+Dyrektywa właściciela z sesji PM 27.08. Ciemny pozostaje domyślny i pozostaje
+sygnaturą marki; jasny jest pełnoprawnym wariantem TOKENOWYM:
+
+- `:root` = dark (bez atrybutu), `[data-theme='light']` nadpisuje ~30 zmiennych;
+  boot = blokujący skrypt inline w `layout.tsx` (mutacja atrybutu na `<html>`,
+  mina PD4), `lot_theme` w localStorage, sync `meta theme-color`.
+- Sweep ~60 surowych `rgb()`/hexów na tokeny (kanały `--x-rgb`, `--glint`,
+  `--sheen`, `--scrim`, `--atmo-1..4`, `--on-accent`, soft-teksty) — wartości
+  ciemnego zachowane co do bitu; zapadka `pnpm -C apps/web lint:tokens`
+  w `pnpm lint` pilnuje, żeby literały nie wróciły.
+- Kontrast jasnego zmierzony skryptem (analog pomiaru PD4, który dotyczył
+  wyłącznie ciemnego): teksty 4,56–18,39, poziomy Drabinki ≥4,45 (L1/L6
+  pociemnione), chipy soft ≥4,91, ogon gradientu 4,94. Obrysy świadomie
+  subtelne — lustro języka ciemnego motywu.
+- Przełącznik Ciemny/Jasny/Systemowy w stopce (radiogroup, cele ≥44 px);
+  `sw.js` `lot-v2`→`lot-v3`. OG i manifest PWA świadomie ciemne.
+- Weryfikacja: 23/23 e2e (theme.spec + landing-redirect.spec), zrzuty
+  390+1440 w OBU motywach na produkcji (`wyprawa/zrzuty/p2-2708-*`).
