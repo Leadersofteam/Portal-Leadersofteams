@@ -62,10 +62,20 @@ export const viewport: Viewport = {
   themeColor: '#0a0b12',
 };
 
+// Boot motywu (P2/S2): blokujący skrypt inline jako PIERWSZE dziecko <body> —
+// parser wykonuje go przed pierwszym paintem treści, więc jasny motyw nie miga.
+// WYŁĄCZNIE mutacja atrybutu na <html>: hydracja Reacta zdejmuje węzły DOM
+// wstrzyknięte skryptem inline, ale mutację atrybutu przeżywa (mina PD4) —
+// stąd też suppressHydrationWarning na <html>. Zero cookies(): odczyt cookies
+// w root layoucie uczyniłby dynamiczną KAŻDĄ stronę Portalu (patrz
+// lib/server-api.ts — to naprawiał PD1). Logika lustrzana z lib/theme.ts.
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl" className={`${inter.variable} ${bricolage.variable}`}>
+    <html lang="pl" className={`${inter.variable} ${bricolage.variable}`} suppressHydrationWarning>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <div className="climb-rail" aria-hidden="true">
           <i />
           <i />

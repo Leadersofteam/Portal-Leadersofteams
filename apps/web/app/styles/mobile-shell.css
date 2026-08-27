@@ -106,7 +106,7 @@
   width: 2.15rem;
   height: 2.15rem;
   border-radius: var(--radius);
-  color: #fff;
+  color: var(--on-accent);
   background: linear-gradient(135deg, var(--primary-600), var(--violet-500));
   box-shadow: var(--glow);
   transition: transform var(--dur) var(--ease);
@@ -130,7 +130,7 @@
 }
 
 .create-sheet::backdrop {
-  background: rgb(4 5 10 / 0.65);
+  background: var(--scrim);
   backdrop-filter: blur(3px);
 }
 
@@ -206,8 +206,8 @@
   flex: none;
   border-radius: var(--radius-sm);
   color: var(--primary-300);
-  background: rgb(131 113 244 / 0.12);
-  border: 1px solid rgb(131 113 244 / 0.28);
+  background: rgb(var(--primary-500-rgb) / 0.12);
+  border: 1px solid rgb(var(--primary-500-rgb) / 0.28);
 }
 
 .create-sheet-action strong {

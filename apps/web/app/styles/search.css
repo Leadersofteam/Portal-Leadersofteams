@@ -23,7 +23,7 @@
 
 .global-search:focus-within {
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgb(131 113 244 / 0.2);
+  box-shadow: 0 0 0 3px rgb(var(--primary-500-rgb) / 0.2);
 }
 
 .global-search input {
@@ -78,7 +78,7 @@
 
 .search-field:focus-within {
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgb(131 113 244 / 0.25);
+  box-shadow: 0 0 0 3px rgb(var(--primary-500-rgb) / 0.25);
 }
 
 .search-field input {
@@ -141,7 +141,7 @@
 }
 
 .search-tabs a.active .search-tab-count {
-  background: rgb(131 113 244 / 0.18);
+  background: rgb(var(--primary-500-rgb) / 0.18);
   color: var(--primary-300);
 }
 
@@ -243,8 +243,8 @@
 /* Copy jest tu istotne prawnie: sprawdzamy WYŁĄCZNIE sumę kontrolną, więc
    etykieta nie może sugerować weryfikacji w rejestrze (patrz isValidNip). */
 .nip-badge {
-  border-color: rgb(16 185 129 / 0.35);
-  color: #6ee7b7;
-  background: rgb(16 185 129 / 0.1);
+  border-color: rgb(var(--success-rgb) / 0.35);
+  color: var(--success-soft-text);
+  background: rgb(var(--success-rgb) / 0.1);
   cursor: help;
 }

@@ -58,9 +58,9 @@ export function LadderArt() {
         );
       })}
 
-      {/* aureola szczytu */}
-      <circle cx="204" cy="42" r="60" fill="#fbbf24" opacity="0.08" />
-      <circle cx="204" cy="42" r="26" fill="#fbbf24" opacity="0.1" />
+      {/* aureola szczytu — bursztyn poziomu 7 z tokenu, żeby motyw go widział */}
+      <circle cx="204" cy="42" r="60" fill="var(--level-7)" opacity="0.08" />
+      <circle cx="204" cy="42" r="26" fill="var(--level-7)" opacity="0.1" />
     </svg>
   );
 }

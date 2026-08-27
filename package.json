@@ -20,7 +20,7 @@
   "scripts": {
     "dev": "pnpm --parallel --filter './apps/*' dev",
     "build": "pnpm -r build",
-    "lint": "eslint .",
+    "lint": "eslint . && pnpm -C apps/web lint:tokens",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
