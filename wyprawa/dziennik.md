@@ -69,3 +69,17 @@
 - **Zgłoszenie W-01 (naprawione w tej sesji):** kreator Portalu, krok 2 — komunikat
   walidacji był zbiorczy („wybierz branżę I napisz…") mimo wybranej branży. Rozbity
   per pole.
+
+## Audyt PM — dwa zgłoszenia właściciela (27.08, 390 px)
+
+- **Co robiłem:** jako zalogowany Konrad wszedłem na `/` (tak, jak klika się logo);
+  obejrzałem panel w poszukiwaniu przełącznika motywu.
+- **Potwierdzone zgłoszenie 1:** zalogowany na `/` zostaje na landingu sprzedażowym,
+  a stopka pokazuje mu „Załóż konto | Zaloguj się" — sesja przy tym ŻYJE
+  (`/panel` wita „Cześć, Konrad Jaworowski"). Wygląda jak wylogowanie, choć nim nie jest.
+  Zrzut: `zrzuty/audyt-pm-2708-zalogowany-na-glownej-390.png`.
+- **Potwierdzone zgłoszenie 2:** żadnego przełącznika motywu w całym UI
+  (panel, stopka — zero trafień „jasny/ciemny/motyw"), `<html>` bez `data-theme`,
+  tło `rgb(10 11 18)` na twardo. Portal jest dark-only.
+- **Plan naprawy:** sprint P1 (redirect `/`→`/panel` w middleware + stopka świadoma
+  sesji) i P2 (pełny motyw jasny) — plan sesji PM 27.08.

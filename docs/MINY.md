@@ -333,3 +333,23 @@ Ta sama mina w drugą stronę: cookie `lot_sid` ma `Secure`, więc po IP nie utr
 sesji (patrz mina wyżej). **Wniosek ogólny: po IP kontenera testuj tylko ścieżki
 anonimowe i tylko odczyt.** Wszystko, co dotyka rejestracji, logowania albo WebCrypto —
 przez `127.0.0.1` albo produkcyjny HTTPS.
+
+### Motyw zmienia się TYLKO tokenami — i dwa powody, dlaczego (27.08, P2)
+
+Portal ma dwa motywy: ciemny domyślny (`:root`, brak atrybutu) i jasny
+(`[data-theme='light']` na `<html>`, ustawiany blokującym skryptem w `layout.tsx`
+z `localStorage('lot_theme')`). Dwie zasady, każda z blizną za sobą:
+
+1. **Żadnych nowych reguł stylu „dla jasnego"** — jasny wolno robić wyłącznie
+   nadpisaniem tokenów. Nowa reguła na selektorze komponentu to powrót miny
+   „skrót `background` kontra późniejsza warstwa" (wszystkie główne przyciski
+   były raz przezroczyste). Pilnuje tego zapadka `pnpm -C apps/web lint:tokens`
+   (w `pnpm lint`): surowe `rgb()`/hexy poza `:root`/`[data-theme=]` = czerwono.
+2. **Boot motywu to mutacja ATRYBUTU, nigdy wstrzykiwanie węzłów** — hydracja
+   Reacta zdejmuje DOM dodany skryptem inline (mina PD4), atrybut na `<html>`
+   przeżywa. Stąd `suppressHydrationWarning` na `<html>` w layout.tsx.
+
+Do kompletu: przy każdej zmianie wyglądu zrzuty w OBU motywach (cztery komplety:
+390/1440 × dark/light); `meta theme-color` synchronizuje boot + `lib/theme.ts`
+(wartości muszą zgadzać się z `--bg` obu motywów); obrazy OG i manifest PWA
+świadomie zostają ciemne.

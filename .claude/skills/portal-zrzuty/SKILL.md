@@ -81,3 +81,17 @@ to sam — jeśli klikasz jak człowiek, nie musisz nic dodawać.
 Nie „czy się wyświetliło", tylko: czy tekst się nie łamie, czy nic nie jest obcięte, czy
 polska odmiana jest poprawna, czy pusty stan mówi coś sensownego, czy cel dotyku ma ≥ 44 px.
 **Otwórz zrzut i obejrzyj go** — zapisanie pliku nie jest weryfikacją.
+
+## Dwa motywy = cztery komplety (P2, 27.08)
+
+Portal ma motyw jasny (`[data-theme='light']` na `<html>`). Po każdej zmianie
+wyglądu rób zrzuty w OBU motywach (390 i 1440 × dark/light). Jasny w headlessie
+włączysz przed `goto`:
+
+```js
+await page.addInitScript(() => localStorage.setItem('lot_theme', 'light'));
+```
+
+Boot w layout.tsx odczyta to przed pierwszym paintem. Wracasz do ciemnego przez
+`localStorage.removeItem('lot_theme')`. Zasady motywu: `docs/MINY.md` (sekcja
+„Motyw zmienia się TYLKO tokenami").
