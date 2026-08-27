@@ -12,8 +12,13 @@ export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
 export PORT=3001
 export HOST=127.0.0.1
 export API_INTERNAL_URL=http://127.0.0.1:3001
-export APP_BASE_URL=http://127.0.0.1:3000
-export E2E_BASE_URL=http://127.0.0.1:3000
+# Origin przeglądarki MUSI być localhost, nie 127.0.0.1: `next start` wypełnia
+# x-forwarded-host własnym `localhost`, więc absolutny Location z middleware
+# (redirect `/`→`/panel`, P1) wskazuje localhost — po wejściu przez 127.0.0.1
+# przekierowanie zmieniałoby origin i gubiło host-only cookie sesji.
+# localhost jest secure context tak samo jak 127.0.0.1 (crypto.subtle działa).
+export APP_BASE_URL=http://localhost:3000
+export E2E_BASE_URL=http://localhost:3000
 # api/worker: NODE_ENV=development → cookie sesji działa po http (Secure=off).
 # web: BUILD produkcyjny (szybka, niezawodna hydracja — brak wyścigów dev-mode).
 

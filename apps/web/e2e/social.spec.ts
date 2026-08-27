@@ -130,7 +130,10 @@ test('nagłówek rozpoznaje zalogowanego i gościa', async ({ browser }) => {
   ).toBeVisible({ timeout: 15_000 });
 
   await register(page, 'E2E Nagłówek', `naglowek-${stamp}@e2e.local`);
-  await page.goto('/');
+  // Furtka `?widok=landing`: bez niej zalogowany jest przekierowywany na /panel
+  // (P1), a ten test sprawdza nagłówek NA LANDINGU — samo przekierowanie ma
+  // własny test w landing-redirect.spec.ts.
+  await page.goto('/?widok=landing');
   await expect(page.getByRole('banner').getByRole('link', { name: 'E2E' })).toBeVisible({
     timeout: 15_000,
   });

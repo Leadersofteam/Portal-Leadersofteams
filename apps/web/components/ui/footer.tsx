@@ -1,7 +1,9 @@
 import Link from 'next/link';
 
 import { ECOSYSTEM_OTHERS } from '@/lib/ecosystem';
+import { FooterAccountLinks } from '@/components/ui/footer-account-links';
 import { LogoMark } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 /**
  * Stopka serwisu — jedyne stałe miejsce z linkami prawnymi (wymóg launchowy
@@ -23,6 +25,7 @@ export function SiteFooter() {
             Status, którego nie da się kupić ani wyrekrutować — tylko zapracować. Marketplace B2B i
             społeczność Liderów z jawnym, antymanipulacyjnym systemem awansu.
           </p>
+          <ThemeToggle />
         </div>
         <div>
           <h4>Platforma</h4>
@@ -62,12 +65,7 @@ export function SiteFooter() {
         <div>
           <h4>Konto i zasady</h4>
           <ul>
-            <li>
-              <Link href="/rejestracja">Załóż konto</Link>
-            </li>
-            <li>
-              <Link href="/logowanie">Zaloguj się</Link>
-            </li>
+            <FooterAccountLinks />
             <li>
               <Link href="/regulamin">Regulamin</Link>
             </li>
