@@ -1366,7 +1366,9 @@ main tbody tr:hover {
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
+  /* Cztery kolumny od 2026-08-27: doszedł blok „Ekosystem" z linkami do
+     pozostałych trzech właściwości marki. */
+  grid-template-columns: 1.5fr repeat(3, minmax(8.5rem, 1fr));
   gap: 2rem;
 }
 
@@ -1951,6 +1953,15 @@ main tbody tr:hover {
   .site-footer-inner {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+}
+
+/* Między 768 a 1024 px cztery kolumny łamałyby „International / EN" —
+   dwie kolumny mieszczą etykiety w całości. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .site-footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 2.5rem;
   }
 }
 

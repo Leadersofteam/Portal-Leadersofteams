@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { ECOSYSTEM_OTHERS } from '@/lib/ecosystem';
 import { LogoMark } from '@/components/ui/logo';
 
 /**
@@ -41,6 +42,21 @@ export function SiteFooter() {
             <li>
               <Link href="/drabinka">Drabinka Lidera</Link>
             </li>
+          </ul>
+        </div>
+        <div>
+          <h4>Ekosystem</h4>
+          {/* Cztery właściwości marki, ta sama lista i te same etykiety na
+              każdej z nich (patrz `lib/ecosystem.ts`). Bez tego bloku człowiek,
+              który trafił na Portal, nie miał skąd wiedzieć, że reszta istnieje. */}
+          <ul>
+            {ECOSYSTEM_OTHERS.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} title={link.description} hrefLang={link.lang}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
         <div>
