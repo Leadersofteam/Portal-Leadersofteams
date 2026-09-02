@@ -11,6 +11,26 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **✅ SESJE 2026-09-01/02 (dzień genialnego Lidera + naprawy W-02..W-05) — na produkcji.**
+> (1) **Pierwsza oferta na pierwsze realne zlecenie**: Konrad złożył przez UI ofertę na
+> „Marketing" HydroSpark Macixa (1200 zł / 14 dni, widełki 500–1500) — `offers` SUBMITTED,
+> powiadomienie in-app poszło; dalszy ciąg rozmowy = człowiek, sprawdzić reakcję Macixa.
+> (2) **Wizytówka Konrada domknięta** (bio + 2 pozycje portfolio), 2 wpisy w feedzie,
+> cykl Q&A w grupie Sprzedaż (akceptacja = 25 pkt PENDING, ×0,5 od tego samego uznającego
+> — anty-fraud działa wg projektu). **Worker dojrzewania potwierdzony bojowo** (2×50
+> z 23.08 same przeszły w CONFIRMED). (3) **Naprawy z wyprawy wdrożone**: oś „Obserwowani"
+> zawiera własną aktywność autora (W-04, + test integracyjny), profil Lidera pokazuje jego
+> usługi przez filtr `leaderProfileId` w `GET /listings` (W-03), „Zgłoś"→„Zgłoś nadużycie"
+> na zleceniu (W-02), strona pytań grupy daje nie-członkowi kartę dołączenia (W-05).
+> Bramki: **217 testów API, 23/23 e2e**, lint/typecheck, zero migracji; backup
+> `portal-20260902-085022`; healthz/worker/uploads zielone; weryfikacja na prodzie
+> przeglądarką Konrada (zrzuty `wyprawa/zrzuty/weryfikacja-w0*-390.png`).
+> **Obserwacja produktowa do decyzji właściciela:** przy ofercie na zlecenie NIE MA kanału
+> rozmowy (firma może tylko przyjąć/zignorować) — przy usługach ten kanał istnieje
+> (inquiry→wiadomości→konwersja); asymetria uderza w pierwszą realną transakcję.
+> Mina infra: równoległe sesje na VPS (tsc/vite ×3) = OOM SIGKILL buildów i timeouty
+> Playwrighta; przed bramkami patrz `/proc/loadavg`.
+>
 > **✅ SESJA 2026-08-27 (PM: P1 „dom zalogowanego" + P2 „motyw jasny") — na produkcji** (`0b61242`, `a222a30`). (1) **P1**: zalogowany na `/` ląduje w `/panel` (middleware, obecność `lot_sid`, 307 z originem z `x-forwarded-host` — `request.url`/`host` bywają rekonstruowane z hosta procesu, a relatywny Location = ERR_INVALID_URL); furtka `/?widok=landing`; stopka z klienckim `FooterAccountLinks` (zalogowany widzi „Panel/Konto i dane"); wylogowanie twardą nawigacją (router cache trzymał prefetch `/` sprzed wylogowania → miękkie przejście lądowało w `/logowanie`). (2) **P2**: motyw jasny — ciemny zostaje domyślny; sweep ~60 literałów na tokeny + zapadka `lint:tokens` w `pnpm lint`; blok `[data-theme='light']` (kontrast zmierzony ≥ AA, poziomy Drabinki pociemnione, sygnatura „im wyżej, tym cieplej" zostaje); boot blokującym skryptem inline (mutacja atrybutu, mina PD4), sync `theme-color`; przełącznik Ciemny/Jasny/Systemowy w stopce; `sw.js` → `lot-v3`. Bramki: 216/216 API, **23/23 e2e** (5 nowych), lint-tokens 0/0. Zweryfikowane na żywo na obu viewportach i w OBU motywach (zrzuty `wyprawa/zrzuty/p1-*`, `p2-*`); healthz/worker/uploads zielone. Nowa mina w MINY.md: „Motyw zmienia się TYLKO tokenami". Audyt PM potwierdził oba zgłoszenia właściciela przed naprawą (dziennik wyprawy, sekcja 27.08).
 >
 > **✅ SESJA 2026-08-24 (szlif UX „upraszczaj gdzie się da"): panel i filtry pokazują to, co Twoje — na produkcji** (`40332b8`). (1) **panel-nav świadomy persony**: przyciski zarządzania („Moje usługi/oferty", „Zlecenia firmy") widać tylko, gdy jest czym zarządzać (`hasProfile`/`hasCompany`) — wcześniej prowadziły do pustych ekranów; „Profil Lidera" bez profilu → „Zostań Liderem"; zdublowane „+ Nowe zlecenie" usunięte. (2) **zwijane filtry `/zlecenia` i `/liderzy`** (wspólny `CollapsibleFilters`, wzorzec `/uslugi` z PD3) — na 390 px pierwszy wynik nie chowa się już pod formularzem. Zweryfikowane na żywo: Lider-z-profilem widzi usługi/oferty, Firma widzi „Zlecenia firmy"; filtry zwinięte na mobile. **PIERWSZE REALNE ZLECENIE**: Macix opublikował „Marketing" (HydroSpark) 22.08 — wisi z 0 ofert (decyzja właściciela). Bramki: 216/216 API na czystej bazie (padający ladder = zanieczyszczona baza dev, nie regresja). **Staging dogoniony buildem z prod.**

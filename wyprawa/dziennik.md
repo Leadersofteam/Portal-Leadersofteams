@@ -132,3 +132,13 @@ zasada „Macix nietykalny" w zakresie treści publicznych; bez pętli wzajemno�
   realną transakcję: Macix dostał ofertę z pytaniami, na które nie ma gdzie
   odpowiedzieć. Do decyzji właściciela (ADR-010 ogranicza komunikatory — ale
   wątek przy ofercie to lustro inquiry, nie DM).
+
+## Naprawy z wyprawy wdrożone (02.09)
+
+W-02..W-05 naprawione, przeszły komplet bramek (217 testów API, 23 e2e — suita
+urosła z 15) i są NA PRODUKCJI, zweryfikowane przeglądarką Konrada na 390 px:
+oś „Obserwowani" pokazuje własne wpisy (koniec znikających postów), profil
+Lidera ma sekcję „Usługi Lidera" z kartą usługi, zlecenie mówi „Zgłoś
+nadużycie", a nie-członek grupy dostaje na stronie pytań kartę z przyciskiem
+dołączenia. Zrzuty: weryfikacja-w0*-390.png. Deploy: staging → prod, backup
+portal-20260902-085022, healthz ok, worker żyje, zero migracji.
