@@ -6,6 +6,7 @@ import { FollowButton } from '@/app/profil/[handle]/follow-button';
 import { JsonLd } from '@/components/json-ld';
 import { Avatar } from '@/components/ui/avatar';
 import { LevelBadge } from '@/components/ui/level-badge';
+import { ListingCard, type ListingCardData } from '@/components/ui/listing-card';
 import { leaderProfileJsonLd } from '@/lib/jsonld';
 import { levelName } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
@@ -97,6 +98,14 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
     profile.reviewCount > 0
       ? await serverApi<LeaderReviews>(`/leaders/${id}/reviews`).catch(() => null)
       : null;
+  // Usługi Lidera (W-03): profil był ślepą uliczką — firma czytała ofertę
+  // i opinie, ale nie miała dokąd pójść dalej. Filtr leaderProfileId zwraca
+  // wyłącznie PUBLISHED z widocznym profilem, więc niczego nie ujawniamy ponad
+  // katalog /uslugi.
+  const listingsData = await serverApi<{ listings: ListingCardData[] }>(
+    `/listings?leaderProfileId=${id}`,
+  ).catch(() => null);
+  const listings = listingsData?.listings ?? [];
 
   return (
     <main>
@@ -165,6 +174,17 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
               </p>
             </div>
           )}
+        </section>
+      )}
+
+      {listings.length > 0 && (
+        <section>
+          <h2>Usługi Lidera ({listings.length})</h2>
+          <div className="feature-grid">
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
         </section>
       )}
 

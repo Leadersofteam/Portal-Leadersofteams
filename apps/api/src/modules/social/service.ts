@@ -727,16 +727,22 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
         followedIds = following.map((f) => f.followedId);
       }
 
+      // Własna aktywność należy do osi „Obserwowani" (W-04): bez tego autor
+      // tuż po publikacji widział pusty stan „Nie obserwujesz jeszcze nikogo"
+      // i wpis wyglądał na zgubiony. followingCount celowo NIE liczy autora —
+      // pusty stan z zachętą do obserwowania ma dalej działać u konta bez treści.
+      const visibleIds = userId ? [...followedIds, userId] : followedIds;
+
       const empty = {
         items: [] as never[],
         nextCursor: null,
         followingCount: followedIds.length,
         scope,
       };
-      if (scope === 'following' && followedIds.length === 0) return empty;
+      if (scope === 'following' && visibleIds.length === 0) return empty;
 
       const rows = await prisma.activityItem.findMany({
-        where: scope === 'following' ? { actorId: { in: followedIds } } : {},
+        where: scope === 'following' ? { actorId: { in: visibleIds } } : {},
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

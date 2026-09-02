@@ -232,6 +232,9 @@ export const listingSortSchema = z.enum(['newest', 'price_asc', 'price_desc']).d
 export type ListingSort = z.infer<typeof listingSortSchema>;
 
 export const listingFiltersSchema = z.object({
+  // Usługi konkretnego Lidera — profil publiczny linkuje nimi do marketplace'u
+  // (W-03: bez tego ścieżka firma→oferent→usługa była ślepą uliczką).
+  leaderProfileId: idSchema.optional(),
   industryId: idSchema.optional(),
   tag: z.string().trim().min(2).max(30).optional(),
   q: z.string().trim().min(2).max(200).optional(),

@@ -66,6 +66,11 @@ describe.skipIf(!hasInfra)('social — follow, feed, profil', () => {
     await ctx.prisma.activityItem.deleteMany({
       where: { actorId: { in: [leaderId, followerId] } },
     });
+    // Wpis z testu „własny wpis w scope=following" trzyma FK do autora —
+    // bez tego kasowania user.deleteMany pada i suita czerwienieje w afterAll.
+    await ctx.prisma.socialPost.deleteMany({
+      where: { authorUserId: { in: [leaderId, followerId] } },
+    });
     await ctx.prisma.user.deleteMany({ where: { email: { in: emails } } });
     await ctx.close();
   });
@@ -139,6 +144,39 @@ describe.skipIf(!hasInfra)('social — follow, feed, profil', () => {
       headers: { cookie: followerCookie },
     });
     expect((feed.json() as { followingCount: number }).followingCount).toBe(0);
+  });
+
+  // Własna aktywność należy do osi „Obserwowani" (W-04): autor tuż po
+  // publikacji ma widzieć swój wpis, nawet gdy nikogo nie obserwuje — inaczej
+  // wita go pusty stan i wpis wygląda na zgubiony.
+  it('feed: własny wpis widoczny w scope=following bez obserwowania kogokolwiek', async () => {
+    const created = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/social/posts',
+      headers: { cookie: followerCookie },
+      payload: { body: `Mój pierwszy wpis ${run} — czy siebie widzę?` },
+    });
+    expect(created.statusCode).toBe(201);
+    const postId = (created.json() as { id: string }).id;
+    // Materializacja feedu żyje w workerze — w teście wołamy handler wprost.
+    await social.onSocialPostPublished({ postId, authorUserId: followerId });
+
+    const feed = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/v1/feed?scope=following',
+      headers: { cookie: followerCookie },
+    });
+    expect(feed.statusCode).toBe(200);
+    const body = feed.json() as {
+      items: Array<{ type: string; subjectId: string }>;
+      followingCount: number;
+    };
+    // followingCount dalej mówi o OBSERWOWANYCH (0) — zachęta do obserwowania
+    // ma prawo się wyświetlić, ale wpis autora musi być na osi.
+    expect(body.followingCount).toBe(0);
+    expect(
+      body.items.some((i) => i.type === 'SOCIAL_POST_PUBLISHED' && i.subjectId === postId),
+    ).toBe(true);
   });
 
   // Zakres „cała społeczność" jest oknem wystawowym Portalu: gość ma zobaczyć

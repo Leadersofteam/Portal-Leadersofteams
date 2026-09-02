@@ -63,3 +63,9 @@ dotyczą ich czynności. Jedna lista, jedno miejsce do aktualizacji.
    miny — nie.
 4. Prefiks `portal-` jest obowiązkowy: na tym VPS obok stoi repo App z własnymi skillami
    (`lot-*`) i nazwy nie mogą kolidować.
+
+## Skille wspólne — przeniesione na poziom użytkownika (01.09.2026)
+
+`playwright-cli`, `playwright-trace` i `prisma-cli` mieszkają teraz w `~/.claude/skills/`
+na VPS (jedna kopia dla wszystkich repo). Przy klonie repo na inną maszynę skopiuj je
+stamtąd do `.claude/skills/` klonu.

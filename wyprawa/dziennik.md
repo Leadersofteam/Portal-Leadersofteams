@@ -83,3 +83,52 @@
   tło `rgb(10 11 18)` na twardo. Portal jest dark-only.
 - **Plan naprawy:** sprint P1 (redirect `/`→`/panel` w middleware + stopka świadoma
   sesji) i P2 (pełny motyw jasny) — plan sesji PM 27.08.
+- **DOMKNIĘTE (dopisek 01.09):** oba zgłoszenia naprawione i wdrożone tego samego
+  dnia — `0b61242` (P1: `/`→`/panel`, stopka zna sesję) i `a222a30` (P2: motyw jasny,
+  przełącznik Ciemny/Jasny/Systemowy w stopce). Zweryfikowane na prodzie 01.09
+  (przełącznik widoczny na każdym zrzucie wyprawy).
+
+## Dzień genialnego Lidera — realne interakcje (01.09, 390 px)
+
+Zgoda właściciela z tej sesji: persony MOGĄ dotykać realnych treści (uchylona
+zasada „Macix nietykalny" w zakresie treści publicznych; bez pętli wzajemności).
+
+- **Co robiłem (Konrad):** oferta na PIERWSZE realne zlecenie Portalu — „Marketing"
+  HydroSpark (Macix, 10 dni bez ofert): pakiet startowy 1200 zł / 14 dni, uczciwie
+  dopasowany do widełek 500–1500 zł. `offers` → SUBMITTED, outbox `offer_submitted`
+  → powiadomienie in-app dla firmy. Licznik ofert 0→1.
+- **Wizytówka:** bio profilu Lidera (było puste) + 2 pozycje portfolio z realnych
+  zleceń wyprawy; publiczny profil `/liderzy/…` wygląda teraz wiarygodnie
+  (3 zlecenia, 5/5, portfolio). 2 wpisy w feedzie (rytm follow-upów; lekcja małego
+  budżetu). Cykl Q&A w grupie Sprzedaż: pytanie Michała → odpowiedź Konrada →
+  akceptacja. Punkt: **25 pkt PENDING** (×0,5 od tego samego uznającego — anty-fraud
+  działa dokładnie wg projektu). Obaj dołączyli do grupy przez UI (join → ACTIVE).
+- **Worker potwierdzony bojowo:** 2×50 pkt z 23.08 dojrzały same ~30.08 —
+  saldo 200 CONFIRMED bez ręcznego dojrzewania. Pytanie z 23.08 rozstrzygnięte.
+- **Co myliło / zgłoszenia:** W-02 „Zgłoś" na zleceniu czyta się jak „aplikuj"
+  (mobile, nad formularzem oferty); W-03 profil Lidera nie linkuje jego usług
+  (ślepa uliczka firma→oferent→usługa); W-04 po publikacji wpisu autor go nie
+  widzi (domyślna zakładka „Obserwowani" bez własnych wpisów = pusty stan);
+  W-05 pusty stan pytań zachęca „Zadaj pierwsze" nie-członka bez ścieżki dołączenia.
+- **Tarcie niebędące błędem:** przy load>90 na VPS (równoległy build App) submit
+  odpowiedzi padł na sieci — UI pokazał generyczne „Coś poszło nie tak.", ale
+  ZACHOWAŁ treść w polu (dobrze); retry przeszedł. Duże formularze przeżywają
+  błąd sieci — to się chwali.
+- **Pozytywne zaskoczenie:** stopka z przełącznikiem motywu na każdej stronie
+  (P2 z 27.08 żyje na prodzie); wątek po akceptacji dostaje badge „Rozwiązane"
+  i podpowiedź o punktach — pętla Drabinki jest czytelna od strony pytającego.
+- **Rekomendacja:** oferta czeka po stronie Macixa — dalszy ciąg (rozmowa,
+  akceptacja) powinien poprowadzić człowiek; sprawdzić za 48 h, czy Macix
+  zareagował (powiadomienie 11+ nieprzeczytanych — patrz W-obserwacja: badge
+  powiadomień u Konrada pokazuje 11, u Michała 2 — warto kiedyś przejść pełny
+  przebieg czytania powiadomień).
+
+## Obserwacja produktowa (01.09, sesja rozwojowa)
+
+- **Brak kanału rozmowy przy ofercie na zlecenie:** firma może ofertę wyłącznie
+  przyjąć („Wybierz tę ofertę") albo zignorować — nie ma jak dopytać oferenta,
+  a Lider nie ma jak doprecyzować. Przy usługach ten kanał ISTNIEJE (zapytanie
+  → wiadomości → konwersja na zlecenie). Asymetria uderza dokładnie w pierwszą
+  realną transakcję: Macix dostał ofertę z pytaniami, na które nie ma gdzie
+  odpowiedzieć. Do decyzji właściciela (ADR-010 ogranicza komunikatory — ale
+  wątek przy ofercie to lustro inquiry, nie DM).

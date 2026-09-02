@@ -307,6 +307,7 @@ export function createListingsService({ prisma, identity, orders, files, redis }
         leaderProfile: { isVisible: true },
         ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
         ...(likeQ ? { title: { contains: likeQ } } : {}),
+        ...(filters.leaderProfileId ? { leaderProfileId: filters.leaderProfileId } : {}),
         ...(filters.industryId ? { industryId: filters.industryId } : {}),
         ...(filters.tag ? { tags: { some: { tag: { slug: filters.tag } } } } : {}),
         ...(priceWhere ? { priceFrom: priceWhere } : {}),

@@ -42,8 +42,11 @@ export function ReportButton({
 
   if (!open) {
     return (
+      // „Zgłoś nadużycie", nie samo „Zgłoś" (W-02): na stronie zlecenia goły
+      // czasownik czytał się jak „zgłoś się do zlecenia" — dokładnie odwrotność
+      // intencji, tuż nad formularzem oferty.
       <button className="btn secondary" onClick={() => setOpen(true)}>
-        Zgłoś
+        Zgłoś nadużycie
       </button>
     );
   }

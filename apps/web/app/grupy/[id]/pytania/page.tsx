@@ -6,6 +6,7 @@ import { cache } from 'react';
 import { THREAD_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
+import { JoinLeaveButton } from '../group-actions';
 import { AskQuestionForm } from './ask-question';
 
 interface GroupDetail {
@@ -54,16 +55,18 @@ export default async function GroupThreadsPage({
   const sp = await searchParams;
   const cursor = typeof sp.cursor === 'string' ? sp.cursor : '';
 
-  const [detail, list] = await Promise.all([
+  const [detail, list, me] = await Promise.all([
     serverApi<GroupDetail>(`/groups/${id}`),
     serverApi<{ threads: ThreadRow[]; nextCursor: string | null }>(
       `/groups/${id}/threads?${cursor ? `cursor=${cursor}` : ''}`,
     ),
+    serverApi<{ user: { id: string } | null }>('/auth/me').catch(() => null),
   ]);
   if (!detail) notFound();
 
   const threads = list?.threads ?? [];
   const isMember = detail.viewer.membershipStatus === 'ACTIVE';
+  const isLoggedIn = Boolean(me?.user);
 
   return (
     <main>
@@ -77,10 +80,30 @@ export default async function GroupThreadsPage({
       </p>
 
       {isMember && <AskQuestionForm groupId={id} />}
+      {/* Nie-członek widział zachętę „Zadaj pierwsze" bez żadnej ścieżki
+          wykonania (W-05) — formularz wymaga członkostwa, a przycisk dołączenia
+          był tylko na stronie głównej grupy. Dajemy ścieżkę na miejscu. */}
+      {!isMember && detail.viewer.membershipStatus !== 'BANNED' && (
+        <div className="card" style={{ marginTop: '1.5rem' }}>
+          <h3>Chcesz zadać pytanie?</h3>
+          {isLoggedIn ? (
+            <>
+              <p className="muted">
+                Pytania i odpowiedzi są dla członków grupy — dołączenie to jedno kliknięcie.
+              </p>
+              <JoinLeaveButton groupId={id} membershipStatus={detail.viewer.membershipStatus} />
+            </>
+          ) : (
+            <p className="muted">
+              <Link href="/logowanie">Zaloguj się</Link>, aby dołączyć do grupy i zadać pytanie.
+            </p>
+          )}
+        </div>
+      )}
 
       <h2 style={{ marginTop: '2rem' }}>Wątki</h2>
       {threads.length === 0 ? (
-        <p className="muted">Brak pytań w tej grupie. Zadaj pierwsze.</p>
+        <p className="muted">Brak pytań w tej grupie.{isMember ? ' Zadaj pierwsze.' : ''}</p>
       ) : (
         threads.map((t) => (
           <article key={t.id} className="card" style={{ marginTop: '1rem' }}>

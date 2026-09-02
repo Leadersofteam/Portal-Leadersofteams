@@ -62,6 +62,21 @@ nie może wymagać cofania schematu (ADR-008) — poprzednia wersja kodu ma dzia
 Jeśli zmiana z natury nie jest expand-only, rozbij ją na dwa wdrożenia
 (najpierw dodaj i zacznij pisać w oba miejsca, dopiero po jakimś czasie usuń stare).
 
+## Przegląd SQL przed wdrożeniem — checklista
+
+Za wzorem migration-review z oficjalnych skilli Prisma, przy czytaniu SQL oczami odpowiedz:
+
+1. **Operacje destrukcyjne = 0** (wymusza ADR-008/expand-only) — policz i potwierdź wprost;
+   każdy DROP/zwężenie/`NOT NULL` bez domyślnej to złamanie ADR, nie „drobiazg".
+2. **Enum**: dotychczasowa kolejność nietknięta, nowe wartości na końcu (pułapka 2).
+3. **Blokady**: `ALTER` na tabeli z ruchem = chwila blokady zapisu; sprawdź rozmiar tabeli,
+   zanim uznasz to za pomijalne.
+4. **Regeneracja migracji** (rebase/poprawka): ręczna logika transformacji danych ze starej
+   migracji NIE przenosi się sama — przenieś i zaznacz w diffie.
+5. **`migrate resolve` tylko po znanym incydencie** (jak pułapka 1) — nigdy do uciszenia
+   rozjazdu o nieznanej przyczynie. Żywa baza = źródło prawdy; `_prisma_migrations` to kopia
+   robocza, która dryfuje.
+
 ## Wdrożenie migracji
 
 Na obu środowiskach osobnym krokiem `run --rm migrate` (profil `tools`) — skill `portal-wdrozenie`.
