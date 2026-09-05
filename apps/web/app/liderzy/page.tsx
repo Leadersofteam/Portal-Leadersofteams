@@ -1,26 +1,17 @@
 import Link from 'next/link';
 
-import { Avatar } from '@/components/ui/avatar';
 import { CollapsibleFilters } from '@/components/ui/collapsible-filters';
 import { EmptyState } from '@/components/ui/empty-state';
-import { LevelBadge } from '@/components/ui/level-badge';
-import { levelName } from '@/lib/levels';
-import { serverApi } from '@/lib/server-api';
+import { IndustryChips } from '@/components/ui/industry-chips';
+import { LeaderRow, type LeaderRowData } from '@/components/ui/leader-row';
+import { publicApi } from '@/lib/server-api';
 
-interface LeaderRow {
-  id: string;
-  displayName: string;
-  avatarFileId: string | null;
-  headline: string;
-  industry: { name: string; slug: string };
-  level: number;
-  averageRating: number | null;
-  reviewCount: number;
-}
+type LeaderRow = LeaderRowData;
 
 interface Industry {
   id: string;
   name: string;
+  slug: string;
 }
 
 export const metadata = {
@@ -42,8 +33,12 @@ export default async function LeadersDirectoryPage({
   }
 
   const [data, industriesData] = await Promise.all([
-    serverApi<{ leaders: LeaderRow[]; nextCursor: string | null }>(`/leaders?${query.toString()}`),
-    serverApi<{ industries: Industry[] }>('/industries'),
+    // PL4: publicApi — lista publiczna, bez cookies (uzasadnienie w /zlecenia).
+    publicApi<{ leaders: LeaderRow[]; nextCursor: string | null }>(
+      `/leaders?${query.toString()}`,
+      0,
+    ),
+    publicApi<{ industries: Industry[] }>('/industries'),
   ]);
   const leaders = data?.leaders ?? [];
   const industries = industriesData?.industries ?? [];
@@ -58,6 +53,9 @@ export default async function LeadersDirectoryPage({
         Katalog Liderów Leaders of Teams. Poziom w Drabince zdobywa się wyłącznie realną pracą i
         mentoringiem — to zweryfikowany dowód, nie deklaracja.
       </p>
+
+      {/* PL4: chipy branż → huby /liderzy/branza/[slug]. */}
+      <IndustryChips industries={industries} base="/liderzy" allHref="/liderzy" />
 
       <CollapsibleFilters>
         <form className="filters" method="get">
@@ -103,32 +101,7 @@ export default async function LeadersDirectoryPage({
       ) : (
         <div>
           {leaders.map((leader) => (
-            <div key={leader.id} className="list-row list-row--stack">
-              <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                <Avatar
-                  name={leader.displayName}
-                  src={leader.avatarFileId ? `/api/v1/files/${leader.avatarFileId}/thumb` : null}
-                />
-                <div>
-                  <h3>
-                    <Link href={`/liderzy/${leader.id}`}>{leader.displayName}</Link>
-                  </h3>
-                  <div className="meta">{leader.headline}</div>
-                  <div className="meta muted">{leader.industry.name}</div>
-                </div>
-              </div>
-              <div className="text-right list-row-aside">
-                <LevelBadge level={leader.level} name={levelName(leader.level)} />
-                {leader.reviewCount > 0 && (
-                  <div className="mt-1">
-                    <span className="badge">
-                      ★ {leader.averageRating}/5 ({leader.reviewCount}{' '}
-                      {leader.reviewCount === 1 ? 'ocena' : 'ocen'})
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+            <LeaderRow key={leader.id} leader={leader} />
           ))}
         </div>
       )}

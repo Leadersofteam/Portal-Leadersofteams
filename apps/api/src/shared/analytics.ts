@@ -54,6 +54,7 @@ const KNOWN_PATHS = new Set([
   '/grupy/:id/pytania',
   '/liderzy',
   '/liderzy/:id',
+  '/liderzy/branza/:id',
   '/logowanie',
   '/nie-pamietam-hasla',
   '/oferty/:id',
@@ -70,7 +71,9 @@ const KNOWN_PATHS = new Set([
   '/panel/uzytkownicy',
   '/panel/zapisane',
   '/panel/zlecenia',
+  '/porownanie/:id',
   '/powiadomienia',
+  '/pytania',
   '/profil/:id',
   '/prywatnosc',
   '/regulamin',
@@ -81,6 +84,7 @@ const KNOWN_PATHS = new Set([
   '/szukam-wykonawcy',
   '/tematy/:id',
   '/uslugi',
+  '/uslugi/branza/:id',
   '/uslugi/nowa',
   '/uslugi/:id',
   '/uslugi/:id/edytuj',
@@ -90,6 +94,7 @@ const KNOWN_PATHS = new Set([
   '/wypis-digest',
   '/zapytania/:id',
   '/zlecenia',
+  '/zlecenia/branza/:id',
   '/zlecenia/nowe',
   '/zlecenia/:id',
 ]);
@@ -99,7 +104,7 @@ export const OTHER_PATH = '/inne';
 // Segmenty statyczne, które NIGDY nie są identyfikatorem — bez tej listy
 // „/uslugi/nowa" zwinęłoby się do „/uslugi/:id" i zlało z kartą usługi,
 // czyli formularz dodawania byłby nieodróżnialny od jej oglądania.
-const STATIC_SEGMENTS = new Set(['nowa', 'nowe', 'pytania', 'post']);
+const STATIC_SEGMENTS = new Set(['nowa', 'nowe', 'pytania', 'post', 'branza']);
 
 // Rodzice, których NASTĘPNY segment jest zawsze identyfikatorem — nawet jeśli
 // nie wygląda na identyfikator (S18). Heurystyka niżej rozpoznaje cuid, uuid,
@@ -115,7 +120,10 @@ const STATIC_SEGMENTS = new Set(['nowa', 'nowe', 'pytania', 'post']);
 // Bez tej listy wszystkie trzy lądowały w `/inne`, czyli najczęściej odwiedzane
 // strony treści były niepoliczalne. STATIC_SEGMENTS ma pierwszeństwo, więc
 // `/uslugi/nowa` dalej jest formularzem, a nie kartą usługi.
-const DYNAMIC_PARENTS = new Set(['profil', 'tematy', 'uslugi']);
+// PL4: `branza` i `porownanie` niosą po sobie slug (`/uslugi/branza/marketing`,
+// `/porownanie/oferteo`) — krótszy niż próg, więc bez tej listy huby SEO
+// wpadałyby do `/inne`, czyli dokładnie ruch, który PL4 ma zmierzyć.
+const DYNAMIC_PARENTS = new Set(['profil', 'tematy', 'uslugi', 'branza', 'porownanie']);
 
 function isIdentifierSegment(segment: string, parent: string | undefined): boolean {
   if (STATIC_SEGMENTS.has(segment)) return false;
@@ -143,12 +151,14 @@ export function normalizePath(rawPath: string): string {
   // Ochrona przed absurdalnie głębokimi adresami (skanery) zanim cokolwiek liczymy.
   if (segments.length > 6) return OTHER_PATH;
 
-  // Rodzic liczy się WYŁĄCZNIE dla drugiego segmentu: `/uslugi/:id` to karta
-  // usługi, ale gdyby kiedyś powstało `/grupy/:id/uslugi/cennik`, „uslugi"
-  // w środku ścieżki nie może nagle zjeść kolejnego segmentu.
+  // Rodzic = poprzedni segment. Do PL4 liczył się tylko dla drugiego segmentu
+  // (obawa: `/grupy/:id/uslugi/cennik` zjadłoby „cennik"); huby `/uslugi/branza/<slug>`
+  // wymagają rodzica także na trzeciej pozycji. Bezpiecznik zostaje inny:
+  // STATIC_SEGMENTS mają pierwszeństwo, a rodzicem-identyfikatorem może być
+  // wyłącznie segment Z LISTY DYNAMIC_PARENTS, nigdy dowolny.
   const normalized = `/${segments
     .map((s, index) =>
-      isIdentifierSegment(s, index === 1 ? segments[0]?.toLowerCase() : undefined)
+      isIdentifierSegment(s, index >= 1 ? segments[index - 1]?.toLowerCase() : undefined)
         ? ':id'
         : s.toLowerCase(),
     )

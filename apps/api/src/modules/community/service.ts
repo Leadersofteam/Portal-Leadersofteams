@@ -248,6 +248,43 @@ export function createCommunityService({ prisma, identity, groups, redis }: Comm
       return rows;
     },
 
+    // Lista ponad grupami (PL4, hub /pytania). Ten sam kształt co listThreads,
+    // z nazwą grupy przy każdym wątku — hub nie zna kontekstu grupy.
+    async listThreadsPublic(filters: ThreadFilters) {
+      const limit = filters.limit ?? PAGE_DEFAULT;
+      const where: Prisma.ThreadWhereInput = {
+        hiddenAt: null,
+        ...(filters.status ? { status: filters.status } : {}),
+      };
+      const rows = await prisma.thread.findMany({
+        where,
+        include: {
+          _count: { select: { answers: true } },
+          group: { select: { id: true, name: true } },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+      });
+      const hasMore = rows.length > limit;
+      const page = hasMore ? rows.slice(0, limit) : rows;
+      const authors = await identity.getPublicUsers(page.map((t) => t.authorUserId));
+      return {
+        threads: page.map((t) => ({
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          groupId: t.group.id,
+          groupName: t.group.name,
+          authorName: authors.get(t.authorUserId)?.displayName ?? 'Użytkownik',
+          answersCount: t._count.answers,
+          hasAcceptedAnswer: t.acceptedAnswerId !== null,
+          createdAt: t.createdAt,
+        })),
+        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+      };
+    },
+
     async listThreads(groupId: string, filters: ThreadFilters) {
       const limit = filters.limit ?? PAGE_DEFAULT;
       const where: Prisma.ThreadWhereInput = {

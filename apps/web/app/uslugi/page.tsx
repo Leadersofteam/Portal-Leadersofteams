@@ -2,7 +2,8 @@ import Link from 'next/link';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { ListingCard, type ListingCardData } from '@/components/ui/listing-card';
-import { serverApi } from '@/lib/server-api';
+import { IndustryChips } from '@/components/ui/industry-chips';
+import { publicApi } from '@/lib/server-api';
 
 import { ListingFilters } from './listing-filters';
 
@@ -13,6 +14,7 @@ export type { ListingCardData as ListingCard } from '@/components/ui/listing-car
 interface Industry {
   id: string;
   name: string;
+  slug: string;
 }
 
 export const metadata = {
@@ -34,11 +36,13 @@ export default async function ListingsPage({
   }
 
   const [data, industriesData, tagsData] = await Promise.all([
-    serverApi<{ listings: ListingCardData[]; nextCursor: string | null }>(
+    // PL4: publicApi — katalog jest publiczny, bez cookies (uzasadnienie w /zlecenia).
+    publicApi<{ listings: ListingCardData[]; nextCursor: string | null }>(
       `/listings?${query.toString()}`,
+      0,
     ),
-    serverApi<{ industries: Industry[] }>('/industries'),
-    serverApi<{ tags: Array<{ name: string; slug: string; count: number }> }>(
+    publicApi<{ industries: Industry[] }>('/industries'),
+    publicApi<{ tags: Array<{ name: string; slug: string; count: number }> }>(
       '/listings/tags/popular',
     ),
   ]);
@@ -63,6 +67,9 @@ export default async function ListingsPage({
         Konkretny zakres, deklarowane ceny i poziom w Drabince, którego nie da się kupić. Zapytanie
         możesz jednym kliknięciem przekształcić w zlecenie z pełnym cyklem ocen.
       </p>
+
+      {/* PL4: chipy branż → huby /uslugi/branza/[slug] (statyczne, indeksowalne). */}
+      <IndustryChips industries={industries} base="/uslugi" allHref="/uslugi" />
 
       {/* Chipy popularnych tagów. To nie ozdoba: `innodb_ft_min_token_size`
           wynosi 3, więc frazy „HR", „IT", „AI" NIGDY nie wejdą do indeksu

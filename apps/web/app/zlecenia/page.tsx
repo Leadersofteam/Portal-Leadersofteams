@@ -1,23 +1,17 @@
 import Link from 'next/link';
 
-import { formatBudget } from '@/lib/labels';
-import { EmptyState } from '@/components/ui/empty-state';
-import { serverApi } from '@/lib/server-api';
 import { CollapsibleFilters } from '@/components/ui/collapsible-filters';
+import { EmptyState } from '@/components/ui/empty-state';
+import { IndustryChips } from '@/components/ui/industry-chips';
+import { OrderRow, type OrderRowData } from '@/components/ui/order-row';
+import { publicApi } from '@/lib/server-api';
 
-interface OrderRow {
-  id: string;
-  title: string;
-  industry: { id: string; name: string };
-  budgetMin: number;
-  budgetMax: number;
-  minLevel: number;
-  companyName: string;
-}
+type OrderRow = OrderRowData;
 
 interface Industry {
   id: string;
   name: string;
+  slug: string;
 }
 
 export const metadata = { title: 'Zlecenia — Leaders of Teams' };
@@ -40,8 +34,12 @@ export default async function OrdersPage({
   }
 
   const [data, industriesData] = await Promise.all([
-    serverApi<{ orders: OrderRow[]; nextCursor: string | null }>(`/orders?${query.toString()}`),
-    serverApi<{ industries: Industry[] }>('/industries'),
+    // PL4: publicApi bez cookies — lista jest publiczna. Revalidate 0 (bez cache
+    // danych Nexta): świeżo opublikowane zlecenie MA być widoczne od razu — cache
+    // 60 s ukrył je przed Firmą tuż po publikacji (e2e ścieżki krytycznej).
+    // Cache-aside z inwalidacją przy publikacji żyje po stronie API.
+    publicApi<{ orders: OrderRow[]; nextCursor: string | null }>(`/orders?${query.toString()}`, 0),
+    publicApi<{ industries: Industry[] }>('/industries'),
   ]);
   const orders = data?.orders ?? [];
   const industries = industriesData?.industries ?? [];
@@ -56,6 +54,9 @@ export default async function OrdersPage({
         Wszystkie opublikowane zlecenia są jawne. Ofertowanie zleceń z wymaganym poziomem
         odblokowuje awans w Drabince Lidera.
       </p>
+
+      {/* PL4: chipy branż prowadzą do hubów /zlecenia/branza/[slug] — nawigacja, nie ranking. */}
+      <IndustryChips industries={industries} base="/zlecenia" allHref="/zlecenia" />
 
       <CollapsibleFilters>
         <form className="filters" method="get">
@@ -123,22 +124,7 @@ export default async function OrdersPage({
       ) : (
         <div>
           {orders.map((order) => (
-            <div key={order.id} className="list-row list-row--stack">
-              <div>
-                <h3>
-                  <Link href={`/zlecenia/${order.id}`}>{order.title}</Link>
-                </h3>
-                <div className="meta">
-                  {order.companyName} · {order.industry.name}
-                </div>
-              </div>
-              <div className="list-row-aside" style={{ textAlign: 'right' }}>
-                <div>{formatBudget(order.budgetMin, order.budgetMax)}</div>
-                {order.minLevel > 0 && (
-                  <span className="badge accent">wymagany poziom {order.minLevel}+</span>
-                )}
-              </div>
-            </div>
+            <OrderRow key={order.id} order={order} />
           ))}
         </div>
       )}

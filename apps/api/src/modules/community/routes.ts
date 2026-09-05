@@ -23,6 +23,14 @@ export function communityRoutes({ community, auth }: CommunityRoutesDeps) {
       return reply.send(await community.listThreads(id, filters));
     });
 
+    // PL4: publiczna lista wątków ze WSZYSTKICH grup — hub /pytania (baza
+    // wiedzy z rozwiązanych pytań pod long-tail). Chronologicznie (ADR-010),
+    // ten sam filtr statusu co lista grupy. Ukryte przez moderatora nie wracają.
+    app.get('/threads', async (request, reply) => {
+      const filters = parseBody(threadFiltersSchema, request.query ?? {});
+      return reply.send(await community.listThreadsPublic(filters));
+    });
+
     app.get('/threads/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
       const viewer = await auth.currentUser(request);

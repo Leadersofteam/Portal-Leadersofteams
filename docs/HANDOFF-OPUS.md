@@ -11,7 +11,30 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
-> **🟡 PL3 „Droga Lidera jako opowieść” — KOD GOTOWY 05.09, wdrożenie w kolejnym wpisie.**
+> **🟡 PL4 „Ruch z wyszukiwarki za 0 zł” — KOD GOTOWY 05.09, wdrożenie w kolejnym wpisie.**
+> **Huby branżowe** `/uslugi|zlecenia|liderzy/branza/[slug]` (30 stron, ISR 300 s, `generateStaticParams`
+> z API z zapasem slugów na czas builda): własny akapit na branżę i wejście (`lib/industries-copy.ts` —
+> 30 ręcznie napisanych tekstów, nie generator), BreadcrumbList + ItemList JSON-LD, chipy branż jako
+> nawigacja hub↔lista↔hub (ADR-010: etykiety, nie ranking), linki siostrzane. Wiersze list wyniesione
+> do `OrderRow`/`LeaderRow` — huby NIE są kopią list. **Listy główne** `/uslugi`, `/zlecenia`,
+> `/liderzy` przez `publicApi` (cache danych 60 s, bez `cookies()`); HTML zostaje dynamiczny przez
+> `searchParams`, ale API nie jest już odpytywane per odsłonę. **Sitemap**: kursorowa paginacja do
+> 1000 adresów na typ (było: ucięte na 50), huby, `/pytania`, porównania, wątki jednym strumieniem
+> z nowej publicznej trasy `GET /threads` (community). **`/pytania`**: baza wiedzy z rozwiązanych
+> wątków ponad grupami (+ czekające). **`/porownanie/{oferteo,fixly,useme}`**: uczciwe „kiedy oni,
+> kiedy my” o MODELACH (bez cen konkurencji, bez FUD), FAQPage JSON-LD. **`/llms.txt`** z faktami
+> do cytowania. Analityka: normalizacja ścieżek liczy huby per typ (`/uslugi/branza/:id`) — rodzic
+> segmentu działa też na trzeciej pozycji, ale tylko z listy `DYNAMIC_PARENTS`.
+> Bramki: **243/243 API** (+1 normalizacja hubów), lint/typecheck; e2e `seo-hubs.spec` (4 testy) —
+> wynik przy wdrożeniu. **D5 (Search Console / Bing) zostaje u właściciela** — wymaga wpisu DNS albo
+> pliku weryfikacyjnego, którego nie mam; po wdrożeniu wystarczy zgłosić `https://leadersofteams.pl/sitemap.xml`.
+>
+> **✅ PL3 „Droga Lidera jako opowieść” — NA PRODUKCJI 05.09 22:25** (`f4d649d`; backup `portal-20260905-222508`, bez migracji).
+> **Dowody:** healthz zielone, 0 błędów api; `/droga` statyczna (`s-maxage=300`) z 7 szczeblami; profil
+> Lidera niesie sekcję „Droga Lidera” (`journey.joinedAt` + `achievements` z API); 26/26 e2e (nowy
+> `droga.spec`). Zrzuty ze stagingu: `wyprawa/zrzuty/pl3-*`. **Mina złapana przez e2e (MINY):** strona
+> ISR prerenderowana przy buildzie bez API zamrażała pusty stan na 5 min po każdym wdrożeniu — dodany
+> zapas `LEVEL_RULES_FALLBACK` (lustro rulesetu) i zasada dla stron statycznych zależnych od API.
 > Nowa strona `/droga` (ISR, BreadcrumbList + ItemList JSON-LD, własny OG): siedem szczebli z progami
 > i odblokowaniami Z API (`/ladder/levels`, jedno źródło prawdy), zdanie „co to znaczy" na szczebel,
 > dwa źródła punktów z liczbami z rulesetu v1 i przykładowymi wpisami księgi, „Ściana szerokości”

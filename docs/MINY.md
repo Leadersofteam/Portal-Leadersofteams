@@ -114,6 +114,18 @@ odświeża. Objaw: e2e `/droga` widziało 0 szczebli przy działającym API; na 
 każdy deploy dawałby 5 minut pustej strony. **Zasada:** strona statyczna zależna od API
 MUSI mieć zapas danych na czas builda (lustro w `lib/`, jak `LEVEL_RULES_FALLBACK`)
 albo być dynamiczna. Landing przeżył to tylko dlatego, że jego sekcja Liderów znika, gdy pusto.
+**Dwie odmiany z PL4:** (a) `generateStaticParams` z zapasem slugów, ale strona bez danych
+branży robiła `notFound()` → 404 zamrożone na 5 min; poprawnie: bez API zwróć `[]`, strony
+powstaną na żądanie. (b) `sitemap.ts` z `revalidate` prerenderował się bez API → godzinę
+po wdrożeniu same wpisy statyczne; poprawnie: `dynamic = 'force-dynamic'` + cache na fetchu.
+
+### Konfiguracja segmentu Next musi być LITERAŁEM (05.09, PL4)
+
+`export const revalidate = HUB_REVALIDATE;` (stała z importu) wywraca `next build` komunikatem
+„Next.js can't recognize the exported `config` field in route …" — Next czyta `revalidate`,
+`dynamic`, `dynamicParams` statycznie, bez wykonywania modułu. Zawsze literał
+(`export const revalidate = 300;`), a wspólną wartość trzymaj w komentarzu, nie w stałej.
+Typecheck i lint tego nie łapią — dopiero build.
 
 ### Nazwa `api` jest DWUZNACZNA na tym serwerze
 

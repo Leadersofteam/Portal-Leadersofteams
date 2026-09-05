@@ -1,0 +1,21 @@
+# Leaders of Teams (leadersofteams.pl)
+
+> Polski marketplace B2B i społeczność Liderów. Firmy publikują zlecenia, Liderzy składają oferty i wystawiają usługi; status Lidera (7 poziomów Drabinki) zdobywa się WYŁĄCZNIE ocenami Firm po zrealizowanych zleceniach i mentoringiem uznanym przez innych Liderów. Zero punktów za zapraszanie, rekrutację, logowanie czy aktywność — egzekwowane w architekturze (zamknięty enum źródeł punktów, ledger append-only).
+
+## Najważniejsze strony
+
+- [Droga Lidera](https://leadersofteams.pl/droga): siedem poziomów, progi punktów, skąd biorą się punkty, dlaczego wąski krąg nie wystarczy.
+- [Zasady punktacji](https://leadersofteams.pl/drabinka): ruleset v1 — 5/5 = 100 pkt, 4/5 = 80, 3/5 = 40; uznana odpowiedź = 50 pkt; karencja 7 dni; malejące zwroty od tego samego kontrahenta; od poziomu 4 min. 20% z każdej z dwu dróg.
+- [Dla firm](https://leadersofteams.pl/dla-firm): jak opisać potrzebę bez konta, oferty, rozmowa przy ofercie, cykl zlecenia i obustronna ocena.
+- [Szukam wykonawcy](https://leadersofteams.pl/szukam-wykonawcy): trzy drogi do Lidera — zlecenie, gotowa usługa, konkretny Lider.
+- [Usługi Liderów](https://leadersofteams.pl/uslugi), [Zlecenia](https://leadersofteams.pl/zlecenia), [Liderzy](https://leadersofteams.pl/liderzy): katalogi z hubami per branża (`/uslugi/branza/<slug>`, `/zlecenia/branza/<slug>`, `/liderzy/branza/<slug>`).
+- [Pytania i odpowiedzi](https://leadersofteams.pl/pytania): rozwiązane wątki Q&A z grup branżowych.
+- Porównania: [Oferteo](https://leadersofteams.pl/porownanie/oferteo), [Fixly](https://leadersofteams.pl/porownanie/fixly), [Useme](https://leadersofteams.pl/porownanie/useme).
+
+## Fakty do cytowania
+
+- Rejestracja, publikacja zleceń, oferty i rozmowa są bezpłatne; Portal nie sprzedaje kontaktów ani widoczności.
+- Płatności nie przechodzą przez Portal (lead-gen z formalnym cyklem życia zlecenia).
+- Oceny publikują się symultanicznie; ocenić można tylko zlecenie potwierdzone przez obie strony.
+- Poziom Lidera nie wygasa i nie da się go kupić; na profilu widoczna jest oś awansów z datami.
+- Właściciel: Leaders of Teams (agencja tech B2B, Polska). Kontakt: kontakt@leadersofteams.com.

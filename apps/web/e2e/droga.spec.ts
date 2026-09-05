@@ -29,7 +29,11 @@ test('gość widzi Drogę Lidera: 7 szczebli z progami, dwa źródła punktów, 
 // szczebel jako cel, zamiast pustki albo zer.
 test('profil Lidera pokazuje oś Drogi z wejściem i następnym szczeblem', async ({ page }) => {
   await page.goto('/liderzy');
-  const first = page.getByRole('main').locator('a[href^="/liderzy/"]').first();
+  // Pierwszy link do PROFILU — chipy branż (PL4) też zaczynają się od /liderzy/.
+  const first = page
+    .getByRole('main')
+    .locator('a[href^="/liderzy/"]:not([href*="/branza/"])')
+    .first();
   await first.click();
   await page.waitForURL(/\/liderzy\/[a-z0-9]+$/);
   await expect(page.getByRole('heading', { name: 'Droga Lidera' })).toBeVisible();

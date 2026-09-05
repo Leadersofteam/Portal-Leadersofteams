@@ -35,6 +35,20 @@ describe('normalizePath', () => {
     expect(normalizePath('/zlecenia/nowe')).toBe('/zlecenia/nowe');
   });
 
+  it('huby branżowe i strony porównawcze (PL4) są policzalne per typ, nie per slug', () => {
+    // Slug branży jest krótki (`hr`, `it`) — bez reguły rodzica wpadałby do /inne,
+    // czyli ruch z Google na huby byłby niepoliczalny. Slug zwija się do :id:
+    // pytanie brzmi „czy huby działają", nie „która branża".
+    expect(normalizePath('/uslugi/branza/marketing')).toBe('/uslugi/branza/:id');
+    expect(normalizePath('/uslugi/branza/hr')).toBe('/uslugi/branza/:id');
+    expect(normalizePath('/zlecenia/branza/it')).toBe('/zlecenia/branza/:id');
+    expect(normalizePath('/liderzy/branza/design-ux')).toBe('/liderzy/branza/:id');
+    expect(normalizePath('/porownanie/oferteo')).toBe('/porownanie/:id');
+    expect(normalizePath('/pytania')).toBe('/pytania');
+    // Rodzic na trzeciej pozycji NIE zjada segmentów statycznych.
+    expect(normalizePath('/uslugi/seo-audyt-a1b2c3/edytuj')).toBe('/uslugi/:id/edytuj');
+  });
+
   it('obcina query i fragment', () => {
     expect(normalizePath('/szukaj?q=marketing')).toBe('/szukaj');
     expect(normalizePath('/uslugi?strona=2#lista')).toBe('/uslugi');

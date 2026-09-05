@@ -1,7 +1,7 @@
 # Program „Droga Lidera” — rozwój Portalu pod ruch, transakcje i wygląd (analiza 04.09.2026)
 
 **Rola:** genialny Lider / full-stack + PM · **Repo:** `/docker/portal-staging` (prod = `leadersofteams.pl`)
-**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: PL0+PL1+PL2 wdrożone 05.09 (HANDOFF), PL3–PL5 otwarte
+**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: PL0–PL3 wdrożone 05.09 (HANDOFF), PL4–PL5 otwarte
 
 ---
 
@@ -95,7 +95,7 @@ Cel: gość z potrzebą publikuje zlecenie bez ściany logowania.
    bez fałszywych liczników i presji (ADR-010).
 4. e2e: nowy spec `company-first-order.spec.ts` (gość → formularz → konto → publikacja).
 
-### PL3 — Droga Lidera jako opowieść (design + treść, 1–2 sesje) — ✅ KOD GOTOWY 05.09 (pkt 4 View Transitions świadomie pominięty)
+### PL3 — Droga Lidera jako opowieść (design + treść, 1–2 sesje) — ✅ WDROŻONY 05.09 (pkt 4 View Transitions świadomie pominięty)
 
 Cel: landing i profil mają pokazywać **drogę od zera do Lidera**, nie regulamin punktacji.
 Wzorce: x.com / SpaceX = odważna typografia, jedna wielka wizualizacja, ciemne tło, ruch
@@ -120,7 +120,7 @@ służący orientacji. Wszystko własnym SVG (ADR-009), bez confetti/streaków (
    jedyny „efekt", jaki wnosi ruch; reszta statyczna.
 5. OG image `/droga` i landingu w nowej skórze (`lib/og.tsx`).
 
-### PL4 — Ruch z wyszukiwarki (0 zł) (1–2 sesje)
+### PL4 — Ruch z wyszukiwarki (0 zł) (1–2 sesje) — ✅ KOD GOTOWY 05.09 (pkt 7 Search Console = działanie właściciela, D5)
 
 Cel: strony, na które da się wejść z Google, i pełna indeksacja tego, co już jest.
 
