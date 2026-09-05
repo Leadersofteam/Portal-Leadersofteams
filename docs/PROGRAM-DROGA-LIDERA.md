@@ -1,7 +1,7 @@
 # Program „Droga Lidera” — rozwój Portalu pod ruch, transakcje i wygląd (analiza 04.09.2026)
 
 **Rola:** genialny Lider / full-stack + PM · **Repo:** `/docker/portal-staging` (prod = `leadersofteams.pl`)
-**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: PL0–PL4 wdrożone 05.09 (HANDOFF), PL5 kod gotowy; D3 i PL5.4 = ruch właściciela
+**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: **PL0–PL5 WDROŻONE 05.09** (HANDOFF); D3 purge demo, D5 Search Console i PL5.4 seeding = ruch właściciela
 
 ---
 
@@ -146,7 +146,7 @@ Cel: strony, na które da się wejść z Google, i pełna indeksacja tego, co ju
 7. Google Search Console + Bing Webmaster (darmowe, tylko weryfikacja pliku/DNS — nie API
    per klik; zgodne z ADR-009). Rejestracja sitemapy. _(wymaga dostępu właściciela do DNS)_.
 
-### PL5 — Pierwszych dwudziestu, ale z lejkiem (ops + produkt, 1 sesja) — ✅ KOD GOTOWY 05.09 (pkt 1–3); pkt 4 i D3 = ruch właściciela (HANDOFF)
+### PL5 — Pierwszych dwudziestu, ale z lejkiem (ops + produkt, 1 sesja) — ✅ WDROŻONY 05.09 (pkt 1–3); pkt 4 i D3 = ruch właściciela (HANDOFF)
 
 1. **„Zaproś Lidera"** (S19 pkt 2 — nadal nie zrobione): strona + mail, **0 punktów,
    0 nagrody, 0 downline**; ścieżka dopisana do `antimlm.integration.test.ts`.

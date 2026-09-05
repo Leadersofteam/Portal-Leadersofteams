@@ -11,7 +11,13 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
-> **🟡 PL5 „Pierwszych dwudziestu, ale z lejkiem” — KOD GOTOWY 05.09 (bez pkt 4), D3 ZABLOKOWANE — czeka na właściciela.**
+> **✅ PL5 „Pierwszych dwudziestu, ale z lejkiem” — NA PRODUKCJI 05.09 23:17** (`e829e87`; backup `portal-20260905-231709`,
+> bez migracji; obraz z worktree `/docker/portal-staging-build`). **Dowody:** healthz zielone, 0 błędów, 0 „bez
+> konsumenta”; zaproszenie przez API na prodzie → **`mail.sent` „Test PL5 (do usunięcia) zaprasza Cię do Leaders
+> of Teams” do kontakt@leadersofteams.com** (właściciel zobaczy realną treść w skrzynce), konto testowe
+> zanonimizowane; staging: ta sama ścieżka, mail no-op. 246/246 API (+3), 31/31 e2e (+1 `zapros.spec`).
+> Przypomnienie o adresie odpali się pierwszy raz po 06:00 UTC 06.09 (znacznik `verifyReminder:lastRunDate`)
+> — do sprawdzenia w logu workera „Wysłano przypomnienia o adresie”. **D3 i pkt 4 nadal u właściciela (niżej).**
 > **Zaproszenie Lidera** (S19 pkt 2): `POST /me/invitations` + `/panel/zapros`. Jeden mail od
 > konkretnej osoby, **zero zapisu w bazie** (nie ma tabeli zaproszeń — nie ma czego nagradzać ani
 > liczyć), zero punktów, zero zdarzeń; treść mówi wprost, że zapraszający nic nie dostaje; linki
@@ -101,7 +107,16 @@
 > bez flagi 200), lint/typecheck; e2e `company-first-order.spec.ts` (gość → konto+firma → szkic
 > wraca → publikacja) — wynik przy wdrożeniu.
 >
-> **✅ SESJA 2026-09-04/05 (program „Droga Lidera”: PL0 pomiar + PL1 pętla transakcji) — NA PRODUKCJI** (`ba19022` + docs).
+> **📌 PODSUMOWANIE PROGRAMU „DROGA LIDERA” (04–05.09): PL0–PL5 NA PRODUKCJI w jedną sesję.** Bramki po każdym
+> sprincie: 217→246 testów API, 23→31 e2e, sitemap 55→92 adresów. Gałąź `feat/droga-lidera-pl0-pl1`
+> (od `feat/s12-widziec-i-reagowac`), 8 commitów, PR otwiera właściciel. **Nowy wzorzec wdrożeniowy:** obrazy prod
+> buduje się z osobnego worktree (`git worktree add --detach /docker/portal-staging-build <commit>` + skopiowane
+> `infra/.env*`, `*.override.yml`) — drzewo główne może w tym czasie nieść kolejny sprint. **Czeka na właściciela:**
+> D3 purge demo (komenda ze skilla `portal-dane-demo`; klasyfikator blokuje mi odczyt hasła), D5 Search Console/Bing
+> (zgłosić `sitemap.xml`), PL5.4 realne zlecenia HydroSpark (propozycje niżej), otwarcie PR. **Miary za 30 dni**
+> (lejek w `/panel/analityka`, wymaga konta MODERATOR): ≥20 kont z potwierdzonym adresem i ≥5 pierwszych akcji.
+>
+ (`ba19022` + docs).
 > **Dowody z produkcji (05.09, 07:40 UTC):** backup `portal-20260905-073459` PRZED migracją; migracja
 > `20260904212051_offer_messages` zastosowana; healthz `mysql/redis ok`, `worker.alive true`, `uploads ok`;
 > `curl -I` pokazuje HSTS/nosniff/X-Frame/frame-ancestors/Referrer/Permissions; 0 „bez konsumenta”,

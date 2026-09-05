@@ -127,6 +127,15 @@ po wdrożeniu same wpisy statyczne; poprawnie: `dynamic = 'force-dynamic'` + cac
 (`export const revalidate = 300;`), a wspólną wartość trzymaj w komentarzu, nie w stałej.
 Typecheck i lint tego nie łapią — dopiero build.
 
+### Obraz produkcyjny buduj z worktree, gdy drzewo główne żyje (05.09)
+
+Kontekst `docker compose build` to snapshot katalogu repo W CHWILI STARTU budowy. Gdy w tym
+samym drzewie piszesz już kolejny sprint, do obrazu wchodzi pół-gotowy kod. Wzorzec z PL4/PL5:
+`git worktree add --detach /docker/portal-staging-build <commit>`, skopiuj `infra/.env`,
+`infra/.env.prod`, `infra/*.override.yml` (nieśledzone!) i buduj z `/docker/portal-staging-build/infra`
+tym samym poleceniem ze skilla `portal-wdrozenie` (nazwy obrazów są te same). Przed kolejnym
+wdrożeniem: `git -C /docker/portal-staging-build checkout --detach <nowy-commit>`.
+
 ### Nazwa `api` jest DWUZNACZNA na tym serwerze
 
 Staging i produkcja dzielą sieć Traefika `n8n_default`, a compose nadaje każdej usłudze alias

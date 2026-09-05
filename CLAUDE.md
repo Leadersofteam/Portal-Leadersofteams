@@ -7,7 +7,7 @@ Monorepo pnpm: Next.js 15 + Fastify + Prisma + MySQL + Redis + BullMQ. Wdrożeni
 > **[docs/MINY.md](docs/MINY.md)** (pułapki, które już kosztowały czas),
 > **[docs/HANDOFF-OPUS.md](docs/HANDOFF-OPUS.md)** (stan i mechanizmy),
 > **[docs/PROGRAM-DROGA-LIDERA.md](docs/PROGRAM-DROGA-LIDERA.md)** (KIERUNEK od 04.09: program PL0–PL5,
-> decyzje właściciela D1–D5; PL0+PL1 na prodzie 05.09), [docs/SPRINTY-S18-S21.md](docs/SPRINTY-S18-S21.md) (poprzedni plan).
+> decyzje właściciela D1–D5; PL0–PL5 na prodzie 05.09; czeka: purge demo D3, Search Console D5), [docs/SPRINTY-S18-S21.md](docs/SPRINTY-S18-S21.md) (poprzedni plan).
 > Gotowy prompt do wklejenia: **[docs/PROMPT-STARTOWY-OPUS.md](docs/PROMPT-STARTOWY-OPUS.md)**.
 > Procesy powtarzalne są w Skillach (`.claude/skills/`) — patrz [docs/SKILLE.md](docs/SKILLE.md).
 
