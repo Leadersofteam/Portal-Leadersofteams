@@ -91,6 +91,9 @@ export interface IdentityService {
   getUserCreatedAt(userId: string): Promise<Date | null>;
   // Analityka (S12): sama LICZBA rejestracji w oknie — bez żadnych danych osoby.
   countRegistrationsBetween(from: Date, to: Date): Promise<number>;
+  // Lejek (PL0): potwierdzone adresy i założone firmy w oknie — same liczby.
+  countVerifiedBetween(from: Date, to: Date): Promise<number>;
+  countCompaniesCreatedBetween(from: Date, to: Date): Promise<number>;
   // RODO (D6): anonimizacja W MIEJSCU (ledger zachowany) + eksport danych.
   anonymizeAccount(userId: string): Promise<void>;
   exportAccount(userId: string): Promise<Record<string, unknown>>;
@@ -515,6 +518,14 @@ export function createIdentityService(
     // a licznik nie mówi KTO ani nie pozwala nikogo wskazać.
     async countRegistrationsBetween(from, to) {
       return prisma.user.count({ where: { createdAt: { gte: from, lt: to } } });
+    },
+
+    async countVerifiedBetween(from, to) {
+      return prisma.user.count({ where: { emailVerifiedAt: { gte: from, lt: to } } });
+    },
+
+    async countCompaniesCreatedBetween(from, to) {
+      return prisma.company.count({ where: { createdAt: { gte: from, lt: to } } });
     },
 
     // --- pierwsza mila (S10) -------------------------------------------------

@@ -51,17 +51,12 @@ const orders = createOrdersService({ prisma, identity, ladder });
 const reviews = createReviewsService({ prisma, identity });
 const antifraud = createAntifraudService({ prisma, ladder, marketplace: orders });
 const social = createSocialService({ prisma, identity, ladder });
-const notifications = createNotificationsService({
-  prisma,
-  identity,
-  signal: async (userId) => {
-    await redisPub.publish(REALTIME_CHANNEL, JSON.stringify({ userId, kind: 'notification' }));
-  },
-});
 // Warstwa e-mail (D4) — własna skrzynka przez SMTP, alternatywnie Brevo,
 // a bez żadnej z nich no-op (0 zł, ADR-009). Konfiguracja MUSI być identyczna
 // jak w server.ts: worker wysyła własne maile (digest), więc rozjazd oznaczałby
 // „działa przy rejestracji, milczy w tle" — najgorszy możliwy rodzaj usterki.
+// PRZED notifications: serwis powiadomień dostaje transport w zależnościach
+// (maile natychmiastowe, PL1), a `const` nie jest hoistowany.
 const mail = createMailService(
   {
     mailEnabled: config.mailEnabled,
@@ -75,6 +70,17 @@ const mail = createMailService(
   },
   (event, data) => logger.info(data, event),
 );
+
+const notifications = createNotificationsService({
+  prisma,
+  identity,
+  signal: async (userId) => {
+    await redisPub.publish(REALTIME_CHANNEL, JSON.stringify({ userId, kind: 'notification' }));
+  },
+  // Maile natychmiastowe (PL1) — ten sam transport, odbiorcy i token wypisu
+  // co digest. Bez SMTP `mail.enabled === false` i serwis nic nie wysyła.
+  mailer: { mail, getRecipients: identity.getDigestRecipients, appBaseUrl: config.APP_BASE_URL },
+});
 
 // Rejestr subskrypcji: WIELU konsumentów na jeden typ zdarzenia (np.
 // marketplace.review_published konsumują i ladder, i notifications). Każdy

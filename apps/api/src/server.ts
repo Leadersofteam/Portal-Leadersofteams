@@ -311,6 +311,10 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
   // Analityka (S12): komponuje publiczne API modułów, nie dotyka ich tabel
   // (ADR-002) — dokładnie jak `search` wyżej. Kolejność źródeł = kolejność kolumn
   // w panelu, od „ilu przyszło" do „co zrobili".
+  // PL0: kolejność to LEJEK — wejście → konto → potwierdzony adres → profil
+  // (Lider / Firma) → pierwsza akcja (usługa, zlecenie, oferta, zapytanie,
+  // wpis, pytanie). Panel /panel/analityka czyta te klucze po nazwie, żeby
+  // pokazać sumy etapów; zmiana klucza tutaj = zmiana tam.
   const analyticsService = createAnalyticsService({
     redis,
     sources: [
@@ -320,14 +324,35 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
         countCreatedBetween: identityService.countRegistrationsBetween,
       },
       {
-        key: 'orders',
-        label: 'Zlecenia',
-        countCreatedBetween: ordersService.countOrdersPublishedBetween,
+        key: 'verified',
+        label: 'Potwierdzone adresy',
+        countCreatedBetween: identityService.countVerifiedBetween,
+      },
+      {
+        key: 'leaderProfiles',
+        label: 'Profile Liderów',
+        countCreatedBetween: profilesService.countProfilesCreatedBetween,
+      },
+      {
+        key: 'companies',
+        label: 'Firmy',
+        countCreatedBetween: identityService.countCompaniesCreatedBetween,
       },
       {
         key: 'listings',
         label: 'Usługi',
         countCreatedBetween: listingsService.countListingsPublishedBetween,
+      },
+      {
+        key: 'orders',
+        label: 'Zlecenia',
+        countCreatedBetween: ordersService.countOrdersPublishedBetween,
+      },
+      { key: 'offers', label: 'Oferty', countCreatedBetween: ordersService.countOffersBetween },
+      {
+        key: 'inquiries',
+        label: 'Zapytania',
+        countCreatedBetween: listingsService.countInquiriesBetween,
       },
       { key: 'posts', label: 'Wpisy', countCreatedBetween: socialService.countPostsBetween },
       {

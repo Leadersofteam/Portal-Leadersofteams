@@ -32,6 +32,8 @@ export interface ProfilesService {
   getPublicProfile(profileId: string): Promise<unknown>;
   addPortfolioItem(userId: string, input: PortfolioItemInput): Promise<{ id: string }>;
   removePortfolioItem(userId: string, itemId: string): Promise<void>;
+  // Lejek (PL0): liczba profili Liderów założonych w oknie — sama liczba.
+  countProfilesCreatedBetween(from: Date, to: Date): Promise<number>;
 }
 
 export function createProfilesService(
@@ -190,6 +192,12 @@ export function createProfilesService(
         where: { id: itemId, leaderProfileId: profile.id },
       });
       if (result.count === 0) throw new NotFoundError('Pozycja portfolio nie istnieje');
+    },
+
+    // Lejek (PL0): profil Lidera to etap między kontem a pierwszą akcją —
+    // sama liczba w oknie, bez danych osoby (ADR-002: moduł liczy własną tabelę).
+    async countProfilesCreatedBetween(from: Date, to: Date): Promise<number> {
+      return prisma.leaderProfile.count({ where: { createdAt: { gte: from, lt: to } } });
     },
   };
 }

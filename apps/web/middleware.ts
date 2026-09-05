@@ -74,10 +74,15 @@ export function middleware(request: NextRequest) {
   // Strzał „wystrzel i zapomnij". Nie ma `await`: licznik NIE MA PRAWA opóźnić
   // ani wywrócić renderu strony. Timeout jest tu drugą linią obrony na wypadek,
   // gdyby api nie odpowiadało — brak liczby jest zawsze lepszy niż wolna strona.
+  // PL0: skąd wejście. Idzie surowy nagłówek Referer i `utm_source`; API
+  // sprowadza je do samego hosta / etykiety kampanii i nie zapisuje nic więcej
+  // (shared/analytics.ts — tam też jest bariera pamięciowa).
+  const referrer = request.headers.get('referer') ?? undefined;
+  const utm = request.nextUrl.searchParams.get('utm_source') ?? undefined;
   void fetch(`${apiUrl}/api/v1/analytics/hit`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ path: request.nextUrl.pathname }),
+    body: JSON.stringify({ path: request.nextUrl.pathname, referrer, utm }),
     signal: AbortSignal.timeout(500),
     cache: 'no-store',
   }).catch(() => {

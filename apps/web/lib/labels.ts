@@ -50,6 +50,10 @@ export function notificationMessage(type: string, payload: Record<string, unknow
       return 'Nowa wiadomość w zapytaniu o usługę.';
     case 'offer_accepted':
       return 'Twoja oferta została przyjęta.';
+    case 'offer_message':
+      return `Nowa wiadomość w rozmowie o ofercie${payload.orderTitle ? ` „${payload.orderTitle}"` : ''}.`;
+    case 'order_delivered':
+      return 'Lider oddał pracę — sprawdź ją i potwierdź wykonanie.';
     case 'order_confirmed':
       return 'Zlecenie zostało potwierdzone jako zrealizowane.';
     case 'review_received':
@@ -95,6 +99,10 @@ export function notificationHref(type: string, payload: Record<string, unknown>)
     return `/watki/${payload.threadId}`;
   if ((type === 'inquiry_created' || type === 'inquiry_message') && payload.inquiryId)
     return `/zapytania/${payload.inquiryId}`;
+  // Rozmowa o ofercie prowadzi do wątku, nie do zlecenia — na zleceniu Firma
+  // widzi listę ofert, a odpowiedź pisze się w wątku (PL1).
+  if ((type === 'offer_message' || type === 'offer_submitted') && payload.offerId)
+    return `/oferty/${payload.offerId}`;
   if (payload.orderId) return `/zlecenia/${payload.orderId}`;
   if (type === 'level_achieved') return '/panel/punkty';
   return '/powiadomienia';

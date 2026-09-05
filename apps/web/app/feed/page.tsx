@@ -120,16 +120,28 @@ export default async function FeedPage({
   // Gość zawsze ląduje na „całej społeczności" — pusty rynek nie wybacza
   // ekranu logowania jako pierwszego wrażenia.
   const requested = params.zakres === 'wszyscy' ? 'all' : 'following';
-  const scope: FeedScope = isLoggedIn ? requested : 'all';
+  let scope: FeedScope = isLoggedIn ? requested : 'all';
   const cursor = typeof params.cursor === 'string' ? params.cursor : '';
 
-  const query = new URLSearchParams({ scope });
-  if (cursor) query.set('cursor', cursor);
-  const data = await serverApi<{
+  interface FeedResponse {
     items: FeedItem[];
     nextCursor: string | null;
     followingCount: number;
-  }>(`/feed?${query.toString()}`);
+  }
+  const loadFeed = (s: FeedScope) => {
+    const query = new URLSearchParams({ scope: s });
+    if (cursor) query.set('cursor', cursor);
+    return serverApi<FeedResponse>(`/feed?${query.toString()}`);
+  };
+  let data = await loadFeed(scope);
+  // Nowe konto nikogo nie obserwuje, więc „Obserwowani" to pusty ekran —
+  // pierwszy widok Lidera po rejestracji był stanem pustym z prośbą, żeby
+  // poszedł gdzie indziej (zrzut p2-2708-feed, PL1). Bez jawnego wyboru
+  // zakresu pokazujemy całą społeczność; jawne `?zakres=` zostaje w mocy.
+  if (scope === 'following' && params.zakres === undefined && (data?.followingCount ?? 0) === 0) {
+    scope = 'all';
+    data = await loadFeed(scope);
+  }
 
   // „Podaj dalej" prowadzi na /feed?cytuj=<id> — cytowany wpis pobieramy po
   // stronie serwera, żeby kompozytor od razu pokazał, CO właściwie podajesz

@@ -8,7 +8,7 @@
 // ADR-010: to narzędzie do PATRZENIA, nie do napędzania zaangażowania —
 // nie liczy streaków, nie liczy wyświetleń pojedynczej treści i nie trafia
 // przed oczy użytkowników, tylko moderatora.
-import { dayKey, readViews } from '../../shared/analytics';
+import { dayKey, readSources, readViews } from '../../shared/analytics';
 import type { Redis } from '../../shared/redis';
 
 export interface AnalyticsCountSource {
@@ -35,10 +35,13 @@ export interface AnalyticsSummary {
   labels: Array<{ key: string; label: string }>;
   /** Ścieżki z ostatnich `days` dób, malejąco. */
   topPaths: Array<{ path: string; views: number }>;
+  /** Źródła wejść (host odsyłacza / utm) z ostatnich `days` dób, malejąco (PL0). */
+  topSources: Array<{ source: string; views: number }>;
 }
 
 const DEFAULT_DAYS = 14;
 const TOP_PATHS_LIMIT = 20;
+const TOP_SOURCES_LIMIT = 20;
 
 export function createAnalyticsService({ redis, sources }: AnalyticsDeps) {
   return {
@@ -57,7 +60,10 @@ export function createAnalyticsService({ redis, sources }: AnalyticsDeps) {
       // Odsłony: jeden odczyt hasha na dobę. Liczby: jedno zapytanie na źródło
       // i dobę — przy 14 dobach i 5 źródłach to 70 tanich COUNT-ów z indeksem,
       // odpalanych wyłącznie gdy moderator otworzy panel.
-      const viewsPerDay = await Promise.all(dayList.map((day) => readViews(redis, day)));
+      const [viewsPerDay, sourcesPerDay] = await Promise.all([
+        Promise.all(dayList.map((day) => readViews(redis, day))),
+        Promise.all(dayList.map((day) => readSources(redis, day))),
+      ]);
       const countsPerSource = await Promise.all(
         sources.map(async (source) => ({
           key: source.key,
@@ -87,10 +93,22 @@ export function createAnalyticsService({ redis, sources }: AnalyticsDeps) {
         .sort((a, b) => b.views - a.views)
         .slice(0, TOP_PATHS_LIMIT);
 
+      const sourceTotals = new Map<string, number>();
+      for (const day of sourcesPerDay) {
+        for (const [source, count] of Object.entries(day)) {
+          sourceTotals.set(source, (sourceTotals.get(source) ?? 0) + count);
+        }
+      }
+      const topSources = [...sourceTotals.entries()]
+        .map(([source, views]) => ({ source, views }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, TOP_SOURCES_LIMIT);
+
       return {
         days: resultDays,
         labels: sources.map((s) => ({ key: s.key, label: s.label })),
         topPaths,
+        topSources,
       };
     },
   };

@@ -4,7 +4,14 @@
 // od nich — musi być pilnowana testem, który wykona się ZAWSZE.
 import { describe, expect, it } from 'vitest';
 
-import { dayKey, normalizePath, OTHER_PATH } from './analytics';
+import {
+  dayKey,
+  DIRECT_SOURCE,
+  normalizePath,
+  normalizeSource,
+  OTHER_PATH,
+  OTHER_SOURCE,
+} from './analytics';
 
 describe('normalizePath', () => {
   it('zachowuje znane ścieżki statyczne', () => {
@@ -88,5 +95,40 @@ describe('dayKey', () => {
     // Późny wieczór czasu polskiego to już kolejna doba UTC — spójność klucza
     // zapisu i odczytu jest ważniejsza niż zgodność z kalendarzem właściciela.
     expect(dayKey(new Date('2026-08-13T23:30:00.000Z'))).toBe('2026-08-13');
+  });
+});
+
+// PL0: źródła ruchu. Te same dwa powody co wyżej — bariera pamięciowa
+// i prywatność (host zamiast pełnego URL-a) muszą być pilnowane testem,
+// który wykonuje się bez infrastruktury.
+describe('normalizeSource', () => {
+  it('sprowadza odsyłacz do samego hosta, bez www i bez ścieżki', () => {
+    expect(normalizeSource('https://www.google.com/search?q=lider')).toBe('google.com');
+    expect(normalizeSource('https://linkedin.com/in/ktos-tam')).toBe('linkedin.com');
+  });
+
+  it('własna domena to wejście bezpośrednie, nie źródło', () => {
+    expect(normalizeSource('https://leadersofteams.pl/uslugi')).toBe(DIRECT_SOURCE);
+    expect(normalizeSource('https://www.leadersofteams.pl/')).toBe(DIRECT_SOURCE);
+  });
+
+  it('brak odsyłacza = bezpośrednio', () => {
+    expect(normalizeSource(undefined)).toBe(DIRECT_SOURCE);
+    expect(normalizeSource('')).toBe(DIRECT_SOURCE);
+    expect(normalizeSource(null)).toBe(DIRECT_SOURCE);
+  });
+
+  it('utm_source wygrywa z hostem i jest oczyszczony', () => {
+    expect(normalizeSource('https://google.com', 'Newsletter Wrzesień!')).toBe(
+      'utm:newsletterwrzesie',
+    );
+    expect(normalizeSource(undefined, 'zaproszenie')).toBe('utm:zaproszenie');
+  });
+
+  it('śmieci lądują w jednym wiadrze', () => {
+    expect(normalizeSource('not a url')).toBe(OTHER_SOURCE);
+    expect(normalizeSource('http://10.0.0.1/')).toBe(OTHER_SOURCE);
+    expect(normalizeSource('http://intranet/')).toBe(OTHER_SOURCE);
+    expect(normalizeSource(`https://${'a'.repeat(80)}.com/`)).toBe(OTHER_SOURCE);
   });
 });

@@ -22,7 +22,26 @@ const nextConfig: NextConfig = {
   async headers() {
     // Service worker musi być zawsze świeży (inaczej stary SW zostaje na
     // zawsze) i mieć prawo do zakresu '/' mimo serwowania z /sw.js.
+    //
+    // Nagłówki bezpieczeństwa (PL0): API ma helmet, a web NIE MIAŁ NIC —
+    // `curl -I https://leadersofteams.pl/uslugi` (04.09) pokazał sam
+    // cache-control. Traefik ich nie dokłada. Świadomie BEZ pełnego CSP:
+    // Portal ma skrypty inline (boot motywu, JSON-LD, rejestracja SW), więc
+    // CSP wymagałby nonce'ów w każdym z nich — osobna zmiana z własnym
+    // pomiarem, nie „przy okazji". `frame-ancestors` wchodzi jako minimum,
+    // bo to jedyna dyrektywa, której X-Frame-Options nie zastępuje w pełni.
+    const security = [
+      { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+      // strict-origin-when-cross-origin: pełny URL tylko do własnej domeny —
+      // link z wątku oferty kliknięty na obcą stronę nie zdradza adresu wątku.
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ];
     return [
+      { source: '/(.*)', headers: security },
       {
         source: '/sw.js',
         headers: [

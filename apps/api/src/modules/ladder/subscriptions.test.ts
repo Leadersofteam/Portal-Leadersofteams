@@ -27,7 +27,9 @@ describe('granica anty-MLM: subskrypcje modułu ladder', () => {
   it('ladder NIE konsumuje zdarzeń Usług (listing/inquiry) mimo prefiksu marketplace.', () => {
     const subscriptions = ladderSubscriptions({} as LadderService);
     for (const type of Object.keys(subscriptions)) {
-      expect(type).not.toMatch(/listing|inquiry/);
+      // `message` obejmuje też wątek przy ofercie (PL1, `marketplace.offer_message`):
+      // rozmowa o ofercie to nie praca — punkt jest dopiero za ocenioną realizację.
+      expect(type).not.toMatch(/listing|inquiry|message/);
     }
   });
 

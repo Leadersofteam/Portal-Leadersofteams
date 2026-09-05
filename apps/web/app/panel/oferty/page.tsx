@@ -9,6 +9,7 @@ interface MyOffer {
   id: string;
   status: string;
   proposedBudget: number | null;
+  messagesCount: number;
   order: { id: string; title: string; status: string };
 }
 
@@ -45,6 +46,11 @@ export default async function MyOffersPage() {
             </div>
             <div className="list-row-aside">
               <span className="badge">{OFFER_STATUS_LABELS[offer.status] ?? offer.status}</span>
+              {/* Wątek przy ofercie (PL1) — tu Lider dowiaduje się, czy Firma
+                  dopytała, zanim wybrała. */}
+              <Link className="btn secondary" href={`/oferty/${offer.id}`}>
+                Rozmowa{offer.messagesCount > 0 ? ` (${offer.messagesCount})` : ''} →
+              </Link>
               {/* ZASTANY BRAK znaleziony przez strażnika kontraktu w S18:
                   `POST /offers/:id/withdraw` istniał od Sprintu 3 i nie miał
                   ŻADNEGO wejścia w interfejsie — złożonej oferty nie dało się

@@ -33,8 +33,10 @@ export function DigestToggle({ initialOptedOut }: { initialOptedOut: boolean }) 
     <section className="card mt-3">
       <h3>Powiadomienia e-mail</h3>
       <p>
-        Raz dziennie wysyłamy jedno zbiorcze podsumowanie nieprzeczytanych powiadomień. Maile o
-        resecie hasła i weryfikacji adresu działają niezależnie od tego ustawienia.
+        Piszemy do Ciebie, gdy dzieje się coś, co wymaga Twojej reakcji: nowa oferta do zlecenia,
+        wiadomość w rozmowie, oddana praca, przyjęta oferta. Raz dziennie dochodzi jedno zbiorcze
+        podsumowanie pozostałych powiadomień. Maile o resecie hasła i weryfikacji adresu działają
+        niezależnie od tego ustawienia.
       </p>
       {error && <div className="error-box">{error}</div>}
       <div className="actions-row">
@@ -42,8 +44,8 @@ export function DigestToggle({ initialOptedOut }: { initialOptedOut: boolean }) 
           {saving
             ? 'Zapisuję…'
             : optedOut
-              ? 'Włącz dzienne podsumowanie'
-              : 'Wyłącz dzienne podsumowanie'}
+              ? 'Włącz powiadomienia e-mail'
+              : 'Wyłącz powiadomienia e-mail'}
         </button>
         <span className={optedOut ? 'badge warning' : 'badge success'}>
           {optedOut ? 'wyłączone' : 'włączone'}

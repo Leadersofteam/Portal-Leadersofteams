@@ -13,6 +13,12 @@ export function notificationsSubscriptions(
     'marketplace.inquiry_created': (p) => service.onInquiryCreated(p as never),
     'marketplace.inquiry_message': (p) => service.onInquiryMessage(p as never),
     'marketplace.offer_accepted': (p) => service.onOfferAccepted(p as never),
+    // GRANICA ANTY-MLM: wątek przy ofercie (PL1) konsumuje WYŁĄCZNIE
+    // notifications — rozmowa nie jest pracą (ladder/subscriptions.test.ts).
+    'marketplace.offer_message': (p) => service.onOfferMessage(p as never),
+    // Oddanie pracy (PL1): do 04.09 jedyny krok cyklu bez adresata — Firma
+    // nie wiedziała, że ma potwierdzić wykonanie.
+    'marketplace.order_delivered': (p) => service.onOrderDelivered(p as never),
     'marketplace.order_confirmed': (p) => service.onOrderConfirmed(p as never),
     'marketplace.review_published': (p) => service.onReviewPublished(p as never),
     'ladder.level_achieved': (p) => service.onLevelAchieved(p as never),

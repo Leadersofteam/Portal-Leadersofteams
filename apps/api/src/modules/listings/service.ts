@@ -646,6 +646,11 @@ export function createListingsService({ prisma, identity, orders, files, redis }
     async countListingsPublishedBetween(from: Date, to: Date): Promise<number> {
       return prisma.serviceListing.count({ where: { publishedAt: { gte: from, lt: to } } });
     },
+
+    // Lejek (PL0): zapytanie o usługę to „pierwsza akcja" Firmy — sama liczba.
+    async countInquiriesBetween(from: Date, to: Date): Promise<number> {
+      return prisma.inquiry.count({ where: { createdAt: { gte: from, lt: to } } });
+    },
   };
 }
 

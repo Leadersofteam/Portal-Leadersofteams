@@ -7,7 +7,19 @@ interface AnalyticsSummary {
   days: Array<{ day: string; views: number; counts: Record<string, number> }>;
   labels: Array<{ key: string; label: string }>;
   topPaths: Array<{ path: string; views: number }>;
+  topSources: Array<{ source: string; views: number }>;
 }
+
+// Etapy lejka (PL0) — klucze źródeł z `server.ts`. Kolejność = droga człowieka:
+// konto → potwierdzony adres → profil (Lider albo Firma) → pierwsza akcja.
+// „Pierwsza akcja" to suma wszystkiego, co zostawia ślad w rynku albo w Q&A;
+// wpisy w feedzie NIE wchodzą (aktywność społeczna to nie praca — ADR-004).
+const FUNNEL: Array<{ label: string; keys: string[] }> = [
+  { label: 'Rejestracje', keys: ['registrations'] },
+  { label: 'Potwierdzone adresy', keys: ['verified'] },
+  { label: 'Profile (Lider lub Firma)', keys: ['leaderProfiles', 'companies'] },
+  { label: 'Pierwsze akcje', keys: ['listings', 'orders', 'offers', 'inquiries', 'threads'] },
+];
 
 export const metadata = { title: 'Ruch — Leaders of Teams' };
 
@@ -24,11 +36,15 @@ export default async function AnalyticsPage() {
   const days = data?.days ?? [];
   const labels = data?.labels ?? [];
   const topPaths = data?.topPaths ?? [];
+  const topSources = data?.topSources ?? [];
 
   // Od najnowszej doby — pierwsze pytanie brzmi „co było wczoraj", nie „co było
   // dwa tygodnie temu".
   const rows = [...days].reverse();
   const totalViews = days.reduce((sum, d) => sum + d.views, 0);
+  const sumKeys = (keys: string[]) =>
+    days.reduce((sum, d) => sum + keys.reduce((s, k) => s + (d.counts[k] ?? 0), 0), 0);
+  const funnel = FUNNEL.map((stage) => ({ label: stage.label, n: sumKeys(stage.keys) }));
 
   return (
     <main>
@@ -53,6 +69,28 @@ export default async function AnalyticsPage() {
         </div>
       )}
 
+      {/* Lejek (PL0): cztery liczby, które mówią, GDZIE ludzie odpadają.
+          Bez procentów i strzałek — przy kilku osobach procent kłamie
+          dramaturgią (ADR-010); same sumy z 14 dób, obok odsłon. */}
+      <h2>Lejek — 14 dni</h2>
+      <div className="day-cards" aria-label="Etapy lejka">
+        <div className="day-card">
+          <p className="day-card-date">Odsłony</p>
+          <p className="day-card-views">{totalViews}</p>
+          <p className="day-card-counts">wejścia na strony</p>
+        </div>
+        {funnel.map((stage) => (
+          <div className="day-card" key={stage.label}>
+            <p className="day-card-date">{stage.label}</p>
+            <p className="day-card-views" aria-label={`${stage.label}: ${stage.n}`}>
+              {stage.n}
+            </p>
+            <p className="day-card-counts">w 14 dób</p>
+          </div>
+        ))}
+      </div>
+
+      <h2>Doby</h2>
       {/* PD4 (dług z PD3): 2 + N kolumn zdarzeń nie mieści się na 390 px —
           na telefonie doba jest kartą z odsłonami-bohaterem, a zdarzenia
           jedną linią (tylko niezerowe — zero w każdej rubryce to szum,
@@ -126,6 +164,35 @@ export default async function AnalyticsPage() {
                 <tr key={p.path}>
                   <td>{p.path}</td>
                   <td>{p.views}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2>Skąd przychodzą (14 dni)</h2>
+      <p className="muted">
+        Sam host odsyłacza (np. <code>google.com</code>) albo etykieta kampanii z{' '}
+        <code>utm_source</code> — nigdy pełny adres. Wejścia bez odsyłacza i przejścia wewnątrz
+        portalu liczą się jako „bezpośrednio”.
+      </p>
+      {topSources.length === 0 ? (
+        <p className="muted">Brak danych — zbieramy od wdrożenia PL0.</p>
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Źródło</th>
+                <th>Wejścia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topSources.map((s) => (
+                <tr key={s.source}>
+                  <td>{s.source}</td>
+                  <td>{s.views}</td>
                 </tr>
               ))}
             </tbody>

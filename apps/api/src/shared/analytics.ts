@@ -54,6 +54,7 @@ const KNOWN_PATHS = new Set([
   '/liderzy/:id',
   '/logowanie',
   '/nie-pamietam-hasla',
+  '/oferty/:id',
   '/offline',
   '/panel',
   '/panel/analityka',
@@ -164,11 +165,91 @@ export async function recordView(redis: Redis, rawPath: string, now = new Date()
 
 /** Odczyt odsłon dla jednej doby: ścieżka → liczba. */
 export async function readViews(redis: Redis, day: string): Promise<Record<string, number>> {
-  const raw = await redis.hgetall(viewsKey(day));
+  return readHash(redis, viewsKey(day));
+}
+
+// --- Źródła ruchu (PL0) -------------------------------------------------------
+//
+// „Skąd ludzie przychodzą" to drugie pytanie po „czy ktokolwiek wszedł" — bez
+// niego nie da się powiedzieć, czy huby SEO albo zaproszenia działają. Trzymamy
+// WYŁĄCZNIE hosta odsyłacza (`google.com`, `linkedin.com`) i wartość
+// `utm_source` — nigdy pełny URL: ścieżka odsyłacza bywa danymi o osobie
+// (np. adres cudzego profilu), a host wystarcza do odpowiedzi.
+//
+// Ta sama bariera pamięciowa co przy ścieżkach: hash dobowy rośnie o pole na
+// każde nowe źródło, więc powyżej limitu wszystko ląduje w `inne`.
+const REFS_KEY_PREFIX = 'portal:analytics:v1:refs:';
+const MAX_REF_FIELDS = 200;
+const MAX_SOURCE_LENGTH = 64;
+export const OTHER_SOURCE = 'inne';
+export const DIRECT_SOURCE = 'bezpośrednio';
+// Własne domeny nie są źródłem ruchu — nawigacja wewnątrz portalu ma referer
+// z naszego hosta i zalewałaby tabelę „leadersofteams.pl: 999".
+const OWN_HOSTS = new Set(['leadersofteams.pl', 'www.leadersofteams.pl', 'localhost']);
+
+export function refsKey(day: string): string {
+  return `${REFS_KEY_PREFIX}${day}`;
+}
+
+/**
+ * Sprowadza odsyłacz i UTM do jednej etykiety źródła. Czysta funkcja —
+ * testowana jednostkowo. Kolejność: jawny `utm_source` wygrywa z hostem
+ * (kampania wie lepiej, skąd jest klik), host wygrywa z brakiem, brak = wejście
+ * bezpośrednie (albo przeglądarka, która nie wysyła referera).
+ */
+export function normalizeSource(referrer: string | null | undefined, utm?: string | null): string {
+  const utmClean = (utm ?? '').trim().toLowerCase();
+  if (utmClean) {
+    const safe = utmClean.replace(/[^a-z0-9._-]/g, '').slice(0, MAX_SOURCE_LENGTH);
+    if (safe) return `utm:${safe}`;
+  }
+  const raw = (referrer ?? '').trim();
+  if (!raw) return DIRECT_SOURCE;
+  let host: string;
+  try {
+    host = new URL(raw).hostname.toLowerCase();
+  } catch {
+    return OTHER_SOURCE;
+  }
+  if (!host) return DIRECT_SOURCE;
+  if (OWN_HOSTS.has(host)) return DIRECT_SOURCE;
+  host = host.replace(/^www\./, '');
+  // Host bez kropki (`intranet`, `localhost`) albo adres IP nie mówi nic
+  // użytecznego, a bywa wewnętrznym skanerem.
+  if (!host.includes('.') || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return OTHER_SOURCE;
+  if (host.length > MAX_SOURCE_LENGTH) return OTHER_SOURCE;
+  return host;
+}
+
+/** Inkrementuje licznik źródła. Cichy przy błędzie — licznik nie jest funkcją. */
+export async function recordSource(
+  redis: Redis,
+  referrer: string | null | undefined,
+  utm: string | null | undefined,
+  now = new Date(),
+): Promise<string> {
+  let source = normalizeSource(referrer, utm);
+  const key = refsKey(dayKey(now));
+  // Limit pól: nowe źródło wchodzi tylko, gdy jest miejsce; znane — zawsze.
+  if (source !== OTHER_SOURCE && source !== DIRECT_SOURCE) {
+    const [exists, size] = await Promise.all([redis.hexists(key, source), redis.hlen(key)]);
+    if (!exists && size >= MAX_REF_FIELDS) source = OTHER_SOURCE;
+  }
+  await redis.pipeline().hincrby(key, source, 1).expire(key, RETENTION_SECONDS).exec();
+  return source;
+}
+
+/** Odczyt źródeł dla jednej doby: źródło → liczba. */
+export async function readSources(redis: Redis, day: string): Promise<Record<string, number>> {
+  return readHash(redis, refsKey(day));
+}
+
+async function readHash(redis: Redis, key: string): Promise<Record<string, number>> {
+  const raw = await redis.hgetall(key);
   const out: Record<string, number> = {};
-  for (const [path, count] of Object.entries(raw)) {
+  for (const [field, count] of Object.entries(raw)) {
     const n = Number.parseInt(count, 10);
-    if (Number.isFinite(n)) out[path] = n;
+    if (Number.isFinite(n)) out[field] = n;
   }
   return out;
 }

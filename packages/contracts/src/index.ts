@@ -340,6 +340,14 @@ export const createOfferInputSchema = z.object({
 });
 export type CreateOfferInput = z.infer<typeof createOfferInputSchema>;
 
+// Wątek przy ofercie (PL1): rozmowa Firma ↔ oferent zakotwiczona w ofercie —
+// lustro `inquiryMessageInputSchema` przy usługach. Świadomie NIE komunikator
+// (ADR-010): wątek żyje tylko, dopóki oferta i zlecenie są aktywne.
+export const offerMessageInputSchema = z.object({
+  body: z.string().trim().min(1).max(5000),
+});
+export type OfferMessageInput = z.infer<typeof offerMessageInputSchema>;
+
 // ---------------------------------------------------------------------------
 // Oceny i Drabinka
 // ---------------------------------------------------------------------------

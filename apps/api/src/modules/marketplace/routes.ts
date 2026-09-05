@@ -3,6 +3,7 @@ import {
   createOfferInputSchema,
   createOrderInputSchema,
   leaderFiltersSchema,
+  offerMessageInputSchema,
   orderFiltersSchema,
   portfolioItemInputSchema,
   reviewInputSchema,
@@ -229,6 +230,20 @@ export function marketplaceRoutes({
       const { id } = request.params as { id: string };
       await orders.withdrawOffer(user.id, id);
       return reply.send({ ok: true });
+    });
+
+    // --- wątek przy ofercie (PL1): obie strony ---------------------------------
+    app.get('/offers/:id/messages', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const { id } = request.params as { id: string };
+      return reply.send({ thread: await orders.getOfferThread(user.id, id) });
+    });
+
+    app.post('/offers/:id/messages', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const { id } = request.params as { id: string };
+      const input = parseBody(offerMessageInputSchema, request.body);
+      return reply.code(201).send(await orders.addOfferMessage(user.id, id, input));
     });
 
     app.post('/orders/:id/start', async (request, reply) => {

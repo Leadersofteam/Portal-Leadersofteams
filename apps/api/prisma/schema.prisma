@@ -70,6 +70,7 @@ model User {
   createdOrders      Order[]
   createdInquiries   Inquiry[]
   inquiryMessages    InquiryMessage[]
+  offerMessages      OfferMessage[]
   listingFavorites   ListingFavorite[]
   following          Follow[]            @relation("Follower")
   followers          Follow[]            @relation("Followed")
@@ -307,10 +308,30 @@ model Offer {
   order         Order         @relation("orderOffers", fields: [orderId], references: [id], onDelete: Cascade)
   leaderProfile LeaderProfile @relation(fields: [leaderProfileId], references: [id])
   awardedFor    Order?        @relation("awardedOffer")
+  messages      OfferMessage[]
 
   @@unique([orderId, leaderProfileId])
   @@index([leaderProfileId, createdAt])
   @@map("offers")
+}
+
+// Wątek przy ofercie (PL1). Do 04.09 Firma mogła ofertę tylko przyjąć albo
+// zignorować — nie było jak dopytać oferenta, a przy usługach ten kanał
+// istniał (Inquiry → InquiryMessage). Asymetria uderzała w pierwszą realną
+// transakcję Portalu. To lustro InquiryMessage, zakotwiczone w ofercie:
+// wiadomość nie daje punktów (ladder nie subskrybuje `offer_message`).
+model OfferMessage {
+  id        String   @id @default(cuid())
+  offerId   String
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  offer  Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
+
+  @@index([offerId, createdAt])
+  @@map("offer_messages")
 }
 
 // ---------------------------------------------------------------------------

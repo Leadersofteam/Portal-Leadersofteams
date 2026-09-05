@@ -175,6 +175,31 @@ test('ścieżka krytyczna: rejestracja → zlecenie → oferta → cykl → ocen
     }
     await expect(leaderPage.getByText(/Twoja oferta/).first()).toBeVisible({ timeout: 2_500 });
   }).toPass({ timeout: 30_000 });
+  // Po złożeniu oferty Lider ląduje w JEJ wątku (PL1) — adres wątku posłuży
+  // niżej do sprawdzenia, że odpowiedź Firmy do niego dotarła.
+  await leaderPage.waitForURL(/\/oferty\/[a-z0-9]+/, { timeout: 10_000 });
+  const threadUrl = leaderPage.url().split('?')[0]!;
+
+  // 5b) Wątek przy ofercie (PL1): Firma dopytuje ZANIM wybierze, Lider widzi
+  // pytanie. Do 04.09 ten kanał nie istniał — Firma miała tylko „wybierz".
+  await companyPage.goto(orderUrl);
+  await expect(companyPage.getByRole('heading', { name: /Oferty/ })).toBeVisible();
+  await companyPage.getByRole('link', { name: /Zapytaj Lidera/ }).click();
+  await companyPage.waitForURL(/\/oferty\/[a-z0-9]+/, { timeout: 10_000 });
+  await expect(async () => {
+    const box = companyPage.getByLabel('Wiadomość');
+    await box.fill('Czy w cenie jest wdrożenie na produkcję i tydzień wsparcia?');
+    await companyPage
+      .getByRole('button', { name: 'Wyślij' })
+      .click({ timeout: 1_500 })
+      .catch(() => {});
+    // Sukces = POZYTYWNY ślad: wiadomość widoczna w wątku po odświeżeniu.
+    await expect(companyPage.getByText(/tydzień wsparcia\?/).first()).toBeVisible({
+      timeout: 4_000,
+    });
+  }).toPass({ timeout: 30_000 });
+  await leaderPage.goto(threadUrl);
+  await expect(leaderPage.getByText(/tydzień wsparcia\?/).first()).toBeVisible();
 
   // 6) Firma: akceptacja oferty → zlecenie przyznane.
   await companyPage.goto(orderUrl);

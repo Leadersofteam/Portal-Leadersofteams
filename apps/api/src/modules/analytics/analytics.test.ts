@@ -133,3 +133,30 @@ describe('analytics.summary', () => {
     expect(summary.days[0]?.views).toBe(1);
   });
 });
+
+// PL0: źródła ruchu — ta sama zasada co topPaths (suma przez doby, malejąco,
+// przycięte). Osobny hash, żeby ścieżki i źródła nie mieszały się w jednej
+// tabeli i żeby limit pól chronił każdy z nich z osobna.
+describe('analytics.summary — źródła ruchu', () => {
+  it('topSources sumuje źródło PRZEZ WSZYSTKIE doby i sortuje malejąco', async () => {
+    const service = createAnalyticsService({
+      redis: fakeRedis({
+        'portal:analytics:v1:refs:2026-08-13': { 'google.com': '2', bezpośrednio: '10' },
+        'portal:analytics:v1:refs:2026-08-14': { 'google.com': '20', 'linkedin.com': '1' },
+      }),
+      sources: [],
+    });
+    const summary = await service.summary(2, NOW);
+    expect(summary.topSources).toEqual([
+      { source: 'google.com', views: 22 },
+      { source: 'bezpośrednio', views: 10 },
+      { source: 'linkedin.com', views: 1 },
+    ]);
+  });
+
+  it('bez zapisanych źródeł lista jest pusta, nie brakująca', async () => {
+    const service = createAnalyticsService({ redis: fakeRedis({}), sources: [] });
+    const summary = await service.summary(1, NOW);
+    expect(summary.topSources).toEqual([]);
+  });
+});

@@ -1,28 +1,40 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { useAction } from '@/components/action-button';
-import { apiFetch } from '@/lib/api';
+import { ApiRequestError, apiFetch } from '@/lib/api';
 
 export function OfferForm({ orderId }: { orderId: string }) {
-  const { run, error, pending } = useAction();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const proposedBudget = form.get('proposedBudget');
     const proposedDays = form.get('proposedDays');
-    void run(() =>
-      apiFetch(`/orders/${orderId}/offers`, {
+    setError(null);
+    setPending(true);
+    try {
+      const res = await apiFetch<{ id: string }>(`/orders/${orderId}/offers`, {
         method: 'POST',
         body: JSON.stringify({
           message: form.get('message'),
           ...(proposedBudget ? { proposedBudget: Number(proposedBudget) } : {}),
           ...(proposedDays ? { proposedDays: Number(proposedDays) } : {}),
         }),
-      }),
-    );
+      });
+      // Po złożeniu oferty Lider ląduje w JEJ wątku z banerem „Twoja oferta
+      // czeka" (PL1) — nie na odświeżonym zleceniu, gdzie musiał szukać
+      // linijki „Twoja oferta: Złożona" (dziennik wyprawy, dzień 6).
+      router.push(`/oferty/${res.id}?wyslana=1`);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : 'Coś poszło nie tak.');
+      setPending(false);
+    }
   }
 
   return (

@@ -1,5 +1,6 @@
 import type {
   CreateOfferInput,
+  OfferMessageInput,
   CreateOrderInput,
   OrderFilters,
   UpdateOrderInput,
@@ -36,6 +37,13 @@ export interface OrdersServiceDeps {
   ladder: LadderService;
   cache?: Cache;
   redis?: Redis;
+}
+
+// Wątek przy ofercie żyje, dopóki obie strony mają o czym rozmawiać: oferta
+// złożona albo przyjęta, zlecenie nieanulowane. Po wycofaniu/odrzuceniu oferty
+// wątek zostaje do odczytu — nie kasujemy cudzych słów.
+function offerThreadOpen(offerStatus: string, orderStatus: OrderStatus): boolean {
+  return (offerStatus === 'SUBMITTED' || offerStatus === 'ACCEPTED') && orderStatus !== 'CANCELLED';
 }
 
 export function createOrdersService({ prisma, identity, ladder, cache, redis }: OrdersServiceDeps) {
@@ -304,6 +312,7 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
           await emitEvent(tx, 'marketplace.offer_submitted', {
             offerId: offer.id,
             orderId,
+            orderTitle: order.title,
             leaderUserId: userId,
             companyId: order.companyId,
           });
@@ -332,7 +341,10 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
       await requireCompanyMember(userId, order.companyId);
       const offers = await prisma.offer.findMany({
         where: { orderId, status: { in: ['SUBMITTED', 'ACCEPTED'] } },
-        include: { leaderProfile: { include: { industry: true } } },
+        include: {
+          leaderProfile: { include: { industry: true } },
+          _count: { select: { messages: true } },
+        },
         orderBy: { createdAt: 'asc' },
       });
       const users = await identity.getPublicUsers(offers.map((o) => o.leaderProfile.userId));
@@ -343,6 +355,7 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
         proposedDays: o.proposedDays,
         status: o.status,
         createdAt: o.createdAt,
+        messagesCount: o._count.messages,
         leader: {
           profileId: o.leaderProfile.id,
           displayName: users.get(o.leaderProfile.userId)?.displayName ?? 'Lider',
@@ -377,6 +390,7 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
         await emitEvent(tx, 'marketplace.offer_accepted', {
           offerId,
           orderId: offer.orderId,
+          orderTitle: offer.order.title,
           leaderUserId: offer.leaderProfile.userId,
         });
       });
@@ -400,9 +414,18 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
       if (awardedLeader !== userId) {
         throw new ForbiddenError('NOT_AWARDED_LEADER', 'Tylko wybrany Lider może oddać pracę');
       }
+      const order = await requireOrder(orderId);
       await prisma.$transaction(async (tx) => {
         await transition(tx, orderId, ['IN_PROGRESS'], { status: 'DELIVERED' });
-        await emitEvent(tx, 'marketplace.order_delivered', { orderId, leaderUserId: userId });
+        // companyId + tytuł w payloadzie: do 04.09 oddanie pracy NIE
+        // powiadamiało Firmy (jedyny krok cyklu bez adresata), a to Firma ma
+        // teraz zrobić kolejny ruch — potwierdzić wykonanie.
+        await emitEvent(tx, 'marketplace.order_delivered', {
+          orderId,
+          orderTitle: order.title,
+          companyId: order.companyId,
+          leaderUserId: userId,
+        });
       });
     },
 
@@ -417,6 +440,7 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
         await transition(tx, orderId, ['DELIVERED'], { status: 'CONFIRMED' });
         await emitEvent(tx, 'marketplace.order_confirmed', {
           orderId,
+          orderTitle: order.title,
           companyId: order.companyId,
           leaderUserId,
         });
@@ -439,7 +463,10 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
     async myOffers(userId: string) {
       const offers = await prisma.offer.findMany({
         where: { leaderProfile: { userId } },
-        include: { order: { select: { id: true, title: true, status: true } } },
+        include: {
+          order: { select: { id: true, title: true, status: true } },
+          _count: { select: { messages: true } },
+        },
         orderBy: { createdAt: 'desc' },
         take: 100,
       });
@@ -448,8 +475,101 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
         status: o.status,
         proposedBudget: o.proposedBudget,
         createdAt: o.createdAt,
+        messagesCount: o._count.messages,
         order: o.order,
       }));
+    },
+
+    // --- Wątek przy ofercie (PL1) -------------------------------------------
+    //
+    // Lustro Inquiry/InquiryMessage z modułu listings. Uczestnicy: członkowie
+    // Firmy zlecenia i oferent. Wątek jest ŻYWY, dopóki oferta nie została
+    // wycofana/odrzucona, a zlecenie anulowane — po tym zostaje do odczytu.
+    // To NIE jest komunikator (ADR-010): nie ma wątku bez oferty.
+
+    async getOfferThread(userId: string, offerId: string) {
+      const offer = await prisma.offer.findUnique({
+        where: { id: offerId },
+        include: {
+          order: { include: { industry: true } },
+          leaderProfile: { select: { id: true, userId: true } },
+          messages: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+      if (!offer) throw new NotFoundError('Oferta nie istnieje');
+      const isLeader = offer.leaderProfile.userId === userId;
+      const isCompany = await identity.isCompanyMember(userId, offer.order.companyId);
+      if (!isLeader && !isCompany) throw new ForbiddenError();
+
+      const [users, companies] = await Promise.all([
+        identity.getPublicUsers([
+          ...new Set([offer.leaderProfile.userId, ...offer.messages.map((m) => m.authorId)]),
+        ]),
+        identity.getPublicCompanies([offer.order.companyId]),
+      ]);
+      return {
+        offer: {
+          id: offer.id,
+          status: offer.status,
+          message: offer.message,
+          proposedBudget: offer.proposedBudget,
+          proposedDays: offer.proposedDays,
+          createdAt: offer.createdAt,
+        },
+        order: {
+          id: offer.order.id,
+          title: offer.order.title,
+          status: offer.order.status,
+          budgetMin: offer.order.budgetMin,
+          budgetMax: offer.order.budgetMax,
+          industryName: offer.order.industry.name,
+          companyId: offer.order.companyId,
+          companyName: companies.get(offer.order.companyId)?.name ?? 'Firma',
+        },
+        leader: {
+          profileId: offer.leaderProfile.id,
+          displayName: users.get(offer.leaderProfile.userId)?.displayName ?? 'Lider',
+        },
+        viewer: { isLeader, isCompany },
+        canReply: offerThreadOpen(offer.status, offer.order.status),
+        messages: offer.messages.map((m) => ({
+          id: m.id,
+          body: m.body,
+          createdAt: m.createdAt,
+          authorName: users.get(m.authorId)?.displayName ?? 'Użytkownik',
+          isOwn: m.authorId === userId,
+        })),
+      };
+    },
+
+    async addOfferMessage(userId: string, offerId: string, input: OfferMessageInput) {
+      const offer = await prisma.offer.findUnique({
+        where: { id: offerId },
+        include: { order: true, leaderProfile: { select: { userId: true } } },
+      });
+      if (!offer) throw new NotFoundError('Oferta nie istnieje');
+      const isLeader = offer.leaderProfile.userId === userId;
+      const isCompany = await identity.isCompanyMember(userId, offer.order.companyId);
+      if (!isLeader && !isCompany) throw new ForbiddenError();
+      if (!offerThreadOpen(offer.status, offer.order.status)) {
+        throw new InvalidTransitionError('Ta rozmowa jest zamknięta');
+      }
+      await prisma.$transaction(async (tx) => {
+        await tx.offerMessage.create({ data: { offerId, authorId: userId, body: input.body } });
+        // GRANICA ANTY-MLM: to zdarzenie konsumuje WYŁĄCZNIE notifications
+        // (ladder/subscriptions.test.ts pilnuje, że `message` nie wchodzi
+        // do Drabinki). Rozmowa o ofercie nie jest pracą.
+        await emitEvent(tx, 'marketplace.offer_message', {
+          offerId,
+          orderId: offer.orderId,
+          orderTitle: offer.order.title,
+          authorUserId: userId,
+          authorIsLeader: isLeader,
+          leaderUserId: offer.leaderProfile.userId,
+          companyId: offer.order.companyId,
+        });
+      });
+      return { ok: true };
     },
 
     // Publiczne API pod antyfraud (ADR-004): czy Lider ma firmę, która
@@ -517,6 +637,12 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
     // Po `publishedAt`: zlecenie w szkicu nie jest jeszcze popytem na rynku.
     async countOrdersPublishedBetween(from: Date, to: Date): Promise<number> {
       return prisma.order.count({ where: { publishedAt: { gte: from, lt: to } } });
+    },
+
+    // Lejek (PL0): oferta to „pierwsza akcja" Lidera po stronie marketplace —
+    // sama LICZBA w oknie, bez danych osoby.
+    async countOffersBetween(from: Date, to: Date): Promise<number> {
+      return prisma.offer.count({ where: { createdAt: { gte: from, lt: to } } });
     },
   };
 }

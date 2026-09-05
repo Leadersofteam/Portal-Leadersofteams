@@ -49,8 +49,12 @@ interface OfferRow {
   proposedBudget: number | null;
   proposedDays: number | null;
   status: string;
+  messagesCount: number;
   leader: { profileId: string; displayName: string; headline: string; industry: string };
 }
+
+const messagesLabel = (n: number) =>
+  n === 0 ? 'Zapytaj Lidera' : n === 1 ? '1 wiadomość' : `${n} wiadomości`;
 
 const getOrder = cache((id: string) => serverApi<OrderDetail>(`/orders/${id}`));
 
@@ -178,9 +182,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 {offer.proposedBudget ? `Proponowany budżet: ${offer.proposedBudget} zł. ` : ''}
                 {offer.proposedDays ? `Czas: ${offer.proposedDays} dni.` : ''}
               </p>
-              {order.status === 'PUBLISHED' && offer.status === 'SUBMITTED' && (
-                <ActionButton path={`/offers/${offer.id}/accept`} label="Wybierz tę ofertę" />
-              )}
+              <div className="actions-row">
+                {order.status === 'PUBLISHED' && offer.status === 'SUBMITTED' && (
+                  <ActionButton path={`/offers/${offer.id}/accept`} label="Wybierz tę ofertę" />
+                )}
+                {/* Wątek przy ofercie (PL1): Firma może dopytać, zanim wybierze —
+                    do 04.09 miała tylko „wybierz albo zignoruj". */}
+                <Link className="btn secondary" href={`/oferty/${offer.id}`}>
+                  {messagesLabel(offer.messagesCount)} →
+                </Link>
+              </div>
             </div>
           ))}
         </section>
@@ -207,7 +218,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {viewer.myOffer && (
         <p className="muted">
-          Twoja oferta: <span className="badge">{OFFER_STATUS_LABELS[viewer.myOffer.status]}</span>
+          Twoja oferta: <span className="badge">{OFFER_STATUS_LABELS[viewer.myOffer.status]}</span>{' '}
+          · <Link href={`/oferty/${viewer.myOffer.id}`}>Rozmowa z firmą →</Link>
         </p>
       )}
 
