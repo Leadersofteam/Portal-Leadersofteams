@@ -128,9 +128,12 @@ export function NewOrderForm({
     }
   }
 
-  // Formularz montujemy dopiero z odczytanym szkicem: defaultValue ustawia
-  // się raz, przy pierwszym renderze pola.
-  if (!draftLoaded)
+  // Zalogowany: formularz montujemy dopiero z odczytanym szkicem, bo
+  // defaultValue ustawia się raz, przy pierwszym renderze pola. Gość szkicu
+  // nie odtwarza (dopiero go tworzy), więc dostaje pełny HTML z serwera —
+  // staging pokazał pustą kartę do hydracji, czyli LCP bez treści i stronę
+  // bez nagłówka dla botów.
+  if (!guest && !draftLoaded)
     return <div className="card" style={{ maxWidth: '42rem', margin: '2rem auto' }} />;
 
   return (
