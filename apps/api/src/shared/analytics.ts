@@ -41,6 +41,7 @@ export function dayKey(date: Date): string {
 // był niepoliczalny. Pilnuje tego teraz test strukturalny `shared/web-contract.test.ts`.
 const KNOWN_PATHS = new Set([
   '/',
+  '/dla-firm',
   '/drabinka',
   '/feed',
   '/firma/nowa',
@@ -76,6 +77,7 @@ const KNOWN_PATHS = new Set([
   '/reset-hasla',
   '/start',
   '/szukaj',
+  '/szukam-wykonawcy',
   '/tematy/:id',
   '/uslugi',
   '/uslugi/nowa',

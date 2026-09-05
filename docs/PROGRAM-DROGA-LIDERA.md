@@ -1,7 +1,7 @@
 # Program „Droga Lidera” — rozwój Portalu pod ruch, transakcje i wygląd (analiza 04.09.2026)
 
 **Rola:** genialny Lider / full-stack + PM · **Repo:** `/docker/portal-staging` (prod = `leadersofteams.pl`)
-**Data:** 2026-09-04 · **Status:** plan do akceptacji właściciela
+**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: PL0+PL1 wdrożone 05.09 (HANDOFF), PL2–PL5 otwarte
 
 ---
 
@@ -10,18 +10,18 @@
 Portal ma **więcej funkcji niż ludzi**. Fundament techniczny jest lepszy niż wygląda z zewnątrz,
 ale trzy rzeczy blokują ruch i pierwszą realną transakcję:
 
-| Sygnał (prod, 04.09) | Pomiar | Wniosek |
-| --- | --- | --- |
-| Odsłony/dobę (Redis `portal:analytics:v1:views:*`, 28.08–04.09) | 5–24 dziennie, w tym własne sesje wyprawy; 29.08 = 10 odsłon, 31.08 = 7 | **Zero ruchu organicznego.** Bottleneck = dystrybucja, nie funkcje |
-| Realni ludzie | Macix + 5 person wyprawy (`wyprawa/KONTA.md`), reszta demo/anonimizowane | Pierwsza realna oferta (Konrad → „Marketing" HydroSpark) wisi **bez odpowiedzi** |
-| Katalog publiczny (API `/leaders`, `/orders`, `/listings`, `/groups`) | 9 Liderów, 10 zleceń, 47 usług, 20 grup, 10 branż (mają `slug`) | Jest czym wypełnić strony hubowe — nie pusty serwis |
-| TTFB publicznych stron | 60–170 ms, HTML 37–124 KB | Szybkość nie jest problemem; problemem jest `cache-control: private, no-store` na WSZYSTKICH listach (tylko `/` używa `publicApi`+ISR) |
-| Maile wychodzące | **tylko digest** (`notifications/service.ts:397`); nowa oferta/wiadomość = powiadomienie in-app | Firma, która nie loguje się codziennie, **nigdy nie dowie się o ofercie** — to prawdopodobnie dlaczego Macix nie odpowiedział |
-| CTA landingu „Dodaj zlecenie jako Firma" | `/zlecenia/nowe` → `redirect('/logowanie')` dla gościa | Oferteo/Fixly dają najpierw formularz potrzeby, potem konto. My dajemy ścianę |
-| Kanał rozmowy przy ofercie na zlecenie | brak (tylko przyjmij/zignoruj); przy usługach istnieje (`Inquiry`→`InquiryMessage`) | Asymetria uderza w pierwszą transakcję (zapisane w HANDOFF jako decyzja właściciela) |
-| Analityka | tylko odsłony ścieżek; zero zdarzeń lejka (wejście → rejestracja → weryfikacja → profil → pierwsza akcja) | Nie da się powiedzieć, gdzie ludzie odpadają |
-| SEO | sitemap (55 URL, limit 50/typ), JSON-LD (Organization/WebSite/Person/JobPosting/QAPage), OG per encja, robots OK | Fundament jest; brakuje **stron hubowych per branża** i treści, na które ktoś może trafić z Google |
-| Design | paleta „cieplone indigo", Bricolage, motyw jasny/ciemny, sygnatura „im wyżej, tym cieplej" (zrzuty `wyprawa/zrzuty/p2-*`) | Solidne, ale landing to **tekst + jedna drabina**. „Droga od zera do Lidera" nie istnieje jako strona — istnieje jako regulamin (`/drabinka`) |
+| Sygnał (prod, 04.09)                                                  | Pomiar                                                                                                                    | Wniosek                                                                                                                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Odsłony/dobę (Redis `portal:analytics:v1:views:*`, 28.08–04.09)       | 5–24 dziennie, w tym własne sesje wyprawy; 29.08 = 10 odsłon, 31.08 = 7                                                   | **Zero ruchu organicznego.** Bottleneck = dystrybucja, nie funkcje                                                                            |
+| Realni ludzie                                                         | Macix + 5 person wyprawy (`wyprawa/KONTA.md`), reszta demo/anonimizowane                                                  | Pierwsza realna oferta (Konrad → „Marketing" HydroSpark) wisi **bez odpowiedzi**                                                              |
+| Katalog publiczny (API `/leaders`, `/orders`, `/listings`, `/groups`) | 9 Liderów, 10 zleceń, 47 usług, 20 grup, 10 branż (mają `slug`)                                                           | Jest czym wypełnić strony hubowe — nie pusty serwis                                                                                           |
+| TTFB publicznych stron                                                | 60–170 ms, HTML 37–124 KB                                                                                                 | Szybkość nie jest problemem; problemem jest `cache-control: private, no-store` na WSZYSTKICH listach (tylko `/` używa `publicApi`+ISR)        |
+| Maile wychodzące                                                      | **tylko digest** (`notifications/service.ts:397`); nowa oferta/wiadomość = powiadomienie in-app                           | Firma, która nie loguje się codziennie, **nigdy nie dowie się o ofercie** — to prawdopodobnie dlaczego Macix nie odpowiedział                 |
+| CTA landingu „Dodaj zlecenie jako Firma"                              | `/zlecenia/nowe` → `redirect('/logowanie')` dla gościa                                                                    | Oferteo/Fixly dają najpierw formularz potrzeby, potem konto. My dajemy ścianę                                                                 |
+| Kanał rozmowy przy ofercie na zlecenie                                | brak (tylko przyjmij/zignoruj); przy usługach istnieje (`Inquiry`→`InquiryMessage`)                                       | Asymetria uderza w pierwszą transakcję (zapisane w HANDOFF jako decyzja właściciela)                                                          |
+| Analityka                                                             | tylko odsłony ścieżek; zero zdarzeń lejka (wejście → rejestracja → weryfikacja → profil → pierwsza akcja)                 | Nie da się powiedzieć, gdzie ludzie odpadają                                                                                                  |
+| SEO                                                                   | sitemap (55 URL, limit 50/typ), JSON-LD (Organization/WebSite/Person/JobPosting/QAPage), OG per encja, robots OK          | Fundament jest; brakuje **stron hubowych per branża** i treści, na które ktoś może trafić z Google                                            |
+| Design                                                                | paleta „cieplone indigo", Bricolage, motyw jasny/ciemny, sygnatura „im wyżej, tym cieplej" (zrzuty `wyprawa/zrzuty/p2-*`) | Solidne, ale landing to **tekst + jedna drabina**. „Droga od zera do Lidera" nie istnieje jako strona — istnieje jako regulamin (`/drabinka`) |
 
 **Teza:** Portal nie potrzebuje kolejnej funkcji społecznej. Potrzebuje (1) domknięcia pętli
 transakcji tak, żeby nie przeciekała, (2) wejścia dla Firm bez ściany, (3) **Drogi Lidera jako
@@ -37,7 +37,7 @@ Rytm bez zmian: `pnpm format && pnpm lint && pnpm typecheck && pnpm -r test` →
 `portal-wdrozenie`, `portal-migracja`, `portal-anty-mlm`, `portal-design`, `portal-zrzuty`.
 Punkt odniesienia: **217 testów API, 23 e2e**. Jeden sprint = jedno wdrożenie.
 
-### PL0 — Pomiar i higiena (1 sesja, bez migracji)
+### PL0 — Pomiar i higiena (1 sesja, bez migracji) — ✅ WYKONANY 05.09 (poza pkt 3 i 5, patrz HANDOFF)
 
 Cel: zanim zaczniemy „robić ruch", mieć lejek, który powie, co działa.
 
@@ -52,10 +52,10 @@ Cel: zanim zaczniemy „robić ruch", mieć lejek, który powie, co działa.
    (skill `web-quality-skills` — patrz §3). Liczby do HANDOFF.
 4. **Nagłówki bezpieczeństwa web** — `curl -I` na prod nie pokazał HSTS/CSP/X-Frame dla
    Next (helmet jest tylko na API). Dodać `headers()` w `apps/web/next.config.ts`.
-   *(niezweryfikowane: Traefik może dokładać HSTS na innej ścieżce — sprawdzić przed zmianą)*.
+   _(niezweryfikowane: Traefik może dokładać HSTS na innej ścieżce — sprawdzić przed zmianą)_.
 5. Sprawdzić, czy oferta Konrada dostała odpowiedź (Macix) — jeśli nie, to dowód dla PL1.
 
-### PL1 — Pętla transakcji nie przecieka (1 sesja, 1 migracja expand-only)
+### PL1 — Pętla transakcji nie przecieka (1 sesja, 1 migracja expand-only) — ✅ WYKONANY 05.09
 
 Cel: pierwsza realna transakcja w Portalu ma się domknąć bez telefonu właściciela.
 
@@ -75,7 +75,7 @@ Cel: pierwsza realna transakcja w Portalu ma się domknąć bez telefonu właśc
 4. **Feed dla nowego konta**: gdy `following = 0`, domyślna zakładka = „Cała społeczność"
    (zrzut `p2-2708-feed-ciemny-1440.png` — pierwszy ekran nowego Lidera to pusty stan).
 
-### PL2 — Firma w 90 sekund (model Oferteo/Fixly) (1 sesja)
+### PL2 — Firma w 90 sekund (model Oferteo/Fixly) (1 sesja) — ✅ KOD GOTOWY 05.09 (wdrożenie: patrz HANDOFF)
 
 Cel: gość z potrzebą publikuje zlecenie bez ściany logowania.
 
@@ -144,7 +144,7 @@ Cel: strony, na które da się wejść z Google, i pełna indeksacja tego, co ju
    (ADR-010: bez FUD), z FAQ JSON-LD. To są frazy, których ludzie realnie szukają.
 6. **AI-SEO**: `/llms.txt` + cytowalne akapity na `/droga` i `/drabinka` (skill `ai-seo`).
 7. Google Search Console + Bing Webmaster (darmowe, tylko weryfikacja pliku/DNS — nie API
-   per klik; zgodne z ADR-009). Rejestracja sitemapy. *(wymaga dostępu właściciela do DNS)*.
+   per klik; zgodne z ADR-009). Rejestracja sitemapy. _(wymaga dostępu właściciela do DNS)_.
 
 ### PL5 — Pierwszych dwudziestu, ale z lejkiem (ops + produkt, 1 sesja)
 
@@ -168,16 +168,16 @@ Turnstile, zewnętrznych API, auto-deployu, punktów za cokolwiek poza pracą i 
 Skill to instrukcja czytana lokalnie — nie wykonuje wywołań HTTP w runtime Portalu, więc ADR-009
 jest zachowany. Instalacja globalna (`~/.claude/`), nie do repo (repo trzyma tylko `portal-*`).
 
-| Repo | Skille do użycia | Sprint | Instalacja |
-| --- | --- | --- | --- |
-| [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) (46,9k★, 75 skilli) | `programmatic-seo`, `seo-audit`, `schema`, `ai-seo`, `competitors`, `onboarding`, `signup`, `cro`, `copywriting`, `launch`, `community-marketing`, `site-architecture` | PL2, PL4, PL5 | `/plugin marketplace add coreyhaines31/marketingskills` → `/plugin install marketing-skills` |
-| [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo) (25 sub-skilli, offline; płatne rozszerzenia OPT-IN — nie włączać) | `/seo audit`, `/seo schema`, `/seo technical`, `/seo geo` | PL0 (audyt bazowy), PL4 | `/plugin marketplace add AgriciDaniel/claude-seo` → `/plugin install` → `/seo setup` |
-| [addyosmani/web-quality-skills](https://github.com/addyosmani/web-quality-skills) | `performance`, `core-web-vitals`, `accessibility`, `seo`; fallback Lighthouse CLI bez MCP | PL0, PL3 | `/plugin marketplace add addyosmani/web-quality-skills` → `/plugin install web-quality-skills@addy-web-quality-skills` |
-| [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | `web-design-guidelines` (100+ reguł UI/a11y), `react-best-practices`, `react-view-transitions`, `composition-patterns` | PL3 | `npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code` |
-| [rampstackco/claude-skills](https://github.com/rampstackco/claude-skills) (103 skille) | `landing-page-copy`, `onboarding-wizard-design`, `multi-step-form-design`, `journey-mapping`, `product-analytics-setup`, `seo-onpage`, `information-architecture` | PL0, PL2, PL3 | `/plugin marketplace add rampstackco/claude-skills` → `/plugin install rampstack-skills@rampstack` |
-| [phuryn/pm-skills](https://github.com/phuryn/pm-skills) (68 skilli) | `growth loops`, `North Star metric`, `journey maps`, `cohort analysis` | PL0, PL5 | `claude plugin marketplace add phuryn/pm-skills` → `claude plugin install pm-marketing-growth@pm-skills pm-go-to-market@pm-skills` |
-| [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (101k★) | tylko jako **źródło porównawcze** przy krytyce (50+ stylów, 161 palet) — NIE do generowania: Portal ma własne tokeny i zakaz nowych bibliotek UI | PL3 | `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill` |
-| [anthropics/skills](https://github.com/anthropics/skills) | `frontend-design`, `webapp-testing`, `skill-creator` (już dostępne we wtyczkach właściciela) | — | już zainstalowane |
+| Repo                                                                                                                                     | Skille do użycia                                                                                                                                                       | Sprint                  | Instalacja                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) (46,9k★, 75 skilli)                                    | `programmatic-seo`, `seo-audit`, `schema`, `ai-seo`, `competitors`, `onboarding`, `signup`, `cro`, `copywriting`, `launch`, `community-marketing`, `site-architecture` | PL2, PL4, PL5           | `/plugin marketplace add coreyhaines31/marketingskills` → `/plugin install marketing-skills`                                       |
+| [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo) (25 sub-skilli, offline; płatne rozszerzenia OPT-IN — nie włączać) | `/seo audit`, `/seo schema`, `/seo technical`, `/seo geo`                                                                                                              | PL0 (audyt bazowy), PL4 | `/plugin marketplace add AgriciDaniel/claude-seo` → `/plugin install` → `/seo setup`                                               |
+| [addyosmani/web-quality-skills](https://github.com/addyosmani/web-quality-skills)                                                        | `performance`, `core-web-vitals`, `accessibility`, `seo`; fallback Lighthouse CLI bez MCP                                                                              | PL0, PL3                | `/plugin marketplace add addyosmani/web-quality-skills` → `/plugin install web-quality-skills@addy-web-quality-skills`             |
+| [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)                                                                  | `web-design-guidelines` (100+ reguł UI/a11y), `react-best-practices`, `react-view-transitions`, `composition-patterns`                                                 | PL3                     | `npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code`                                             |
+| [rampstackco/claude-skills](https://github.com/rampstackco/claude-skills) (103 skille)                                                   | `landing-page-copy`, `onboarding-wizard-design`, `multi-step-form-design`, `journey-mapping`, `product-analytics-setup`, `seo-onpage`, `information-architecture`      | PL0, PL2, PL3           | `/plugin marketplace add rampstackco/claude-skills` → `/plugin install rampstack-skills@rampstack`                                 |
+| [phuryn/pm-skills](https://github.com/phuryn/pm-skills) (68 skilli)                                                                      | `growth loops`, `North Star metric`, `journey maps`, `cohort analysis`                                                                                                 | PL0, PL5                | `claude plugin marketplace add phuryn/pm-skills` → `claude plugin install pm-marketing-growth@pm-skills pm-go-to-market@pm-skills` |
+| [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (101k★)                                  | tylko jako **źródło porównawcze** przy krytyce (50+ stylów, 161 palet) — NIE do generowania: Portal ma własne tokeny i zakaz nowych bibliotek UI                       | PL3                     | `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill`                                                                     |
+| [anthropics/skills](https://github.com/anthropics/skills)                                                                                | `frontend-design`, `webapp-testing`, `skill-creator` (już dostępne we wtyczkach właściciela)                                                                           | —                       | już zainstalowane                                                                                                                  |
 
 Pominięte świadomie: skille wymagające Ahrefs/DataForSEO/Semrush (płatne), `hyperfx-ai/marketing-skills`
 (wymaga MCP z kluczem), skille do płatnych reklam (brak budżetu, ADR-009). Brak skilla po polsku —
@@ -189,13 +189,13 @@ Po instalacji: dopisać wiersze do `docs/SKILLE.md` (sekcja „Skille zewnętrzn
 
 ## 4. Decyzje właściciela (rekomendacje — nie rozstrzygnę ich z kodu)
 
-| # | Decyzja | Rekomendacja |
-| --- | --- | --- |
-| D1 | Wątek rozmowy przy ofercie na zlecenie (PL1.2) — czy to nie łamie ADR-010 „bez DM"? | **TAK, wdrożyć.** To lustro `Inquiry` (rozmowa zakotwiczona w transakcji, nie DM). Bez tego pierwsza transakcja umiera. |
-| D2 | Zlecenie jako gość przed kontem (PL2.1) — Firma bez weryfikacji publikuje szybciej | **TAK.** Brief 3.4 mówi to wprost; ryzyko spamu R-03 mitygują istniejące rate-limity i proof-of-work. Szkic publikuje się dopiero po weryfikacji e-maila. |
-| D3 | Dane demo na produkcji (R-17) przed pchnięciem ruchu | **PURGE przed PL4.** Strony hubowe z fikcyjnymi Liderami w Google = dowód przeciw ADR-004. Zastąpić 3–5 realnymi zleceniami HydroSpark. |
-| D4 | Historie person wyprawy na landingu (PL3.3) — konta są testowe | Użyć jako **„historia wyprawy"** jawnie oznaczonej, albo poczekać na pierwszą realną. Nie udawać. |
-| D5 | Google Search Console / Bing — weryfikacja domeny | Zrobić (0 zł, brak API per klik); wymaga wpisu DNS/pliku od właściciela. |
+| #   | Decyzja                                                                             | Rekomendacja                                                                                                                                              |
+| --- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Wątek rozmowy przy ofercie na zlecenie (PL1.2) — czy to nie łamie ADR-010 „bez DM"? | **TAK, wdrożyć.** To lustro `Inquiry` (rozmowa zakotwiczona w transakcji, nie DM). Bez tego pierwsza transakcja umiera.                                   |
+| D2  | Zlecenie jako gość przed kontem (PL2.1) — Firma bez weryfikacji publikuje szybciej  | **TAK.** Brief 3.4 mówi to wprost; ryzyko spamu R-03 mitygują istniejące rate-limity i proof-of-work. Szkic publikuje się dopiero po weryfikacji e-maila. |
+| D3  | Dane demo na produkcji (R-17) przed pchnięciem ruchu                                | **PURGE przed PL4.** Strony hubowe z fikcyjnymi Liderami w Google = dowód przeciw ADR-004. Zastąpić 3–5 realnymi zleceniami HydroSpark.                   |
+| D4  | Historie person wyprawy na landingu (PL3.3) — konta są testowe                      | Użyć jako **„historia wyprawy"** jawnie oznaczonej, albo poczekać na pierwszą realną. Nie udawać.                                                         |
+| D5  | Google Search Console / Bing — weryfikacja domeny                                   | Zrobić (0 zł, brak API per klik); wymaga wpisu DNS/pliku od właściciela.                                                                                  |
 
 Kolejność wdrażania: **PL0 → PL1 → PL2 → PL3 → PL4 → PL5**. PL3 i PL4 można zamienić, jeśli
 właściciel chce najpierw ruch, a potem wygląd — ale strony hubowe w starej skórze landingu

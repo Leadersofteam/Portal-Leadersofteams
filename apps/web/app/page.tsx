@@ -204,8 +204,10 @@ export default async function HomePage() {
           <details>
             <summary>Jak Firma może zlecić pracę?</summary>
             <p>
-              Załóż bezpłatne konto, dodaj profil Firmy i opublikuj zlecenie z widełkami budżetu.
-              Oferty składają Liderzy o wymaganym poziomie — po realizacji oceniacie się nawzajem.
+              Opisz potrzebę bez konta — konto i firmę założysz jednym krokiem po formularzu.
+              Publikujesz po potwierdzeniu adresu e-mail. Oferty składają Liderzy o wymaganym
+              poziomie, przy każdej masz rozmowę, a po realizacji oceniacie się nawzajem.{' '}
+              <Link href="/dla-firm">Więcej dla firm →</Link>
             </p>
           </details>
           <details>

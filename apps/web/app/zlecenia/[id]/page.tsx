@@ -89,6 +89,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
   const isLoggedIn = Boolean(me?.user);
+  // Stan potwierdzenia adresu tylko tam, gdzie ma znaczenie (szkic Firmy) —
+  // jedno zapytanie więcej wyłącznie dla właściciela szkicu.
+  const verification =
+    viewer.isCompanyMember && order.status === 'DRAFT'
+      ? await serverApi<{ email: string; verified: boolean }>('/me/verification')
+      : null;
 
   const offers =
     viewer.isCompanyMember && ['PUBLISHED', 'AWARDED'].includes(order.status)
@@ -141,6 +147,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {isLoggedIn && !viewer.isCompanyMember && (
         <div className="actions-row">
           <ReportButton subjectType="ORDER" subjectId={order.id} />
+        </div>
+      )}
+
+      {/* PL2 (D2): szkic gościa publikuje się dopiero po potwierdzeniu adresu.
+          Mówimy to PRZED kliknięciem, nie dopiero błędem z API — a link do
+          ponownej wysyłki jest w banerze panelu. */}
+      {viewer.isCompanyMember && order.status === 'DRAFT' && verification?.verified === false && (
+        <div className="card" data-testid="verify-before-publish">
+          <h3>Potwierdź adres e-mail, żeby opublikować</h3>
+          <p className="muted">
+            Link wysłaliśmy na {verification.email}. Nie dotarł?{' '}
+            <Link href="/panel">Wyślij ponownie z panelu →</Link> Szkic czeka tutaj.
+          </p>
         </div>
       )}
 

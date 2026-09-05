@@ -199,6 +199,28 @@ export function createIdentityService(
   // Generowanie unikatowego @handle z displayName (transliteracja PL + kolizje).
   // Wołane przy rejestracji (nowi userzy linkowalni od 1. dnia) i leniwie
   // przez moduł social dla kont sprzed tej zmiany.
+  // Wspólne dla `createCompany` (formularz /firma/nowa) i rejestracji z nazwą
+  // firmy (PL2) — jedna ścieżka tworzenia Company, jedno zdarzenie domenowe.
+  async function createCompanyFor(ownerId: string, input: CreateCompanyInput) {
+    // Zmiana stanu + zdarzenie domenowe atomowo (wzorzec outbox, ADR-007).
+    return prisma.$transaction(async (tx) => {
+      const company = await tx.company.create({
+        data: {
+          name: input.name,
+          nip: input.nip ?? null,
+          // Kontrakt (`createCompanyInputSchema`) już odrzucił numer z błędną
+          // sumą kontrolną, więc obecność NIP-u tutaj ZNACZY, że przeszedł.
+          // Zapisujemy znacznik, zamiast przeliczać sumę przy każdym renderze.
+          nipVerifiedAt: input.nip ? new Date() : null,
+          description: input.description ?? null,
+          members: { create: { userId: ownerId, role: 'OWNER' } },
+        },
+      });
+      await emitEvent(tx, 'identity.company_created', { companyId: company.id, ownerId });
+      return { id: company.id, name: company.name };
+    });
+  }
+
   async function ensureHandleFor(userId: string): Promise<string> {
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -258,6 +280,20 @@ export function createIdentityService(
         } catch {
           /* best-effort — moduł social nada leniwie przy pierwszym follow */
         }
+        // PL2 „Firma w 90 sekund": konto + firma jednym krokiem. Firma powstaje
+        // PO użytkowniku (właściciel musi istnieć), a intencja zapisuje się
+        // od razu, żeby kreator pierwszej mili nie pytał o to, co już wiadomo.
+        // Zero punktów — to stan interfejsu i własność, nie zdarzenie Drabinki.
+        if (input.companyName) {
+          await createCompanyFor(user.id, { name: input.companyName });
+        }
+        const intent = input.intent ?? (input.companyName ? 'COMPANY' : undefined);
+        if (intent) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { onboardingIntent: intent, onboardingStep: 2 },
+          });
+        }
         // Miękka weryfikacja (MVP): auto-login, a gdy wysyłka włączona — mail.
         if (mail?.enabled) {
           try {
@@ -289,23 +325,7 @@ export function createIdentityService(
     },
 
     async createCompany(ownerId, input) {
-      // Zmiana stanu + zdarzenie domenowe atomowo (wzorzec outbox, ADR-007).
-      return prisma.$transaction(async (tx) => {
-        const company = await tx.company.create({
-          data: {
-            name: input.name,
-            nip: input.nip ?? null,
-            // Kontrakt (`createCompanyInputSchema`) już odrzucił numer z błędną
-            // sumą kontrolną, więc obecność NIP-u tutaj ZNACZY, że przeszedł.
-            // Zapisujemy znacznik, zamiast przeliczać sumę przy każdym renderze.
-            nipVerifiedAt: input.nip ? new Date() : null,
-            description: input.description ?? null,
-            members: { create: { userId: ownerId, role: 'OWNER' } },
-          },
-        });
-        await emitEvent(tx, 'identity.company_created', { companyId: company.id, ownerId });
-        return { id: company.id, name: company.name };
-      });
+      return createCompanyFor(ownerId, input);
     },
 
     async listCompanies(userId) {

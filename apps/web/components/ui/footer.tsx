@@ -45,6 +45,12 @@ export function SiteFooter() {
             <li>
               <Link href="/drabinka">Drabinka Lidera</Link>
             </li>
+            <li>
+              <Link href="/dla-firm">Dla firm</Link>
+            </li>
+            <li>
+              <Link href="/szukam-wykonawcy">Szukam wykonawcy</Link>
+            </li>
           </ul>
         </div>
         <div>

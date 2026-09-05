@@ -196,6 +196,9 @@ export async function buildServer(config: AppConfig): Promise<AppContext> {
     ladder: ladderService,
     cache,
     redis,
+    // PL2 (D2): publikacja po potwierdzeniu adresu — tylko tam, gdzie poczta
+    // realnie wychodzi (uzasadnienie przy OrdersServiceDeps).
+    publishRequiresVerifiedEmail: config.mailEnabled,
   });
   const reviewsService = createReviewsService({ prisma, identity: identityService });
   // KOLEJNOŚĆ MA ZNACZENIE: `social` powstaje PRZED `groups`, bo groups czyta

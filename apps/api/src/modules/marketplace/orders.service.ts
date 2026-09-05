@@ -32,11 +32,21 @@ export interface OrdersServiceDeps {
   prisma: PrismaClient;
   identity: Pick<
     IdentityService,
-    'isCompanyMember' | 'getPublicCompanies' | 'getPublicUsers' | 'getUserCreatedAt'
+    | 'isCompanyMember'
+    | 'getPublicCompanies'
+    | 'getPublicUsers'
+    | 'getUserCreatedAt'
+    | 'getVerificationStatus'
   >;
   ladder: LadderService;
   cache?: Cache;
   redis?: Redis;
+  // PL2 (D2): zlecenie gościa publikuje się dopiero po potwierdzeniu adresu.
+  // Flaga zależy od środowiska: bez SMTP (dev/test) nie ma jak potwierdzić
+  // adresu, więc bramka jest wyłączona — inaczej Portal bez poczty byłby
+  // Portalem bez zleceń. Na produkcji (SMTP włączone) bramka działa dla
+  // wszystkich publikacji: to też bariera anty-spam (R-03).
+  publishRequiresVerifiedEmail?: boolean;
 }
 
 // Wątek przy ofercie żyje, dopóki obie strony mają o czym rozmawiać: oferta
@@ -46,7 +56,14 @@ function offerThreadOpen(offerStatus: string, orderStatus: OrderStatus): boolean
   return (offerStatus === 'SUBMITTED' || offerStatus === 'ACCEPTED') && orderStatus !== 'CANCELLED';
 }
 
-export function createOrdersService({ prisma, identity, ladder, cache, redis }: OrdersServiceDeps) {
+export function createOrdersService({
+  prisma,
+  identity,
+  ladder,
+  cache,
+  redis,
+  publishRequiresVerifiedEmail = false,
+}: OrdersServiceDeps) {
   async function requireOrder(orderId: string) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundError('Zlecenie nie istnieje');
@@ -179,6 +196,15 @@ export function createOrdersService({ prisma, identity, ladder, cache, redis }: 
     async publish(userId: string, orderId: string) {
       const order = await requireOrder(orderId);
       await requireCompanyMember(userId, order.companyId);
+      if (publishRequiresVerifiedEmail) {
+        const verification = await identity.getVerificationStatus(userId);
+        if (!verification?.verified) {
+          throw new ForbiddenError(
+            'EMAIL_NOT_VERIFIED',
+            'Potwierdź adres e-mail, żeby opublikować zlecenie — link wysłaliśmy przy rejestracji, nowy znajdziesz w panelu.',
+          );
+        }
+      }
       // Limit publikacji dla świeżych kont (D7) — bariera anty-spam.
       await enforceFreshAccountQuota(
         redis,

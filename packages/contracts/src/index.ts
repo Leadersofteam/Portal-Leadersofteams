@@ -49,6 +49,12 @@ export const registerInputSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   displayName: displayNameSchema,
+  // PL2 „Firma w 90 sekund": gość opisuje potrzebę PRZED kontem, a konto
+  // i firmę zakłada jednym krokiem. Nazwa firmy tworzy Company (właściciel =
+  // nowe konto) i ustawia intencję COMPANY, żeby kreator nie pytał o to, co
+  // już wiadomo. Pole jest opcjonalne — zwykła rejestracja bez zmian.
+  companyName: z.string().trim().min(2).max(120).optional(),
+  intent: z.enum(['LEADER', 'COMPANY', 'BOTH']).optional(),
 });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 

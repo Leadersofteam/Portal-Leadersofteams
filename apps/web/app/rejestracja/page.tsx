@@ -25,6 +25,19 @@ export default function RegisterPage() {
   // przerysowywać, a przerysowanie formularza w trakcie pisania gubiłoby fokus.
   const prepared = useRef<PreparedHumancheck | null>(null);
   const solving = useRef<Promise<PreparedHumancheck | null> | null>(null);
+  // PL2 „Firma w 90 sekund": `?cel=firma` dokłada JEDNO pole (nazwa firmy) i
+  // zakłada konto razem z firmą; `?dalej=zlecenie` wraca do formularza potrzeby,
+  // w którym czeka szkic z sessionStorage. Czytane po montażu (brak Suspense
+  // wokół useSearchParams w tym drzewie) — do pierwszego renderu formularz jest
+  // zwykły, więc nic nie mignie poza jednym dodatkowym polem.
+  const [celFirma, setCelFirma] = useState(false);
+  const [dalejZlecenie, setDalejZlecenie] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setCelFirma(params.get('cel') === 'firma');
+    setDalejZlecenie(params.get('dalej') === 'zlecenie');
+  }, []);
 
   useEffect(() => {
     // Start liczenia natychmiast po wejściu na stronę. Zanim ktokolwiek wpisze
@@ -57,13 +70,18 @@ export default function RegisterPage() {
           displayName: form.get('displayName'),
           // Pole-pułapka: człowiek go nie widzi, więc zawsze przyjdzie puste.
           nazwaFirmy: form.get('nazwaFirmy') ?? '',
+          ...(celFirma && form.get('companyName')
+            ? { companyName: form.get('companyName'), intent: 'COMPANY' }
+            : {}),
           ...(prepared.current?.solution ? { humancheck: prepared.current.solution } : {}),
         }),
       });
       // Świeże konto trafia do kreatora, nie do pustego panelu — na pustym
       // rynku pierwsze „co teraz?" kosztuje nas użytkownika. Kreator jest
-      // w całości pomijalny (patrz app/start/wizard.tsx).
-      router.push('/start');
+      // w całości pomijalny (patrz app/start/wizard.tsx). Wyjątek (PL2): Firma,
+      // która przyszła z formularza potrzeby, wraca do niego — kreator pytałby
+      // o to, co już wiadomo.
+      router.push(dalejZlecenie ? '/zlecenia/nowe' : '/start');
       router.refresh();
     } catch (err) {
       setError(
@@ -80,10 +98,11 @@ export default function RegisterPage() {
           na telefonie kolumna znika i formularz zostaje pierwszy. */}
       <div className="auth-split">
         <div className="card form-card">
-          <h1>Załóż konto</h1>
+          <h1>{celFirma ? 'Konto i firma — jeden krok' : 'Załóż konto'}</h1>
           <p className="muted">
-            Rejestracja jest otwarta dla każdego. Tytuł Lidera zdobywa się pracą i mentoringiem — w
-            Drabince Lidera.
+            {celFirma
+              ? 'Twój opis potrzeby czeka w tej karcie. Załóż konto, podaj nazwę firmy — i wracasz do zlecenia.'
+              : 'Rejestracja jest otwarta dla każdego. Tytuł Lidera zdobywa się pracą i mentoringiem — w Drabince Lidera.'}
           </p>
           {error && <div className="error-box">{error}</div>}
           <form onSubmit={onSubmit}>
@@ -91,6 +110,19 @@ export default function RegisterPage() {
               <label htmlFor="displayName">Imię i nazwisko (lub nazwa)</label>
               <input id="displayName" name="displayName" required minLength={2} maxLength={80} />
             </div>
+            {celFirma && (
+              <div className="field">
+                <label htmlFor="companyName">Nazwa firmy</label>
+                <input
+                  id="companyName"
+                  name="companyName"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  autoComplete="organization"
+                />
+              </div>
+            )}
             <div className="field">
               <label htmlFor="email">E-mail</label>
               <input id="email" name="email" type="email" required autoComplete="email" />

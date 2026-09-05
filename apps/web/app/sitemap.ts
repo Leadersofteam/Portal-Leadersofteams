@@ -21,6 +21,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: url('/zlecenia'), changeFrequency: 'hourly', priority: 0.9 },
     { url: url('/grupy'), changeFrequency: 'daily', priority: 0.7 },
     { url: url('/drabinka'), changeFrequency: 'weekly', priority: 0.6 },
+    // PL2: wejścia dla drugiej strony rynku.
+    { url: url('/dla-firm'), changeFrequency: 'weekly', priority: 0.8 },
+    { url: url('/szukam-wykonawcy'), changeFrequency: 'weekly', priority: 0.8 },
   ];
 
   const [leaders, orders, groups, listings] = await Promise.all([

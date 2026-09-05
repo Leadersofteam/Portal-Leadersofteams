@@ -11,6 +11,67 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **🟡 PL2 „Firma w 90 sekund” (D2) — KOD GOTOWY 05.09, status wdrożenia w kolejnym wpisie.**
+> Gość na `/zlecenia/nowe` widzi formularz potrzeby (koniec ściany logowania): szkic ląduje w
+> `sessionStorage` (`lot_szkic_zlecenia_v1`), `/rejestracja?cel=firma&dalej=zlecenie` zakłada
+> konto **i firmę jednym krokiem** (`registerInputSchema.companyName` + `intent`; identity tworzy
+> Company wspólnym `createCompanyFor`, ustawia intencję COMPANY, kreator pominięty), powrót do
+> wypełnionego formularza („Wypełniliśmy formularz Twoim opisem…”), zapis szkicu → zlecenie.
+> **Bramka D2:** `publish` wymaga potwierdzonego adresu, gdy poczta jest włączona
+> (`publishRequiresVerifiedEmail = config.mailEnabled`); bez SMTP (dev/test) bez zmian — inaczej
+> Portal bez poczty byłby Portalem bez zleceń. Strona zlecenia mówi to PRZED kliknięciem
+> (`verify-before-publish`). Nowe strony: `/dla-firm` (FAQPage JSON-LD, ISR) i `/szukam-wykonawcy`
+> (trzy drogi + realne karty usług, ISR); linki w stopce i FAQ landingu; sitemap; KNOWN_PATHS.
+> Bramki: **240/240 API** (+4: rejestracja z firmą, zwykła bez firmy, bramka z flagą 403→200,
+> bez flagi 200), lint/typecheck; e2e `company-first-order.spec.ts` (gość → konto+firma → szkic
+> wraca → publikacja) — wynik przy wdrożeniu.
+>
+> **✅ SESJA 2026-09-04/05 (program „Droga Lidera”: PL0 pomiar + PL1 pętla transakcji) — NA PRODUKCJI** (`ba19022` + docs).
+> **Dowody z produkcji (05.09, 07:40 UTC):** backup `portal-20260905-073459` PRZED migracją; migracja
+> `20260904212051_offer_messages` zastosowana; healthz `mysql/redis ok`, `worker.alive true`, `uploads ok`;
+> `curl -I` pokazuje HSTS/nosniff/X-Frame/frame-ancestors/Referrer/Permissions; 0 „bez konsumenta”,
+> 0 błędów api. **Ścieżka przeszła NA ŻYWO kontami testowymi** (Firma = kontakt@leadersofteams.com,
+> Lider = @example.com): rejestracja z bramką → firma → zlecenie → oferta → pytanie Firmy w wątku →
+> odpowiedź Lidera → powiadomienia obu stron (`offer_submitted`, `offer_message`) → **worker
+> `mail.sent` ×3** (SMTP przyjął: „Nowa oferta do zlecenia…” i „Nowa wiadomość…” do kontakt@,
+> „Nowa wiadomość…” do Lidera — właściciel znajdzie je w skrzynce kontakt@). Zrzuty 390/1440:
+> `wyprawa/zrzuty/pl1-*.png`. **Posprzątane z dowodem:** oferta wycofana, zlecenie anulowane, profil
+> Lidera ukryty, oba konta zanonimizowane ścieżką RODO; `/leaders` i `/orders` bez śladu „PL1”.
+> Staging: ta sama ścieżka + `/analytics/summary` z nowymi kolumnami lejka i `topSources` (konto
+> moderatora testowe → RODO). Na stagingu SMTP wyłączone (no-op) — mail dowiedziony tylko na prodzie.
+> **Nie zrobione z PL0:** pkt 5 (czy Macix odpisał — zapytanie do bazy blokuje klasyfikator; publiczne
+> API: zlecenie „Marketing” wciąż otwarte, więc oferta Konrada dalej czeka).
+> **Lighthouse bazowy (PL0.3, 05.09 07:50, mobile, produkcja, 1 przebieg każdy, load ~2):**
+> `/` perf 66 · LCP 3,0 s · TBT 1550 ms · CLS 0,001 · SEO 100 · a11y 95 · BP 96;
+> `/uslugi` 69 · 3,1 s · 930 ms · CLS 0,077; `/zlecenia` 86 · 2,4 s · 420 ms; `/liderzy` 61 · 3,8 s · 1270 ms;
+> `/drabinka` 66 · 3,5 s · 1000 ms. Wniosek: TTFB jest znikomy (60–170 ms), wynik zjada JS na
+> kliencie (TBT) i LCP tekstu po hydracji — cel PL3/PL4: mniej JS na stronach publicznych,
+> ISR dla list. Liczby porównywać tylko przy niskim load (mina 21.08).
+> Program i decyzje właściciela (D1–D5, wszystkie zatwierdzone 04.09): [`docs/PROGRAM-DROGA-LIDERA.md`](PROGRAM-DROGA-LIDERA.md).
+> **Diagnoza z pomiaru (04.09):** 5–24 odsłon/dobę (własne sesje), 0 organicznych; Portal wysyłał
+> WYŁĄCZNIE dzienny digest — Firma bez codziennego logowania nie wiedziała o ofercie (pierwsza realna
+> oferta, Konrad → „Marketing” HydroSpark, wisiała bez odpowiedzi); przy ofercie na zlecenie brak kanału
+> rozmowy (przy usługach był); analityka bez lejka i źródeł; web bez ŻADNYCH nagłówków bezpieczeństwa
+> (`curl -I` pokazał sam cache-control — helmet chroni tylko API).
+> **PL0:** źródła wejść (host odsyłacza / `utm_source`, bariera 200 pól, bez pełnych URL-i) +
+> lejek (rejestracje → potwierdzone adresy → profile Lider/Firma → pierwsze akcje) w `/panel/analityka`;
+> HSTS/nosniff/frame-ancestors/Referrer-Policy/Permissions-Policy w `next.config.ts` (świadomie bez
+> pełnego CSP — skrypty inline motywu/JSON-LD/SW wymagałyby nonce’ów; osobna zmiana).
+> **PL1:** maile natychmiastowe (oferta, wiadomość, oddana praca, przyjęcie, potwierdzenie, zapytanie)
+> tym samym transportem i tokenem wypisu co digest — jeden przełącznik w `/panel/konto` wyłącza wszystko;
+> tylko dla świeżych powiadomień (redelivery nie dubluje); `order_delivered` dostał adresata (Firma);
+> **wątek przy ofercie** `OfferMessage` (migracja expand-only, 1 tabela) + `/oferty/[id]` z banerem
+> „Twoja oferta czeka” po złożeniu oferty; wejścia z listy ofert Firmy, ze zlecenia i z `/panel/oferty`;
+> `ladder/subscriptions.test` pilnuje, że `message` nie wchodzi do Drabinki (D1: rozmowa to nie DM —
+> lustro Inquiry). Feed nowego konta bez obserwowanych otwiera się na całej społeczności.
+> **Bramki:** 236/236 API (+19), **23/23 e2e** (ścieżka krytyczna + pytanie Firmy w wątku), lint,
+> typecheck, lint-tokens. Gałąź `feat/droga-lidera-pl0-pl1` (od `feat/s12-widziec-i-reagowac`, na
+> którym stoi prod). **Mina sesji** (MINY „Dwa `next build` naraz”): źle rozpoznałem cudzą budowę
+> i ubiłem wrapper zamiast klienta compose — budowa szła dalej.
+> Zastane: brak powiadomienia dla Firmy przy oddaniu pracy (od Sprintu 1–2); web bez nagłówków bezpieczeństwa.
+> Otwarte w programie: PL2 (Firma bez ściany), PL3 (`/droga`, hero), PL4 (huby SEO, ISR), PL5 (zaproszenia,
+> seeding HydroSpark, purge demo — D3).
+>
 > **✅ SESJE 2026-09-01/02 (dzień genialnego Lidera + naprawy W-02..W-05) — na produkcji.**
 > (1) **Pierwsza oferta na pierwsze realne zlecenie**: Konrad złożył przez UI ofertę na
 > „Marketing" HydroSpark Macixa (1200 zł / 14 dni, widełki 500–1500) — `offers` SUBMITTED,

@@ -81,6 +81,29 @@ poprawnego wywołania (dane w wolumenie nietknięte). **Komendy wdrożenia kopiu
 **Objaw:** `run --rm migrate` kończy się „provide valid database credentials", choć nic
 w bazie się nie zmieniało; `mysql` ma nagle status „Up X seconds".
 
+### Dwa `next build` naraz — czyj który? (05.09, PL0/PL1)
+
+Przy load 7 i 1 GB wolnej pamięci `ps` pokazał dwa `next build`: jeden w
+`/app/apps/web`, drugi z jest-workerami `next@15.0.0_@playwright+test@1.59.1`.
+Uznałem, że ten z `/app/apps/web` jest mój (Portal ma `apps/web`), ubiłem
+„swojego" klienta compose i czekałem, aż tamten skończy. Oba wnioski były błędne:
+Portal buduje web w **`/repo/apps/web`** (WORKDIR etapu `build` w `Dockerfile.web`),
+a jego wersje w ścieżkach procesów to `next@15.5.20_@playwright+test@1.61.1`
+(pnpm-lock). Build w `/app` z `15.0.0` należał do innego projektu (ten sam układ
+monorepo). Do tego `kill` trafił we wrapper `bash -c`, a `docker compose … build`
+i `docker-buildx bake` żyły dalej — budowa Portalu w ogóle nie stanęła, zgubił
+się tylko plik z kodem wyjścia.
+
+**Zasady:** (1) czyja budowa — poznasz po WORKDIR z Dockerfile'a i po wersji
+z lockfile'a w ścieżce procesu, nie po `apps/web`; (2) po `kill` sprawdź
+`ps -eo pid,args | grep "[d]ocker compose"` — wrapper to nie klient;
+(3) czekaj na PID klienta compose, nie na plik-marker zapisywany przez wrapper.
+
+Dopisek z tej samej sesji: `ps -eo pid,args | grep "[n]ext build" | grep /docker/portal-staging | … kill`
+zabiło **własną powłokę** (exit 144) — linia poleceń narzędzia zawiera oba wzorce, więc
+`grep` trafił w siebie. Filtruj po ścieżce binarki (`[n]ext/dist/bin/next build`), której
+w Twojej komendzie literalnie nie ma, albo wyklucz `$$`.
+
 ### Nazwa `api` jest DWUZNACZNA na tym serwerze
 
 Staging i produkcja dzielą sieć Traefika `n8n_default`, a compose nadaje każdej usłudze alias
