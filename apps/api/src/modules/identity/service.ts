@@ -100,6 +100,18 @@ export interface IdentityService {
   // E-mail (D4): weryfikacja adresu i reset hasła (za flagą; wysyłka no-op gdy off).
   sendEmailVerification(userId: string, email: string): Promise<string>;
   /**
+   * Przypomnienie o niepotwierdzonym adresie (PL5, S19 pkt 4 „otwarte"):
+   * konta z okna [from, to) bez potwierdzenia, nieanonimizowane, niewypisane.
+   * Worker woła raz na dobę z oknem 48–72 h — każde konto trafia dokładnie raz.
+   */
+  listUnverifiedForReminder(from: Date, to: Date): Promise<Array<{ id: string; email: string }>>;
+  sendVerificationReminder(userId: string, email: string): Promise<void>;
+  /**
+   * Zaproszenie Lidera (PL5). Jeden mail od konkretnej osoby, bez zapisu w bazie:
+   * nie ma tabeli zaproszeń, więc nie ma czego nagradzać ani liczyć (anty-MLM).
+   */
+  sendInvitation(userId: string, input: { email: string; message?: string }): Promise<void>;
+  /**
    * Stan potwierdzenia adresu — czytany Z BAZY, nie z migawki sesji.
    * Sesja jest zamrożona przy logowaniu (ta sama pułapka co z rolą MODERATOR),
    * więc gdyby baner zależał od sesji, nie zniknąłby po kliknięciu w link.
@@ -672,6 +684,73 @@ export function createIdentityService(
       return { email: user.email, verified: user.emailVerifiedAt !== null };
     },
 
+    async listUnverifiedForReminder(from, to) {
+      return prisma.user.findMany({
+        where: {
+          createdAt: { gte: from, lt: to },
+          emailVerifiedAt: null,
+          anonymizedAt: null,
+          digestOptOutAt: null,
+        },
+        select: { id: true, email: true },
+      });
+    },
+
+    async sendVerificationReminder(userId, email) {
+      const raw = await createToken(userId, 'EMAIL_VERIFY', EMAIL_VERIFY_TTL_MS);
+      // Jedno przypomnienie, po 48 h, bez ponaglania (ADR-010): mówimy, co
+      // potwierdzenie daje (publikacja zlecenia, odzyskanie konta) i tyle.
+      await mail?.send({
+        to: email,
+        subject: 'Jedno kliknięcie, żeby dokończyć konto — Leaders of Teams',
+        text: [
+          'Cześć!',
+          '',
+          `Dwa dni temu powstało konto na ${appBaseUrl}. Adres e-mail wciąż czeka`,
+          'na potwierdzenie. Bez niego konto działa, ale nie opublikujesz zlecenia',
+          'i nie odzyskasz hasła, gdy je zapomnisz.',
+          '',
+          `${appBaseUrl}/weryfikacja?token=${raw}`,
+          '',
+          'Link jest ważny przez dobę. To jedyne przypomnienie — więcej nie napiszemy.',
+          '',
+          'Jeśli to nie Ty, zignoruj tę wiadomość.',
+          '',
+          '— Leaders of Teams',
+        ].join('\n'),
+      });
+    },
+
+    async sendInvitation(userId, input) {
+      const sender = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { displayName: true, anonymizedAt: true },
+      });
+      if (!sender || sender.anonymizedAt) throw new ForbiddenError();
+      const message = input.message?.trim();
+      await mail?.send({
+        to: input.email,
+        subject: `${sender.displayName} zaprasza Cię do Leaders of Teams`,
+        text: [
+          `${sender.displayName} uważa, że Leaders of Teams może Ci się przydać.`,
+          ...(message ? ['', `„${message}"`] : []),
+          '',
+          'To marketplace B2B i społeczność Liderów, w której status zdobywa się',
+          'wyłącznie pracą ocenioną przez Firmy i mentoringiem uznanym przez innych.',
+          'Zapraszający nie dostaje za to zaproszenie NICZEGO — żadnych punktów,',
+          'prowizji ani miejsca w strukturze. Tak działa ten portal.',
+          '',
+          `Zobacz, jak wygląda droga od zera do Lidera: ${appBaseUrl}/droga?utm_source=zaproszenie`,
+          `Załóż konto (bezpłatnie): ${appBaseUrl}/rejestracja?utm_source=zaproszenie`,
+          '',
+          'Nie chcesz takich wiadomości? Zignoruj ją — nie zapisujemy, kto kogo zaprosił,',
+          'więc nie ma listy, z której trzeba się wypisać.',
+          '',
+          '— Leaders of Teams',
+        ].join('\n'),
+      });
+    },
+
     sendEmailVerification(userId, email) {
       return sendVerification(userId, email);
     },
@@ -684,10 +763,46 @@ export function createIdentityService(
       if (!token || token.type !== 'EMAIL_VERIFY' || token.usedAt || token.expiresAt < now) {
         return { verified: false };
       }
-      await prisma.$transaction([
+      const [, user] = await prisma.$transaction([
         prisma.verificationToken.update({ where: { id: token.id }, data: { usedAt: now } }),
-        prisma.user.update({ where: { id: token.userId }, data: { emailVerifiedAt: now } }),
+        prisma.user.update({
+          where: { id: token.userId },
+          data: { emailVerifiedAt: now },
+          select: { email: true, displayName: true, onboardingIntent: true, digestOptOutAt: true },
+        }),
       ]);
+      // Mail powitalny (PL5, S19 pkt 5) — JEDEN krok wg intencji, bez streaków
+      // i „wróć do nas" (ADR-010). Firma → opublikuj zlecenie; Lider → wystaw
+      // usługę albo odpowiedz komuś. Wysyłka best-effort, poza transakcją.
+      if (!user.digestOptOutAt) {
+        const firma = user.onboardingIntent === 'COMPANY';
+        try {
+          await mail?.send({
+            to: user.email,
+            subject: firma
+              ? 'Adres potwierdzony — możesz opublikować zlecenie'
+              : 'Adres potwierdzony — pierwszy szczebel jest przed Tobą',
+            text: [
+              `Cześć, ${user.displayName}!`,
+              '',
+              'Adres potwierdzony. Jeden krok, który ma teraz sens:',
+              '',
+              firma
+                ? `Opublikuj zlecenie i zbieraj oferty Liderów: ${appBaseUrl}/zlecenia/nowe`
+                : `Wystaw usługę z jawnym zakresem i ceną: ${appBaseUrl}/uslugi/nowa`,
+              firma
+                ? ''
+                : `…albo odpowiedz komuś w grupie — mentoring liczy się tak samo jak praca: ${appBaseUrl}/pytania`,
+              '',
+              `Jak wygląda cała droga: ${appBaseUrl}/droga`,
+              '',
+              '— Leaders of Teams',
+            ].join('\n'),
+          });
+        } catch {
+          /* mail to dodatek, nie warunek potwierdzenia */
+        }
+      }
       return { verified: true };
     },
 

@@ -34,6 +34,11 @@ const MAINTENANCE_INTERVAL_MS = 5 * 60_000;
 const DIGEST_CHECK_MS = 10 * 60_000;
 const DIGEST_HOUR_UTC = 6; // 08:00 czasu polskiego latem, 07:00 zimą
 const DIGEST_STATE_KEY = 'digest:lastSentDate';
+// Przypomnienie o niepotwierdzonym adresie (PL5): raz na dobę, okno 48–72 h od
+// rejestracji — każde konto trafia dokładnie raz, bez kolumny „przypomniano".
+const VERIFY_REMINDER_STATE_KEY = 'verifyReminder:lastRunDate';
+const VERIFY_REMINDER_FROM_H = 72;
+const VERIFY_REMINDER_TO_H = 48;
 const BATCH_SIZE = 50;
 
 const config = loadConfig();
@@ -243,12 +248,43 @@ async function runDigest() {
 const digestTimer = mail.enabled ? setInterval(() => void runDigest(), DIGEST_CHECK_MS) : null;
 if (mail.enabled) void runDigest();
 
+// Przypomnienie o adresie (PL5) — ten sam rytm i znacznik dobowy co digest,
+// żeby deploy nie wysyłał drugiego przypomnienia tym samym ludziom.
+async function runVerifyReminder() {
+  try {
+    const now = new Date();
+    if (now.getUTCHours() < DIGEST_HOUR_UTC) return;
+    const today = now.toISOString().slice(0, 10);
+    const state = await prisma.workerState.findUnique({
+      where: { key: VERIFY_REMINDER_STATE_KEY },
+    });
+    if (state?.value === today) return;
+    await prisma.workerState.upsert({
+      where: { key: VERIFY_REMINDER_STATE_KEY },
+      create: { key: VERIFY_REMINDER_STATE_KEY, value: today },
+      update: { value: today },
+    });
+    const from = new Date(now.getTime() - VERIFY_REMINDER_FROM_H * 3_600_000);
+    const to = new Date(now.getTime() - VERIFY_REMINDER_TO_H * 3_600_000);
+    const users = await identity.listUnverifiedForReminder(from, to);
+    for (const u of users) await identity.sendVerificationReminder(u.id, u.email);
+    if (users.length > 0) logger.info({ sent: users.length }, 'Wysłano przypomnienia o adresie');
+  } catch (err) {
+    logger.error({ err }, 'Błąd przypomnień o adresie');
+  }
+}
+const reminderTimer = mail.enabled
+  ? setInterval(() => void runVerifyReminder(), DIGEST_CHECK_MS)
+  : null;
+if (mail.enabled) void runVerifyReminder();
+
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, async () => {
     logger.info({ signal }, 'Zamykanie workera');
     running = false;
     heartbeat.stop();
     clearInterval(maintenanceTimer);
+    if (reminderTimer) clearInterval(reminderTimer);
     if (digestTimer) clearInterval(digestTimer);
     await eventsWorker.close();
     await eventsQueue.close();

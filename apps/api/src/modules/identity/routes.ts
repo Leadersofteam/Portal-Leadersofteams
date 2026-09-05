@@ -3,6 +3,7 @@ import {
   createCompanyInputSchema,
   digestOptOutInputSchema,
   digestUnsubscribeInputSchema,
+  invitationInputSchema,
   loginInputSchema,
   registerInputSchema,
   requestPasswordResetInputSchema,
@@ -214,6 +215,17 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
       const input = parseBody(digestUnsubscribeInputSchema, request.body);
       const ok = await service.digestOptOutByToken(input.token);
       return reply.send({ ok });
+    });
+
+    // --- Zaproszenie Lidera (PL5, S19 pkt 2) --------------------------------
+    // Jeden mail, zero zapisu, zero punktów. Limit jak przy auth (ten sam
+    // limiter co logowanie): zaproszenia to jedyna trasa, która wysyła mail na
+    // DOWOLNY adres podany przez użytkownika — bez limitu byłaby armatką spamową.
+    app.post('/me/invitations', { config: authRateLimit }, async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const input = parseBody(invitationInputSchema, request.body);
+      await service.sendInvitation(user.id, input);
+      return reply.send({ ok: true });
     });
 
     // --- Administracja użytkownikami (19.08, tylko ADMIN) -------------------

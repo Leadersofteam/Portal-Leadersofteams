@@ -654,6 +654,15 @@ export const digestUnsubscribeInputSchema = z.object({
 });
 export type DigestUnsubscribeInput = z.infer<typeof digestUnsubscribeInputSchema>;
 
+// Zaproszenie Lidera (PL5, S19 pkt 2). ZERO punktów, ZERO nagrody, ZERO śladu
+// „kto kogo" — Portal nie zapisuje zaproszeń, tylko wysyła jeden mail
+// (ADR-004/ADR-011: nie ma czego wynagradzać, więc nie ma jak zbudować downline).
+export const invitationInputSchema = z.object({
+  email: emailSchema,
+  message: z.string().trim().max(500).optional(),
+});
+export type InvitationInput = z.infer<typeof invitationInputSchema>;
+
 // ---------------------------------------------------------------------------
 // Administracja użytkownikami (19.08)
 //

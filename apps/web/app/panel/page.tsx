@@ -157,6 +157,11 @@ export default async function PanelPage() {
         <Link className="btn secondary" href="/panel/konto">
           Konto i dane
         </Link>
+        {/* PL5: zaproszenie bez cienia MLM — 0 punktów, 0 nagrody, 0 zapisu
+            „kto kogo". Tylko mail od człowieka do człowieka. */}
+        <Link className="btn secondary" href="/panel/zapros">
+          Zaproś Lidera
+        </Link>
       </nav>
 
       <section className="feature-grid panel-cards">

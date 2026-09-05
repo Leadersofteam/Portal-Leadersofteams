@@ -69,6 +69,7 @@ const KNOWN_PATHS = new Set([
   '/panel/ulubione',
   '/panel/uslugi',
   '/panel/uzytkownicy',
+  '/panel/zapros',
   '/panel/zapisane',
   '/panel/zlecenia',
   '/porownanie/:id',

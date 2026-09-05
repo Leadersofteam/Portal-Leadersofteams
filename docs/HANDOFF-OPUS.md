@@ -11,7 +11,34 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
-> **🟡 PL4 „Ruch z wyszukiwarki za 0 zł” — KOD GOTOWY 05.09, wdrożenie w kolejnym wpisie.**
+> **🟡 PL5 „Pierwszych dwudziestu, ale z lejkiem” — KOD GOTOWY 05.09 (bez pkt 4), D3 ZABLOKOWANE — czeka na właściciela.**
+> **Zaproszenie Lidera** (S19 pkt 2): `POST /me/invitations` + `/panel/zapros`. Jeden mail od
+> konkretnej osoby, **zero zapisu w bazie** (nie ma tabeli zaproszeń — nie ma czego nagradzać ani
+> liczyć), zero punktów, zero zdarzeń; treść mówi wprost, że zapraszający nic nie dostaje; linki
+> z `utm_source=zaproszenie` (lejek PL0 pokaże źródło). Limit = limiter auth. Ścieżka **dopisana do
+> `antimlm.integration.test.ts`** (strażnik strzeże tylko tego, przez co przeszedł). **Mail powitalny**
+> po potwierdzeniu adresu (S19 pkt 5): jeden krok wg intencji (Firma → opublikuj zlecenie; Lider →
+> wystaw usługę albo odpowiedz w `/pytania`). **Przypomnienie o adresie** (S19 pkt 4): worker raz na
+> dobę, okno 48–72 h od rejestracji (każde konto dokładnie raz, bez kolumny), pomija potwierdzone,
+> zanonimizowane i wypisane; ten sam znacznik dobowy co digest, więc deploy nie dubluje.
+> **D3 (purge demo) — NIE WYKONANE:** komenda ze skilla `portal-dane-demo` czyta hasło bazy prod do
+> zmiennej i klasyfikator auto-mode ją blokuje; nie obchodzę tego. **Właściciel: jedna komenda ze
+> skilla (`seed-demo.ts --purge`), backup już jest (`portal-20260905-2225xx`).** Do zdjęcia: 6 Liderów
+> demo (Anna, Marek, Kasia, Piotr, Ola, Tomek), 3 firmy (Nordic Software House, FinTeam, Brandowo),
+> 4 zlecenia, 7 usług, grupy/wątki demo. Zostają: Macix ×2, Konrad (persona), „Marketing” HydroSpark.
+> **Pkt 4 (seeding realnych zleceń HydroSpark) — decyzja/treść właściciela:** proponowane trzy szkice
+> do wklejenia w `/zlecenia/nowe` z konta HydroSpark: (1) „Ofertowanie w CRM — uporządkowanie
+> procesu i szablony” (marketing/sprzedaż, 2–4 tys.), (2) „Kampania lokalna dla instalatora HVAC
+> (Google + Meta)” (marketing, 3–6 tys.), (3) „Księgowość i rozliczenia projektów instalacyjnych —
+> proces + narzędzie” (finanse, 2–5 tys.). Nie zakładam ich sam — to realne zobowiązania firmy.
+>
+> **✅ PL4 „Ruch z wyszukiwarki za 0 zł” — NA PRODUKCJI 05.09 23:03** (`b53719d`; obraz zbudowany z osobnego
+> worktree `/docker/portal-staging-build` na tym commicie — drzewo główne mogło już nieść PL5; bez migracji).
+> **Dowody:** healthz zielone, 0 błędów api; sitemap **92 adresy (30 hubów)** vs 55 przed programem;
+> `/uslugi|zlecenia|liderzy/branza/<slug>` 200 z nagłówkiem branży i `s-maxage=300`; `/pytania`,
+> `/porownanie/oferteo`, `/llms.txt` 200. 30/30 e2e (4 nowe). **Trzy miny złapane po drodze** (MINY):
+> literał `revalidate`, zamrożone 404 hubów przy buildzie bez API, sitemap ISR bez API. Uwaga
+> produktowa: po D3 (purge demo) huby pokażą uczciwe stany puste z CTA — to zamierzone.
 > **Huby branżowe** `/uslugi|zlecenia|liderzy/branza/[slug]` (30 stron, ISR 300 s, `generateStaticParams`
 > z API z zapasem slugów na czas builda): własny akapit na branżę i wejście (`lib/industries-copy.ts` —
 > 30 ręcznie napisanych tekstów, nie generator), BreadcrumbList + ItemList JSON-LD, chipy branż jako

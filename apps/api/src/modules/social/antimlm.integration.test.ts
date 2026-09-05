@@ -136,6 +136,17 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
     // trzecim źródłem punktów obok pracy i mentoringu. Krok dołożony do
     // ścieżki z tego samego powodu co cytowanie: strażnik strzeże tylko tego,
     // przez co realnie przeszedł.
+    // ZAPROSZENIE LIDERA (PL5): jedyna funkcja z granicy anty-MLM w tym
+    // programie. Krok MUSI tu być — inaczej strażnik zieleniłby się przez
+    // pominięcie: zaproszenie nie tworzy zdarzenia, punktu ani wiersza w bazie.
+    const invite = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/me/invitations',
+      headers: { cookie: aCookie },
+      payload: { email: `zaproszony-${run}@example.com`, message: 'Zobacz, warto.' },
+    });
+    expect(invite.statusCode).toBe(200);
+
     const przedNagroda = await ctx.prisma.outboxEvent.count({
       where: { createdAt: { gte: startedAt } },
     });
