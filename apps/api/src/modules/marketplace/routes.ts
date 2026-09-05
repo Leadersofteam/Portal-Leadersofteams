@@ -25,10 +25,10 @@ export interface MarketplaceRoutesDeps {
   profiles: ProfilesService;
   orders: OrdersService;
   reviews: ReviewsService;
-  ladder: Pick<LadderService, 'getLevel' | 'getLevels'>;
+  ladder: Pick<LadderService, 'getLevel' | 'getLevels' | 'getAchievements'>;
   // Dane firmy do publicznego profilu — przez publiczne API identity (ADR-002),
   // marketplace nie czyta tabeli `companies`.
-  identity: Pick<IdentityService, 'getCompanyMeta' | 'getPublicUsers'>;
+  identity: Pick<IdentityService, 'getCompanyMeta' | 'getPublicUsers' | 'getUserCreatedAt'>;
   auth: AuthHelpers;
 }
 
@@ -123,11 +123,19 @@ export function marketplaceRoutes({
     app.get('/leaders/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
       const profile = (await profiles.getPublicProfile(id)) as { userId: string };
-      const [level, stats] = await Promise.all([
+      // Droga Lidera (PL3): daty awansów + data dołączenia składają się na
+      // publiczną oś na profilu. Równolegle z poziomem i ocenami — jedno
+      // żądanie, zero dodatkowego TTFB dla odwiedzającego.
+      const [level, stats, achievements, joinedAt] = await Promise.all([
         ladder.getLevel(profile.userId),
         reviews.getLeaderReviewStats(profile.userId),
+        ladder.getAchievements(profile.userId),
+        identity.getUserCreatedAt(profile.userId),
       ]);
-      return reply.send({ profile: { ...profile, level, ...stats } });
+      return reply.send({
+        profile: { ...profile, level, ...stats },
+        journey: { joinedAt, achievements },
+      });
     });
 
     app.get('/me/leader-profile', async (request, reply) => {

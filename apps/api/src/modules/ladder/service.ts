@@ -234,6 +234,19 @@ export function createLadderService(prisma: PrismaClient) {
       return new Map(states.map((s) => [s.userId, s.level]));
     },
 
+    // Publiczna oś awansów (PL3 „Droga Lidera"): kiedy Lider wszedł na który
+    // szczebel. To projekcja LevelAchievement — dane, które i tak są jawne
+    // przez poziom na profilu; daty czynią z poziomu OPOWIEŚĆ, nie etykietę.
+    // Bez punktów i bez księgi: te zostają prywatne (/panel/punkty).
+    async getAchievements(userId: string): Promise<Array<{ level: number; achievedAt: Date }>> {
+      const rows = await prisma.levelAchievement.findMany({
+        where: { userId },
+        orderBy: { level: 'asc' },
+        select: { level: true, achievedAt: true },
+      });
+      return rows;
+    },
+
     async getMyLadder(userId: string) {
       const state = await prisma.ladderState.findUnique({ where: { userId } });
       const level = state?.level ?? 0;

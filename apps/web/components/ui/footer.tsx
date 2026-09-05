@@ -43,7 +43,10 @@ export function SiteFooter() {
               <Link href="/grupy">Grupy branżowe</Link>
             </li>
             <li>
-              <Link href="/drabinka">Drabinka Lidera</Link>
+              <Link href="/droga">Droga Lidera</Link>
+            </li>
+            <li>
+              <Link href="/drabinka">Zasady punktacji</Link>
             </li>
             <li>
               <Link href="/dla-firm">Dla firm</Link>

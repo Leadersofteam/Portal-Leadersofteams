@@ -57,6 +57,10 @@ export default async function LadderRulesPage() {
   return (
     <main>
       <h1>Drabinka Lidera — jawne zasady</h1>
+      <p className="muted">
+        To regulamin punktacji. Jeśli szukasz opowieści — jak wygląda droga od poziomu 0 do 7 i co
+        daje każdy szczebel — zajrzyj na <Link href="/droga">Drogę Lidera →</Link>
+      </p>
       <p>
         Tytuł Lidera i poziomy zdobywa się wyłącznie{' '}
         <strong>realną, uznaną przez innych pracą</strong>. Punkty pochodzą z dwóch równoważnych

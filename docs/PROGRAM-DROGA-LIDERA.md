@@ -95,7 +95,7 @@ Cel: gość z potrzebą publikuje zlecenie bez ściany logowania.
    bez fałszywych liczników i presji (ADR-010).
 4. e2e: nowy spec `company-first-order.spec.ts` (gość → formularz → konto → publikacja).
 
-### PL3 — Droga Lidera jako opowieść (design + treść, 1–2 sesje)
+### PL3 — Droga Lidera jako opowieść (design + treść, 1–2 sesje) — ✅ KOD GOTOWY 05.09 (pkt 4 View Transitions świadomie pominięty)
 
 Cel: landing i profil mają pokazywać **drogę od zera do Lidera**, nie regulamin punktacji.
 Wzorce: x.com / SpaceX = odważna typografia, jedna wielka wizualizacja, ciemne tło, ruch

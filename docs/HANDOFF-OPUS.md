@@ -11,6 +11,21 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **🟡 PL3 „Droga Lidera jako opowieść” — KOD GOTOWY 05.09, wdrożenie w kolejnym wpisie.**
+> Nowa strona `/droga` (ISR, BreadcrumbList + ItemList JSON-LD, własny OG): siedem szczebli z progami
+> i odblokowaniami Z API (`/ladder/levels`, jedno źródło prawdy), zdanie „co to znaczy" na szczebel,
+> dwa źródła punktów z liczbami z rulesetu v1 i przykładowymi wpisami księgi, „Ściana szerokości”
+> (malejące zwroty + 20% z każdej drogi od L4), historia z wyprawy **jawnie oznaczona jako persona**
+> (D4). **Oś Drogi na profilu Lidera**: `GET /leaders/:id` zwraca `journey { joinedAt, achievements }`
+> (nowe `ladder.getAchievements` — projekcja `LevelAchievement`, bez punktów i księgi); komponent
+> `JourneyRail` pokazuje wejście → poziomy z datami → następny szczebel z progiem, także na poziomie 0.
+> Nawigacja: „Droga” w nagłówku zamiast „Drabinka” (regulamin zostaje w stopce jako „Zasady
+> punktacji” i pod linkiem z `/droga`), linki z landingu i z `/drabinki`. Świadomie BEZ View Transitions
+> (flaga eksperymentalna Next 15.5 — ryzyko bez zysku przy tym ruchu) i bez przebudowy hero: teza
+> nagłówka landingu jest właściciela, `LadderArt` już animuje z poszanowaniem reduced-motion.
+> Bramki: **242/242 API** (+2: oś na świeżym profilu, awanse rosnąco bez punktów), lint/typecheck;
+> e2e `droga.spec.ts` (7 szczebli z progami z API, źródła, wejście; oś na profilu) — wynik przy wdrożeniu.
+>
 > **✅ PL2 „Firma w 90 sekund” (D2) — NA PRODUKCJI 05.09 08:20** (`386c133`, `37ca2ae`; backup `portal-20260905-081743`, bez migracji).
 > **Dowody:** healthz zielone, 0 błędów api; `/dla-firm` i `/szukam-wykonawcy` statyczne (ISR,
 > `s-maxage=300`); ścieżka gościa przeszła w PRAWDZIWEJ przeglądarce (390 px) na stagingu przez

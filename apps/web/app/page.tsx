@@ -52,6 +52,11 @@ export default async function HomePage() {
               Dodaj zlecenie jako Firma
             </Link>
           </div>
+          {/* PL3: droga od zera do Lidera ma własną stronę — landing tylko
+              ją zapowiada, żeby nie stać się regulaminem. */}
+          <p className="muted">
+            <Link href="/droga">Zobacz całą Drogę Lidera: siedem szczebli, punkt po punkcie →</Link>
+          </p>
           {/* Liczby-bohaterowie: statyczna narracja zasad, nie licznik metryk
               (ADR-010). „0 za zapraszanie" to nasz najważniejszy wyróżnik —
               stoi w jednym rzędzie z resztą, bo to zasada, nie przechwałka. */}
@@ -116,7 +121,8 @@ export default async function HomePage() {
         </div>
         <p className="muted">
           Bursztyn poziomu 7 trzeba zdobyć — nie da się go kupić, wynegocjować ani wyrekrutować.{' '}
-          <Link href="/drabinka">Zobacz jawne zasady punktacji →</Link>
+          <Link href="/droga">Przejdź Drogę Lidera →</Link> ·{' '}
+          <Link href="/drabinka">Jawne zasady punktacji →</Link>
         </p>
       </section>
 

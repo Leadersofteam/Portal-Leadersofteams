@@ -6,10 +6,11 @@ import { FollowButton } from '@/app/profil/[handle]/follow-button';
 import { JsonLd } from '@/components/json-ld';
 import { Avatar } from '@/components/ui/avatar';
 import { LevelBadge } from '@/components/ui/level-badge';
+import { JourneyRail, type JourneyData } from '@/components/ui/journey-rail';
 import { ListingCard, type ListingCardData } from '@/components/ui/listing-card';
 import { leaderProfileJsonLd } from '@/lib/jsonld';
 import { levelName } from '@/lib/levels';
-import { serverApi } from '@/lib/server-api';
+import { publicApi, serverApi } from '@/lib/server-api';
 
 interface PublicProfile {
   profile: {
@@ -32,6 +33,14 @@ interface PublicProfile {
       imageFileId: string | null;
     }>;
   };
+  // PL3: oś Drogi — daty awansów i dołączenia (publiczne jak sam poziom).
+  journey?: JourneyData;
+}
+
+interface LevelRow {
+  level: number;
+  name: string;
+  pointsRequired: number;
 }
 
 // cache(): jeden fetch współdzielony przez generateMetadata i komponent (per żądanie).
@@ -107,6 +116,12 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
   ).catch(() => null);
   const listings = listingsData?.listings ?? [];
 
+  // Droga Lidera (PL3): następny szczebel z publicznych progów (ISR, bez
+  // cookies) — profil opowiada, gdzie Lider jest i co jest przed nim.
+  const levelsData = await publicApi<{ levels: LevelRow[] }>('/ladder/levels').catch(() => null);
+  const nextRung = (levelsData?.levels ?? []).find((l) => l.level === profile.level + 1) ?? null;
+  const journey = data.journey ?? { joinedAt: null, achievements: [] };
+
   return (
     <main>
       <JsonLd
@@ -176,6 +191,15 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
           )}
         </section>
       )}
+
+      {/* Droga Lidera (PL3): poziom jako opowieść z datami, nie etykieta.
+          Widoczna też na poziomie 0 — wtedy mówi „wejście" i pokazuje
+          pierwszy szczebel jako cel; to uczciwe: świeży Lider nie ma zer,
+          ma drogę przed sobą. */}
+      <section className="journey-section">
+        <h2>Droga Lidera</h2>
+        <JourneyRail journey={journey} displayName={profile.displayName} next={nextRung} />
+      </section>
 
       {listings.length > 0 && (
         <section>

@@ -18,7 +18,7 @@ const NAV_LINKS = [
   { href: '/zlecenia', label: 'Zlecenia' },
   { href: '/liderzy', label: 'Liderzy' },
   { href: '/grupy', label: 'Grupy' },
-  { href: '/drabinka', label: 'Drabinka' },
+  { href: '/droga', label: 'Droga' },
   { href: '/panel', label: 'Panel' },
 ];
 

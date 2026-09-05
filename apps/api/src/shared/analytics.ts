@@ -43,6 +43,7 @@ const KNOWN_PATHS = new Set([
   '/',
   '/dla-firm',
   '/drabinka',
+  '/droga',
   '/feed',
   '/firma/nowa',
   '/firmy/:id',

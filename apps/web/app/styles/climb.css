@@ -718,3 +718,188 @@
     font-size: 2.2rem;
   }
 }
+
+/* ===================== Droga Lidera (PL3) ===================== */
+/* Oś awansów: jedna pionowa szyna, kamienie milowe od dołączenia do
+   następnego szczebla. Kolor kroku z tokenu poziomu (--lv) ZAWSZE obok
+   etykiety z numerem i nazwą — para temperatura+tekst (portal-design). */
+.journey {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0 0 0 1.4rem;
+  position: relative;
+  display: grid;
+  gap: 1rem;
+}
+
+.journey::before {
+  content: '';
+  position: absolute;
+  left: 0.42rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, var(--border-strong), var(--primary-500), var(--level-7));
+  opacity: 0.55;
+}
+
+.journey-step {
+  --lv: var(--text-faint);
+  position: relative;
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.journey-dot {
+  position: absolute;
+  left: -1.4rem;
+  top: 0.35rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: var(--lv);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--lv) 22%, transparent);
+}
+
+.journey-step--start .journey-dot {
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  box-shadow: none;
+}
+
+.journey-step--next .journey-dot {
+  background: transparent;
+  border: 2px dashed var(--lv);
+  box-shadow: none;
+}
+
+.journey-title {
+  margin: 0;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.journey-step--next .journey-title {
+  color: var(--text-muted);
+}
+
+.journey-meta {
+  margin: 0.1rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* Strona /droga: siedem szczebli jako pionowa oś czytana z góry na dół,
+   z temperaturą rosnącą ku bursztynowi. Numer poziomu jest liczbą-bohaterem
+   (jak na kartach /drabinki), próg i odblokowania obok. */
+.droga-rail {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.droga-rung {
+  --lv: var(--level-1);
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr);
+  gap: 0.2rem 1.1rem;
+  padding: 1.1rem 1.2rem 1.1rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--lv) 35%, var(--border));
+  border-left: 4px solid var(--lv);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--lv) 10%, transparent), transparent 55%),
+    var(--surface);
+}
+
+.droga-rung-num {
+  grid-row: 1 / span 3;
+  align-self: start;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--lv);
+  letter-spacing: -0.02em;
+}
+
+.droga-rung h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text-strong);
+}
+
+.droga-rung-threshold {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.droga-rung-threshold strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--text-strong);
+}
+
+.droga-rung-unlock {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.droga-rung--top {
+  box-shadow: 0 0 32px -10px color-mix(in srgb, var(--level-7) 60%, transparent);
+}
+
+/* Wpis z księgi jako cytat: monospace nie jest potrzebny — to jedno zdanie,
+   które ma czytać się jak paragon: za co, ile, z jaką wagą. */
+.droga-ledger {
+  margin: 1rem 0 0;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.droga-ledger strong {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+}
+
+.droga-paths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 700px) {
+  .droga-paths {
+    grid-template-columns: 1fr;
+  }
+
+  .droga-rung {
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    padding: 0.9rem 0.9rem 0.9rem 0.8rem;
+  }
+
+  .droga-rung-num {
+    font-size: 1.9rem;
+  }
+}
+
+.droga-story {
+  border-left: 3px solid var(--level-3);
+  padding-left: 1.1rem;
+}
+
+.droga-story .muted small {
+  display: block;
+  margin-top: 0.4rem;
+}

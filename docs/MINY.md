@@ -104,6 +104,17 @@ zabiło **własną powłokę** (exit 144) — linia poleceń narzędzia zawiera 
 `grep` trafił w siebie. Filtruj po ścieżce binarki (`[n]ext/dist/bin/next build`), której
 w Twojej komendzie literalnie nie ma, albo wyklucz `$$`.
 
+### Strona ISR prerenderowana przy `next build` BEZ API zamraża pusty stan (05.09, PL3)
+
+`next build` prerenderuje strony statyczne (`○`) w czasie budowy, a wtedy API nie działa
+(`fetch failed … ECONNREFUSED` w logu builda — wygląda jak szum, nie jest). `publicApi()`
+łapie błąd i zwraca `null`, strona renderuje uczciwy stan „nie udało się wczytać" — i TEN
+HTML trafia do obrazu. Po wdrożeniu ISR serwuje go przez cały `revalidate` (300 s), potem
+odświeża. Objaw: e2e `/droga` widziało 0 szczebli przy działającym API; na produkcji
+każdy deploy dawałby 5 minut pustej strony. **Zasada:** strona statyczna zależna od API
+MUSI mieć zapas danych na czas builda (lustro w `lib/`, jak `LEVEL_RULES_FALLBACK`)
+albo być dynamiczna. Landing przeżył to tylko dlatego, że jego sekcja Liderów znika, gdy pusto.
+
 ### Nazwa `api` jest DWUZNACZNA na tym serwerze
 
 Staging i produkcja dzielą sieć Traefika `n8n_default`, a compose nadaje każdej usłudze alias
