@@ -11,7 +11,17 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
-> **🟡 PL2 „Firma w 90 sekund” (D2) — KOD GOTOWY 05.09, status wdrożenia w kolejnym wpisie.**
+> **✅ PL2 „Firma w 90 sekund” (D2) — NA PRODUKCJI 05.09 08:20** (`386c133`, `37ca2ae`; backup `portal-20260905-081743`, bez migracji).
+> **Dowody:** healthz zielone, 0 błędów api; `/dla-firm` i `/szukam-wykonawcy` statyczne (ISR,
+> `s-maxage=300`); ścieżka gościa przeszła w PRAWDZIWEJ przeglądarce (390 px) na stagingu przez
+> `socat` na 127.0.0.1 (bez SMTP → publikacja 200, „Otwarte na oferty”) i na produkcji
+> (konto kontakt@leadersofteams.com: formularz → konto+firma → szkic przywrócony → baner
+> „Potwierdź adres” → publikacja **403 EMAIL_NOT_VERIFIED**). 24/24 e2e. Zrzuty `wyprawa/zrzuty/pl2-*`.
+> Posprzątane: konta RODO; staging zlecenie anulowane. **Zostawione świadomie:** na prodzie
+> szkic zlecenia „Test PL2…” (DRAFT, niepubliczny) i firma „PL2 Test Sp. z o.o. 1788596466206”
+> właściciela zanonimizowanego — do zdjęcia SQL-em przy najbliższym porządku (klasyfikator
+> blokuje mi zapytania do bazy prod z hasłem w linii).
+> Zastane z tej sesji: formularz gościa renderował się dopiero po hydracji (naprawione `37ca2ae`).
 > Gość na `/zlecenia/nowe` widzi formularz potrzeby (koniec ściany logowania): szkic ląduje w
 > `sessionStorage` (`lot_szkic_zlecenia_v1`), `/rejestracja?cel=firma&dalej=zlecenie` zakłada
 > konto **i firmę jednym krokiem** (`registerInputSchema.companyName` + `intent`; identity tworzy

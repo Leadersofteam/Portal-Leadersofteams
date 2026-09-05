@@ -1,7 +1,7 @@
 # Program „Droga Lidera” — rozwój Portalu pod ruch, transakcje i wygląd (analiza 04.09.2026)
 
 **Rola:** genialny Lider / full-stack + PM · **Repo:** `/docker/portal-staging` (prod = `leadersofteams.pl`)
-**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: PL0+PL1 wdrożone 05.09 (HANDOFF), PL2–PL5 otwarte
+**Data:** 2026-09-04 · **Status:** ZATWIERDZONY przez właściciela 04.09 (D1–D5: tak). Realizacja: PL0+PL1+PL2 wdrożone 05.09 (HANDOFF), PL3–PL5 otwarte
 
 ---
 
@@ -75,7 +75,7 @@ Cel: pierwsza realna transakcja w Portalu ma się domknąć bez telefonu właśc
 4. **Feed dla nowego konta**: gdy `following = 0`, domyślna zakładka = „Cała społeczność"
    (zrzut `p2-2708-feed-ciemny-1440.png` — pierwszy ekran nowego Lidera to pusty stan).
 
-### PL2 — Firma w 90 sekund (model Oferteo/Fixly) (1 sesja) — ✅ KOD GOTOWY 05.09 (wdrożenie: patrz HANDOFF)
+### PL2 — Firma w 90 sekund (model Oferteo/Fixly) (1 sesja) — ✅ WDROŻONY 05.09
 
 Cel: gość z potrzebą publikuje zlecenie bez ściany logowania.
 
