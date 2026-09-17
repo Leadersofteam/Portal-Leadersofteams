@@ -176,7 +176,10 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
-      - --innodb-buffer-pool-size=1G
+      # 17.09: baza ma ~10 MB danych — 1G bufora + performance_schema trzymały ~560 MB w swapie VPS.
+      # 256M = 25× zapasu; buffer pool da się podnieść online (SET GLOBAL), gdy dane urosną.
+      - --innodb-buffer-pool-size=256M
+      - --performance-schema=OFF
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: portal
