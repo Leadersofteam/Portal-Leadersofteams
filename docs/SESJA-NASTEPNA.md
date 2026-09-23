@@ -9,6 +9,9 @@
 - 17.09: bazy odchudzone (prod 256M, staging 64M, performance_schema OFF).
 - Niezacommitowane: `docs/HANDOFF-OPUS.md` (zmiana z innej sesji; najpierw sprawdź, czyja).
 
+- 23.09: staging ZATRZYMANY dla oszczędności RAM. Start: `cd infra && docker compose -p portal-staging -f docker-compose.staging.yml -f staging.override.yml start`.
+- 23.09: worktree `/docker/portal-staging-build` usunięty. Kontenery prod mają jeszcze etykiety wskazujące tę ścieżkę. Następne wdrożenie prod rób z `infra/` w tym repo (`.env.prod` jest identyczny); wzorzec worktree z MINY nadal obowiązuje, gdy drzewo główne niesie niedokończony sprint.
+
 ## Czeka na właściciela
 1. D3 — purge danych demo (`seed-demo.ts --purge`).
 2. D5 — Search Console / Bing: zgłoszenie `sitemap.xml`.
@@ -20,4 +23,3 @@
 
 ## Zasady sesji
 - Sesję otwieraj w `/docker/portal-staging`. Pamięć projektu: `~/.claude/projects/-docker-portal-staging/memory/`.
-- Staging może być zatrzymany dla oszczędności RAM. Uruchom go przed testem (`docs/RUNBOOK-COMPOSE.md`).
