@@ -40,7 +40,7 @@ docker compose -p portal-prod logs worker --since 10m | grep "bez konsumenta"
 - **`docs/SPRINTY-S15-S19.md`** — odhacz zrobione, dopisz to, co odkryłeś po drodze.
 - **`docs/MINY.md`** — każda pułapka, która kosztowała Cię dziś czas, trafia tutaj.
 - **`docs/RISKS.md`** — nowe ryzyka wraz z decyzją właściciela i sposobem odwrócenia.
-- **`docs/PROMPT-STARTOWY-OPUS.md`** — zadanie na następną sesję + świeże miny.
+- **`docs/SESJA-NASTEPNA.md`** — zadanie na następną sesję + świeże miny.
 - Jeśli proces powtórzył się trzeci raz — zrób z niego **Skill**, nie akapit w docs.
 
 ## 4. Commit i push
@@ -63,3 +63,13 @@ git push          # PR tworzy WŁAŚCICIEL — na VPS nie ma `gh`
 3. **Czego potrzebujesz od niego** — jednym akapitem, konkretnie (sekrety, decyzje).
 
 Nie raportuj jako zrobione niczego, czego nie przeszedłeś ścieżką użytkownika.
+
+## Kontrakt z hookiem startu sesji (od 23.09) — obowiązkowy
+
+Hook `~/.claude/hooks/start-sesji.sh` wstrzykuje następnej sesji z `docs/SESJA-NASTEPNA.md` TYLKO sekcje, których
+nagłówek zawiera „Zadania”, „Czego nie”, „Czeka na” albo „Nie wolno”. Dlatego:
+- `docs/SESJA-NASTEPNA.md` **nadpisz** (≤ ~40 linii): `## Stan (zmierzony)`, `## Zadania w kolejności` (punkt 1 wykonalny
+  od razu), `## Czego nie robić`, opcjonalnie `## Czeka na właściciela`, na końcu `## Prompt startowy` (2–3 zdania).
+- Commituj tylko swoje ścieżki: `git commit -m "…" -- <pliki>` (równoległe sesje, cudzy `git add -A`).
+- Pamięć projektu: `~/.claude/projects/-docker-<repo>/memory/` — jedna linia w `MEMORY.md` ≤ 150 znaków.
+- Na koniec zaproponuj właścicielowi archiwizację sesji (zwalnia ~100–200 MB swapu).
