@@ -11,6 +11,19 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **📱 POMIAR BAZOWY „mobile-craft” 05.09 (program M — mobile-first dla 3 projektów; plan i decyzje:
+> `~/.claude/plans/dzi-kuj-za-tw-j-dotychczasowy-replicated-sunrise.md`, skill `~/.claude/skills/mobile-craft/`).**
+> Harness (Playwright, gość, 390 i 320 px, sieć+CPU dławione jak Lighthouse mobile) na produkcji, 9 tras:
+> overflow poziomy **0/9**, `100vh` **0** reguł, dolny pas + safe-area + viewport-fit ✓ wszędzie, SW ✓, manifest
+> ma `shortcuts` (3) i maskable, **brak `share_target`**. Do naprawy w M2: **cele dotyku < 44 px: `/uslugi` 33,
+> `/liderzy` 23, `/zlecenia` 16** — chipy branż 33 px wys., pole szukania 26 px, przycisk „Menu” 38 px, CTA
+> 40 px; **gość dostaje 3 × 401 na KAŻDEJ stronie** (`notification-bell.tsx` woła `/me/notifications/unread-count`
+> i otwiera Socket.IO bez sesji — 3 zmarnowane żądania na 4G); LCP `/` 2,1 s (125 kB JS, TBT 433 ms), reszta
+> tras 0,15–0,9 s. Na 320 px te same liczby (bez regresji). Zapis: `~/.claude/skills/mobile-craft/baseline/2026-09-05-portal-{390,320}.json`.
+> Program M dla Portalu (M2, po M1 w App): push transakcyjny (ADR-010, flaga `PUSH_ENABLED`, tabela
+> `PushSubscription` expand-only = zgoda), Badging z `NotificationCountBadge`, Speculation Rules na hubach, View
+> Transitions lista→karta, prompt instalacji po pierwszej akcji, pull-to-refresh na feedzie.
+
 > **✅ PL5 „Pierwszych dwudziestu, ale z lejkiem” — NA PRODUKCJI 05.09 23:17** (`e829e87`; backup `portal-20260905-231709`,
 > bez migracji; obraz z worktree `/docker/portal-staging-build`). **Dowody:** healthz zielone, 0 błędów, 0 „bez
 > konsumenta”; zaproszenie przez API na prodzie → **`mail.sent` „Test PL5 (do usunięcia) zaprasza Cię do Leaders
@@ -583,7 +596,7 @@
 > **✅ SESJA S15 + S16 (2026-08-13, wieczór): „Pierwsza mila i portal pełen życia"**
 > (`5c03258`, `e30e05b`, `5e18ed5`). Wdrożone na staging i **produkcję**.
 > **▶ NASTĘPNY KROK: S17 w [SPRINTY-S15-S19.md](SPRINTY-S15-S19.md)**, prompt startowy:
-> [PROMPT-STARTOWY-OPUS.md](PROMPT-STARTOWY-OPUS.md).
+> [PROMPT-STARTOWY-OPUS.md](archiwum/prompty/PROMPT-STARTOWY-OPUS.md).
 >
 > **🔴 SPROSTOWANIE, KTÓRE MUSI TU STAĆ NA WIERZCHU.** Ten dokument twierdził, że poczta
 > jest „ZROBIONA 13.08, zweryfikowane na produkcji dla rejestracji i resetu". Zweryfikowane
