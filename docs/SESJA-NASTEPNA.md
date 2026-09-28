@@ -20,6 +20,9 @@
 ## Zadania w kolejności
 1. Pomiar lejka w `/panel/analityka`: ruch, źródła, pierwsze zlecenia od 05.09. Liczby zapisz tutaj.
 2. Z pomiaru wybierz JEDNO wąskie gardło (dystrybucja albo pętla transakcji) i zrób plan sprintu.
+3. **Kontrast (zastane, pomiar 28.09 z tokenów)** — jasny motyw: `.badge.accent` (`primary-300` na bieli) 1,72:1,
+   `.section-eyebrow` (`primary-400`) 2,39:1; kanały `--success-rgb/--danger-rgb/--warning-rgb` mają stare wartości Tailwinda.
+   Plik: `apps/web/app/globals.css` (~l. 874 i 1575). Poprawka tokenów przy najbliższym wdrożeniu.
 
 ## Zasady sesji
 - Sesję otwieraj w `/docker/portal-staging`. Pamięć projektu: `~/.claude/projects/-docker-portal-staging/memory/`.
