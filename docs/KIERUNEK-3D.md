@@ -150,6 +150,12 @@ dokłada do p95 nic mierzalnego. W poprzednim kontenerze ta sama gałąź przesz
 Wniosek procesowy: czerwone `check:perf (2)` czyta się wyłącznie obok pomiaru `main`
 z tej samej maszyny (skill `lot-scena-3d`, krok 4).
 
+**Rozstrzygnięcie w CI (PR #175, runner GitHuba, 2026-10-20):** `check:perf (2)` zielone —
+`/` ze sceną p95 **16,8 ms**, `/lot-app/` 16,8, `/services/web-development/` 16,8, `/about/` 16,7,
+`/contact/` 16,8, zero długich zadań. Do tego `check:visual` 45 tras × 2 viewporty bez błędów
+konsoli, `check:a11y` (w tym „nic nie rusza się samo przy redukcji ruchu"), `check:forms`
+i `check:wcag` 2 × 45 tras. Czerwień z kontenera sesji była maszyną, co potwierdza A/B.
+
 ## 7. Sceny per właściwość
 
 | Właściwość                         | Scena                                            | Formacje                                                                          | Co znaczy punkt                                                                                                                                                                             |
