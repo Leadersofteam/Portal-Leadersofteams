@@ -20,7 +20,7 @@ długości przewijania):
 
 |                | aim24.pl                                                                                     | AIM Motion (podgląd)                                                  | my                                                     |
 | -------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------ |
-| Silnik         | three.js w chunku 650 kB (GLTF + Draco, szkło `transmission`), shader „lawy” w surowym WebGL | three.js z unpkg + importmap, `EffectComposer` z bloomem, Lenis z CDN | **surowy WebGL, 10 kB gzip, jeden plik**               |
+| Silnik         | three.js w chunku 650 kB (GLTF + Draco, szkło `transmission`), shader „lawy” w surowym WebGL | three.js z unpkg + importmap, `EffectComposer` z bloomem, Lenis z CDN | **surowy WebGL, ~14,7 kB gzip, jeden plik**            |
 | Historia       | orbita kart portfolio                                                                        | kula → galaktyka → mózg (siatka z obcego bucketu)                     | rozproszenie → klucz z Feniksem → bramki → Feniks      |
 | Treść          | SPA, pusty `<div id="root">` dla robota                                                      | treść w `fixed` warstwach przełączanych `opacity`                     | treść w dokumencie, ruchoma wyłącznie dekoracja        |
 | Start          | ekran ładowania                                                                              | ekran ładowania z procentami                                          | treść natychmiast; scena po pierwszym geście lub 5,5 s |
@@ -39,6 +39,9 @@ to wizualny default agencji AI (`leadersofteam.pl` CLAUDE.md §8.1).
   technologicznym („budujemy na Bieliku”, §9.4). Feniks jest metaforą: odrodzenie —
   polskie firmy znikające z mapy wracają jako Teamy (§7: „Rodzinne firmy znikają
   z mapy” → „Odwracamy ten układ”).
+- **Feniks jest przerysowany z prawdziwej ryciny**, nie wymyślony: heraldyczny
+  Feniks Arthura Charlesa Fox-Daviesa (1909, domena publiczna), odtworzony
+  punktami — każdy punkt to człowiek, razem tworzą rycinę.
 - **Feniks prowadzi od pierwszej sekundy** i jest tym samym zestawem punktów przez
   całą stronę: przywódca klucza → siódma bramka (L7, własny Team) → serce wielkiego
   Feniksa. Nie pojawia się znikąd.

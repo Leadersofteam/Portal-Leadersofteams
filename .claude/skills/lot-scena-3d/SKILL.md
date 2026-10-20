@@ -7,7 +7,7 @@ description: Formacja 3D — wspólna scena WebGL całej sieci Leaders of Teams 
 
 Jeden plik, bajt w bajt ten sam w każdym repozytorium, które go wysyła:
 `public/scene/formation-v1.js` — surowy WebGL, **zero bibliotek, zero obcych hostów,
-zero literałów koloru**, ~10 kB gzip. Nie przepisuj go w jednym repo. Zmiana = nowy
+zero literałów koloru**, ~14,7 kB gzip (z tego ~3,1 kB to mapa ryciny Feniksa). Nie przepisuj go w jednym repo. Zmiana = nowy
 plik `formation-v2.js` + nowy skrót SHA-256 we **wszystkich** strażnikach, w PR-ach,
 które wchodzą razem (patrz „Synchronizacja").
 
@@ -35,6 +35,30 @@ w ogniu (`--color-growth-gfx` — jedyny odcień, który na tej stronie już zna
 **Granica §1 (nie kłamiemy):** scena jest dekoracją (`aria-hidden`). Nie niesie
 liczb, statusów ani obietnic, których nie ma w tekście. Statusy poziomów idą
 z danych (`LEVELS`), nie z ręki.
+
+### Feniks — przerysowany z ryciny, nie wymyślony
+
+Właściciel: „Feniksa musisz zrobić pięknego. Ten jest brzydki — weź z Internetu
+i przerysuj”. Pierwsza wersja była parametryczna (wachlarz piór z równań) i czytała
+się jak schemat. Obecna jest **próbkowana z ryciny w domenie publicznej**:
+
+- źródło: Arthur Charles Fox-Davies, _A Complete Guide to Heraldry_ (1909), Wikimedia
+  Commons `File:Phoenix (European Heraldry).svg` — **public domain, bez wymogu
+  atrybucji** (i tak podana w nagłówku pliku sceny),
+- **tylko domena publiczna / CC0.** Kandydaci CC BY-SA (np. `Greek Phoenix.svg`)
+  odpadli: share-alike objąłby plik sceny, a z grafik chronionych (stocki, Adobe,
+  Etsy) nie przerysowujemy wcale,
+- mapa 200 × 211: na zewnątrz / wypełnienie (biel płyty) / linia (cięcie rylca),
+  RLE w stałej `PHX`; odbudowa: `scripts/phoenix-map.py` (opis w nagłówku),
+- punkty: 84 % z linii (ryt czyta się jak rycina z ludzi), 16 % z wypełnienia
+  (blady fiolet, `tone 3`), każdy z drganiem wewnątrz komórki — bez siatki,
+- kolory: linie piór atramentem, końce piór fioletem, korpus przechodzi w żar
+  (atrament → fiolet → bursztyn), płomienie w ogniu; skrzydła wygięte do czytelnika,
+- przywódca klucza to **ten sam** Feniks w małej skali (same linie), pochylony
+  w kierunek lotu.
+
+Wiki Commons tnie zbyt częste zapytania (HTTP 429): pobieraj miniatury
+z `thumb.wikimedia.org` z nagłówkiem `User-Agent` z kontaktem, nie oryginał SVG.
 
 ## 2. Przejścia — lot, nie przenikanie
 
@@ -111,7 +135,7 @@ i skrypty zrzutów **przed** załadowaniem strony) zdejmuje bramkę 6 w CI bez G
 
 ## 6. Wydajność
 
-- Tiery po szerokości: 8000 / 5200 / 3200 punktów, DPR ≤ 1,75 / 1,5 / 1,25,
+- Tiery po szerokości: 12 000 / 7 500 / 4 800 punktów (ryt Feniksa ma ~9 800 komórek linii — poniżej ~1 punktu na komórkę pióra się rozmywają), DPR ≤ 1,75 / 1,5 / 1,25,
   60 / 45 / 30 fps (bramka klatek, nie `setInterval`).
 - `gl_PointSize` przycięty (punkt przy obiektywie nie staje się kleksem),
   mgła po głębokości, `depth:false`, `antialias:false`, `powerPreference:"low-power"`.
@@ -172,7 +196,7 @@ wskaźniku; pętla zatrzymana poza kadrem; statyczna klatka/plakat przy redukcji
 
 - three.js z unpkg + importmap, Lenis z CDN, Google Fonts, siatka „mózgu” z obcego
   bucketu → §4.2 (zero obcych hostów), zapadka JS. Orbita na aim24 ładuje 650 kB
-  surowego JS; nasza scena 10 kB gzip.
+  surowego JS; nasza scena ~14,7 kB gzip.
 - Ekran ładowania z procentami przed treścią → opóźnia LCP; u nas treść jest
   pierwsza, scena dochodzi po geście.
 - Treść w `position: fixed` warstwach przełączanych `opacity`/`inert` → treść
