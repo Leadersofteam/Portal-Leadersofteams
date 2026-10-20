@@ -8,19 +8,20 @@ w dokumentacji i staje się Skillem.** Dokumentacja opisuje STAN, Skill opisuje 
 
 ## Mapa
 
-| Skill                       | Kiedy się włącza                                            | Czego pilnuje                                                                                         |
-| --------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **portal-bramki**           | przed każdym commitem i wdrożeniem; „sprawdź", „przetestuj" | liczba wykonanych testów zamiast koloru, sierota na porcie, odtworzenie bazy po e2e                   |
-| **portal-wdrozenie**        | „wdróż", „deploy", diagnoza po wdrożeniu                    | `portal-prod` ≠ `portal`, migrate za profilem tools, backup przed migracją, trzy sygnały w `/healthz` |
-| **portal-migracja**         | każda zmiana schematu                                       | brak TTY, pusty plik blokujący migracje, ENUM jako liczba porządkowa, expand-only                     |
-| **portal-anty-mlm**         | każda funkcja społeczna                                     | rozszerzenie ścieżki w teście strukturalnym — inaczej zieleni się przez pominięcie                    |
-| **portal-dane-demo**        | zasianie/zdjęcie danych przykładowych                       | dwie flagi na produkcji, `--purge`, `chown` po seedzie, prawdziwa ścieżka kodu                        |
-| **portal-zrzuty**           | po każdej zmianie w UI                                      | 390 i 1440 px, `waitUntil: 'load'`, `chrome-linux64`, kasowanie pliku tymczasowego                    |
-| **portal-zamkniecie-sesji** | „domknij", „przygotuj do następnej sesji"                   | sprzątanie kont testowych, sprostowania w HANDOFF, push                                               |
-| **portal-awaria**           | produkcja nie działa po wdrożeniu, „wycofaj", „przywróć"    | rollback obrazów bez cofania migracji (expand-only), restore z kopii z drillem, worker.alive ≠ Up     |
-| **portal-stan-zastany**     | start sesji, pozycja z roadmapy, raport „zamknięte"         | `git log -S`/grep przed kodowaniem, skutek w bazie zamiast logu wysyłki, ścieżka z KLIKNIĘCIEM linku  |
-| playwright-cli / -trace     | automatyzacja przeglądarki z CLI, inspekcja trace'ów        | kopie oficjalnych skilli z `node_modules/playwright-core` (odśwież po upgradzie Playwrighta)          |
-| prisma-cli                  | referencja składni komend Prisma                            | oficjalny skill Prismy (opisuje 7.x; repo ma 6.19 — flagi sprawdzaj przy rozjeździe)                  |
+| Skill                       | Kiedy się włącza                                                | Czego pilnuje                                                                                                     |
+| --------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **portal-bramki**           | przed każdym commitem i wdrożeniem; „sprawdź", „przetestuj"     | liczba wykonanych testów zamiast koloru, sierota na porcie, odtworzenie bazy po e2e                               |
+| **portal-wdrozenie**        | „wdróż", „deploy", diagnoza po wdrożeniu                        | `portal-prod` ≠ `portal`, migrate za profilem tools, backup przed migracją, trzy sygnały w `/healthz`             |
+| **portal-migracja**         | każda zmiana schematu                                           | brak TTY, pusty plik blokujący migracje, ENUM jako liczba porządkowa, expand-only                                 |
+| **portal-anty-mlm**         | każda funkcja społeczna                                         | rozszerzenie ścieżki w teście strukturalnym — inaczej zieleni się przez pominięcie                                |
+| **portal-dane-demo**        | zasianie/zdjęcie danych przykładowych                           | dwie flagi na produkcji, `--purge`, `chown` po seedzie, prawdziwa ścieżka kodu                                    |
+| **portal-zrzuty**           | po każdej zmianie w UI                                          | 390 i 1440 px, `waitUntil: 'load'`, `chrome-linux64`, kasowanie pliku tymczasowego                                |
+| **portal-scena-3d**         | drabinka 3D w hero, nowa scena, „3D", „przejścia", „cząsteczki" | SVG zostaje pod sceną · ADR-009 (zero sieci) · `--level-*` · kanon `docs/KIERUNEK-3D.md` · film klatek `film.mjs` |
+| **portal-zamkniecie-sesji** | „domknij", „przygotuj do następnej sesji"                       | sprzątanie kont testowych, sprostowania w HANDOFF, push                                                           |
+| **portal-awaria**           | produkcja nie działa po wdrożeniu, „wycofaj", „przywróć"        | rollback obrazów bez cofania migracji (expand-only), restore z kopii z drillem, worker.alive ≠ Up                 |
+| **portal-stan-zastany**     | start sesji, pozycja z roadmapy, raport „zamknięte"             | `git log -S`/grep przed kodowaniem, skutek w bazie zamiast logu wysyłki, ścieżka z KLIKNIĘCIEM linku              |
+| playwright-cli / -trace     | automatyzacja przeglądarki z CLI, inspekcja trace'ów            | kopie oficjalnych skilli z `node_modules/playwright-core` (odśwież po upgradzie Playwrighta)                      |
+| prisma-cli                  | referencja składni komend Prisma                                | oficjalny skill Prismy (opisuje 7.x; repo ma 6.19 — flagi sprawdzaj przy rozjeździe)                              |
 
 ## Czego w skillach świadomie NIE MA
 
