@@ -1,0 +1,13 @@
+# Znaleziska gitleaks sprawdzone ręcznie i uznane za NIE-sekrety.
+# Każdy wpis to odcisk (commit:plik:reguła:linia) JEDNEGO znaleziska — nie wzorzec,
+# więc ta sama wartość w innym miejscu nadal zatrzyma CI.
+#
+# UWAGA: w komentarzach tutaj NIGDY nie cytuj wartości — gitleaks skanuje też ten
+# plik i dosłowny cytat staje się nowym znaleziskiem (zmierzone 2026-10-21).
+
+# e2e: hasło jednorazowego konta testowego (stała NEW_PASSWORD), tylko w teście.
+5c0325863e29b0aaf9b7bf5ffb90c44a65ebbd1c:apps/web/e2e/email-flows.spec.ts:generic-api-key:17
+
+# Formularz zlecenia: nazwa klucza sessionStorage dla szkicu (stała DRAFT_KEY),
+# nie poświadczenie — patrz komentarz nad stałą w pliku.
+386c1330c00a7442a398c5ed3b32e1705f1d8151:apps/web/app/zlecenia/nowe/new-order-form.tsx:generic-api-key:19
