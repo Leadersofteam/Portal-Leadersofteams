@@ -1,5 +1,17 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-10-21 — audyt UX i dwie fale poprawek NA PRODUKCJI (prod `0207887`, gałąź `feat/droga-lidera-pl0-pl1`).**
+> Feedback właściciela: „nieintuicyjne i generyczne”. Audyt (rubryka `~/.claude/skills/audyt-ux-wspolny`): home 5,2, katalog 5,4,
+> lejek 6,0, panel firmy 4,6. Przyczyna: Portal opowiadał o Drabince zamiast o tym, co gość dostaje; Firma (źródło zleceń) była
+> drugą akcją i po rejestracji słyszała „Jesteś u podnóża”. **Fala 1** (`18789ae`): konsola gościa 4+ błędy → 0 (nowy
+> `GET /api/v1/auth/session` 200 `user:null`, brak socketu bez sesji), React #418 (`<a>` w `<a>` w cytacie) naprawiony, cele 44 px,
+> kontrast linków/eyebrow AA, szkic bez potwierdzonego e-maila → „Wyślij link ponownie”. **Fala 2** (`0207887`, decyzja
+> właściciela): hero „Opisz zlecenie. Oferty złożą sprawdzeni Liderzy.”, Firma akcją główną, panel wg roli (szkic zlecenia firmy),
+> „Zapytaj” na profilu Lidera, `/szukam-wykonawcy` → 308 `/dla-firm`. Na żywo: healthz ok, 0 błędów konsoli, 0 wywołań
+> zewnętrznych (ADR-009). **Nie wdrożone:** `main` (PR #17 drabinka 3D, #19 logo, #21 CI) — konflikt logo + inny schemat.
+> **Workflow `deploy-staging.yml`** 21.10 nic nie wdrożył na ten VPS (brak `/opt/portal-staging`, 0 obrazów ghcr, staging
+> zatrzymany od 23.09) — decyzja o workflow u właściciela.
+
 > **📌 OD 2026-08-14 START SESJI WYGLĄDA INACZEJ.** Repo ma [`CLAUDE.md`](../CLAUDE.md)
 > (wczytywany automatycznie), [`docs/MINY.md`](MINY.md) — skonsolidowaną listę pułapek —
 > oraz **siedem Skilli projektowych** w `.claude/skills/` (mapa: [`docs/SKILLE.md`](SKILLE.md)).

@@ -1,28 +1,29 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-> Stan zmierzony 23.09.2026. Zacznij od tego pliku, nie od historii. Po sesji nadpisz go nowym stanem.
-> Stare prompty startowe (`PROMPT-START-SESJI.md`, `PROMPT-STARTOWY-OPUS*.md`) są historyczne.
+> Stan zmierzony 21.10.2026 wieczór. Zacznij od tego pliku, nie od historii. Po sesji nadpisz go nowym stanem.
 
 ## Stan
-- Produkcja: leadersofteams.pl → 200, 0,13 s (23.09). Gałąź robocza `feat/droga-lidera-pl0-pl1`, ostatni commit `4586bf2` (17.09).
-- Program „Droga Lidera” PL0–PL5 wdrożony 05.09 (`docs/PROGRAM-DROGA-LIDERA.md`). Od tego czasu brak commitów funkcjonalnych.
-- 17.09: bazy odchudzone (prod 256M, staging 64M, performance_schema OFF).
-- Niezacommitowane: `docs/HANDOFF-OPUS.md` (zmiana z innej sesji; najpierw sprawdź, czyja).
-
-- 23.09: staging ZATRZYMANY dla oszczędności RAM. Start: `cd infra && docker compose -p portal-staging -f docker-compose.staging.yml -f staging.override.yml start`.
-- 23.09: worktree `/docker/portal-staging-build` usunięty. Kontenery prod mają jeszcze etykiety wskazujące tę ścieżkę. Następne wdrożenie prod rób z `infra/` w tym repo (`.env.prod` jest identyczny); wzorzec worktree z MINY nadal obowiązuje, gdy drzewo główne niesie niedokończony sprint.
+- Produkcja: `0207887` na `feat/droga-lidera-pl0-pl1` (NIE `main`). healthz: mysql/redis ok, worker alive, uploads ok.
+  Powrót: obrazy `portal-web:powrot-18789ae`, `portal-api:powrot-18789ae` (fala 1).
+- 21.10 wdrożone fale UX 1+2 (szczegóły: baner `docs/HANDOFF-OPUS.md`). Gość: 0 błędów konsoli, 0 wywołań zewnętrznych.
+- `origin/main` (PR #17 drabinka 3D, #19 logo, #21 CI) NIEWDROŻONY: inny schemat (main nie ma pól prod) + konflikt logo.
+- Staging zatrzymany od 23.09. Analityka (Redis, 35 dni): dziura 30.09–14.10; 99,6% ruchu bezpośredni, 8 odsłon z Google w 20 dni.
+- Dane testowe audytu 21.10 NIEPOSPRZĄTANE (odczyt prod-DB zablokowany): firma „Audyt UX Test Sp”, anulowane zlecenie
+  `cmvhdtbu90008pm01hq6vyfmv` (otwiera się publicznie 200), zanonimizowany wiersz konta `audyt-ux-20261021@example.com`.
 
 ## Czeka na właściciela
-1. D3 — purge danych demo (`seed-demo.ts --purge`).
-2. D5 — Search Console / Bing: zgłoszenie `sitemap.xml`.
-3. PR `feat/droga-lidera-pl0-pl1` → `main` (otwiera właściciel).
+1. Które logo zostaje (PR #19 czy obecne na prod) i czy schemat z prod ma trafić do `main` — odblokowuje wdrożenie `main`.
+2. Workflow `.github/workflows/deploy-staging.yml` (push do main → SSH deploy) — sprzeczny z „wdrożenia ręczne”; decyzja.
+3. Dane: duplikat „Macix”, zlecenie „Marketing” w złej branży, identyczne opinie u Konrada — demo czy realne? D3 purge demo.
+4. 3 firmy + 2 Liderów do testów (`/root/docs/TESTERZY-I-SPOLECZNOSC.md`). D5 Search Console.
 
 ## Zadania w kolejności
-1. Pomiar lejka w `/panel/analityka`: ruch, źródła, pierwsze zlecenia od 05.09. Liczby zapisz tutaj.
-2. Z pomiaru wybierz JEDNO wąskie gardło (dystrybucja albo pętla transakcji) i zrób plan sprintu.
-3. **Kontrast (zastane, pomiar 28.09 z tokenów)** — jasny motyw: `.badge.accent` (`primary-300` na bieli) 1,72:1,
-   `.section-eyebrow` (`primary-400`) 2,39:1; kanały `--success-rgb/--danger-rgb/--warning-rgb` mają stare wartości Tailwinda.
-   Plik: `apps/web/app/globals.css` (~l. 874 i 1575). Poprawka tokenów przy najbliższym wdrożeniu.
+1. Posprzątać dane testowe audytu 21.10 (lista w „Stan”) — konta testowe mają stałą zgodę; usuwać dzieci → rodzice.
+2. Po decyzji 1: scalić `origin/main` do `feat/droga-lidera-pl0-pl1`, bramki, staging, prod (skill `portal-wdrozenie`).
+3. Katalog nie może wyglądać na martwy: 5–10 prawdziwych profili/zleceń przed zaproszeniem testerów.
+4. Dziura w analityce 30.09–14.10 — czy nie działał zapis, czy Portal.
 
 ## Zasady sesji
 - Sesję otwieraj w `/docker/portal-staging`. Pamięć projektu: `~/.claude/projects/-docker-portal-staging/memory/`.
+- Budowy na VPS przez `flock /root/.vps-build.lock …` (trzy repo budują na jednym serwerze).
+- Typecheck pada na usuniętej stronie → `rm -rf apps/web/.next/types` (MINY 21.10).
