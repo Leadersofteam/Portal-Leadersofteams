@@ -11,6 +11,14 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **🧭 2026-10-21: KIERUNEK SIECI — tylko dokumenty, kod bez zmian.** Właściciel: „strony
+> wyglądają dobrze, ale czegoś im brakuje — przewijania 3D i opowiadania historii w płynnych
+> przejściach”. Plan dla czterech stron sieci: [SIEC-LOT.md](SIEC-LOT.md) (portal: §4.2
+> „Światło z cudzych rąk”, pełny tor na `/drabinka`), prompt: [PROMPT-SIEC-3D.md](PROMPT-SIEC-3D.md).
+> **Zmierzone 2026-10-21:** `#17` (drabinka 3D) scalony, ale na produkcji `leadersofteams.pl/`
+> nie ma płótna sceny — najpewniej niewdrożone (sprawdź `portal-stan-zastany`, zanim
+> uznasz inaczej). **Stopka nie linkuje do żadnego z trzech pozostałych adresów sieci.**
+
 > **🔄 SESJA 2026-10-20: „Drabinka w przestrzeni" — gałąź `claude/drabinka-3d`, NIEWDROŻONE.**
 > Kierunek ekosystemu „Instrument w przestrzeni" (kanon: [KIERUNEK-3D.md](KIERUNEK-3D.md)). Hero dostał drabinkę
 > z cząstek nad `LadderArt`: 7 szczebli w `--level-1…7`, przy przewinięciu punkty przenoszą się 1–3 szczeble wyżej —

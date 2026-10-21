@@ -158,17 +158,37 @@ i `check:wcag` 2 × 45 tras. Czerwień z kontenera sesji była maszyną, co potw
 
 ## 7. Sceny per właściwość
 
-| Właściwość                         | Scena                                            | Formacje                                                                          | Co znaczy punkt                                                                                                                                                                             |
-| ---------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `leadersofteams.com` — hero        | **Orbita leadów** wokół `AppSurface`             | orbita (pasma = etapy) → zebrane przy krawędzi karty; utracone odpadają           | lead; kolor = `state-*` z lejka, legenda pod kartą                                                                                                                                          |
-| `app.leadersofteams.com` — landing | **Dane układają się same** w ciemnej `StoryZone` | pętla dnia (5 węzłów) → leady wg etapu 43/12/4/3 → puls zespołu (4 paski + deale) | proporcje = `demoData.ts`, te same liczby co odczyt obok; kolor = `--heat-*` (bursztyn tylko dla wygranej)                                                                                  |
-| `leadersofteams.pl` — hero Portalu | **Drabinka w przestrzeni**                       | 7 szczebli → światło wspina się 1–3 szczeble wyżej                                | poziom; kolor = `--level-1…7`                                                                                                                                                               |
-| `leadersofteam.pl`                 | —                                                | —                                                                                 | nieruszone 2026-10-20. Na koncie jest repo `Leadersofteam/Leadersofteam` (najpewniej ta właściwość — do potwierdzenia); nie było w zakresie sesji. Zasady z tego dokumentu obowiązują i tam |
+| Właściwość                             | Scena                                               | Formacje                                                                          | Co znaczy punkt                                                                                            |
+| -------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `leadersofteams.com` — hero            | **Orbita leadów** wokół `AppSurface`                | orbita (pasma = etapy) → zebrane przy krawędzi karty; utracone odpadają           | lead; kolor = `state-*` z lejka, legenda pod kartą                                                         |
+| `app.leadersofteams.com` — landing     | **Dane układają się same** w ciemnej `StoryZone`    | pętla dnia (5 węzłów) → leady wg etapu 43/12/4/3 → puls zespołu (4 paski + deale) | proporcje = `demoData.ts`, te same liczby co odczyt obok; kolor = `--heat-*` (bursztyn tylko dla wygranej) |
+| `leadersofteams.pl` — hero Portalu     | **Drabinka w przestrzeni**                          | 7 szczebli → światło wspina się 1–3 szczeble wyżej                                | poziom; kolor = `--level-1…7`                                                                              |
+| `leadersofteam.pl` — hero i akt „Ruch” | **Feniks prowadzi sieć** (inny silnik, patrz niżej) | rozproszenie → klucz z Feniksem → 7 bramek → wszyscy stają się Feniksem           | człowiek                                                                                                   |
+
+> **`leadersofteam.pl` ma inny silnik — i to jest stan świadomy, nie przeoczenie.**
+> `public/scene/formation-v1.js` w repo `Leadersofteam/Leadersofteam` (PR #43,
+> scalony 2026-10-21, na produkcji). Feniks jest sceną **tamtej** strony i znakiem
+> sieci; decyzja właściciela 2026-10-21: **jedna strona, jedna scena** — wersja
+> Feniksa dla `.com` (PR #176) zamknięta, propozycje dla portalu i aplikacji wycofane.
+> **Dług:** w sieci są dwa silniki (ten kanon w trzech kopiach i `formation-v1.js`).
+> Scalenie opłaca się dopiero przy następnej zmianie któregoś z nich.
 
 ## 8. Otwarte i niezweryfikowane
 
 - **Pomiar na prawdziwym GPU i Safari/iOS** — wszystkie pomiary z tej sesji to headless
   Chromium + SwiftShader. Telefon z iOS nie był oglądany.
 - **Bateria telefonu** — tier niski to 30 kl./s i 35% punktów; nie mierzone.
-- **Produkcja** — nic z tego nie jest wdrożone; .com wdraża się z `main` (merge PR),
-  App i Portal ręcznie przez właściciela.
+- **Produkcja (zmierzone 2026-10-21, headless Chromium po geście):** `.com` — płótno
+  sceny jest (#175 scalony, deploy z `main`). Portal (#17) i landing aplikacji (#267)
+  są scalone, ale płótna na produkcji **nie ma** — oba wdraża się ręcznie.
+
+## 9. Następny krok — opowieść przewijana (2026-10-21)
+
+Właściciel: _„strony wyglądają dobrze, ale czegoś im brakuje — przewijania 3D
+i opowiadania historii w płynnych przejściach”_. Ten dokument opisuje silnik i zasady
+płynności; **czego brakuje i dokąd idzie każda z czterech stron** opisuje karta sieci
+**`docs/SIEC-LOT.md`** (ten sam plik w czterech repo): wspólna gramatyka (§3), kierunek
+i rozdziały każdej strony (§4: „Droga leada” tutaj, „Dzień zespołu” w aplikacji,
+„Światło z cudzych rąk” w portalu, „Lot Feniksa” na `leadersofteam.pl`), kolejność (§5).
+Silnik dostanie okno przesuwne formacji (karta §3.1 pkt 13) — dziś trzyma 4 na punkt.
+Prompt na sesję wykonawczą: `docs/PROMPT-SIEC-3D.md`.
