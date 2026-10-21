@@ -316,6 +316,37 @@ main {
   animation: ladder-float 7s ease-in-out infinite;
 }
 
+/* Drabinka 3D (components/ui/ladder-scene.tsx). SVG trzyma miejsce w układzie
+   zawsze — kanwa kładzie się na nim i jest od niego większa, żeby punkty miały
+   gdzie się wychylić. SVG gaśnie dopiero po pierwszej narysowanej klatce
+   sceny (data-scene="on"); bez WebGL nic się nie zmienia. Maska gradientem
+   (rysuje się raz), nie filter: blur (przeliczałby się co klatkę). */
+.ladder-scene {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.ladder-scene .ladder-art {
+  transition: opacity 600ms var(--ease);
+}
+.ladder-scene[data-scene='on'] .ladder-art {
+  opacity: 0;
+}
+.ladder-scene-canvas {
+  position: absolute;
+  left: -40%;
+  top: -18%;
+  width: 180%;
+  height: 136%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms var(--ease);
+  mask-image: radial-gradient(closest-side, black 70%, transparent 100%);
+}
+.ladder-scene[data-scene='on'] .ladder-scene-canvas {
+  opacity: 1;
+}
+
 @keyframes ladder-float {
   0%,
   100% {

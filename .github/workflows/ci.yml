@@ -46,9 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Wersję pnpm podaje `packageManager` w package.json. Druga wersja tutaj
-      # (`version: 10`) sprawiała, że action-setup@v4 odmawiał startu
-      # („Multiple versions of pnpm specified") i job padał przed pierwszym testem.
+      # Wersja pnpm idzie z `packageManager` w package.json. Podanie jej tu
+      # drugi raz kończy krok błędem „Multiple versions of pnpm specified"
+      # (action-setup v4) — CI było przez to czerwone od sierpnia.
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
@@ -89,9 +89,6 @@ jobs:
           fetch-depth: 0
       # Bezpośrednio CLI (MIT) zamiast gitleaks-action, która dla organizacji
       # wymaga płatnej licencji (polityka 0 zł — ADR-009).
-      # `--verbose` przy `--redact`: log podaje plik, linię i regułę każdego
-      # znaleziska, ale nie wartość. Bez tego job mówił tylko „leaks found: 2"
-      # i nie dało się ustalić, czego dotyczy drugie.
       - name: Skan sekretów
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo \
