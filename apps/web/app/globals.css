@@ -148,6 +148,12 @@
   --text-faint: #5f6980;
   --text-body: #39415a;
 
+  /* Fiolet jako TEKST na jasnym tle (P14): pastele ciemnego motywu dawały
+     2,2:1 (primary-400) i 1,7:1 (primary-300) na #f6f7fb. Pociemnione do AA
+     (≥ 4,5:1) — dotyczy linków, .section-eyebrow, .badge.accent. */
+  --primary-300: #4b33b8;
+  --primary-400: #5a42cb;
+
   /* Drabinka na jasnym: sygnatura „im wyżej, tym cieplej" zostaje, wartości
      pociemnione — pastele ciemnego motywu mają na bieli ~2:1. */
   --level-1: #5d6b80;
@@ -309,6 +315,18 @@ a:hover {
   color: var(--primary-300);
 }
 
+/* Linki w bloku tekstu NIE mogą się wyróżniać samym kolorem (axe
+   link-in-text-block: #a59cfe vs #99a2b3 = 1,07:1). Podkreślenie = czytelne
+   bez rozróżniania barw (P13). */
+.muted a,
+.meta a,
+.plain-list a,
+p a:not([class]) {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: from-font;
+}
+
 ::selection {
   background: rgb(var(--primary-500-rgb) / 0.35);
   color: var(--on-accent);
@@ -453,6 +471,24 @@ main {
 
   .ladder-art {
     width: min(11rem, 60%);
+  }
+}
+
+/* 390 (audyt UX 21.10, P02): drabinka nad H1 zjadała ~połowę pierwszego
+   ekranu i spychała oba przyciski pod zgięcie. Na telefonie idzie POD treść
+   i maleje — akcja pierwsza, ozdoba potem. Teksty bez zmian. */
+@media (max-width: 640px) {
+  .hero-art-wrap {
+    order: 0;
+    margin-top: 0;
+  }
+
+  .ladder-art {
+    width: min(8rem, 40%);
+  }
+
+  .hero.hero-split {
+    padding-top: 1rem;
   }
 }
 
@@ -710,6 +746,8 @@ main {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  /* Cel dotyku ≥ 44 px (audyt UX 21.10, P07: było 40 px na każdym CTA). */
+  min-height: 44px;
   padding: 0.62rem 1.15rem;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
@@ -1161,9 +1199,10 @@ main tbody tr:hover {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  width: 2.4rem;
-  height: 2.4rem;
-  padding: 0 0.55rem;
+  /* 44×44 — cel dotyku (P07: było 38×38). */
+  width: 44px;
+  height: 44px;
+  padding: 0 0.7rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -1570,6 +1609,11 @@ main tbody tr:hover {
   gap: 0.75rem;
   flex-wrap: wrap;
   margin-top: 1.6rem;
+}
+
+/* P20: link pod przyciskami był do nich przyklejony i czytał się jak trzecia akcja. */
+.hero-cta + p {
+  margin-top: 1rem;
 }
 
 .section-eyebrow {
@@ -1985,6 +2029,9 @@ main tbody tr:hover {
 }
 
 .fav-star {
+  /* Cel dotyku 44×44 przy niezmienionym wyglądzie (P07: było 31×28) —
+     powiększamy tylko strefę klikania pseudo-elementem. */
+  position: relative;
   border: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   color: var(--level-7);
@@ -1996,6 +2043,12 @@ main tbody tr:hover {
   transition:
     transform var(--dur) var(--ease),
     border-color var(--dur) var(--ease);
+}
+
+.fav-star::after {
+  content: '';
+  position: absolute;
+  inset: -8px -7px;
 }
 
 .fav-star:hover {
@@ -2351,6 +2404,35 @@ a.quoted-post:hover {
   margin-bottom: 0.35rem;
 }
 
+/* Licznik kroków formularza (P06: „Krok 1 z 2") i odstęp wstępu od pierwszej
+   etykiety — wstęp był przyklejony do „Tytuł". */
+.form-step {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.card .form-intro {
+  margin-bottom: 1.5rem;
+}
+
+/* Rzadki katalog (P10): jedna akcja zamiast filtrów nad 1–3 wynikami. */
+.sparse-note {
+  margin-top: 1.5rem;
+}
+
+.sparse-note h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+.sparse-note p {
+  margin: 0 0 1rem;
+}
+
 /* Lista bez punktorów dla zestawień (zlecenia firmy, tagi) */
 .plain-list {
   list-style: none;
@@ -2376,8 +2458,11 @@ a.quoted-post:hover {
 }
 
 .tag-chip {
-  display: inline-block;
-  padding: 0.28rem 0.7rem;
+  /* Cel dotyku ≥ 44 px (P07: chip miał 33 px). */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.28rem 0.85rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
   font-size: 0.85rem;
@@ -2386,6 +2471,20 @@ a.quoted-post:hover {
   transition:
     border-color var(--dur) var(--ease),
     color var(--dur) var(--ease);
+}
+
+/* Na telefonie 11 chipów po 44 px to 4 rzędy nad 1–3 wynikami — jeden
+   przewijany rząd zamiast ściany filtrów (P07/P10). */
+@media (max-width: 640px) {
+  .tag-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tag-chip {
+    white-space: nowrap;
+  }
 }
 
 .tag-chip:hover,

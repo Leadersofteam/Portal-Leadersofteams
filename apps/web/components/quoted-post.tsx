@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 import { Avatar } from '@/components/ui/avatar';
-import { MentionText } from '@/components/mention-text';
 
 export interface QuotedPostView {
   id: string;
@@ -49,8 +48,12 @@ export function QuotedPost({ quoted }: { quoted: QuotedPostView }) {
           <span className="muted quoted-post-handle">@{quoted.author.handle}</span>
         )}
       </div>
+      {/* Zwykły tekst, NIE MentionText: cała karta jest już linkiem, a linki
+          @wzmianek/#tematów w środku dawały <a> w <a> — nieprawidłowy HTML,
+          który przeglądarka rozcina, i błąd hydracji React #418 na /feed
+          (audyt UX 21.10, P09). Wzmianki są klikalne na stronie oryginału. */}
       <p className="quoted-post-body">
-        <MentionText>{quoted.body ?? ''}</MentionText>
+        <span className="pre-wrap">{quoted.body ?? ''}</span>
       </p>
     </Link>
   );

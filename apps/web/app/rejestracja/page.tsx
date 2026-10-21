@@ -98,6 +98,11 @@ export default function RegisterPage() {
           na telefonie kolumna znika i formularz zostaje pierwszy. */}
       <div className="auth-split">
         <div className="card form-card">
+          {celFirma && dalejZlecenie && (
+            <p className="form-step" data-testid="form-step">
+              Krok 2 z 2 · konto i firma
+            </p>
+          )}
           <h1>{celFirma ? 'Konto i firma — jeden krok' : 'Załóż konto'}</h1>
           <p className="muted">
             {celFirma

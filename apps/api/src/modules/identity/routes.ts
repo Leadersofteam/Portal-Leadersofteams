@@ -29,7 +29,12 @@ export interface IdentityRoutesDeps {
   humancheck: Humancheck;
   config: Pick<
     AppConfig,
-    'SESSION_COOKIE_NAME' | 'SESSION_TTL_SECONDS' | 'cookieSecure' | 'NODE_ENV' | 'isProduction'
+    | 'SESSION_COOKIE_NAME'
+    | 'SESSION_TTL_SECONDS'
+    | 'cookieSecure'
+    | 'NODE_ENV'
+    | 'isProduction'
+    | 'mailEnabled'
   >;
 }
 
@@ -118,6 +123,14 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
       return reply.send({ user });
     });
 
+    // Sesja dla nagłówka w przeglądarce (audyt UX 21.10, P08): gość to stan
+    // NORMALNY, nie błąd — 200 z `user: null`, żeby konsola gościa była czysta.
+    // `/auth/me` zostaje z 401: strony serwerowe przekierowują na nim do logowania.
+    app.get('/auth/session', async (request, reply) => {
+      const user = await auth.currentUser(request);
+      return reply.send({ user: user ?? null });
+    });
+
     app.post('/companies', async (request, reply) => {
       const user = await auth.requireUser(request);
       const input = parseBody(createCompanyInputSchema, request.body);
@@ -154,7 +167,11 @@ export function identityRoutes(deps: IdentityRoutesDeps) {
 
     app.get('/me/verification', async (request, reply) => {
       const user = await auth.requireUser(request);
-      return reply.send(await service.getVerificationStatus(user.id));
+      const status = await service.getVerificationStatus(user.id);
+      // `publishGate`: czy publikacja zlecenia NAPRAWDĘ czeka na potwierdzenie
+      // (bramka działa tylko z włączoną pocztą — server.ts). Web blokuje
+      // „Opublikuj" wyłącznie wtedy (P04), inaczej zablokowałby środowisko bez SMTP.
+      return reply.send(status && { ...status, publishGate: config.mailEnabled });
     });
 
     // Ponowna wysyłka linku aktywacyjnego. Bez tego jedyną drogą po wygaśnięciu

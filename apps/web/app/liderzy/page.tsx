@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { CollapsibleFilters } from '@/components/ui/collapsible-filters';
 import { EmptyState } from '@/components/ui/empty-state';
 import { IndustryChips } from '@/components/ui/industry-chips';
+import { SparseCatalogNote, SPARSE_CATALOG_LIMIT } from '@/components/ui/sparse-catalog-note';
 import { LeaderRow, type LeaderRowData } from '@/components/ui/leader-row';
 import { publicApi } from '@/lib/server-api';
 
@@ -43,6 +44,14 @@ export default async function LeadersDirectoryPage({
   const leaders = data?.leaders ?? [];
   const industries = industriesData?.industries ?? [];
 
+  const hasFilters = Boolean(
+    (typeof params.q === 'string' && params.q) ||
+    (typeof params.industryId === 'string' && params.industryId),
+  );
+  // P10: przy kilku Liderach filtry nad 1–3 wierszami tylko udają katalog.
+  const sparse =
+    !hasFilters && leaders.length > 0 && leaders.length < SPARSE_CATALOG_LIMIT && !data?.nextCursor;
+
   const nextParams = new URLSearchParams(query);
   if (data?.nextCursor) nextParams.set('cursor', data.nextCursor);
 
@@ -57,37 +66,39 @@ export default async function LeadersDirectoryPage({
       {/* PL4: chipy branż → huby /liderzy/branza/[slug]. */}
       <IndustryChips industries={industries} base="/liderzy" allHref="/liderzy" />
 
-      <CollapsibleFilters>
-        <form className="filters" method="get">
-          <div className="field">
-            <label htmlFor="q">Szukaj</label>
-            <input
-              id="q"
-              name="q"
-              defaultValue={typeof params.q === 'string' ? params.q : ''}
-              placeholder="np. automatyzacja, performance marketing"
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="industryId">Branża</label>
-            <select
-              id="industryId"
-              name="industryId"
-              defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
-            >
-              <option value="">Wszystkie</option>
-              {industries.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button className="btn" type="submit">
-            Filtruj
-          </button>
-        </form>
-      </CollapsibleFilters>
+      {!sparse && (
+        <CollapsibleFilters>
+          <form className="filters" method="get">
+            <div className="field">
+              <label htmlFor="q">Szukaj</label>
+              <input
+                id="q"
+                name="q"
+                defaultValue={typeof params.q === 'string' ? params.q : ''}
+                placeholder="np. automatyzacja, performance marketing"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="industryId">Branża</label>
+              <select
+                id="industryId"
+                name="industryId"
+                defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
+              >
+                <option value="">Wszystkie</option>
+                {industries.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button className="btn" type="submit">
+              Filtruj
+            </button>
+          </form>
+        </CollapsibleFilters>
+      )}
 
       {leaders.length === 0 ? (
         <EmptyState
@@ -104,6 +115,13 @@ export default async function LeadersDirectoryPage({
             <LeaderRow key={leader.id} leader={leader} />
           ))}
         </div>
+      )}
+
+      {sparse && (
+        <SparseCatalogNote>
+          Społeczność Liderów dopiero rośnie. Opisz, czego potrzebujesz — oferty złożą Liderzy z
+          pasującym doświadczeniem.
+        </SparseCatalogNote>
       )}
 
       {data?.nextCursor && (

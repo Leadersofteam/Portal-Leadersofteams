@@ -18,6 +18,14 @@ const NAV_LINKS = [
   { href: '/zlecenia', label: 'Zlecenia' },
   { href: '/liderzy', label: 'Liderzy' },
   { href: '/grupy', label: 'Grupy' },
+];
+
+// Audyt UX 21.10 (P15): Firma — strona, która przynosi zlecenia — nie miała
+// wejścia w nagłówku, a gość widział „Panel" prowadzący do logowania.
+// Gość: „Dla firm". Zalogowany: „Droga" + „Panel". Sesja nieznana: nic
+// (ta sama zasada co przy „Zaloguj się" niżej).
+const GUEST_LINKS = [{ href: '/dla-firm', label: 'Dla firm' }];
+const USER_LINKS = [
   { href: '/droga', label: 'Droga' },
   { href: '/panel', label: 'Panel' },
 ];
@@ -52,7 +60,7 @@ export function SiteHeader() {
       </button>
 
       <nav className={open ? 'open' : ''}>
-        {NAV_LINKS.map((link) => (
+        {[...NAV_LINKS, ...(user ? USER_LINKS : user === null ? GUEST_LINKS : [])].map((link) => (
           <Link
             key={link.href}
             href={link.href}

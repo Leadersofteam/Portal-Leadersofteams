@@ -9,7 +9,7 @@ import { orderJsonLd } from '@/lib/jsonld';
 import { ORDER_STATUS_LABELS, OFFER_STATUS_LABELS, formatBudget } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
-import { ActionButton, OfferForm } from './actions';
+import { ActionButton, OfferForm, ResendVerificationButton } from './actions';
 import { ReviewForm } from './review-form';
 
 interface ReviewsData {
@@ -93,8 +93,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   // jedno zapytanie więcej wyłącznie dla właściciela szkicu.
   const verification =
     viewer.isCompanyMember && order.status === 'DRAFT'
-      ? await serverApi<{ email: string; verified: boolean }>('/me/verification')
+      ? await serverApi<{ email: string; verified: boolean; publishGate?: boolean }>(
+          '/me/verification',
+        )
       : null;
+  // P04: „Opublikuj" blokujemy tylko, gdy API naprawdę czeka na potwierdzenie
+  // (`publishGate`; brak pola = starsze API z bramką → blokada).
+  const publishLocked = verification?.verified === false && verification.publishGate !== false;
 
   const offers =
     viewer.isCompanyMember && ['PUBLISHED', 'AWARDED'].includes(order.status)
@@ -157,16 +162,29 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <div className="card" data-testid="verify-before-publish">
           <h3>Potwierdź adres e-mail, żeby opublikować</h3>
           <p className="muted">
-            Link wysłaliśmy na {verification.email}. Nie dotarł?{' '}
-            <Link href="/panel">Wyślij ponownie z panelu →</Link> Szkic czeka tutaj.
+            Link wysłaliśmy na {verification.email}. Kliknij go w poczcie i wróć tutaj — szkic
+            czeka. Nie dotarł? Wyślemy nowy.
           </p>
+          <ResendVerificationButton email={verification.email} />
         </div>
       )}
 
       {/* --- akcje Firmy --- */}
       {viewer.isCompanyMember && (
         <div className="actions-row">
-          {order.status === 'DRAFT' && (
+          {order.status === 'DRAFT' && publishLocked && (
+            // P04: aktywny przycisk, który może tylko zwrócić błąd, myli —
+            // wyłączony z powodem obok (aria-describedby czyta go czytnik).
+            <span className="publish-locked">
+              <button type="button" className="btn" disabled aria-describedby="publish-locked-why">
+                Opublikuj zlecenie
+              </button>
+              <span id="publish-locked-why" className="muted">
+                Dostępne po potwierdzeniu adresu e-mail.
+              </span>
+            </span>
+          )}
+          {order.status === 'DRAFT' && !publishLocked && (
             <ActionButton path={`/orders/${order.id}/publish`} label="Opublikuj zlecenie" />
           )}
           {['DRAFT', 'PUBLISHED', 'AWARDED'].includes(order.status) && (

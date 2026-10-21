@@ -115,6 +115,16 @@ export function IconPanel({ size = 24, active = false }: IconProps) {
   );
 }
 
+/** Logowanie — strzałka wchodząca w drzwi. */
+export function IconLogin({ size = 24 }: IconProps) {
+  return (
+    <svg {...svgProps(size)}>
+      <path d="M13.5 4.5h4a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-4" />
+      <path d="M4.5 12h10M11 8.5l3.5 3.5-3.5 3.5" />
+    </svg>
+  );
+}
+
 /** Szukanie. */
 export function IconSearch({ size = 24 }: IconProps) {
   return (

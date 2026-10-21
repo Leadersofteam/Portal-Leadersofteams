@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { CollapsibleFilters } from '@/components/ui/collapsible-filters';
 import { EmptyState } from '@/components/ui/empty-state';
 import { IndustryChips } from '@/components/ui/industry-chips';
+import { SparseCatalogNote, SPARSE_CATALOG_LIMIT } from '@/components/ui/sparse-catalog-note';
 import { OrderRow, type OrderRowData } from '@/components/ui/order-row';
 import { publicApi } from '@/lib/server-api';
 
@@ -44,6 +45,10 @@ export default async function OrdersPage({
   const orders = data?.orders ?? [];
   const industries = industriesData?.industries ?? [];
 
+  // P10: przy kilku zleceniach filtry nad 1–3 wierszami tylko udają katalog.
+  const sparse =
+    !hasFilters && orders.length > 0 && orders.length < SPARSE_CATALOG_LIMIT && !data?.nextCursor;
+
   const nextParams = new URLSearchParams(query);
   if (data?.nextCursor) nextParams.set('cursor', data.nextCursor);
 
@@ -58,47 +63,49 @@ export default async function OrdersPage({
       {/* PL4: chipy branż prowadzą do hubów /zlecenia/branza/[slug] — nawigacja, nie ranking. */}
       <IndustryChips industries={industries} base="/zlecenia" allHref="/zlecenia" />
 
-      <CollapsibleFilters>
-        <form className="filters" method="get">
-          <div className="field">
-            <label htmlFor="q">Szukaj</label>
-            <input
-              id="q"
-              name="q"
-              defaultValue={typeof params.q === 'string' ? params.q : ''}
-              placeholder="np. automatyzacja CRM"
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="industryId">Branża</label>
-            <select
-              id="industryId"
-              name="industryId"
-              defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
-            >
-              <option value="">Wszystkie</option>
-              {industries.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="budgetMin">Budżet od (zł)</label>
-            <input
-              id="budgetMin"
-              name="budgetMin"
-              type="number"
-              min={0}
-              defaultValue={typeof params.budgetMin === 'string' ? params.budgetMin : ''}
-            />
-          </div>
-          <button className="btn" type="submit">
-            Filtruj
-          </button>
-        </form>
-      </CollapsibleFilters>
+      {!sparse && (
+        <CollapsibleFilters>
+          <form className="filters" method="get">
+            <div className="field">
+              <label htmlFor="q">Szukaj</label>
+              <input
+                id="q"
+                name="q"
+                defaultValue={typeof params.q === 'string' ? params.q : ''}
+                placeholder="np. automatyzacja CRM"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="industryId">Branża</label>
+              <select
+                id="industryId"
+                name="industryId"
+                defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
+              >
+                <option value="">Wszystkie</option>
+                {industries.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="budgetMin">Budżet od (zł)</label>
+              <input
+                id="budgetMin"
+                name="budgetMin"
+                type="number"
+                min={0}
+                defaultValue={typeof params.budgetMin === 'string' ? params.budgetMin : ''}
+              />
+            </div>
+            <button className="btn" type="submit">
+              Filtruj
+            </button>
+          </form>
+        </CollapsibleFilters>
+      )}
 
       {orders.length === 0 ? (
         /* CTA zależne od kontekstu (ux-copy, PD4) — jak na /uslugi. */
@@ -127,6 +134,13 @@ export default async function OrdersPage({
             <OrderRow key={order.id} order={order} />
           ))}
         </div>
+      )}
+
+      {sparse && (
+        <SparseCatalogNote>
+          Zleceń jest na razie niewiele. Masz zadanie dla Lidera? Opisz je — konto i firmę założysz
+          w drugim kroku.
+        </SparseCatalogNote>
       )}
 
       {data?.nextCursor && (

@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 
 import { IconBell } from '@/components/ui/icons';
 import { apiFetch, ApiRequestError } from '@/lib/api';
+import { useSession } from '@/lib/use-session';
 
 // Dzwonek powiadomień: badge liczby nieprzeczytanych + realtime (ADR-007).
 // Socket niesie tylko SYGNAŁ „coś przyszło" — licznik zawsze dociągany REST-em.
@@ -14,15 +16,45 @@ import { apiFetch, ApiRequestError } from '@/lib/api';
 
 type UnreadState = { count: number | null; authed: boolean };
 
+// JEDNO gniazdo na kartę, współdzielone przez dzwonek i badge dolnego paska.
+// Zastane do 21.10: komentarz niżej obiecywał jedno źródło, a każdy komponent
+// otwierał własne `io()` — zmierzone 2 WebSockety na stronę po zalogowaniu.
+let sharedSocket: Socket | null = null;
+const socketListeners = new Set<() => void>();
+
+function subscribeNotifications(listener: () => void): () => void {
+  socketListeners.add(listener);
+  if (!sharedSocket) {
+    sharedSocket = io({ path: '/api/socket.io/', withCredentials: true });
+    sharedSocket.on('notification', () => socketListeners.forEach((l) => l()));
+  }
+  return () => {
+    socketListeners.delete(listener);
+    if (socketListeners.size === 0 && sharedSocket) {
+      sharedSocket.disconnect();
+      sharedSocket = null;
+    }
+  };
+}
+
 /**
  * Jedno źródło licznika dla headera i dolnego paska. Gdyby każdy komponent
  * trzymał własny stan, telefon otwierałby DWA połączenia Socket.IO na raz —
  * na long-pollingu (fallback za proxy) to podwójny ruch bez żadnego zysku.
  */
 function useUnreadCount(): UnreadState {
+  const { user } = useSession();
   const [state, setState] = useState<UnreadState>({ count: null, authed: true });
 
   useEffect(() => {
+    // Gość (P08): bez sesji nie pytamy o licznik i NIE otwieramy Socket.IO —
+    // inaczej konsola gościa dostawała 401 + 400 z gniazda na każdej stronie.
+    // `undefined` = sesja jeszcze nieznana → czekamy, nic nie wołamy.
+    if (user === undefined) return;
+    if (user === null) {
+      setState({ count: null, authed: false });
+      return;
+    }
     let cancelled = false;
 
     async function refresh() {
@@ -38,13 +70,12 @@ function useUnreadCount(): UnreadState {
     }
 
     void refresh();
-    const socket = io({ path: '/api/socket.io/', withCredentials: true });
-    socket.on('notification', () => void refresh());
+    const unsubscribe = subscribeNotifications(() => void refresh());
     return () => {
       cancelled = true;
-      socket.disconnect();
+      unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   return state;
 }

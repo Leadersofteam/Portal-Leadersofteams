@@ -64,6 +64,51 @@ export function OfferForm({ orderId }: { orderId: string }) {
   );
 }
 
+/**
+ * Główna akcja szkicu bez potwierdzonego adresu (audyt UX 21.10, P04): zamiast
+ * aktywnego „Opublikuj", który mógł tylko zwrócić błąd, ponowna wysyłka linku
+ * — w miejscu, bez odsyłania do panelu.
+ */
+export function ResendVerificationButton({ email }: { email: string }) {
+  const [state, setState] = useState<'idle' | 'pending' | 'sent' | 'error'>('idle');
+
+  async function resend() {
+    setState('pending');
+    try {
+      await apiFetch('/auth/resend-verification', { method: 'POST' });
+      setState('sent');
+    } catch {
+      setState('error');
+    }
+  }
+
+  if (state === 'sent') {
+    return (
+      <p role="status">
+        Wysłaliśmy nowy link na <strong>{email}</strong>. Sprawdź skrzynkę, także folder spam.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {state === 'error' && (
+        <div className="error-box" role="alert">
+          Nie udało się wysłać linku. Spróbuj za chwilę.
+        </div>
+      )}
+      <button
+        type="button"
+        className="btn"
+        onClick={() => void resend()}
+        disabled={state === 'pending'}
+      >
+        {state === 'pending' ? 'Wysyłanie…' : 'Wyślij link ponownie'}
+      </button>
+    </>
+  );
+}
+
 // `ActionButton` przeniesiony do `components/action-button.tsx` (S18) — używa go
 // też panel ofert. Re-eksport zostaje, żeby nie ruszać importów strony zlecenia.
 export { ActionButton } from '@/components/action-button';

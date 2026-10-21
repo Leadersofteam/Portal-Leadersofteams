@@ -30,10 +30,15 @@ type Me = { user: { id: string; displayName: string } | null };
 let inflight: Promise<Me> | null = null;
 
 function fetchSession(): Promise<Me> {
-  inflight ??= apiFetch<Me>('/auth/me').catch((err: unknown) => {
-    // 401 = gość. Każdy inny błąd też traktujemy jak „nie wiadomo, kto to" —
-    // nagłówek nie jest miejscem na komunikat o awarii API.
-    if (err instanceof ApiRequestError) return { user: null };
+  // `/auth/session` odpowiada gościowi 200 + `user: null` (P08 — wcześniej
+  // `/auth/me` dawał 401 w konsoli na każdej stronie gościa). 404 = API
+  // starsze niż web (okno wdrożenia) → wracamy do `/auth/me`.
+  inflight ??= apiFetch<Me>('/auth/session').catch((err: unknown) => {
+    if (err instanceof ApiRequestError && err.status === 404) {
+      return apiFetch<Me>('/auth/me').catch(() => ({ user: null }));
+    }
+    // Każdy inny błąd traktujemy jak „nie wiadomo, kto to" — nagłówek nie
+    // jest miejscem na komunikat o awarii API.
     return { user: null };
   });
   return inflight;

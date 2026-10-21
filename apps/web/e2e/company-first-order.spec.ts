@@ -17,6 +17,7 @@ test('gość: opis potrzeby → konto i firma → szkic wraca → publikacja', a
   await page
     .getByLabel(/Opis potrzeby/)
     .fill('Szukamy Lidera, który uporządkuje nasz proces ofertowania i wdroży rytm tygodniowy.');
+  await page.getByLabel('Branża').selectOption({ label: 'IT i programowanie' });
   await page.getByLabel('Budżet od (zł)').fill('2000');
   await page.getByLabel('Budżet do (zł)').fill('4000');
   await page.getByRole('button', { name: 'Dalej: konto i firma' }).click();

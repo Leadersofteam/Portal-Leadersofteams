@@ -138,14 +138,20 @@ export function NewOrderForm({
 
   return (
     <div className="card" style={{ maxWidth: '42rem', margin: '2rem auto' }}>
+      {/* P06: gość widzi, ile go to kosztuje — dwa kroki, nie niewiadoma. */}
+      {guest && (
+        <p className="form-step" data-testid="form-step">
+          Krok 1 z 2 · opis potrzeby
+        </p>
+      )}
       <h1>{guest ? 'Opisz, co ma powstać' : 'Nowe zlecenie'}</h1>
       {guest ? (
-        <p className="muted">
+        <p className="muted form-intro">
           Bez konta na start. Opiszesz potrzebę, a konto i firmę założysz w następnym kroku — jednym
           formularzem. Zlecenie opublikujesz po potwierdzeniu adresu e-mail.
         </p>
       ) : (
-        <p className="muted">
+        <p className="muted form-intro">
           Zlecenie powstaje jako szkic — opublikujesz je po sprawdzeniu treści.
         </p>
       )}
@@ -176,12 +182,18 @@ export function NewOrderForm({
             required
             minLength={5}
             maxLength={140}
+            placeholder="np. Uporządkowanie procesu ofertowania w zespole sprzedaży"
             defaultValue={draft?.title ?? ''}
           />
         </div>
         <div className="field">
           <label htmlFor="industryId">Branża</label>
-          <select id="industryId" name="industryId" required defaultValue={draft?.industryId}>
+          {/* P06: pusta opcja zamiast pierwszej z listy — inaczej „AI i automatyzacja"
+              wyglądało na wybór, którego nikt nie zrobił. `required` pilnuje wyboru. */}
+          <select id="industryId" name="industryId" required defaultValue={draft?.industryId ?? ''}>
+            <option value="" disabled>
+              Wybierz branżę
+            </option>
             {industries.map((i) => (
               <option key={i.id} value={i.id}>
                 {i.name}
@@ -197,6 +209,7 @@ export function NewOrderForm({
             required
             minLength={20}
             maxLength={10000}
+            placeholder="np. Mamy 12 handlowców, oferta powstaje tydzień i każdy robi ją inaczej. Chcemy jednego procesu i tygodniowego rytmu — efekt w 2 miesiące."
             defaultValue={draft?.description ?? ''}
           />
         </div>
@@ -209,6 +222,7 @@ export function NewOrderForm({
               type="number"
               min={0}
               required
+              placeholder="np. 2000"
               defaultValue={draft?.budgetMin ?? ''}
             />
           </div>
@@ -220,6 +234,7 @@ export function NewOrderForm({
               type="number"
               min={0}
               required
+              placeholder="np. 5000"
               defaultValue={draft?.budgetMax ?? ''}
             />
           </div>

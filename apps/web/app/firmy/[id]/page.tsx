@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { ORDER_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
 interface CompanyProfile {
@@ -172,7 +173,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
             <li key={order.id}>
               <Link href={`/zlecenia/${order.id}`}>{order.title}</Link>{' '}
               <span className="muted">
-                · {order.industry} · {order.status}
+                · {order.industry} · {ORDER_STATUS_LABELS[order.status] ?? order.status}
               </span>
             </li>
           ))}

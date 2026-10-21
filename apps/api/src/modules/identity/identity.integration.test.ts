@@ -133,6 +133,12 @@ describe.skipIf(!hasInfra)('identity — przepływ end-to-end', () => {
     expect(me.statusCode).toBe(401);
   });
 
+  it('GET /auth/session dla gościa zwraca 200 i user: null (P08)', async () => {
+    const res = await ctx.app.inject({ method: 'GET', url: '/api/v1/auth/session' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ user: null });
+  });
+
   it('/healthz raportuje zdrowe zależności', async () => {
     const res = await ctx.app.inject({ method: 'GET', url: '/healthz' });
     expect(res.statusCode).toBe(200);

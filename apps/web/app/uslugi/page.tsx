@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ListingCard, type ListingCardData } from '@/components/ui/listing-card';
 import { IndustryChips } from '@/components/ui/industry-chips';
+import { SparseCatalogNote, SPARSE_CATALOG_LIMIT } from '@/components/ui/sparse-catalog-note';
 import { publicApi } from '@/lib/server-api';
 
 import { ListingFilters } from './listing-filters';
@@ -57,6 +58,13 @@ export default async function ListingsPage({
     (typeof params.priceMax === 'string' && params.priceMax),
   );
 
+  // P10: przy kilku usługach filtry nad 1–3 kartami tylko udają katalog.
+  const sparse =
+    !hasFilters &&
+    listings.length > 0 &&
+    listings.length < SPARSE_CATALOG_LIMIT &&
+    !data?.nextCursor;
+
   const nextParams = new URLSearchParams(query);
   if (data?.nextCursor) nextParams.set('cursor', data.nextCursor);
 
@@ -75,7 +83,7 @@ export default async function ListingsPage({
           wynosi 3, więc frazy „HR", „IT", „AI" NIGDY nie wejdą do indeksu
           FULLTEXT i nie da się ich wyszukać — tag jest jedyną drogą do tych
           kategorii. Filtrowanie zwykłym linkiem, więc działa też bez JS. */}
-      {popularTags.length > 0 && (
+      {!sparse && popularTags.length > 0 && (
         <ul className="tag-chips" aria-label="Popularne tagi">
           {activeTag && (
             <li>
@@ -99,59 +107,61 @@ export default async function ListingsPage({
 
       {/* Na 390 px cztery pola filtrów spychały pierwszą kartę o cały ekran —
           zwijamy je za przyciskiem (ListingFilters); desktop widzi je od razu. */}
-      <ListingFilters>
-        <form className="filters" method="get">
-          <div className="field">
-            <label htmlFor="q">Szukaj</label>
-            <input
-              id="q"
-              name="q"
-              defaultValue={typeof params.q === 'string' ? params.q : ''}
-              placeholder="np. automatyzacja sprzedaży"
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="industryId">Branża</label>
-            <select
-              id="industryId"
-              name="industryId"
-              defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
-            >
-              <option value="">Wszystkie</option>
-              {industries.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="priceMax">Cena do (zł)</label>
-            <input
-              id="priceMax"
-              name="priceMax"
-              type="number"
-              min={0}
-              defaultValue={typeof params.priceMax === 'string' ? params.priceMax : ''}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="sort">Sortowanie</label>
-            <select
-              id="sort"
-              name="sort"
-              defaultValue={typeof params.sort === 'string' ? params.sort : 'newest'}
-            >
-              <option value="newest">Najnowsze</option>
-              <option value="price_asc">Cena: od najniższej</option>
-              <option value="price_desc">Cena: od najwyższej</option>
-            </select>
-          </div>
-          <button className="btn" type="submit">
-            Filtruj
-          </button>
-        </form>
-      </ListingFilters>
+      {!sparse && (
+        <ListingFilters>
+          <form className="filters" method="get">
+            <div className="field">
+              <label htmlFor="q">Szukaj</label>
+              <input
+                id="q"
+                name="q"
+                defaultValue={typeof params.q === 'string' ? params.q : ''}
+                placeholder="np. automatyzacja sprzedaży"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="industryId">Branża</label>
+              <select
+                id="industryId"
+                name="industryId"
+                defaultValue={typeof params.industryId === 'string' ? params.industryId : ''}
+              >
+                <option value="">Wszystkie</option>
+                {industries.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="priceMax">Cena do (zł)</label>
+              <input
+                id="priceMax"
+                name="priceMax"
+                type="number"
+                min={0}
+                defaultValue={typeof params.priceMax === 'string' ? params.priceMax : ''}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="sort">Sortowanie</label>
+              <select
+                id="sort"
+                name="sort"
+                defaultValue={typeof params.sort === 'string' ? params.sort : 'newest'}
+              >
+                <option value="newest">Najnowsze</option>
+                <option value="price_asc">Cena: od najniższej</option>
+                <option value="price_desc">Cena: od najwyższej</option>
+              </select>
+            </div>
+            <button className="btn" type="submit">
+              Filtruj
+            </button>
+          </form>
+        </ListingFilters>
+      )}
 
       {listings.length === 0 ? (
         /* CTA zależne od kontekstu (ux-copy, PD4): przy aktywnych filtrach
@@ -181,6 +191,13 @@ export default async function ListingsPage({
             <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
+      )}
+
+      {sparse && (
+        <SparseCatalogNote>
+          Katalog dopiero rośnie. Opisz, czego potrzebujesz — zlecenie zobaczą wszyscy Liderzy,
+          także ci, którzy nie mają jeszcze usługi w katalogu.
+        </SparseCatalogNote>
       )}
 
       {data?.nextCursor && (
