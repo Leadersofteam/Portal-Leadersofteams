@@ -1,0 +1,5 @@
+# Fałszywe alarmy gitleaks. Każdy wpis = odcisk znaleziska (commit:plik:reguła:linia)
+# i powód, dla którego to nie jest sekret. Prawdziwy sekret się rotuje, nie wpisuje tutaj.
+
+# Hasło konta tworzonego przez test e2e (NEW_PASSWORD) — fikcyjne, konto żyje tylko w bazie e2e.
+5c0325863e29b0aaf9b7bf5ffb90c44a65ebbd1c:apps/web/e2e/email-flows.spec.ts:generic-api-key:17
