@@ -44,8 +44,16 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
     const company = await register(emails[1]!, 'Firma Pytająca');
     companyCookie = company.cookie;
 
-    const industries = await ctx.app.inject({ method: 'GET', url: '/api/v1/industries' });
-    industryId = (industries.json() as { industries: Array<{ id: string }> }).industries[0]!.id;
+    // Własna branża testowa, jak w pozostałych testach integracyjnych. Wcześniej
+    // brana była pierwsza z GET /industries — działało tylko na bazie zasianej
+    // `prisma/seed.ts`. CI robi samo `db push`, więc lista była pusta i cały plik
+    // padał w beforeAll (niewidoczne, dopóki job ginął wcześniej na pnpm).
+    const industry = await ctx.prisma.industry.upsert({
+      where: { slug: `test-${run}` },
+      update: {},
+      create: { name: `Branża testowa ${run}`, slug: `test-${run}` },
+    });
+    industryId = industry.id;
 
     const profile = await ctx.app.inject({
       method: 'POST',
@@ -75,7 +83,9 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
     });
     await ctx.prisma.order.deleteMany({ where: { companyId } });
     await ctx.prisma.company.deleteMany({ where: { id: companyId } });
+    await ctx.prisma.leaderProfile.deleteMany({ where: { userId: { in: ids } } });
     await ctx.prisma.user.deleteMany({ where: { email: { in: emails } } });
+    await ctx.prisma.industry.deleteMany({ where: { slug: `test-${run}` } });
     await ctx.close();
   });
 
