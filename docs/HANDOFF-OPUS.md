@@ -11,6 +11,14 @@
 > Konto `asfsaf@gmail.com` usunięte na polecenie właściciela (był to adres testowy).
 > Wszystkie kontenery `healthy`, `worker.alive` i `uploads` zielone, zero błędów w logach.
 
+> **🔄 SESJA 2026-10-20: „Drabinka w przestrzeni" — gałąź `claude/drabinka-3d`, NIEWDROŻONE.**
+> Kierunek ekosystemu „Instrument w przestrzeni" (kanon: [KIERUNEK-3D.md](KIERUNEK-3D.md)). Hero dostał drabinkę
+> z cząstek nad `LadderArt`: 7 szczebli w `--level-1…7`, przy przewinięciu punkty przenoszą się 1–3 szczeble wyżej —
+> światło się wspina i ociepla, czyli zdanie „status trzeba zapracować" powiedziane ruchem. Silnik `components/scene/`
+> (kopia z .com, zero sieci — ADR-009). Bez WebGL zostaje SVG. **Zweryfikowane:** typecheck, `pnpm lint`, prettier,
+> `next build`, zrzuty 1440 i 390 przy 0/300/600 px. **Niezweryfikowane:** staging, produkcja, e2e (`infra/e2e.sh`
+> wymaga realnego MySQL/Redis), Safari/iOS, prawdziwe GPU. Nowe miny: sekcja „Scena 3D" w MINY.md.
+>
 > **✅ SESJA 2026-08-19 (PM infrastruktury): digest naprawiony + role z UI** (`380bd08`, `c562583`).
 > Wdrożone na staging i produkcję (migracja expand-only: `users.digestOptOutAt`,
 > `users.digestToken`, tabela `worker_state`), przejście ścieżek NA ŻYWO kontami testowymi
