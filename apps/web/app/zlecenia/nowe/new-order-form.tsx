@@ -47,14 +47,27 @@ function draftFromForm(form: FormData): Draft {
   };
 }
 
+// Wejście z profilu Lidera bez usług (fala 2): „Zaproponuj zlecenie" niesie
+// Lidera, żeby formularz podpowiedział jego branżę i powiedział wprost, co się
+// stanie. Portal nie ma wiadomości prywatnych (ADR-010), więc nie obiecujemy
+// „wysyłki do Lidera" — zlecenie trafia do katalogu jego branży.
+export interface ForLeader {
+  id: string;
+  name: string;
+  industryId: string;
+  industryName: string;
+}
+
 export function NewOrderForm({
   guest = false,
   companies,
   industries,
+  forLeader = null,
 }: {
   guest?: boolean;
   companies: Option[];
   industries: Option[];
+  forLeader?: ForLeader | null;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +168,13 @@ export function NewOrderForm({
           Zlecenie powstaje jako szkic — opublikujesz je po sprawdzeniu treści.
         </p>
       )}
+      {forLeader && !draft && (
+        <p className="form-for-leader" data-testid="for-leader">
+          Zlecenie z myślą o: <Link href={`/liderzy/${forLeader.id}`}>{forLeader.name}</Link>. Po
+          publikacji trafi do zleceń z branży „{forLeader.industryName}” — {forLeader.name} i inni
+          Liderzy z tej branży złożą ofertę, a Ty wybierzesz.
+        </p>
+      )}
       {!guest && draft && (
         <p className="muted" data-testid="draft-restored">
           Wypełniliśmy formularz Twoim opisem sprzed rejestracji. Sprawdź i zapisz.
@@ -190,7 +210,12 @@ export function NewOrderForm({
           <label htmlFor="industryId">Branża</label>
           {/* P06: pusta opcja zamiast pierwszej z listy — inaczej „AI i automatyzacja"
               wyglądało na wybór, którego nikt nie zrobił. `required` pilnuje wyboru. */}
-          <select id="industryId" name="industryId" required defaultValue={draft?.industryId ?? ''}>
+          <select
+            id="industryId"
+            name="industryId"
+            required
+            defaultValue={draft?.industryId ?? forLeader?.industryId ?? ''}
+          >
             <option value="" disabled>
               Wybierz branżę
             </option>

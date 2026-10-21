@@ -51,4 +51,27 @@ test('gość: opis potrzeby → konto i firma → szkic wraca → publikacja', a
       await btn.click({ timeout: 1_500 }).catch(() => {});
     await expect(page.getByText('Otwarte na oferty').first()).toBeVisible({ timeout: 2_000 });
   }).toPass({ timeout: 30_000 });
+
+  // 5) Fala 2 (21.10): panel Firmy mówi o JEJ zleceniu, nie o Drabince.
+  await page.goto('/panel');
+  await expect(page.getByText('Panel firmy')).toBeVisible({ timeout: 30_000 });
+  await expect(
+    page.getByRole('heading', { name: `„Automatyzacja ofertowania ${stamp}” czeka na oferty` }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Zobacz zlecenie' })).toBeVisible();
+});
+
+test('fala 2: Firma jest akcją główną, /szukam-wykonawcy to 308 na /dla-firm', async ({ page }) => {
+  await page.goto('/');
+  const hero = page.locator('.hero-cta').first();
+  // Pierwszy przycisk hero (wypełniony) prowadzi do formularza zlecenia.
+  await expect(hero.locator('a.btn').first()).toHaveAttribute('href', '/zlecenia/nowe');
+  await expect(hero.locator('a.btn').first()).toHaveText('Dodaj zlecenie');
+
+  const res = await page.request.get('/szukam-wykonawcy', { maxRedirects: 0 });
+  expect(res.status()).toBe(308);
+  expect(res.headers()['location']).toMatch(/\/dla-firm$/);
+  await page.goto('/szukam-wykonawcy');
+  await expect(page).toHaveURL(/\/dla-firm$/);
+  await expect(page.getByText('Trzy drogi do Lidera')).toBeVisible();
 });

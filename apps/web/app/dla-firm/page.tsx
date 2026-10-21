@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/json-ld';
-import { LevelBadge } from '@/components/ui/level-badge';
-import { hasTrust, TrustStrip } from '@/components/ui/trust-strip';
+import { LeaderRow, type LeaderRowData } from '@/components/ui/leader-row';
+import { ListingCard, type ListingCardData } from '@/components/ui/listing-card';
+import { FIRM_STEPS } from '@/lib/firm-steps';
 import { SITE_URL } from '@/lib/site';
 import { publicApi } from '@/lib/server-api';
 
@@ -13,42 +14,37 @@ import { publicApi } from '@/lib/server-api';
 // bez konta — konto zakłada dopiero po opisaniu zlecenia (model Oferteo/Fixly,
 // brief 3.4: publikacja bez weryfikacji na starcie).
 // ADR-010: żadnych liczników „X firm już…", żadnej presji — same zasady.
+// Fala 2 (21.10): wchłonęła /szukam-wykonawcy (308 w next.config) — trzy drogi
+// do Lidera i gotowe usługi są teraz tutaj, jedna strona na jedną intencję.
 export const metadata: Metadata = {
   title: 'Dla firm — zleć pracę Liderowi | Leaders of Teams',
   description:
-    'Opisz potrzebę, dostań oferty od Liderów z jawnym poziomem i ocenami, dopytaj w rozmowie przy ofercie i wybierz. Bez prowizji, bez weryfikacji na starcie.',
+    'Opisz potrzebę i zbieraj oferty, wybierz gotową usługę z jawną ceną albo zapytaj konkretnego Lidera. Poziom i oceny Liderów są zapracowane, nie kupione. Bez prowizji.',
   alternates: { canonical: '/dla-firm' },
 };
 
 export const revalidate = 300;
 
-interface LeaderRow {
-  id: string;
-  displayName: string;
-  headline: string;
-  industry: { name: string };
-  level: number;
-  averageRating: number | null;
-  reviewCount: number;
-  completedOrders?: number;
-}
-
-const STEPS = [
+// Trzy drogi do Lidera (dawne /szukam-wykonawcy). Pierwsza jest akcją główną —
+// pozostałe dwie to skróty dla kogoś, kto już wie, czego chce.
+const PATHS = [
   {
     title: 'Opisz potrzebę',
-    body: 'Tytuł, branża, widełki budżetu i kilka zdań o tym, co ma powstać. Konto założysz w następnym kroku — jednym formularzem, razem z nazwą firmy.',
+    body: 'Nie wiesz jeszcze kto — wiesz co. Publikujesz zlecenie z widełkami, Liderzy odpowiadają ofertą, Ty dopytujesz i wybierasz.',
+    cta: 'Dodaj zlecenie',
+    href: '/zlecenia/nowe',
   },
   {
-    title: 'Dostań oferty',
-    body: 'Liderzy odpowiadają ofertą z kwotą i terminem. Przy każdej widzisz poziom w Drabince, oceny od innych Firm i liczbę zrealizowanych zleceń — żadnego z tych sygnałów nie da się kupić.',
+    title: 'Wybierz gotową usługę',
+    body: 'Konkretny zakres, deklarowana cena, pakiety. Wysyłasz zapytanie do Lidera i rozmawiacie w wątku — z niego powstaje zlecenie z pełnym cyklem ocen.',
+    cta: 'Przeglądaj usługi',
+    href: '/uslugi',
   },
   {
-    title: 'Dopytaj i wybierz',
-    body: 'Każda oferta ma rozmowę: dopytasz o zakres, termin albo cenę, zanim wybierzesz. O nowej ofercie i odpowiedzi dostaniesz e-mail.',
-  },
-  {
-    title: 'Odbierz pracę i oceń',
-    body: 'Lider oddaje pracę, Ty potwierdzasz wykonanie. Oceniacie się nawzajem — obie oceny publikują się naraz, więc żadna strona nie ocenia „pod dyktando”.',
+    title: 'Zapytaj konkretnego Lidera',
+    body: 'Katalog z poziomem w Drabince, ocenami i liczbą zrealizowanych zleceń. Na profilu Lidera jest przycisk „Zapytaj”.',
+    cta: 'Katalog Liderów',
+    href: '/liderzy',
   },
 ];
 
@@ -72,8 +68,12 @@ const FAQ = [
 ];
 
 export default async function ForCompaniesPage() {
-  const data = await publicApi<{ leaders: LeaderRow[] }>('/leaders?limit=6').catch(() => null);
-  const leaders = (data?.leaders ?? []).filter((l) => l.level >= 1).slice(0, 3);
+  const [leadersData, listingsData] = await Promise.all([
+    publicApi<{ leaders: LeaderRowData[] }>('/leaders?limit=6').catch(() => null),
+    publicApi<{ listings: ListingCardData[] }>('/listings?limit=3').catch(() => null),
+  ]);
+  const leaders = (leadersData?.leaders ?? []).filter((l) => l.level >= 1).slice(0, 3);
+  const listings = (listingsData?.listings ?? []).slice(0, 3);
 
   return (
     <main className="landing">
@@ -103,16 +103,16 @@ export default async function ForCompaniesPage() {
         <div className="hero-copy">
           <span className="hero-eyebrow">Dla firm</span>
           <h1>
-            Opisz, co ma powstać. <span className="gradient-text">Wybierz, komu ufasz.</span>
+            Opisz, co ma powstać. <span className="rung-mark">Wybierz, komu ufasz.</span>
           </h1>
           <p>
-            Zlecenie publikujesz bez konta w pierwszym kroku i bez prowizji. Oferty składają
-            Liderzy, których poziom i oceny są jawne i zapracowane — a przy każdej ofercie masz
-            rozmowę, żeby dopytać, zanim wybierzesz.
+            Zlecenie opisujesz bez konta i bez prowizji. Oferty składają Liderzy, których poziom i
+            oceny są jawne i zapracowane — a przy każdej ofercie masz rozmowę, żeby dopytać, zanim
+            wybierzesz.
           </p>
           <div className="hero-cta">
             <Link className="btn" href="/zlecenia/nowe">
-              Opisz potrzebę
+              Dodaj zlecenie
             </Link>
             <Link className="btn secondary" href="/uslugi">
               Przeglądaj gotowe usługi
@@ -123,42 +123,55 @@ export default async function ForCompaniesPage() {
 
       <section>
         <span className="section-eyebrow">Jak to działa</span>
-        <h2>Cztery kroki, jedno miejsce</h2>
-        <div className="steps">
-          {STEPS.map((s) => (
-            <div className="step" key={s.title}>
+        <h2>Od opisu do ocenionej pracy</h2>
+        <ol className="climb">
+          {FIRM_STEPS.map((s) => (
+            <li key={s.title}>
               <h3>{s.title}</h3>
               <p>{s.body}</p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
+
+      <section>
+        <span className="section-eyebrow">Trzy drogi do Lidera</span>
+        <h2>Wiesz, czego potrzebujesz — wybierz wejście</h2>
+        <ul className="paths">
+          {PATHS.map((p) => (
+            <li key={p.title}>
+              <div>
+                <h3>{p.title}</h3>
+                <p>{p.body}</p>
+              </div>
+              <Link href={p.href}>{p.cta} →</Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {listings.length > 0 && (
+        <section>
+          <span className="section-eyebrow">Gotowe usługi</span>
+          <h2>Konkretny zakres, jawna cena</h2>
+          <div className="feature-grid">
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+          <p className="mt-2">
+            <Link href="/uslugi">Wszystkie usługi →</Link>
+          </p>
+        </section>
+      )}
 
       {leaders.length > 0 && (
         <section>
           <span className="section-eyebrow">Kogo spotkasz</span>
           <h2>Poziom to dowód, nie deklaracja</h2>
-          <div className="feature-grid">
+          <div className="leader-list">
             {leaders.map((leader) => (
-              <Link key={leader.id} href={`/liderzy/${leader.id}`} className="card">
-                <LevelBadge level={leader.level} />
-                <h3 className="mt-2">{leader.displayName}</h3>
-                <p>{leader.headline}</p>
-                <p className="muted mt-1">{leader.industry.name}</p>
-                {hasTrust({
-                  averageRating: leader.averageRating,
-                  reviewCount: leader.reviewCount,
-                  completedOrders: leader.completedOrders ?? 0,
-                }) && (
-                  <TrustStrip
-                    facts={{
-                      averageRating: leader.averageRating,
-                      reviewCount: leader.reviewCount,
-                      completedOrders: leader.completedOrders ?? 0,
-                    }}
-                  />
-                )}
-              </Link>
+              <LeaderRow key={leader.id} leader={leader} />
             ))}
           </div>
           <p className="mt-2">
@@ -180,11 +193,11 @@ export default async function ForCompaniesPage() {
         </div>
       </section>
 
-      <section className="card" style={{ textAlign: 'center' }}>
+      <section className="closing-cta">
         <h2>Masz konkretną potrzebę?</h2>
         <p className="muted">Formularz zajmie dwie minuty. Konto założysz po nim, razem z firmą.</p>
         <Link className="btn" href="/zlecenia/nowe">
-          Opisz potrzebę →
+          Dodaj zlecenie
         </Link>
       </section>
     </main>

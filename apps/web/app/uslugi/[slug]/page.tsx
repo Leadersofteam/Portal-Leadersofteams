@@ -167,7 +167,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
       {!isOwner && (
         <>
-          <h2>Zapytaj o tę usługę</h2>
+          <h2 id="zapytaj">Zapytaj o tę usługę</h2>
           {me?.user ? (
             companies.companies.length > 0 ? (
               <InquiryForm

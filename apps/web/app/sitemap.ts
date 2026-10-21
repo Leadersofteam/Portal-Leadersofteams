@@ -57,7 +57,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: url('/droga'), changeFrequency: 'weekly', priority: 0.9 },
     // PL2: wejścia dla drugiej strony rynku.
     { url: url('/dla-firm'), changeFrequency: 'weekly', priority: 0.8 },
-    { url: url('/szukam-wykonawcy'), changeFrequency: 'weekly', priority: 0.8 },
     // PL4: baza wiedzy Q&A i strony porównawcze.
     { url: url('/pytania'), changeFrequency: 'daily', priority: 0.7 },
     ...POROWNANIA.map((p): Entry => ({

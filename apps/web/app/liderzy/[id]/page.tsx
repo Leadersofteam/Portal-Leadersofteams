@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
@@ -122,8 +123,32 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
   const nextRung = (levelsData?.levels ?? []).find((l) => l.level === profile.level + 1) ?? null;
   const journey = data.journey ?? { joinedAt: null, achievements: [] };
 
+  // Fala 2 (P11): akcja kontaktu. Portal nie ma wiadomości prywatnych
+  // (ADR-010), więc „Zapytaj" prowadzi istniejącą drogą: zapytanie o usługę
+  // (wątek z Liderem, z którego powstaje zlecenie), a gdy Lider nie ma usług —
+  // formularz zlecenia z jego branżą podpowiedzianą (?lider=).
+  const contact = isSelf
+    ? null
+    : listings.length === 1
+      ? {
+          href: `/uslugi/${listings[0]?.slug}#zapytaj`,
+          label: 'Zapytaj o usługę',
+          hint: 'Wiadomość trafia do Lidera; rozmowa toczy się w wątku zapytania. Bez prowizji.',
+        }
+      : listings.length > 1
+        ? {
+            href: '#uslugi',
+            label: 'Zapytaj o usługę',
+            hint: `Wybierz jedną z ${listings.length} usług — zapytanie trafia do Lidera. Bez prowizji.`,
+          }
+        : {
+            href: `/zlecenia/nowe?lider=${profile.id}`,
+            label: 'Zaproponuj zlecenie',
+            hint: 'Lider nie ma jeszcze usług w katalogu — opisz zlecenie, a złoży ofertę.',
+          };
+
   return (
-    <main>
+    <main className={contact ? 'has-contact-bar' : undefined}>
       <JsonLd
         data={leaderProfileJsonLd({
           id: profile.id,
@@ -167,6 +192,22 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
       </p>
       {profile.bio && <p className="description">{profile.bio}</p>}
 
+      {contact && (
+        <>
+          <div className="leader-contact">
+            <Link className="btn" href={contact.href}>
+              {contact.label}
+            </Link>
+            <p className="hint">{contact.hint}</p>
+          </div>
+          <div className="leader-contact-bar">
+            <Link className="btn" href={contact.href}>
+              {contact.label}
+            </Link>
+          </div>
+        </>
+      )}
+
       {/* Pas zaufania — lustro kart z profilu Firmy (feature-grid + stat-number):
           jeden język wiarygodności po obu stronach rynku. Karta pojawia się
           tylko dla ZAPRACOWANEGO faktu — świeżemu Liderowi nie wystawiamy zer. */}
@@ -202,7 +243,7 @@ export default async function LeaderProfilePage({ params }: { params: Promise<{ 
       </section>
 
       {listings.length > 0 && (
-        <section>
+        <section id="uslugi">
           <h2>Usługi Lidera ({listings.length})</h2>
           <div className="feature-grid">
             {listings.map((listing) => (

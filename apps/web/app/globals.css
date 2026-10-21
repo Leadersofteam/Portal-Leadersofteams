@@ -537,17 +537,38 @@ main {
   color: var(--text-faint);
 }
 
-/* Utility: gradientowy tekst na akcentach nagłówka */
+/* Akcent nagłówka: „szczeble pod słowem" (fala 2, 21.10). Zastępuje gradient
+   fiolet→róż na tekście (background-clip:text) — wzorzec z listy anty-
+   generycznej. Tekst zostaje pełnym --text-strong (czytelny w obu motywach),
+   a pod nim siedem odcinków w kolorach poziomów — sygnatura Portalu, ta sama
+   skala co Drabinka. `.gradient-text` zostaje aliasem, żeby strony, które go
+   jeszcze używają (droga, porównania), przeszły na nowy akcent bez zmian w JSX. */
+.rung-mark,
 .gradient-text {
-  background: linear-gradient(
-    115deg,
-    var(--primary-400) 10%,
-    var(--violet-500) 60%,
-    var(--gradient-tail) 100%
+  color: var(--text-strong);
+  background-image: linear-gradient(
+    90deg,
+    var(--level-1) 0% 12.7%,
+    transparent 12.7% 14.3%,
+    var(--level-2) 14.3% 27%,
+    transparent 27% 28.6%,
+    var(--level-3) 28.6% 41.3%,
+    transparent 41.3% 42.9%,
+    var(--level-4) 42.9% 55.5%,
+    transparent 55.5% 57.1%,
+    var(--level-5) 57.1% 69.8%,
+    transparent 69.8% 71.4%,
+    var(--level-6) 71.4% 84.1%,
+    transparent 84.1% 85.7%,
+    var(--level-7) 85.7% 98.4%,
+    transparent 98.4% 100%
   );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 0.11em;
+  background-position: 0 96%;
+  padding-bottom: 0.08em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* ========================= Siatka kart ========================= */
@@ -607,64 +628,6 @@ main {
   color: var(--text-muted);
   font-size: 0.94rem;
   margin: 0;
-}
-
-/* Eyebrow numeryczny/etykieta w kartach funkcji (opcjonalny) */
-.card-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  margin-bottom: 0.9rem;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(
-    135deg,
-    rgb(var(--primary-500-rgb) / 0.22),
-    rgb(var(--violet-500-rgb) / 0.18)
-  );
-  border: 1px solid rgb(var(--primary-400-rgb) / 0.3);
-  color: var(--primary-300);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-/* Karty funkcji landingu: widmowy numer zamiast szablonowego kwadracika,
-   akcent w kolorze poziomu na lewej krawędzi. */
-.feature-card {
-  position: relative;
-  overflow: hidden;
-  padding-left: 1.6rem;
-}
-
-.feature-card::after {
-  content: attr(data-num);
-  position: absolute;
-  top: -1.4rem;
-  right: -0.4rem;
-  font-family: var(--font-display);
-  font-size: 6.5rem;
-  font-weight: 800;
-  line-height: 1;
-  color: color-mix(in srgb, var(--lv, var(--primary-500)) 11%, transparent);
-  pointer-events: none;
-}
-
-.feature-card {
-  border-left: 3px solid color-mix(in srgb, var(--lv, var(--primary-500)) 55%, transparent);
-}
-
-.feature-card[data-num='01'] {
-  --lv: var(--level-2);
-}
-.feature-card[data-num='02'] {
-  --lv: var(--level-4);
-}
-.feature-card[data-num='03'] {
-  --lv: var(--level-6);
-}
-.feature-card[data-num='04'] {
-  --lv: var(--level-7);
 }
 
 /* ========================== Formularze ========================== */
@@ -1655,11 +1618,6 @@ main tbody tr:hover {
   margin-top: 0;
 }
 
-.landing .feature-card h2 {
-  font-size: 1.15rem;
-  margin: 0 0 0.5rem;
-}
-
 /* Widmowy napis nad stopką — podpis marki zamiast pustki. */
 .watermark {
   display: block;
@@ -1678,54 +1636,152 @@ main tbody tr:hover {
   overflow: hidden;
 }
 
-/* „Jak to działa" — trzy kroki połączone linią wznoszenia. */
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  counter-reset: step;
-  margin-top: 1.5rem;
+/* „Jak to działa" jako wspinaczka (fala 2, 21.10) — zamiast siatki trzech
+   kart z numerem w kółku. Każdy krok stoi na szczeblu w kolorze poziomu, od
+   chłodnego do bursztynu, a poręcz łączy szczeble. Bez kart: tekst czyta się
+   jak droga, nie jak cennik funkcji. */
+.climb {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  max-width: 44rem;
 }
 
-.steps .step {
+.climb li {
+  --lv: var(--level-2);
   position: relative;
-  padding: 1.35rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--sheen), transparent 40%), var(--surface);
+  padding: 0 0 1.5rem 3.4rem;
 }
 
-.steps .step::before {
-  counter-increment: step;
-  content: counter(step);
-  display: inline-flex;
+.climb li::before {
+  content: counter(list-item);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  margin-bottom: 0.9rem;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(
-    135deg,
-    rgb(var(--primary-500-rgb) / 0.22),
-    rgb(var(--violet-500-rgb) / 0.18)
-  );
-  border: 1px solid rgb(var(--primary-400-rgb) / 0.3);
-  color: var(--primary-300);
-  font-weight: 700;
+  width: 2.4rem;
+  height: 1.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--lv) 60%, transparent);
+  background: color-mix(in srgb, var(--lv) 14%, transparent);
+  color: var(--text-strong);
   font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
-.steps .step h3 {
-  margin: 0 0 0.45rem;
+.climb li::after {
+  content: '';
+  position: absolute;
+  left: calc(1.2rem - 1px);
+  top: 1.95rem;
+  bottom: 0.25rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lv) 70%, transparent),
+    color-mix(in srgb, var(--lv) 15%, transparent)
+  );
+}
+
+.climb li:last-child {
+  padding-bottom: 0;
+}
+
+.climb li:last-child::after {
+  display: none;
+}
+
+.climb li:nth-child(2) {
+  --lv: var(--level-4);
+}
+.climb li:nth-child(3) {
+  --lv: var(--level-6);
+}
+.climb li:nth-child(4) {
+  --lv: var(--level-7);
+}
+
+.climb h3 {
+  margin: 0.1rem 0 0.35rem;
+  font-size: 1.08rem;
+  color: var(--text-strong);
+}
+
+.climb p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* Trzy drogi do Lidera (/dla-firm) — wiersze z linią podziału zamiast kart:
+   to wybór wejścia, nie trzy „funkcje". Link po prawej, na 390 pod tekstem. */
+.paths {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.paths li {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.paths h3 {
+  margin: 0 0 0.3rem;
   font-size: 1.05rem;
   color: var(--text-strong);
 }
 
-.steps .step p {
+.paths p {
   margin: 0;
+  max-width: 40rem;
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: 0.94rem;
+}
+
+.paths li > a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .paths li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+}
+
+.leader-list {
+  margin-top: 1.5rem;
+}
+
+/* Sekcja dla drugiej publiczności (Lider) na stronie głównej: oddzielona
+   linią, nie kartą — strona ma jedną akcję główną (Firma). */
+.landing section.leader-door {
+  padding-top: 3rem;
+  border-top: 1px solid var(--border);
+}
+
+.leader-door > p.muted {
+  max-width: 42rem;
+}
+
+.landing section.closing-cta {
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
 }
 
 /* Wizual Drabinki: 7 szczebli wspinających się ku bursztynowi. */
@@ -2535,4 +2591,67 @@ a.quoted-post:hover {
 .field-hint {
   margin: 0.35rem 0 0;
   font-size: 0.85rem;
+}
+
+/* Formularz zlecenia otwarty z profilu Lidera (fala 2). */
+.form-for-leader {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-body);
+  font-size: 0.93rem;
+}
+
+/* Kontakt z profilu Lidera (fala 2, P11): profil był ślepą uliczką — 2680 px
+   bez jednego przycisku. Akcja stoi pod nagłówkiem, a na telefonie dodatkowo
+   pasek nad dolną nawigacją (fixed, nie sticky: sticky z `bottom` znika, gdy
+   przewiniesz POZA element — czyli dokładnie wtedy, gdy czytasz opinie). */
+.leader-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  align-items: center;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.leader-contact .hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.leader-contact-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .leader-contact-bar {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    z-index: 30;
+    display: flex;
+    padding: 0.5rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .leader-contact-bar .btn {
+    flex: 1 1 auto;
+  }
+
+  main.has-contact-bar {
+    padding-bottom: 5rem;
+  }
+
+  /* Na telefonie akcję niesie pasek — w treści zostaje sama podpowiedź,
+     żeby w pierwszym ekranie nie było dwóch identycznych przycisków. */
+  .leader-contact .btn {
+    display: none;
+  }
 }

@@ -29,9 +29,9 @@ async function register(page: Page, displayName: string, email: string) {
 test('gość na „/" zostaje na landingu i widzi linki logowania', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/(\?.*)?$/);
-  await expect(page.getByRole('heading', { name: /Status, którego nie da się kupić/ })).toBeVisible(
-    { timeout: 15_000 },
-  );
+  await expect(page.getByRole('heading', { name: /Opisz zlecenie\. Oferty złożą/ })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(
     page.getByRole('contentinfo').getByRole('link', { name: 'Zaloguj się' }),
   ).toBeVisible({ timeout: 15_000 });
@@ -49,9 +49,9 @@ test('zalogowany: „/" przekierowuje do /panel, furtka pokazuje landing bez kł
 
   // 2. Furtka: landing osiągalny świadomie, a stopka zna zalogowanego.
   await page.goto('/?widok=landing');
-  await expect(page.getByRole('heading', { name: /Status, którego nie da się kupić/ })).toBeVisible(
-    { timeout: 15_000 },
-  );
+  await expect(page.getByRole('heading', { name: /Opisz zlecenie\. Oferty złożą/ })).toBeVisible({
+    timeout: 15_000,
+  });
   const stopka = page.getByRole('contentinfo');
   await expect(stopka.getByRole('link', { name: 'Panel' })).toBeVisible({ timeout: 15_000 });
   await expect(stopka.getByRole('link', { name: 'Zaloguj się' })).toHaveCount(0);
@@ -61,7 +61,7 @@ test('zalogowany: „/" przekierowuje do /panel, furtka pokazuje landing bez kł
   await page.getByRole('button', { name: 'Wyloguj się' }).click();
   await page.waitForURL(/\/(\?.*)?$/, { timeout: 30_000 });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Status, którego nie da się kupić/ })).toBeVisible(
-    { timeout: 15_000 },
-  );
+  await expect(page.getByRole('heading', { name: /Opisz zlecenie\. Oferty złożą/ })).toBeVisible({
+    timeout: 15_000,
+  });
 });

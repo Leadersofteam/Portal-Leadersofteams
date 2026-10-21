@@ -107,7 +107,7 @@ export default async function IndustryListingsHub({
           {' · '}
           <Link href={`/liderzy/branza/${slug}`}>Liderzy: {industry.name} →</Link>
           {' · '}
-          <Link href="/szukam-wykonawcy">Szukam wykonawcy →</Link>
+          <Link href="/dla-firm">Szukam wykonawcy →</Link>
         </p>
       </section>
     </main>

@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   // Bez tego Next robi 308 usuwając ukośnik → handshake trafia w 404. Wyłączamy
   // auto-redirect, żeby rewrite proxował ścieżkę 1:1 do api.
   skipTrailingSlashRedirect: true,
+  async redirects() {
+    // Fala 2 (21.10): /szukam-wykonawcy i /dla-firm mówiły do tej samej osoby
+    // (Firmy) dwoma różnymi nagłówkami. Zostaje jedna strona; stary adres 308,
+    // żeby linki z zewnątrz i z indeksu wyszukiwarki nie trafiały w 404.
+    return [{ source: '/szukam-wykonawcy', destination: '/dla-firm', permanent: true }];
+  },
   async rewrites() {
     // Cały ruch API idzie przez origin webu (same-origin cookies, zero CORS).
     // Dokładna reguła socket.io PRZED ogólną: zachowuje literalny końcowy ukośnik

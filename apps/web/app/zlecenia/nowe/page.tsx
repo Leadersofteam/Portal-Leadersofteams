@@ -1,6 +1,6 @@
 import { serverApi } from '@/lib/server-api';
 
-import { NewOrderForm } from './new-order-form';
+import { NewOrderForm, type ForLeader } from './new-order-form';
 
 export const metadata = { title: 'Nowe zlecenie — Leaders of Teams' };
 
@@ -9,7 +9,28 @@ export const metadata = { title: 'Nowe zlecenie — Leaders of Teams' };
 // zakłada jednym krokiem na /rejestracja?cel=firma, a po powrocie formularz
 // jest wypełniony i zapisuje szkic. Publikacja wymaga potwierdzonego adresu
 // (bramka w API, gdy poczta włączona) — to jedyna bariera, i celowo późna.
-export default async function NewOrderPage() {
+export default async function NewOrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lider?: string }>;
+}) {
+  const { lider } = await searchParams;
+  // Id z adresu idzie do ścieżki API — tylko znaki cuid, nic, co zmieni ścieżkę.
+  const leaderData =
+    lider && /^[a-z0-9]{10,40}$/.test(lider)
+      ? await serverApi<{
+          profile: { id: string; displayName: string; industry: { id: string; name: string } };
+        }>(`/leaders/${lider}`).catch(() => null)
+      : null;
+  const forLeader: ForLeader | null = leaderData
+    ? {
+        id: leaderData.profile.id,
+        name: leaderData.profile.displayName,
+        industryId: leaderData.profile.industry.id,
+        industryName: leaderData.profile.industry.name,
+      }
+    : null;
+
   const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
   const isLoggedIn = Boolean(me?.user);
 
@@ -26,6 +47,7 @@ export default async function NewOrderPage() {
         guest={!isLoggedIn}
         companies={companies?.companies ?? []}
         industries={industries?.industries ?? []}
+        forLeader={forLeader}
       />
     </main>
   );
