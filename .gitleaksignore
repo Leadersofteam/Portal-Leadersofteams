@@ -6,3 +6,9 @@
 
 # Nazwa klucza sessionStorage ze szkicem formularza zlecenia (wersjonowana nazwa, nie sekret).
 386c1330c00a7442a398c5ed3b32e1705f1d8151:apps/web/app/zlecenia/nowe/new-order-form.tsx:generic-api-key:19
+
+# Tag obrazu Dockera do wycofania wdrożenia (docs/SESJA-NASTEPNA.md na gałęzi
+# feat/droga-lidera-pl0-pl1), nie sekret. Uwaga: gitleaks skanuje historię WSZYSTKICH
+# gałęzi (fetch-depth: 0, domyślne --all), więc fałszywy alarm z dowolnej gałęzi
+# czerwieni każdy PR i main — odcisk wpisuje się tutaj, nie na tamtej gałęzi.
+0493ddaa0eb61d7f3f1cc934617a476ae6151bdf:docs/SESJA-NASTEPNA.md:generic-api-key:7
