@@ -1,5 +1,16 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-10-22 — `origin/main` SCALONY do gałęzi prod i WDROŻONY (prod `52ff25c`).** Dług gałęzi wobec main: 24 → 0.
+> Konflikty: logo — wersja z PR #19 (drabina z poręczami, gradient sieci; og.tsx i ikony PWA z main już jej używały,
+> mieszanka dałaby dwa znaki), `page.tsx` — hero fali 2 + `LadderScene`, dokumenty — obie strony. Schemat: bez migracji.
+> `docs/program-droga-lidera` wchłonięta (gałąź miała nowszą wersję). `claude/focused-shirley-01366f` — poprawka
+> `/me/listings` już w gałęzi, do zamknięcia. **Regresja ze scalenia naprawiona:** kanwa sceny 3D dawała poziomy scroll
+> 390 → 465 px. **Zastane naprawione:** hero dziedziczył 72 px `margin-top` sekcji (pustka nad eyebrow), pole szukania
+> 14,7 px (zoom iOS), pola 43 px, brak `touch-action`; wiersz listy podświetlał się jak klikalny, a cel miał 20 px →
+> link rozciągnięty na wiersz. **Zastane, NIE naprawione:** `notFound()` pod `loading.tsx` = HTTP 200 z noindex (MINY).
+> Dane testowe audytu 21.10 usunięte. **Sprostowanie:** baner 21.10 pisał „main ma inny schemat” — kierunek scalenia
+> main → gałąź nie przyniósł żadnej migracji; różnica dotyczy tylko wdrażania `main` wprost.
+
 > **🟢 2026-10-21 — audyt UX i dwie fale poprawek NA PRODUKCJI (prod `0207887`, gałąź `feat/droga-lidera-pl0-pl1`).**
 > Feedback właściciela: „nieintuicyjne i generyczne”. Audyt (rubryka `~/.claude/skills/audyt-ux-wspolny`): home 5,2, katalog 5,4,
 > lejek 6,0, panel firmy 4,6. Przyczyna: Portal opowiadał o Drabince zamiast o tym, co gość dostaje; Firma (źródło zleceń) była
