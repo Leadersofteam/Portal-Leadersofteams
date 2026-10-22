@@ -37,12 +37,23 @@
  * bramki przeglądarkowe (`check:perf`, `check:wcag`) mierzą stronę ZE sceną,
  * na CPU, z dławieniem ÷4. Scena nie dostaje tam taryfy ulgowej.
  *
+ * **Render programowy = odmowa (od `FIELD_VERSION` 3).** Skoro SwiftShader,
+ * llvmpipe i podobne nie odmawiają same, silnik czyta nazwę sterownika i odmawia
+ * sam. Scena na CPU konkuruje z przewijaniem o ten sam rdzeń: na runnerze CI
+ * `/` dało p95 33,4 ms przy 16,7 ms na trasach bez sceny, a poziom telefonu
+ * (35% punktów, 30 kl./s) tego nie usunął — padł dwa razy z rzędu 2026-10-22.
+ * U człowieka render programowy to maszyna bez akceleracji (VM, GPU na czarnej
+ * liście), czyli dokładnie ta, której płynne przewijanie jest droższe niż
+ * dekoracja. Ta sama decyzja co scena na `leadersofteam.pl`. Skutek dla bramek:
+ * `check:perf` i `check:wcag` mierzą w CI stronę BEZ sceny; jej koszt na
+ * prawdziwym GPU mierzy się na urządzeniu.
+ *
  * W każdym z tych przypadków wywołujący zostawia stronę taką, jaka jest bez
  * sceny.
  * Nic nie może od sceny zależeć: ani treść, ani układ.
  */
 
-export const FIELD_VERSION = 2;
+export const FIELD_VERSION = 3;
 
 /** Generator deterministyczny — ta sama scena przy każdym wejściu. */
 export const mulberry = (seed: number) => () => {
@@ -142,6 +153,13 @@ const resolveTier = (width: number): Tier => {
   }
   if (width <= 1100) return { share: 0.6, dprMax: 1.5, fps: 45, pointer: false, lerp: 0.1 };
   return { share: 1, dprMax: 2, fps: 60, pointer: true, lerp: 0.075 };
+};
+
+/** Nazwa sterownika z rozszerzenia debugowego, a bez niego ogólna nazwa z `RENDERER`. */
+const isSoftwareRenderer = (gl: WebGLRenderingContext): boolean => {
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
+  const name = gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
+  return /swiftshader|llvmpipe|softpipe|software/i.test(String(name ?? ''));
 };
 
 const VERT = `
@@ -362,6 +380,10 @@ export function mountField(
   });
   if (!glOrNull) return null;
   const gl: WebGLRenderingContext = glOrNull;
+  if (isSoftwareRenderer(gl)) {
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return null;
+  }
 
   const vs = compile(gl, gl.VERTEX_SHADER, VERT);
   const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
