@@ -37,12 +37,20 @@
  * bramki przeglądarkowe (`check:perf`, `check:wcag`) mierzą stronę ZE sceną,
  * na CPU, z dławieniem ÷4. Scena nie dostaje tam taryfy ulgowej.
  *
+ * **Render programowy dostaje poziom telefonu (od `FIELD_VERSION` 3).** Skoro
+ * SwiftShader, llvmpipe i podobne nie odmawiają, scena liczy każdy punkt na tym
+ * samym CPU, które obsługuje przewijanie. Na runnerze CI dało to p95 33,4 ms na
+ * `/` trzy przebiegi z rzędu przy 16,7 ms na trasach bez sceny (2026-10-21).
+ * U człowieka to maszyna bez akceleracji (VM, GPU na czarnej liście), więc
+ * 35% punktów i 30 kl./s są tam właściwą decyzją, a nie zabiegiem pod bramkę.
+ * Bramki dalej mierzą stronę ZE sceną, tyle że w tym poziomie.
+ *
  * W każdym z tych przypadków wywołujący zostawia stronę taką, jaka jest bez
  * sceny.
  * Nic nie może od sceny zależeć: ani treść, ani układ.
  */
 
-export const FIELD_VERSION = 2;
+export const FIELD_VERSION = 3;
 
 /** Generator deterministyczny — ta sama scena przy każdym wejściu. */
 export const mulberry = (seed: number) => () => {
@@ -134,14 +142,21 @@ interface Tier {
  * Telefon dostaje trzecią część punktów i 30 kl./s: na 390 px nikt nie
  * odróżni 2500 punktów od 7000, a bateria odróżni.
  */
-const resolveTier = (width: number): Tier => {
+const resolveTier = (width: number, software: boolean): Tier => {
   const cores = navigator.hardwareConcurrency || 4;
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
-  if (width <= 640 || cores <= 4 || memory <= 4) {
+  if (software || width <= 640 || cores <= 4 || memory <= 4) {
     return { share: 0.35, dprMax: 1.25, fps: 30, pointer: false, lerp: 0.14 };
   }
   if (width <= 1100) return { share: 0.6, dprMax: 1.5, fps: 45, pointer: false, lerp: 0.1 };
   return { share: 1, dprMax: 2, fps: 60, pointer: true, lerp: 0.075 };
+};
+
+/** Nazwa sterownika z rozszerzenia debugowego, a bez niego ogólna nazwa z `RENDERER`. */
+const isSoftwareRenderer = (gl: WebGLRenderingContext): boolean => {
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
+  const name = gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
+  return /swiftshader|llvmpipe|softpipe|software/i.test(String(name ?? ''));
 };
 
 const VERT = `
@@ -374,7 +389,7 @@ export function mountField(
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
   gl.useProgram(prog);
 
-  const tier = resolveTier(window.innerWidth);
+  const tier = resolveTier(window.innerWidth, isSoftwareRenderer(gl));
   const count = Math.max(200, Math.round(spec.count * tier.share));
   const forms = spec.formations.slice(0, 4);
   const last = forms.length - 1;
