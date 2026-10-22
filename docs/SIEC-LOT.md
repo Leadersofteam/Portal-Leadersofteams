@@ -1,6 +1,6 @@
 # Sieć Leaders of Teams — cztery marki, jedna opowieść
 
-<!-- SIEC_VERSION: 1 · 2026-10-21 -->
+<!-- SIEC_VERSION: 2 · 2026-10-22 -->
 
 > **Karta sieci.** Ten sam plik leży w czterech repozytoriach, bajt w bajt:
 > `Leadersofteam` (kanon — strona „O firmie”), `Portal-Leadersofteams`,
@@ -115,7 +115,8 @@ Marki są różne: inny znak, inny akcent, inne tło, inny bohater. Wspólna jes
     5–7 rozdziałów. W każdej chwili shader potrzebuje tylko formacji bieżącej
     i sąsiednich, więc rozwiązaniem jest podmiana bufora nieaktywnego slotu przy
     zmianie rozdziału (`bufferSubData`), nie więcej atrybutów. Zmiana silnika =
-    wszystkie trzy kopie + `FIELD_VERSION` 3 (`docs/KIERUNEK-3D.md` §4).
+    wszystkie trzy kopie + `FIELD_VERSION` 4 (`docs/KIERUNEK-3D.md` §4; wersję 3
+    zajęła 2026-10-22 odmowa renderu programowego, `.com` #180).
     `formation-v1.js` na `.pl` — pojemność sprawdzić w kroku A, przed scenariuszem.
 
 ### 3.2 Wspólny język koloru

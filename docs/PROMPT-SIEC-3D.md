@@ -1,6 +1,6 @@
 # Prompt startowy — opowieść przewijana 3D w sieci Leaders of Teams
 
-<!-- SIEC_VERSION: 1 · 2026-10-21 · ten sam plik w czterech repo, obok docs/SIEC-LOT.md -->
+<!-- SIEC_VERSION: 2 · 2026-10-22 · ten sam plik w czterech repo, obok docs/SIEC-LOT.md -->
 
 Wklej wszystko pod kreską jako pierwszą wiadomość nowej sesji. W ostatniej linii
 wpisz, którą stronę bierze ta sesja — albo `wszystkie`, wtedy kolejność z karty sieci.

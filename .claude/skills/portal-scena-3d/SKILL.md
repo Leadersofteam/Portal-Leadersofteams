@@ -57,7 +57,7 @@ Dziś drabinka gra wyłącznie w hero. Kierunek portalu, rozdziały i wspólna g
 4. **Gdzie:** hero `/` zostaje; pełny tor na `/drabinka` (ta sama scena, inna trasa).
    Progi i reguły wyłącznie z danych portalu, które `/drabinka` już renderuje.
 5. **Silnik:** tor ma 6 rozdziałów, silnik trzyma 4 formacje — okno przesuwne slotów,
-   `FIELD_VERSION` 3 we wszystkich trzech kopiach (karta §3.1 pkt 13). Kanon w `.com`.
+   `FIELD_VERSION` 4 we wszystkich trzech kopiach (karta §3.1 pkt 13). Kanon w `.com`.
 6. **Finał:** L5 → brama do aplikacji LOT, L7 → złoto (`--level-7`), wokół punktu
    zbiera się zespół → link do `app.leadersofteams.com`.
 
