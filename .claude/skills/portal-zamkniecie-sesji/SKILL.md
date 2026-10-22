@@ -52,6 +52,11 @@ jaka była przyczyna, dlaczego takie rozwiązanie, co świadomie odrzucono.
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
+**Stan gałęzi przed pushem:** uruchom `~/.claude/skills/scalanie-galezi/stan-galezi.sh /docker/portal-staging`.
+Warunek zamknięcia: „brak z main: 0” i „wypchnięta”. Te 2–3 linie wklej do raportu i do sekcji „Stan”
+w briefie; gałęzie z „wchłonięte” dopisz do listy „do zamknięcia na GitHubie” dla właściciela.
+Przed PR-em do `main` uruchom agenta `recenzent-galezi` (globalny, `~/.claude/agents/`) — przygotowuje opis PR.
+
 ```bash
 git push          # PR tworzy WŁAŚCICIEL — na VPS nie ma `gh`
 ```
