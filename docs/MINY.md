@@ -418,3 +418,21 @@ z PR #19. Wdrożenie „czystego main” = cofnięcie schematu i funkcji. Najpie
 Po usunięciu `app/szukam-wykonawcy/page.tsx` `pnpm -r typecheck` dawał TS2307 z `.next/types/app/szukam-wykonawcy/page.ts`.
 To artefakt poprzedniej budowy (git-ignored), nie kod: `rm -rf apps/web/.next/types` i typecheck jest zielony.
 
+
+## Scena 3D (2026-10-20)
+
+### Drabinka 3D jest warstwą nad SVG, nie zamiast niego
+
+`components/ui/ladder-scene.tsx` renderuje `LadderArt` ZAWSZE — SVG trzyma miejsce w układzie,
+a kanwa kładzie się na nim i gasi go dopiero po pierwszej narysowanej klatce (`data-scene="on"`).
+Usunięcie SVG „bo jest scena" dałoby skok układu i pusty hero na każdym urządzeniu bez WebGL.
+Silnik (`components/scene/particleField.ts`) to kopia z leadersofteams.com: ~6 kB własnego WebGL,
+**zero wywołań sieciowych** (ADR-009) — nie zamieniaj go na three.js z CDN. Zmiana silnika = trzy
+kopie (Portal, App, .com) + `FIELD_VERSION`. Kanon kierunku: `docs/KIERUNEK-3D.md`.
+
+### Ścisłe typy tego repo łapią silnik, który przechodzi gdzie indziej
+
+Portal kompiluje z `noUncheckedIndexedAccess`; pierwsza kopia silnika miała tu 6 błędów
+(destrukturyzacja `getImageData`, `forms[f]`, `entry` z `IntersectionObserver`), których .com i App
+nie widziały. Poprawione w KANONIE, nie w kopii — inaczej trzy pliki przestałyby być identyczne.
+Typecheck Portalu jest najostrzejszą bramką dla silnika: zmieniasz go gdziekolwiek, uruchom ją tu.

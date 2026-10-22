@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/json-ld';
-import { LadderArt } from '@/components/ui/ladder-art';
+import { LadderScene } from '@/components/ui/ladder-scene';
 import { LeaderRow, type LeaderRowData } from '@/components/ui/leader-row';
 import { FIRM_STEPS } from '@/lib/firm-steps';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
@@ -65,7 +65,8 @@ export default async function HomePage() {
           </dl>
         </div>
         <div className="hero-art-wrap">
-          <LadderArt />
+          {/* Drabinka 3D (kierunek „Instrument w przestrzeni"); bez WebGL zostaje SVG. */}
+          <LadderScene />
         </div>
       </section>
 

@@ -12,6 +12,14 @@ Monorepo pnpm: Next.js 15 + Fastify + Prisma + MySQL + Redis + BullMQ. Wdrożeni
 > nie czytaj historii. Na koniec skill `portal-zamkniecie-sesji` (nadpisuje brief). Stare prompty: `docs/archiwum/prompty/`.
 > Procesy powtarzalne są w Skillach (`.claude/skills/`) — patrz [docs/SKILLE.md](docs/SKILLE.md).
 
+> **Kierunek sieci (2026-10-21): cztery marki, cztery pytania, jedna gramatyka.**
+> `leadersofteam.pl` mówi _dlaczego_, ten portal _jak zapracować status_, aplikacja _gdzie
+> pracuje zespół_, `leadersofteams.com` _co to za produkt_. Plan opowieści przewijanej 3D
+> dla portalu („Światło z cudzych rąk” — twój punkt nigdy nie świeci sam) i dla
+> pozostałych trzech: **[docs/SIEC-LOT.md](docs/SIEC-LOT.md)** (ten sam plik w czterech
+> repo). Prompt: [docs/PROMPT-SIEC-3D.md](docs/PROMPT-SIEC-3D.md). **Znalezione przy
+> okazji:** portal nie linkuje do żadnego z trzech pozostałych adresów sieci — karta §1.
+
 ## Jedna zasada, z której wynika reszta
 
 **Status w Portalu trzeba ZAPRACOWAĆ.** Punkt Drabinki może przyznać wyłącznie drugi człowiek
@@ -68,7 +76,7 @@ pnpm build && bash infra/e2e.sh                              # + odtworzenie baz
 zrzuty 390 i 1440 px → commit → staging → prod → wpis w HANDOFF
 ```
 
-Skille: `portal-bramki` (weryfikacja), `portal-wdrozenie` (deploy), `portal-zrzuty` (zrzuty),
+Skille: `portal-bramki` (weryfikacja), `portal-wdrozenie` (deploy), `portal-zrzuty` (zrzuty), `portal-scena-3d` (drabinka 3D, kanon `docs/KIERUNEK-3D.md`),
 `portal-awaria` (rollback/restore), `portal-stan-zastany` (zanim uznasz coś za zrobione/brakujące),
 `portal-design` (każda zmiana wyglądu — program: docs/DESIGN-SPRINTY.md).
 

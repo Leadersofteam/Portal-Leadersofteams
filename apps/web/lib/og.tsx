@@ -53,37 +53,28 @@ export function credentialCard({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 5,
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            padding: '0 9px',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          }}
-        >
-          <div style={{ display: 'flex', height: 5, borderRadius: 3, background: '#fbbf24' }} />
-          <div
-            style={{
-              display: 'flex',
-              height: 5,
-              borderRadius: 3,
-              background: 'rgba(255,255,255,0.85)',
-            }}
-          />
-          <div
-            style={{
-              display: 'flex',
-              height: 5,
-              borderRadius: 3,
-              background: 'rgba(255,255,255,0.5)',
-            }}
-          />
-        </div>
+        {/* Znak marki — te same liczby co components/ui/logo.tsx (siatka 32). */}
+        <svg width="44" height="44" viewBox="0 0 32 32">
+          <defs>
+            <linearGradient
+              id="og-mark"
+              x1="0"
+              y1="32"
+              x2="32"
+              y2="0"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#5b21b6" />
+              <stop offset="1" stopColor="#7c3aed" />
+            </linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="7" fill="url(#og-mark)" />
+          <path d="M9.2 26.5 11.4 5.5h1.9l-1.9 21z" fill="#fff" />
+          <path d="M22.8 26.5 20.6 5.5h-1.9l1.9 21z" fill="#fff" />
+          <rect x="9.78" y="19.7" width="12.45" height="2.6" fill="#fff" />
+          <rect x="10.4" y="13.7" width="11.19" height="2.6" fill="#fff" />
+          <rect x="9.43" y="7.7" width="13.13" height="2.6" fill="#fbbf24" />
+        </svg>
         <div style={{ display: 'flex', fontSize: 30, opacity: 0.9, letterSpacing: 1 }}>
           {kicker}
         </div>

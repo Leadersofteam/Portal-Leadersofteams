@@ -378,6 +378,22 @@
 > przetworzył WSZYSTKIE kontenery (z mysql!) i api wstało z błędnymi poświadczeniami.
 > Dane nietknięte (wolumen; po naprawie 18 users / 4 posts). Lekcja w MINY: komendy wdrożenia
 > kopiować ZE SKILLA, nie z pamięci.
+
+> **🧭 2026-10-21: KIERUNEK SIECI — tylko dokumenty, kod bez zmian.** Właściciel: „strony
+> wyglądają dobrze, ale czegoś im brakuje — przewijania 3D i opowiadania historii w płynnych
+> przejściach”. Plan dla czterech stron sieci: [SIEC-LOT.md](SIEC-LOT.md) (portal: §4.2
+> „Światło z cudzych rąk”, pełny tor na `/drabinka`), prompt: [PROMPT-SIEC-3D.md](PROMPT-SIEC-3D.md).
+> **Zmierzone 2026-10-21:** `#17` (drabinka 3D) scalony, ale na produkcji `leadersofteams.pl/`
+> nie ma płótna sceny — najpewniej niewdrożone (sprawdź `portal-stan-zastany`, zanim
+> uznasz inaczej). **Stopka nie linkuje do żadnego z trzech pozostałych adresów sieci.**
+
+> **🔄 SESJA 2026-10-20: „Drabinka w przestrzeni" — gałąź `claude/drabinka-3d`, NIEWDROŻONE.**
+> Kierunek ekosystemu „Instrument w przestrzeni" (kanon: [KIERUNEK-3D.md](KIERUNEK-3D.md)). Hero dostał drabinkę
+> z cząstek nad `LadderArt`: 7 szczebli w `--level-1…7`, przy przewinięciu punkty przenoszą się 1–3 szczeble wyżej —
+> światło się wspina i ociepla, czyli zdanie „status trzeba zapracować" powiedziane ruchem. Silnik `components/scene/`
+> (kopia z .com, zero sieci — ADR-009). Bez WebGL zostaje SVG. **Zweryfikowane:** typecheck, `pnpm lint`, prettier,
+> `next build`, zrzuty 1440 i 390 przy 0/300/600 px. **Niezweryfikowane:** staging, produkcja, e2e (`infra/e2e.sh`
+> wymaga realnego MySQL/Redis), Safari/iOS, prawdziwe GPU. Nowe miny: sekcja „Scena 3D" w MINY.md.
 >
 > **✅ SESJA 2026-08-19 (PM infrastruktury): digest naprawiony + role z UI** (`380bd08`, `c562583`).
 > Wdrożone na staging i produkcję (migracja expand-only: `users.digestOptOutAt`,
