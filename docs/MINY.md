@@ -410,14 +410,15 @@ Do kompletu: przy każdej zmianie wyglądu zrzuty w OBU motywach (cztery komplet
 świadomie zostają ciemne.
 
 ### Produkcja NIE stoi na `main` — `main` ma inny schemat i inne logo (21.10)
+
 Prod = `feat/droga-lidera-pl0-pl1` (46 commitów spoza `main`). `git diff <prod>..origin/main -- '**/prisma/**'` NIE jest pusty
 (main nie ma 21 linii schematu i `wyprawa-czas.ts`), a scalenie main → prod daje konflikt logo (`logo.tsx`, `icon.svg`, `logo.svg`)
 z PR #19. Wdrożenie „czystego main” = cofnięcie schematu i funkcji. Najpierw decyzja właściciela, potem scalenie do gałęzi prod.
 
 ### Typecheck pada na usuniętej stronie = stary `.next/types` (21.10)
+
 Po usunięciu `app/szukam-wykonawcy/page.tsx` `pnpm -r typecheck` dawał TS2307 z `.next/types/app/szukam-wykonawcy/page.ts`.
 To artefakt poprzedniej budowy (git-ignored), nie kod: `rm -rf apps/web/.next/types` i typecheck jest zielony.
-
 
 ## Scena 3D (2026-10-20)
 

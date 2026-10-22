@@ -68,6 +68,7 @@ Nie raportuj jako zrobione niczego, czego nie przeszedłeś ścieżką użytkown
 
 Hook `~/.claude/hooks/start-sesji.sh` wstrzykuje następnej sesji z `docs/SESJA-NASTEPNA.md` TYLKO sekcje, których
 nagłówek zawiera „Zadania”, „Czego nie”, „Czeka na” albo „Nie wolno”. Dlatego:
+
 - `docs/SESJA-NASTEPNA.md` **nadpisz** (≤ ~40 linii): `## Stan (zmierzony)`, `## Zadania w kolejności` (punkt 1 wykonalny
   od razu), `## Czego nie robić`, opcjonalnie `## Czeka na właściciela`, na końcu `## Prompt startowy` (2–3 zdania).
 - Commituj tylko swoje ścieżki: `git commit -m "…" -- <pliki>` (równoległe sesje, cudzy `git add -A`).

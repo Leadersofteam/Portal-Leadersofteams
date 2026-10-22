@@ -140,8 +140,9 @@
 > D3 purge demo (komenda ze skilla `portal-dane-demo`; klasyfikator blokuje mi odczyt hasła), D5 Search Console/Bing
 > (zgłosić `sitemap.xml`), PL5.4 realne zlecenia HydroSpark (propozycje niżej), otwarcie PR. **Miary za 30 dni**
 > (lejek w `/panel/analityka`, wymaga konta MODERATOR): ≥20 kont z potwierdzonym adresem i ≥5 pierwszych akcji.
->
- (`ba19022` + docs).
+
+(`ba19022` + docs).
+
 > **Dowody z produkcji (05.09, 07:40 UTC):** backup `portal-20260905-073459` PRZED migracją; migracja
 > `20260904212051_offer_messages` zastosowana; healthz `mysql/redis ok`, `worker.alive true`, `uploads ok`;
 > `curl -I` pokazuje HSTS/nosniff/X-Frame/frame-ancestors/Referrer/Permissions; 0 „bez konsumenta”,
