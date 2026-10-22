@@ -37,13 +37,16 @@
  * bramki przeglądarkowe (`check:perf`, `check:wcag`) mierzą stronę ZE sceną,
  * na CPU, z dławieniem ÷4. Scena nie dostaje tam taryfy ulgowej.
  *
- * **Render programowy dostaje poziom telefonu (od `FIELD_VERSION` 3).** Skoro
- * SwiftShader, llvmpipe i podobne nie odmawiają, scena liczy każdy punkt na tym
- * samym CPU, które obsługuje przewijanie. Na runnerze CI dało to p95 33,4 ms na
- * `/` trzy przebiegi z rzędu przy 16,7 ms na trasach bez sceny (2026-10-21).
- * U człowieka to maszyna bez akceleracji (VM, GPU na czarnej liście), więc
- * 35% punktów i 30 kl./s są tam właściwą decyzją, a nie zabiegiem pod bramkę.
- * Bramki dalej mierzą stronę ZE sceną, tyle że w tym poziomie.
+ * **Render programowy = odmowa (od `FIELD_VERSION` 3).** Skoro SwiftShader,
+ * llvmpipe i podobne nie odmawiają same, silnik czyta nazwę sterownika i odmawia
+ * sam. Scena na CPU konkuruje z przewijaniem o ten sam rdzeń: na runnerze CI
+ * `/` dało p95 33,4 ms przy 16,7 ms na trasach bez sceny, a poziom telefonu
+ * (35% punktów, 30 kl./s) tego nie usunął — padł dwa razy z rzędu 2026-10-22.
+ * U człowieka render programowy to maszyna bez akceleracji (VM, GPU na czarnej
+ * liście), czyli dokładnie ta, której płynne przewijanie jest droższe niż
+ * dekoracja. Ta sama decyzja co scena na `leadersofteam.pl`. Skutek dla bramek:
+ * `check:perf` i `check:wcag` mierzą w CI stronę BEZ sceny; jej koszt na
+ * prawdziwym GPU mierzy się na urządzeniu.
  *
  * W każdym z tych przypadków wywołujący zostawia stronę taką, jaka jest bez
  * sceny.
@@ -142,10 +145,10 @@ interface Tier {
  * Telefon dostaje trzecią część punktów i 30 kl./s: na 390 px nikt nie
  * odróżni 2500 punktów od 7000, a bateria odróżni.
  */
-const resolveTier = (width: number, software: boolean): Tier => {
+const resolveTier = (width: number): Tier => {
   const cores = navigator.hardwareConcurrency || 4;
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
-  if (software || width <= 640 || cores <= 4 || memory <= 4) {
+  if (width <= 640 || cores <= 4 || memory <= 4) {
     return { share: 0.35, dprMax: 1.25, fps: 30, pointer: false, lerp: 0.14 };
   }
   if (width <= 1100) return { share: 0.6, dprMax: 1.5, fps: 45, pointer: false, lerp: 0.1 };
@@ -377,6 +380,10 @@ export function mountField(
   });
   if (!glOrNull) return null;
   const gl: WebGLRenderingContext = glOrNull;
+  if (isSoftwareRenderer(gl)) {
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return null;
+  }
 
   const vs = compile(gl, gl.VERTEX_SHADER, VERT);
   const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
@@ -389,7 +396,7 @@ export function mountField(
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
   gl.useProgram(prog);
 
-  const tier = resolveTier(window.innerWidth, isSoftwareRenderer(gl));
+  const tier = resolveTier(window.innerWidth);
   const count = Math.max(200, Math.round(spec.count * tier.share));
   const forms = spec.formations.slice(0, 4);
   const last = forms.length - 1;
