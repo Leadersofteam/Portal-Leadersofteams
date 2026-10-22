@@ -53,6 +53,25 @@
     max-width: none;
     min-height: 44px;
   }
+
+  /* Samo pole też ma 44 px wysokości (nie tylko obudowa) — stuknięcie
+     w obwódkę formularza poza inputem nie dawało fokusu. */
+  .global-search {
+    padding-block: 0;
+  }
+
+  .global-search input {
+    align-self: stretch;
+    min-height: 42px; /* + 2 × 1 px obwódki = 44 px */
+  }
+}
+
+/* iOS Safari powiększa stronę przy fokusie pola < 16 px i nie wraca
+   (mobile-craft #12); 0.92rem = 14,7 px łapało to na każdej stronie. */
+@media (pointer: coarse) {
+  .global-search input {
+    font-size: 1rem;
+  }
 }
 
 /* ===================== Strona wyników ===================== */

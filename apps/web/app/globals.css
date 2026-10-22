@@ -199,6 +199,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Podwójne stuknięcie nie powiększa strony (pinch zostaje — dostępność). */
+  touch-action: manipulation;
 }
 
 body {
@@ -253,7 +255,8 @@ body::after {
   display: flex;
   flex-direction: column-reverse;
   justify-content: space-between;
-  padding: 12vh 0 8vh;
+  /* dvh: na iOS vh liczy się z ukrytym paskiem adresu. */
+  padding: 12dvh 0 8dvh;
 }
 
 .climb-rail i {
@@ -495,9 +498,14 @@ main {
     grid-template-columns: 1fr;
   }
 
+  /* overflow-x: clip — kanwa sceny 3D jest o 80% szersza od drabinki (punkty
+     mają gdzie się wychylić), a w jednej kolumnie wychodziła za ekran: 390 px
+     przewijało się w poziomie do 465 px (zmierzone po scaleniu main 22.10).
+     clip, nie hidden: nie robi z wrappera kontenera przewijania. */
   .hero-art-wrap {
     order: -1;
     margin-top: 1rem;
+    overflow-x: clip;
   }
 
   .ladder-art {
@@ -711,9 +719,21 @@ main {
   color: var(--text);
   font-size: 0.98rem;
   font-family: inherit;
+  /* 0.7rem×2 + linia dawały 43 px — o piksel pod celem dotyku. */
+  min-height: 44px;
   transition:
     border-color var(--dur) var(--ease),
     box-shadow var(--dur) var(--ease);
+}
+
+/* iOS powiększa przy fokusie pola < 16 px; 0.98rem = 15,7 px wystarczało,
+   żeby formularz zlecenia i logowania „podskakiwał" na iPhonie. */
+@media (pointer: coarse) {
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 1rem;
+  }
 }
 
 .field input::placeholder,
@@ -936,6 +956,26 @@ main {
 
 .list-row:hover {
   background: var(--surface);
+}
+
+/* Cały wiersz jest celem linku tytułu (audyt 22.10: hover podświetlał wiersz
+   jak klikalny, a trafić trzeba było w 20-px tytuł — na 390 px 8 takich celów
+   na /liderzy). ::after rozciąga link; pozostałe kontrolki wiersza (Zapytaj,
+   porównaj, akcje panelu) podnosimy nad niego, żeby dalej dało się je kliknąć. */
+.list-row {
+  position: relative;
+}
+
+.list-row h3 > a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.list-row :is(a, button, input, select, label, summary):not(h3 > a) {
+  position: relative;
+  z-index: 1;
 }
 
 .list-row h3 {
@@ -1642,6 +1682,13 @@ main tbody tr:hover {
 /* Sekcje landingu: większa skala nagłówków + oddech. */
 .landing section {
   margin-top: 4.5rem;
+}
+
+/* Odstęp MIĘDZY sekcjami — nie nad pierwszą. Hero dziedziczył te 72 px
+   i na 390 px nad eyebrow stało ~115 px pustki, spychając akcje w dół
+   (zastane, zmierzone 22.10). */
+.landing section.hero {
+  margin-top: 0;
 }
 
 .landing section > h2 {

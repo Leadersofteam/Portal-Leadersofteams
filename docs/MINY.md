@@ -67,6 +67,14 @@ innej nazwy i potwierdzenia — dziś nazywa się „Zrezygnuj z moderacji".
 
 ---
 
+### `notFound()` pod `loading.tsx` zwraca 200, nie 404
+
+`/zlecenia/<id>`, `/liderzy/<id>`, `/uslugi/<id>` usuniętego rekordu dają stronę „nie znalezione"
+z kodem **200** (zmierzone 22.10; `/pytania/<id>` bez `loading.tsx` daje 404). Przyczyna: `loading.tsx`
+segmentu włącza streaming — nagłówki 200 wychodzą przed `notFound()`. Next dokleja
+`<meta name="robots" content="noindex">`, więc Google nie indeksuje, ale curl/monitoring widzi 200.
+**Sprawdzając usunięcie danych, patrz na API (`api.leadersofteams.pl/orders/<id>` → 404), nie na kod strony.**
+
 ## Infrastruktura
 
 ### Deploy prod BEZ `--env-file .env.prod` podmienia środowisko wszystkim kontenerom
@@ -437,3 +445,10 @@ Portal kompiluje z `noUncheckedIndexedAccess`; pierwsza kopia silnika miała tu 
 (destrukturyzacja `getImageData`, `forms[f]`, `entry` z `IntersectionObserver`), których .com i App
 nie widziały. Poprawione w KANONIE, nie w kopii — inaczej trzy pliki przestałyby być identyczne.
 Typecheck Portalu jest najostrzejszą bramką dla silnika: zmieniasz go gdziekolwiek, uruchom ją tu.
+
+### Kanwa sceny jest szersza od drabinki — w jednej kolumnie wychodzi za ekran
+
+`.ladder-scene-canvas` ma `width: 180%; left: -40%`. Na desktopie mieści się w siatce hero,
+ale ≤ 900 px (jedna kolumna) dawała poziomy scroll 390 → 465 px (22.10, po scaleniu main do
+gałęzi prod). Wrapper `.hero-art-wrap` ma w tym zakresie `overflow-x: clip` — nie `hidden`,
+które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmierz `scrollWidth` na 390.
