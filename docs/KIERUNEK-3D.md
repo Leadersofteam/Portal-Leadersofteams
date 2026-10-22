@@ -77,11 +77,11 @@ Jeden plik, czysty WebGL 1, jedno wywołanie `drawArrays` na klatkę.
 - **Formacja dostaje `prev`** — pozycję tego samego punktu w poprzedniej formacji, więc
   przejście może zachować kierunek punktu (zebranie zamiast przetasowania).
 - **Odmowa = stan poprawny:** brak WebGL, błąd shadera, `failIfMajorPerformanceCaveat`,
-  utrata kontekstu. Strona bez sceny jest kompletna.
+  render programowy (nazwa sterownika, od `FIELD_VERSION` 3), utrata kontekstu. Strona bez sceny jest kompletna.
 - **Kopie:** `.com` `src/components/scene/` (kanon) · App `apps/web/components/scene/` ·
   Portal `apps/web/components/scene/`. Różnią się wyłącznie akapitem nagłówka
   i formatowaniem prettiera danego repo. Zmiana = wszystkie trzy + podbicie
-  `FIELD_VERSION` (dziś **2**). Kontrola: `grep -rn "FIELD_VERSION =" */*/components/scene */src/components/scene`.
+  `FIELD_VERSION` (dziś **3**). Kontrola: `grep -rn "FIELD_VERSION =" */*/components/scene */src/components/scene`.
 
 ## 5. Płynność narracji — zasady (nie gust)
 
@@ -133,6 +133,25 @@ historię i przekaz."_ Z tego wynikają reguły, każda z mechanizmem w kodzie:
 (CPU ÷4, p95 ≤ 20 ms) i `check:wcag` (45 tras × 2 viewporty). **Headless Chromium z SwiftShaderem
 NIE odmawia przy `failIfMajorPerformanceCaveat`**, więc bramki zmierzyły stronę ze sceną
 na renderowaniu programowym — nie mają taryfy ulgowej.
+
+**Korekta 2026-10-21: pełna scena na renderze programowym stoi na krawędzi budżetu.**
+PR #179 (sama dokumentacja, `dist/` identyczny z `main`) dał na `/` p95 33,4 ms trzy razy
+z rzędu. A/B na runnerze GitHuba, trzy warianty uruchomione w tej samej minucie, każdy
+po 5 pełnych przebiegów `check:perf (2)`:
+
+| wariant                                                  | przebiegi czerwone na `/` | pomiary `/` > 20 ms (z powtórkami) |
+| -------------------------------------------------------- | ------------------------- | ---------------------------------- |
+| `main` (pełna scena, 12 000 punktów, 60 kl./s)           | 1 / 5                     | 2 / 6                              |
+| render programowy → poziom telefonu (pierwsza wersja v3) | 0 / 5                     | 1 / 6                              |
+| bez sceny                                                | 0 / 5                     | 0 / 5                              |
+
+Wniosek z 2026-10-21: scena była czynnikiem, nie jedyną przyczyną — runner bywa wolny także
+bez niej. **2026-10-22 poziom telefonu padł na `/` dwa razy z rzędu** (p95 33,4 ms, PR #180
+w `.com`), więc ta wersja nie wystarczyła. Obowiązuje **odmowa**: rozpoznanie sterownika
+(`WEBGL_debug_renderer_info`, potem `RENDERER`; wzorzec `swiftshader|llvmpipe|softpipe|software`)
+→ `mountField` zwalnia kontekst i zwraca `null`, jak scena na `leadersofteam.pl`. Konsekwencja,
+którą trzeba znać: **CI mierzy stronę bez sceny.** Koszt sceny na prawdziwym GPU mierzy się
+na urządzeniu (DevTools → Performance, CPU ÷4); bramka tego nie zrobi.
 
 Po restarcie kontenera (nowa maszyna, 4 rdzenie) `check:perf (2)` zrobiło się czerwone —
 więc zrobiłem A/B naprzemiennie, `main` w osobnym worktree, ten sam skrypt i port:
