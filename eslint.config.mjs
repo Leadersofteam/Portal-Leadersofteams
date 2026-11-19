@@ -41,6 +41,10 @@ export default tseslint.config(
       // harness wyprawy: skrypty Node poza workspace'ami (globale node/browser
       // mieszane celowo — page.evaluate); to samo wyłączenie ma audyt/ w App
       'wyprawa/**',
+      // makiety V17 (HTML+JS przeglądarkowe) i harness zrzutów — skrypty Node/przeglądarki,
+      // nie kod Portalu; lint bez tego wpisu zgłaszał 80 błędów no-undef (zastane od makiety P0)
+      'docs/redesign-propozycje/**',
+      'audyt/harness/**',
     ],
   },
   js.configs.recommended,

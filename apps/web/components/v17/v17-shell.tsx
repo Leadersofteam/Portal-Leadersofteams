@@ -121,7 +121,6 @@ export function V17Shell() {
 
       <header className="v17-bar">
         <Link href="/" className="v17-logo" aria-label="Leaders of Teams — strona główna">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon.svg" alt="" width={32} height={32} />
         </Link>
         <span className="v17-bc">
