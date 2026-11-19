@@ -40,6 +40,6 @@ kod za flagą `data-wyglad="v17"` (sesja Sonnet) → `zgodnosc-makiety` ZGODNY w
 
 ## Akceptacje ekranów (wpisuje Lider — bez wpisu ekran nie idzie do kodu)
 
-| Ekran | Paczka | Data | Cytat Macieja | Zrzut | Kod (commit) |
-| ----- | ------ | ---- | ------------- | ----- | ------------ |
-| —     | —      | —    | —             | —     | —            |
+| Ekran                                                                                       | Paczka | Data  | Cytat Macieja  | Zrzut                                                                                                             | Kod (commit) |
+| ------------------------------------------------------------------------------------------- | ------ | ----- | -------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| `/panel` (zalogowany) + rama: menu szyna↔panel, dolny pasek + arkusz, tło siatki, karta v17 | P0     | 19.11 | „Akceptuję P0” | `audyt/zrzuty/v17-panel-*.png` (gałąź `claude/dazzling-bose-0da725` @ `dd0456b`; recenzent-wygladu GOTOWE bez P1) | —            |
