@@ -35,8 +35,8 @@ export function GridBg() {
       nodes.length = 0;
       // deterministyczne rozmieszczenie (bez Math.random → stabilny zrzut)
       for (let i = 0; i < Math.min(28, Math.floor((w * h) / 45000)); i++) {
-        const gx = Math.floor(((i * 7919) % 997) / 997 * (w / STEP));
-        const gy = Math.floor(((i * 104729) % 991) / 991 * (h / STEP));
+        const gx = Math.floor((((i * 7919) % 997) / 997) * (w / STEP));
+        const gy = Math.floor((((i * 104729) % 991) / 991) * (h / STEP));
         nodes.push({ x: gx * STEP, y: gy * STEP, ph: (i % 9) / 9 });
       }
     };

@@ -125,154 +125,154 @@ export default async function PanelPage() {
 
   return (
     <>
-    <main className="v17-only">
-      <PanelV17
-        displayName={user.displayName}
-        profileId={profile?.profile?.id ?? null}
-        ladder={ladder}
-      />
-    </main>
-    <main className="v17-hide">
-      <section className="climber-base">
-        <div className="climber-base-head">
-          <p className="climber-kicker">Panel Lidera · Baza wspinacza</p>
-          <h1>Cześć, {user.displayName}</h1>
-          <p className="muted">{user.email}</p>
-          {social?.handle && (
-            <p className="muted">
-              Twój uchwyt: <Link href={`/profil/${social.handle}`}>@{social.handle}</Link> ·{' '}
-              {social.followers} obserwujących · obserwujesz {social.following}
-            </p>
+      <main className="v17-only">
+        <PanelV17
+          displayName={user.displayName}
+          profileId={profile?.profile?.id ?? null}
+          ladder={ladder}
+        />
+      </main>
+      <main className="v17-hide">
+        <section className="climber-base">
+          <div className="climber-base-head">
+            <p className="climber-kicker">Panel Lidera · Baza wspinacza</p>
+            <h1>Cześć, {user.displayName}</h1>
+            <p className="muted">{user.email}</p>
+            {social?.handle && (
+              <p className="muted">
+                Twój uchwyt: <Link href={`/profil/${social.handle}`}>@{social.handle}</Link> ·{' '}
+                {social.followers} obserwujących · obserwujesz {social.following}
+              </p>
+            )}
+          </div>
+
+          {ladder && (
+            <ProgressRail
+              level={ladder.state.level}
+              totalPoints={ladder.state.totalPoints}
+              marketplacePoints={ladder.state.marketplacePoints}
+              communityPoints={ladder.state.communityPoints}
+              nextLevel={ladder.nextLevel}
+            />
           )}
-        </div>
+        </section>
 
-        {ladder && (
-          <ProgressRail
-            level={ladder.state.level}
-            totalPoints={ladder.state.totalPoints}
-            marketplacePoints={ladder.state.marketplacePoints}
-            communityPoints={ladder.state.communityPoints}
-            nextLevel={ladder.nextLevel}
-          />
-        )}
-      </section>
+        <VerifyBanner />
 
-      <VerifyBanner />
+        {showChecklist && <StartHere steps={steps} />}
 
-      {showChecklist && <StartHere steps={steps} />}
-
-      {/* Panel-nav świadomy persony (24.08): przyciski ZARZĄDZANIA pokazujemy
+        {/* Panel-nav świadomy persony (24.08): przyciski ZARZĄDZANIA pokazujemy
           tylko, gdy jest czym zarządzać — „Moje usługi/oferty" dla Lidera
           z profilem, „Zlecenia firmy" dla kogoś z firmą. Bez tego prowadziły
           do pustych ekranów. Ścieżki utworzenia profilu/firmy są w sekcjach
           „Strona Lidera"/„Strona Firmy" niżej, a „Dodaj zlecenie" w pasku „+",
           więc zdublowane „+ Nowe zlecenie" znika stąd. */}
-      <nav className="panel-nav">
-        <Link className="btn secondary" href="/panel/profil">
-          {hasProfile ? 'Profil Lidera' : 'Zostań Liderem'}
-        </Link>
-        {hasProfile && (
-          <Link className="btn secondary" href="/panel/uslugi">
-            Moje usługi
+        <nav className="panel-nav">
+          <Link className="btn secondary" href="/panel/profil">
+            {hasProfile ? 'Profil Lidera' : 'Zostań Liderem'}
           </Link>
-        )}
-        {hasProfile && (
-          <Link className="btn secondary" href="/panel/oferty">
-            Moje oferty
+          {hasProfile && (
+            <Link className="btn secondary" href="/panel/uslugi">
+              Moje usługi
+            </Link>
+          )}
+          {hasProfile && (
+            <Link className="btn secondary" href="/panel/oferty">
+              Moje oferty
+            </Link>
+          )}
+          {hasCompany && (
+            <Link className="btn secondary" href="/panel/zlecenia">
+              Zlecenia firmy
+            </Link>
+          )}
+          <Link className="btn secondary" href="/panel/zapisane">
+            Zapisane
           </Link>
-        )}
-        {hasCompany && (
-          <Link className="btn secondary" href="/panel/zlecenia">
-            Zlecenia firmy
+          <Link className="btn secondary" href="/panel/ulubione">
+            Ulubione usługi
           </Link>
-        )}
-        <Link className="btn secondary" href="/panel/zapisane">
-          Zapisane
-        </Link>
-        <Link className="btn secondary" href="/panel/ulubione">
-          Ulubione usługi
-        </Link>
-        <Link className="btn secondary" href="/panel/konto">
-          Konto i dane
-        </Link>
-        {/* PL5: zaproszenie bez cienia MLM — 0 punktów, 0 nagrody, 0 zapisu
+          <Link className="btn secondary" href="/panel/konto">
+            Konto i dane
+          </Link>
+          {/* PL5: zaproszenie bez cienia MLM — 0 punktów, 0 nagrody, 0 zapisu
             „kto kogo". Tylko mail od człowieka do człowieka. */}
-        <Link className="btn secondary" href="/panel/zapros">
-          Zaproś Lidera
-        </Link>
-      </nav>
+          <Link className="btn secondary" href="/panel/zapros">
+            Zaproś Lidera
+          </Link>
+        </nav>
 
-      <section className="feature-grid panel-cards">
-        <div className="card">
-          <h3>Strona Lidera</h3>
-          {profile?.profile ? (
-            <p>
-              Twój profil: „{profile.profile.headline}”.{' '}
-              <Link href={`/liderzy/${profile.profile.id}`}>Zobacz publiczny profil →</Link>
-            </p>
-          ) : (
-            <p>
-              Nie masz jeszcze profilu Lidera. <Link href="/panel/profil">Utwórz go</Link>, żeby
-              składać oferty na zlecenia.
-            </p>
-          )}
-        </div>
-        <div className="card">
-          <h3>Strona Firmy</h3>
-          {companies?.companies?.length ? (
-            <p>
-              Twoje firmy: {companies.companies.map((c) => c.name).join(', ')}.{' '}
-              <Link href="/panel/zlecenia">Zarządzaj zleceniami →</Link>
-            </p>
-          ) : (
-            <p>
-              Chcesz zlecać pracę? <Link href="/firma/nowa">Utwórz profil firmy</Link> i opublikuj
-              pierwsze zlecenie.
-            </p>
-          )}
-        </div>
-        <div className="card">
-          <h3>Drabinka Lidera</h3>
-          <p>
-            {points} pkt zaliczonych
-            {ladder?.nextLevel
-              ? ` · do poziomu ${ladder.nextLevel.level} brakuje ${ladder.nextLevel.missingPoints} pkt`
-              : ''}
-            . <Link href="/panel/punkty">Moje punkty →</Link>
-          </p>
-        </div>
-      </section>
-
-      {isModerator && (
-        <section className="card" style={{ marginTop: '1.5rem' }}>
-          <h3>Moderacja</h3>
-          <p className="muted">
-            {openCases === 0
-              ? 'Brak otwartych spraw.'
-              : `Otwarte sprawy: ${openCases} — czekają na decyzję człowieka.`}
-          </p>
-          <nav className="actions-row">
-            <Link className={openCases > 0 ? 'btn' : 'btn secondary'} href="/panel/moderacja">
-              Zgłoszenia i sygnały{openCases > 0 ? ` (${openCases})` : ''}
-            </Link>
-            <Link className="btn secondary" href="/panel/analityka">
-              Ruch w portalu
-            </Link>
-            {/* Nadanie roli moderatora wymagało do 19.08 SQL-a na produkcji —
-                strona bez wejścia z panelu powtórzyłaby minę „trasa bez UI". */}
-            {user.role === 'ADMIN' && (
-              <Link className="btn secondary" href="/panel/uzytkownicy">
-                Użytkownicy i role
-              </Link>
+        <section className="feature-grid panel-cards">
+          <div className="card">
+            <h3>Strona Lidera</h3>
+            {profile?.profile ? (
+              <p>
+                Twój profil: „{profile.profile.headline}”.{' '}
+                <Link href={`/liderzy/${profile.profile.id}`}>Zobacz publiczny profil →</Link>
+              </p>
+            ) : (
+              <p>
+                Nie masz jeszcze profilu Lidera. <Link href="/panel/profil">Utwórz go</Link>, żeby
+                składać oferty na zlecenia.
+              </p>
             )}
-          </nav>
+          </div>
+          <div className="card">
+            <h3>Strona Firmy</h3>
+            {companies?.companies?.length ? (
+              <p>
+                Twoje firmy: {companies.companies.map((c) => c.name).join(', ')}.{' '}
+                <Link href="/panel/zlecenia">Zarządzaj zleceniami →</Link>
+              </p>
+            ) : (
+              <p>
+                Chcesz zlecać pracę? <Link href="/firma/nowa">Utwórz profil firmy</Link> i opublikuj
+                pierwsze zlecenie.
+              </p>
+            )}
+          </div>
+          <div className="card">
+            <h3>Drabinka Lidera</h3>
+            <p>
+              {points} pkt zaliczonych
+              {ladder?.nextLevel
+                ? ` · do poziomu ${ladder.nextLevel.level} brakuje ${ladder.nextLevel.missingPoints} pkt`
+                : ''}
+              . <Link href="/panel/punkty">Moje punkty →</Link>
+            </p>
+          </div>
         </section>
-      )}
 
-      <p className="mt-4">
-        <LogoutButton />
-      </p>
-    </main>
+        {isModerator && (
+          <section className="card" style={{ marginTop: '1.5rem' }}>
+            <h3>Moderacja</h3>
+            <p className="muted">
+              {openCases === 0
+                ? 'Brak otwartych spraw.'
+                : `Otwarte sprawy: ${openCases} — czekają na decyzję człowieka.`}
+            </p>
+            <nav className="actions-row">
+              <Link className={openCases > 0 ? 'btn' : 'btn secondary'} href="/panel/moderacja">
+                Zgłoszenia i sygnały{openCases > 0 ? ` (${openCases})` : ''}
+              </Link>
+              <Link className="btn secondary" href="/panel/analityka">
+                Ruch w portalu
+              </Link>
+              {/* Nadanie roli moderatora wymagało do 19.08 SQL-a na produkcji —
+                strona bez wejścia z panelu powtórzyłaby minę „trasa bez UI". */}
+              {user.role === 'ADMIN' && (
+                <Link className="btn secondary" href="/panel/uzytkownicy">
+                  Użytkownicy i role
+                </Link>
+              )}
+            </nav>
+          </section>
+        )}
+
+        <p className="mt-4">
+          <LogoutButton />
+        </p>
+      </main>
     </>
   );
 }

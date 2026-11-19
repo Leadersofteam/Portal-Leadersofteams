@@ -63,7 +63,8 @@ export function V17Shell() {
     if (!rama) return;
     const k = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (e.key === '[' && !/INPUT|TEXTAREA|SELECT/.test(t?.tagName ?? '') && !t?.isContentEditable) toggle();
+      if (e.key === '[' && !/INPUT|TEXTAREA|SELECT/.test(t?.tagName ?? '') && !t?.isContentEditable)
+        toggle();
     };
     addEventListener('keydown', k);
     return () => removeEventListener('keydown', k);
@@ -131,7 +132,11 @@ export function V17Shell() {
           <MagnifyingGlass size={15} weight="bold" aria-hidden="true" />
           <span>Szukaj zleceń, Liderów, firm</span>
         </Link>
-        <Link href="/panel/konto" className="v17-av" aria-label={`Konto: ${user?.displayName ?? ''}`}>
+        <Link
+          href="/panel/konto"
+          className="v17-av"
+          aria-label={`Konto: ${user?.displayName ?? ''}`}
+        >
           {inicjaly}
         </Link>
       </header>
@@ -140,7 +145,12 @@ export function V17Shell() {
         {V17_BOTTOM.map((it) => {
           const act = v17Active(pathname, it.href);
           return (
-            <Link key={it.href} href={it.href} className={`v17-di${act ? ' on' : ''}`} aria-current={act ? 'page' : undefined}>
+            <Link
+              key={it.href}
+              href={it.href}
+              className={`v17-di${act ? ' on' : ''}`}
+              aria-current={act ? 'page' : undefined}
+            >
               <span className="v17-ik">
                 <V17Icon name={it.icon} size={22} />
                 {it.badge && <NotificationCountBadge />}
@@ -149,7 +159,12 @@ export function V17Shell() {
             </Link>
           );
         })}
-        <button type="button" className={`v17-di${sheet ? ' on' : ''}`} onClick={() => setSheet(true)} aria-haspopup="dialog">
+        <button
+          type="button"
+          className={`v17-di${sheet ? ' on' : ''}`}
+          onClick={() => setSheet(true)}
+          aria-haspopup="dialog"
+        >
           <span className="v17-ik">
             <V17Icon name="DotsThreeOutline" size={22} />
           </span>
@@ -158,9 +173,20 @@ export function V17Shell() {
       </nav>
 
       {sheet && (
-        <div className="v17-arkusz" role="dialog" aria-modal="true" aria-label="Wszystkie moduły" onClick={() => setSheet(false)}>
+        <div
+          className="v17-arkusz"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Wszystkie moduły"
+          onClick={() => setSheet(false)}
+        >
           <div className="v17-arkusz-in" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="v17-arkusz-x" onClick={() => setSheet(false)} aria-label="Zamknij">
+            <button
+              type="button"
+              className="v17-arkusz-x"
+              onClick={() => setSheet(false)}
+              aria-label="Zamknij"
+            >
               <X size={18} weight="bold" />
             </button>
             {V17_MENU.map((s) => (
@@ -168,7 +194,11 @@ export function V17Shell() {
                 <p className="v17-sec-t">{s.title}</p>
                 <div className="v17-arkusz-sieć">
                   {s.items.map((it) => (
-                    <Link key={it.href} href={it.href} className={`v17-mi${v17Active(pathname, it.href) ? ' on' : ''}`}>
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      className={`v17-mi${v17Active(pathname, it.href) ? ' on' : ''}`}
+                    >
                       <span className="v17-ik">
                         <V17Icon name={it.icon} />
                       </span>

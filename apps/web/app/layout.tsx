@@ -85,7 +85,11 @@ const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var 
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl" className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
+    <html
+      lang="pl"
+      className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <div className="climb-rail" aria-hidden="true">

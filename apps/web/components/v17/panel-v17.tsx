@@ -101,8 +101,18 @@ export async function PanelV17({
   const empty = orders.length === 0 && offers.length === 0 && points === 0;
 
   const kpi: Array<[React.ReactNode, string, string, string]> = [
-    [<Briefcase key="a" size={18} weight="duotone" />, 'Moje zlecenia', String(open.length), 'otwarte'],
-    [<Tag key="b" size={18} weight="duotone" />, 'Oferty na moje zlecenia', String(offersTotal), 'ofert'],
+    [
+      <Briefcase key="a" size={18} weight="duotone" />,
+      'Moje zlecenia',
+      String(open.length),
+      'otwarte',
+    ],
+    [
+      <Tag key="b" size={18} weight="duotone" />,
+      'Oferty na moje zlecenia',
+      String(offersTotal),
+      'ofert',
+    ],
     [
       <Star key="c" size={18} weight="duotone" />,
       'Ocena',
@@ -146,7 +156,11 @@ export async function PanelV17({
           ))}
         </div>
 
-        <article className="v17-k v17-c7" aria-label="Drabinka Lidera" style={{ animationDelay: '.05s' }}>
+        <article
+          className="v17-k v17-c7"
+          aria-label="Drabinka Lidera"
+          style={{ animationDelay: '.05s' }}
+        >
           <div className="v17-kh">
             <span className="v17-ik" style={{ color: 'var(--level-3)' }}>
               <Ladder size={18} weight="duotone" />
@@ -161,7 +175,9 @@ export async function PanelV17({
           {empty ? (
             <div className="v17-pusty">
               <b>Nowy w Portalu</b>
-              <span>Pierwszy punkt przyznaje drugi człowiek — ocena po zleceniu albo uznana odpowiedź.</span>
+              <span>
+                Pierwszy punkt przyznaje drugi człowiek — ocena po zleceniu albo uznana odpowiedź.
+              </span>
               <Link className="v17-lnk" href="/pytania">
                 Odpowiedz na pytanie <ArrowRight size={12} weight="bold" aria-hidden="true" />
               </Link>
@@ -208,7 +224,11 @@ export async function PanelV17({
         </article>
 
         {/* Najwyżej jedna ciemna karta na ekran: zlecenie w toku. „W toku" raz — w plakietce. */}
-        <aside className="v17-k v17-live v17-c5" aria-label="Zlecenie w toku" style={{ animationDelay: '.1s' }}>
+        <aside
+          className="v17-k v17-live v17-c5"
+          aria-label="Zlecenie w toku"
+          style={{ animationDelay: '.1s' }}
+        >
           <div className="v17-kh">
             <span className="v17-plak em">W toku</span>
             <h3>Zlecenie w realizacji</h3>
@@ -230,7 +250,11 @@ export async function PanelV17({
                   <>
                     <div>
                       <small>Twoja oferta</small>
-                      <b>{myLive.proposedBudget != null ? formatBudget(myLive.proposedBudget, myLive.proposedBudget) : '—'}</b>
+                      <b>
+                        {myLive.proposedBudget != null
+                          ? formatBudget(myLive.proposedBudget, myLive.proposedBudget)
+                          : '—'}
+                      </b>
                     </div>
                     <div>
                       <small>Wiadomości</small>
@@ -261,7 +285,9 @@ export async function PanelV17({
 
         <article id="oferty" className="v17-k v17-c4" style={{ animationDelay: '.05s' }}>
           <div className="v17-kh">
-            <span className="v17-ik"><Tag size={18} weight="duotone" /></span>
+            <span className="v17-ik">
+              <Tag size={18} weight="duotone" />
+            </span>
             <h3>Oferty do odpowiedzi</h3>
             <div className="r">
               <Link className="v17-lnk" href="/panel/zlecenia">
@@ -276,7 +302,10 @@ export async function PanelV17({
                   <b>{o.title}</b>
                   <small>{o.companyName}</small>
                 </div>
-                <span className="v17-plak em">{o.offersCount} {o.offersCount < 2 ? 'oferta' : o.offersCount < 5 ? 'oferty' : 'ofert'}</span>
+                <span className="v17-plak em">
+                  {o.offersCount}{' '}
+                  {o.offersCount < 2 ? 'oferta' : o.offersCount < 5 ? 'oferty' : 'ofert'}
+                </span>
               </Link>
             ))
           ) : (
@@ -292,7 +321,9 @@ export async function PanelV17({
 
         <article className="v17-k v17-c4" style={{ animationDelay: '.1s' }}>
           <div className="v17-kh">
-            <span className="v17-ik"><Bell size={18} weight="duotone" /></span>
+            <span className="v17-ik">
+              <Bell size={18} weight="duotone" />
+            </span>
             <h3>Powiadomienia</h3>
             <div className="r">
               <Link className="v17-lnk" href="/powiadomienia">
@@ -317,7 +348,9 @@ export async function PanelV17({
 
         <article className="v17-k v17-c4" style={{ animationDelay: '.15s' }}>
           <div className="v17-kh">
-            <span className="v17-ik"><Briefcase size={18} weight="duotone" /></span>
+            <span className="v17-ik">
+              <Briefcase size={18} weight="duotone" />
+            </span>
             <h3>Nowe zlecenia</h3>
             <div className="r">
               <Link className="v17-lnk" href="/zlecenia">
@@ -330,7 +363,9 @@ export async function PanelV17({
               <Link key={o.id} className="v17-wiersz" href={`/zlecenia/${o.id}`}>
                 <div>
                   <b>{o.title}</b>
-                  <small>{formatBudget(o.budgetMin, o.budgetMax)} · {o.companyName}</small>
+                  <small>
+                    {formatBudget(o.budgetMin, o.budgetMax)} · {o.companyName}
+                  </small>
                 </div>
                 <span className="v17-plak ok">otwarte</span>
               </Link>
@@ -362,7 +397,11 @@ function Glowka({
       <span className="v17-sp" />
       {cta && (
         <Link className="v17-cta" href={cta.href}>
-          {cta.plus ? <Plus size={16} weight="bold" aria-hidden="true" /> : <ArrowRight size={16} weight="bold" aria-hidden="true" />}
+          {cta.plus ? (
+            <Plus size={16} weight="bold" aria-hidden="true" />
+          ) : (
+            <ArrowRight size={16} weight="bold" aria-hidden="true" />
+          )}
           {cta.label}
         </Link>
       )}
