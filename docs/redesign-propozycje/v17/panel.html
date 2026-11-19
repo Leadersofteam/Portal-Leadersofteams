@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Panel — Portal V17 PRO (makieta P0)</title>
+<!-- Makieta P0 /panel (19.11.2026). X przestaje przeklikiwać Powiadomienia, Oferty, Zlecenia i Drabinkę, żeby wiedzieć, co dziś zrobić.
+     Dane: fixtura-portal.js (fikcja). Liczby = to, co Portal liczy dziś (apps/web/app/panel/page.tsx, punkty z ocen i uznanych odpowiedzi).
+     Stany: ?stan=pusty|ladowanie|blad. Fonty/ikony z CDN — wolno tylko w makiecie (ADR-009 dotyczy kodu). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="wspolne.css">
+<style>
+[hidden]{display:none!important}
+.lad{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px}
+.lad i{display:block;height:10px;border-radius:6px;background:var(--ln)}
+.lad i.on{background:var(--c);box-shadow:0 0 14px -2px var(--c)}
+.lad i.tu{outline:2px solid var(--c);outline-offset:2px}
+.ladl{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font:600 11px Inter;color:var(--mut);text-align:center}
+.ladl .tu{color:var(--tx)}
+.lvl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lvl .nm{font:800 40px "Bricolage Grotesque";letter-spacing:-.03em;color:var(--level-3)}
+.lvl small{font:500 13px Inter;color:var(--tx2)}
+.zrodla{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.zrodla div{border:1px dashed var(--ln);border-radius:14px;padding:10px 12px}
+.zrodla small{display:block;font:500 12px Inter;color:var(--tx2)}
+.zrodla b{font:700 22px "Bricolage Grotesque"}
+.zrodla i{color:var(--level-3);font-style:normal}
+.glowka{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.glowka .h{font-size:clamp(26px,3.4vw,38px);margin:0;font-weight:800}
+.glowka .sp{flex:1}
+.kpi .t{white-space:nowrap}
+.bledbox{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:var(--bads);color:var(--bad);font:600 13.5px Inter}
+.bledbox .btn-glowny{margin-left:auto}
+.zywe .wiersz{border-color:rgba(255,255,255,.12)}
+@media (max-width:820px){.bledbox{flex-wrap:wrap}.bledbox .btn-glowny{margin-left:0}.glowka .btn-glowny{width:100%}}
+</style>
+</head>
+<body data-ekran="Panel" data-stany="dane,pusty,ladowanie,blad">
+
+<div class="app">
+  <header class="bar">
+    <span class="pill bc"><b>Panel</b></span>
+    <span class="sp"></span>
+    <span class="pill szuk"><i class="ph-bold ph-magnifying-glass" style="font-size:15px"></i>Szukaj zleceń, Liderów, firm</span>
+    <span class="av" style="width:44px;height:44px" title="Ola Wrzos · Lider" id="av"></span>
+  </header>
+
+  <div class="glowka wej">
+    <h1 class="h">Co dziś, <span class="akc" id="imie"></span></h1>
+    <span class="sp"></span>
+    <a class="btn-glowny" href="#oferty" id="cta" data-tylko-stan="dane"><i class="ph-bold ph-arrow-right"></i><span id="ctaTxt"></span></a>
+    <a class="btn-glowny" href="#" data-tylko-stan="pusty" hidden><i class="ph-bold ph-plus"></i>Dodaj pierwsze zlecenie</a>
+  </div>
+
+  <!-- błąd: jedna linia, reszta ekranu schowana -->
+  <div class="bledbox" data-tylko-stan="blad" hidden role="alert" style="margin-top:16px">
+    <i class="ph-duotone ph-warning-circle" style="font-size:22px"></i>Nie udało się wczytać panelu. Twoje dane są bezpieczne.
+    <a class="btn-glowny" href="#">Spróbuj ponownie</a>
+  </div>
+
+  <div class="g" style="margin-top:16px" data-tylko-stan="dane pusty ladowanie" hidden>
+    <!-- KPI: karuzela na telefonie -->
+    <div class="c12 kpis" data-przesuw id="kpi"></div>
+
+    <!-- Drabinka: punkty wyłącznie z ocen i uznanych odpowiedzi (ADR-004) -->
+    <article class="k c7 wej" style="animation-delay:.05s" aria-label="Drabinka Lidera">
+      <div class="kh"><span class="ik" style="color:var(--level-3)"><i class="ph-duotone ph-ladder"></i></span><h3>Drabinka</h3>
+        <div class="r"><a class="lnk" href="#">Moje punkty <i class="ph-bold ph-arrow-right"></i></a></div></div>
+      <div data-tylko-stan="dane" hidden id="ladDane"></div>
+      <div data-tylko-stan="pusty" hidden class="pusty-kom">
+        <b>Nowy w Portalu</b><span>Pierwszy punkt przyznaje drugi człowiek — ocena po zleceniu albo uznana odpowiedź.</span>
+        <a class="lnk" href="#">Odpowiedz na pytanie <i class="ph-bold ph-arrow-right"></i></a></div>
+      <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:44px;width:40%"></div><div class="skel" style="height:10px;margin-top:16px"></div><div class="skel" style="height:56px;margin-top:16px"></div></div>
+    </article>
+
+    <!-- Na żywo: najwyżej jedna ciemna karta na ekran — zlecenie w toku -->
+    <aside class="k live c5 wej zywe" style="animation-delay:.1s" aria-label="Zlecenie w toku">
+      <div class="kh"><div><div class="lbl">W toku</div><h3 style="margin-top:3px">Zlecenie w realizacji</h3></div></div>
+      <div data-tylko-stan="dane" hidden id="zywe"></div>
+      <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Brak zleceń w toku</b><span>Gdy przyjmiesz ofertę, zlecenie pojawi się tutaj.</span></div>
+      <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:56px"></div><div class="skel" style="height:44px;margin-top:12px"></div></div>
+    </aside>
+
+    <article class="k c4 wej" id="oferty" style="animation-delay:.05s">
+      <div class="kh"><span class="ik" style="background:var(--embs);color:var(--ember)"><i class="ph-duotone ph-tag"></i></span><h3>Oferty do odpowiedzi</h3>
+        <div class="r"><a class="lnk" href="#">Wszystkie <i class="ph-bold ph-arrow-right"></i></a></div></div>
+      <div data-tylko-stan="dane" hidden id="lOferty"></div>
+      <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Brak ofert do odpowiedzi</b><span>Opublikuj zlecenie, a oferty trafią tutaj.</span><a class="lnk" href="#">Dodaj zlecenie <i class="ph-bold ph-arrow-right"></i></a></div>
+      <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:44px"></div><div class="skel" style="height:44px;margin-top:10px"></div></div>
+    </article>
+
+    <article class="k c4 wej" style="animation-delay:.1s">
+      <div class="kh"><span class="ik"><i class="ph-duotone ph-bell"></i></span><h3>Powiadomienia</h3>
+        <div class="r"><a class="lnk" href="#">Wszystkie <i class="ph-bold ph-arrow-right"></i></a></div></div>
+      <div data-tylko-stan="dane" hidden id="lPowi"></div>
+      <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Nic nowego</b><span>Ustaw powiadomienia o zleceniach w swojej branży.</span><a class="lnk" href="#">Ustaw powiadomienie <i class="ph-bold ph-arrow-right"></i></a></div>
+      <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:44px"></div><div class="skel" style="height:44px;margin-top:10px"></div></div>
+    </article>
+
+    <article class="k c4 wej" style="animation-delay:.15s">
+      <div class="kh"><span class="ik" style="background:var(--oks);color:var(--ok)"><i class="ph-duotone ph-briefcase"></i></span><h3>Zlecenia w Twojej branży</h3>
+        <div class="r"><a class="lnk" href="#">Katalog <i class="ph-bold ph-arrow-right"></i></a></div></div>
+      <div data-tylko-stan="dane" hidden id="lBranza"></div>
+      <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Brak zleceń w Twojej branży</b><span>Ustaw powiadomienie, a dowiesz się pierwszy.</span><a class="lnk" href="#">Ustaw powiadomienie <i class="ph-bold ph-arrow-right"></i></a></div>
+      <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:44px"></div><div class="skel" style="height:44px;margin-top:10px"></div></div>
+    </article>
+  </div>
+  <p class="stopka">Makieta V17 PRO · dane przykładowe · stopka „Ekosystem” wg apps/web/lib/ecosystem.ts</p>
+</div>
+
+<script src="fixtura-portal.js"></script>
+<script src="wspolne.js"></script>
+<script>
+const F=window.FIX,ja=F.ja,pusty=()=>V17.stan==='pusty';
+document.getElementById('imie').textContent=ja.imie;
+document.getElementById('av').textContent=ja.imie[0]+ja.nazwisko[0];
+const brak=-1;
+// Dane „dziś” są fikcją na bazie fikstury; w kodzie: Prisma/API (to, co /panel liczy dziś + powiadomienia).
+const otwarte=F.zlecenia.filter(z=>z.status==='otwarte'),toku=F.zlecenia.find(z=>z.status==='w toku');
+const doOdp=F.zlecenia.filter(z=>z.status==='otwarte'&&z.ofert>0);
+const brIn=[F.zlecenia[3],{tytul:'Wymiana grzejników — 14 szt.',firma:'Kamienica Pod Lipą sp. z o.o.',budzet:'6–9 tys. zł',termin:'10.01',ofert:1,status:'otwarte'}];
+const powi=[['tag','Nowa oferta na „Serwis klimatyzacji — 12 pokoi”','dziś, 09:12'],['star','Ocena ★ 5 po zleceniu — Hotel Nad Zatoką','wczoraj'],['check-circle','Twoja odpowiedź uznana: „Pompa ciepła w budynku z 1930 r.”','2 dni temu']];
+const wiersz=(ic,t,s,pl)=>`<a class="wiersz" href="#"><span class="ik">${ikona(ic)}</span><div><b>${t}</b><small>${s}</small></div>${pl||''}</a>`;
+document.getElementById('ctaTxt').textContent=`Odpowiedz na ${doOdp.length} oferty`;
+// KPI — tylko to, co Portal liczy: zlecenia, oferty, ocena śr. z liczbą ocen, poziom Drabinki
+const KPI=[['briefcase','Moje zlecenia',pusty()?0:otwarte.length,'otwarte'],['tag','Oferty do odpowiedzi',pusty()?0:doOdp.reduce((a,z)=>a+z.ofert,0),'ofert'],
+ ['star','Ocena',pusty()?'—':ja.ocenaSr.toString().replace('.',','),pusty()?'brak ocen':`z ${ja.ocen} ocen`],['ladder','Poziom Drabinki',pusty()?1:ja.poziom,pusty()?'nowy w Portalu':`${ja.punkty} pkt`]];
+const kp=()=>{const l=V17.stan==='ladowanie';document.getElementById('kpi').innerHTML=KPI.map(([ic,t,v,u],i)=>`<article class="k kpi wej" style="animation-delay:${.04*i}s"><div class="t"><span class="ik">${ikona(ic)}</span>${t}</div>${l?'<div class="skel" style="height:32px;width:50%;margin:6px 0 4px"></div>':`<div class="v num">${v}<small> ${u}</small></div>`}</article>`).join('')};
+const lad=()=>{const c=ja.poziom,p=ja.punkty;
+ document.getElementById('ladDane').innerHTML=`<div class="lvl"><span class="nm num">${c}</span><small>poziom z 7 · ${p} pkt · jeszcze ${ja.doNastepnego} do poziomu ${c+1}</small></div>
+ <div class="lad" role="img" aria-label="Poziom ${c} z 7">${[1,2,3,4,5,6,7].map(n=>`<i style="--c:var(--level-${n})" class="${n<=c?'on':''} ${n===c?'tu':''}"></i>`).join('')}</div>
+ <div class="ladl">${[1,2,3,4,5,6,7].map(n=>`<span class="${n===c?'tu':''}">${n}</span>`).join('')}</div>
+ <div class="zrodla"><div><small>Oceny po zleceniach</small><b class="num"><i>${ja.ocen}</i> pkt</b></div><div><small>Uznane odpowiedzi</small><b class="num"><i>${ja.uznaneOdp}</i> pkt</b></div></div>`};
+const wypelnij=()=>{kp();lad();
+ document.getElementById('zywe').innerHTML=`<div class="ro"><span class="av">${toku.firma[0]}</span><div><b>${toku.tytul}</b><small>${toku.firma} · termin ${toku.termin}</small></div><span class="st">W toku</span></div><div class="pary"><div><small>Budżet</small><b class="num">${toku.budzet}</b></div><div><small>Ofert</small><b class="e num">${toku.ofert}</b></div></div>`;
+ document.getElementById('lOferty').innerHTML=doOdp.map(z=>wiersz('tag',z.tytul,`${z.firma} · ${z.budzet}`,`<span class="plak em">${z.ofert} ${z.ofert<5?'oferty':'ofert'}</span>`)).join('');
+ document.getElementById('lPowi').innerHTML=powi.map(([i,t,s])=>wiersz(i,t,s)).join('');
+ document.getElementById('lBranza').innerHTML=brIn.map(z=>wiersz('briefcase',z.tytul,`${z.budzet} · do ${z.termin}`,`<span class="plak ok">otwarte</span>`)).join('');};
+wypelnij();document.addEventListener('v17stan',()=>{wypelnij();});
+</script>
+</body>
+</html>
