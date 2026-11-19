@@ -95,3 +95,19 @@ await page.addInitScript(() => localStorage.setItem('lot_theme', 'light'));
 Boot w layout.tsx odczyta to przed pierwszym paintem. Wracasz do ciemnego przez
 `localStorage.removeItem('lot_theme')`. Zasady motywu: `docs/MINY.md` (sekcja
 „Motyw zmienia się TYLKO tokenami").
+
+## Rytm V17 PRO (od 19.11) — 1512 + 390 × jasny + ciemny, pełna strona
+
+W programie V17 (skill `portal-v17-design`) zrzuty robisz w rozmiarach rodziny z LoT App, żeby para
+makieta ↔ Portal była porównywalna 1:1 (agent `zgodnosc-makiety`). 1440 zostaje dla starszych porównań.
+
+- Rozmiary: **1512×982** (dsf 1) i **390×844** (`isMobile`, `hasTouch`, dsf 2). Jasny pierwszy (to dostaje Maciej), ciemny drugi.
+- `fullPage: true` na obu + dodatkowo na 390 sam pierwszy ekran (`-390-ekran.png`) — dolny pasek `fixed` w pełnej stronie ląduje
+  w środku obrazu (pułapka 1 wyżej).
+- Wygląd V17 w kodzie: `localStorage.setItem('lot_wyglad', 'v17')` w `addInitScript` obok `lot_theme`.
+- Pomiar po zrzucie: `document.documentElement.scrollWidth` = szerokość ORAZ najszerszy element w `main`
+  (`getBoundingClientRect().width` ≤ `innerWidth`) — sam `scrollWidth` nie widzi przycięcia przez `overflow:hidden`.
+  Wyjątek: kontenery `[data-przesuw]` (karuzele — zgoda Macieja na przesuwanie kafelków w poziomie).
+- Nazwa: `audyt/zrzuty/v17-<ekran>[-<stan>]-<jasny|ciemny>-<1512|390>.png` (ta sama co makiety).
+- Makiety HTML: gotowy `node audyt/harness/v17-makiety-zrzuty.mjs <plik.html> <nazwa> [stany…] [--pelna]`.
+- Przed serią: MemAvailable ≥ 1500 MB i SwapFree ≥ 500 MB; jeden proces Chromium naraz (VPS wspólny z LoT App).

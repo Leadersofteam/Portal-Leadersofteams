@@ -134,7 +134,8 @@ PD3 → D4 (App) → D5+PD4 (oba, dostępność i domknięcie).**
 - **ADR-010**: żadnych wzorców uzależniających — feed chronologiczny, bez infinite
   scrolla, ranking tylko do etykiet. Design nie może przemycić dark patterns.
 - **Anty-MLM (ADR-004)**: żaden element wizualny nie sugeruje nagród za zapraszanie.
-- **Żadnych nowych bibliotek UI** — tożsamość na własnych komponentach i SVG.
+- **Żadnych nowych bibliotek UI** — tożsamość na własnych komponentach i SVG. Wyjątek (19.11, Maciej:
+  „Phosphor jak w App”): ikony Phosphor duotone w wyglądzie V17 PRO — `docs/PROGRAM-V17-PORTAL.md`.
 - Priorytet S19 (decyzje właściciela: dane demo, lista zaproszeń) jest nadrzędny —
   program designu nie blokuje zaproszeń, tylko je poprzedza tam, gdzie zdąży.
 

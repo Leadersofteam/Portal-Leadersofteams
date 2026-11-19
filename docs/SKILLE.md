@@ -21,9 +21,18 @@ w dokumentacji i staje się Skillem.** Dokumentacja opisuje STAN, Skill opisuje 
 | **portal-awaria**           | produkcja nie działa po wdrożeniu, „wycofaj", „przywróć"                    | rollback obrazów bez cofania migracji (expand-only), restore z kopii z drillem, worker.alive ≠ Up                                                                                   |
 | **portal-stan-zastany**     | start sesji, pozycja z roadmapy, raport „zamknięte"                         | `git log -S`/grep przed kodowaniem, skutek w bazie zamiast logu wysyłki, ścieżka z KLIKNIĘCIEM linku                                                                                |
 | **portal-wyprawa**          | journey-testy na prawdziwych danych, „przejdź jak użytkownik", „dogfooding" | harness `wyprawa/` (konta-persony, rejestracja z anty-botem po stronie Node), cykl zlecenia i Q&A z minami anty-fraudu, dziennik + zgłoszenia, sprzątanie z dowodem                 |
+| **portal-v17-design**       | program V17 PRO, „makieta”, „paczka P0…P7”, „nowy wygląd”                   | makieta → akceptacja Macieja → kod za flagą `data-wyglad="v17"` → zgodność w 4 parach · Phosphor (wyjątek 19.11) · siatka liderów / scena 3D na P7                                  |
+| **portal-lider-dnia**       | koordynacja sesji Sonnet, „Lider”, „zamknij dzień”                          | pomiar zamiast raportu, maks. 2 sesje, bramka pamięci, flock `/tmp/lot-v17-build.lock`, szablon promptu                                                                             |
+| ui-ux-pro-max               | projektowanie/recenzja interfejsu (baza stylów, palet, wytycznych UX)       | kopia 1:1 z LoT App (19.11)                                                                                                                                                         |
 | **portal-design**           | każda zmiana wyglądu, sprinty PD1–PD4, „popraw design"                      | tokeny zamiast hexów, światło poziomów jako sygnatura, własne SVG, granice ADR-009/010, test anty-generyczności                                                                     |
 | playwright-cli / -trace     | automatyzacja przeglądarki z CLI, inspekcja trace'ów                        | kopie oficjalnych skilli z `node_modules/playwright-core` (odśwież po upgradzie Playwrighta)                                                                                        |
 | prisma-cli                  | referencja składni komend Prisma                                            | oficjalny skill Prismy (opisuje 7.x; repo ma 6.19 — flagi sprawdzaj przy rozjeździe)                                                                                                |
+
+## Agenci (`.claude/agents/`, od 19.11, Sonnet, tylko odczyt)
+
+- **recenzent-wygladu** — werdykt GOTOWE/POPRAW dla ekranu V17 (kod + zrzuty).
+- **zgodnosc-makiety** — ZGODNY/NIEZGODNY: zrzut Portalu ↔ zaakceptowana makieta, ta sama szerokość/motyw/stan.
+- **audytor-modulu** — użycie modułu na prod (SQL read-only, bez demo) + werdykt ZOSTAW/POPRAW/SCAL/UKRYJ.
 
 ## Skille zewnętrzne podnoszące jakość (z wtyczek właściciela)
 

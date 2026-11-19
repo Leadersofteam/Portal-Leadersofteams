@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Feniks v17 pro</title>
+<!-- Feniks v17 pro — makieta Pulpitu (18.11.2026). Następczyni Feniks V7.
+     Menu: szyna 76 px ↔ panel 256 px z sekcjami (moduły z apps/web/components/layout/nav-items.ts), etykieta po najechaniu.
+     Ikony: Phosphor duotone (2.1.1). Kolory i fonty: Feniks. Dane PRZYKŁADOWE. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="v17/wspolne.css">
+</head>
+<body data-ekran="Pulpit">
+
+<div class="app">
+  <header class="bar">
+    <span class="logo mlogo" role="img" aria-label="Feniks"></span><span class="pill bc"><b>Pulpit</b></span>
+    <span class="pill"><i class="ph-duotone ph-clock" style="font-size:15px"></i>śr., 18 lis · <b class="num">09:41</b></span>
+    <span class="sp"></span>
+    <span class="pill szuk"><i class="ph-bold ph-magnifying-glass" style="font-size:15px"></i>Szukaj firm, ludzi, zadań<span class="kbd">⌘K</span></span>
+    <span class="ib gl" title="Dodaj"><i class="ph-bold ph-plus"></i></span>
+    <span class="ib" title="Powiadomienia"><i class="ph-duotone ph-bell"></i><span class="kr"></span></span>
+    <span class="av" style="width:42px;height:42px" title="Maciej · Lider zespołu">MK</span>
+  </header>
+
+  <div class="powitanie wej">
+    <h1 class="h">Dzień dobry, <span class="akc">Maciej</span></h1>
+    <div class="okres"><span>Dziś</span><span class="on">Tydzień</span><span>Miesiąc</span></div>
+  </div>
+
+  <div class="g">
+    <!-- rząd 1: Feniks + KPI -->
+    <article class="k fd c4 wej" aria-label="Feniks dnia">
+      <canvas id="feniks" aria-hidden="true"></canvas>
+      <div class="in">
+        <div class="lb">Feniks dnia</div>
+        <div class="nm num" id="fdNum">0<small> / 20 kroków</small></div>
+        <div class="etap" id="fdEtap"></div>
+        <span class="toast" id="fdToast">+1</span>
+        <div class="seg" id="fdSeg"><div><i></i></div><div><i></i></div><div><i></i></div><div><i></i></div></div>
+        <div class="segl" id="fdSegl"><span>Ogon</span><span>Skrzydła</span><span>Głowa</span><span>Lot</span></div>
+        <div class="kroki" title="Makieta: kliknij, żeby zasymulować krok">
+          <button data-k="1" data-c="155,123,242"><i class="ph-duotone ph-phone"></i>Rozmowa</button>
+          <button data-k="1" data-c="12,143,99"><i class="ph-duotone ph-note-pencil"></i>Notatka</button>
+          <button data-k="3" data-c="244,169,59"><i class="ph-duotone ph-calendar-check"></i>Spotkanie</button></div>
+      </div>
+    </article>
+    <div class="c8 kpis" data-przesuw id="kpi"></div>
+
+    <!-- rząd 2: lejek + finanse + na żywo -->
+    <article class="k c5 wej" style="animation-delay:.05s">
+      <div class="kh"><span class="ik"><i class="ph-duotone ph-funnel"></i></span><h3>Lejek CRM</h3><div class="r"><span class="lnk">CRM <i class="ph-bold ph-arrow-right"></i></span></div></div>
+      <div class="lejek" id="lejek"></div>
+    </article>
+    <article class="k c4 wej wykres" style="animation-delay:.1s">
+      <div class="kh"><span class="ik" style="background:var(--oks);color:var(--ok)"><i class="ph-duotone ph-chart-line-up"></i></span><h3>Finanse</h3>
+        <div class="r legenda"><span><i style="background:var(--ac)"></i>Przychód</span><span><i style="background:var(--ember)"></i>Koszty</span></div></div>
+      <svg id="fin" viewBox="0 0 400 170" aria-label="Przychód i koszty, 6 miesięcy"></svg>
+    </article>
+    <aside class="k live c3 wej" style="animation-delay:.15s" aria-label="Dzwonię na żywo">
+      <div class="kh"><div><div class="lbl">Na żywo</div><h3 style="margin-top:3px">Dzwonię</h3></div></div>
+      <div class="rozm">
+        <div class="ro"><span class="av">LA</span><div><b>Budmax Kołobrzeg</b><small>Laura · 04:12</small></div><span class="st">Rozmawia</span></div>
+        <div class="ro"><span class="av" style="background:linear-gradient(135deg,#0C8F63,#5BE0A8)">WI</span><div><b>Termo-Bud</b><small>Wiktor · oddzwonić 10:15</small></div><span class="st cz">Czeka</span></div>
+      </div>
+      <div class="pary"><div><small>Spotkania (tydz.)</small><b class="num">5</b></div><div><small>Wyceny w drodze</small><b class="e num">3</b></div></div>
+    </aside>
+
+    <!-- rząd 3: tabela leadów + kalendarz -->
+    <article class="k c8 wej" style="animation-delay:.1s">
+      <div class="kh"><span class="ik"><i class="ph-duotone ph-address-book"></i></span><h3>Do kontaktu</h3><div class="r"><span class="lnk">Lista na dziś <i class="ph-bold ph-arrow-right"></i></span></div></div>
+      <div style="overflow-x:auto"><table class="tab" id="leady"><thead><tr><th>Firma</th><th>Etap</th><th class="hm">Opiekun</th><th class="hm">Następny krok</th><th class="r">Wartość</th><th class="r">Termin</th></tr></thead><tbody></tbody></table></div>
+    </article>
+    <article class="k c4 wej" style="animation-delay:.15s">
+      <div class="kh"><span class="ik"><i class="ph-duotone ph-calendar-dots"></i></span><h3>Kalendarz · dziś</h3><div class="r"><span class="lnk">Tydzień <i class="ph-bold ph-arrow-right"></i></span></div></div>
+      <div class="oslist">
+        <div class="os"><time>08:00</time><div class="b ok"><b>Odprawa budowy C</b><small>AquaMarina · 6 osób</small></div></div>
+        <div class="os teraz"><time>10:15</time><div class="b"><b>Oddzwonić: Termo-Bud</b><small>Wiktor</small></div></div>
+        <div class="os"><time>12:30</time><div class="b em"><b>Spotkanie: Hotel Bałtyk</b><small>Świnoujście · Maciej, Wiktor</small></div></div>
+        <div class="os"><time>15:00</time><div class="b"><b>Wycena W/2026/005</b><small>Zatwierdzenie cennika</small></div></div>
+      </div>
+    </article>
+
+    <!-- rząd 4: wyceny + budowa + zespół -->
+    <article class="k c4 wej">
+      <div class="kh"><span class="ik" style="background:var(--embs);color:var(--ember)"><i class="ph-duotone ph-file-text"></i></span><h3>Wyceny</h3><div class="r"><span class="lnk">Wszystkie <i class="ph-bold ph-arrow-right"></i></span></div></div>
+      <table class="tab" id="wyceny"><tbody></tbody></table>
+    </article>
+    <article class="k c4 wej" style="animation-delay:.05s">
+      <div class="kh"><span class="ik" style="background:var(--oks);color:var(--ok)"><i class="ph-duotone ph-buildings"></i></span><h3>Budowa · AquaMarina 3</h3><div class="r"><span class="lnk">Dozór <i class="ph-bold ph-arrow-right"></i></span></div></div>
+      <div class="bud" id="bud"></div>
+      <div class="legenda" style="margin-top:10px"><span><i style="background:var(--ok)"></i>Wod-kan</span><span><i style="background:var(--ac)"></i>C.O.</span><span><i style="background:var(--ember)"></i>Klima</span></div>
+      <div class="mini"><div><small>Zgłoszenia</small><b class="num">7</b></div><div><small>Zdjęcia dziś</small><b class="num">23</b></div><div><small>Usterki</small><b class="num dz">2</b></div></div>
+    </article>
+    <article class="k c4 wej" style="animation-delay:.1s">
+      <div class="kh"><span class="ik"><i class="ph-duotone ph-users-three"></i></span><h3>Zespół teraz</h3><div class="r"><span class="lnk">Ludzie <i class="ph-bold ph-arrow-right"></i></span></div></div>
+      <div class="ludzie" id="ludzie"></div>
+    </article>
+  </div>
+  <p class="stopka">Makieta Feniks v17 pro · dane przykładowe</p>
+</div>
+<script src="v17/wspolne.js"></script>
+<script>
+// Pulpit — dane i wykresy tej makiety (rama, menu, tło i reflektor: v17/wspolne.js)
+
+// ── KPI ──
+const spark=(pts,c)=>{const mx=Math.max(...pts),mn=Math.min(...pts),d=pts.map((v,i)=>`${i?'L':'M'}${(i/(pts.length-1)*84).toFixed(1)} ${(28-(v-mn)/(mx-mn||1)*24).toFixed(1)}`).join(' ');return `<svg viewBox="0 0 84 30" fill="none" preserveAspectRatio="none"><path d="${d} V30 H0Z" fill="${c}" opacity=".12"/><path d="${d}" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`};
+const KPI=[['target','Nowe leady','72','',['up','+18%'],[30,34,31,40,44,52,72],'var(--ac)'],['phone','Rozmowy','21','/ 7 dni',['up','16 z wynikiem'],[2,4,3,5,2,3,2],'var(--ac)'],['file-text','Wyceny','48,2','tys. zł',['dn','−6%'],[60,58,55,52,50,49,48],'var(--ember)'],['wallet','Przychód XI','132','tys. zł',['up','+9%'],[90,104,98,112,120,121,132],'var(--ok)']];
+document.getElementById('kpi').innerHTML=KPI.map(([ic,t,v,u,[k,d],pts,c],i)=>`<article class="k kpi wej" style="animation-delay:${.04*i}s"><div class="t"><span class="ik">${ikona(ic)}</span>${t}</div><div class="v num">${v}<small> ${u}</small></div><div class="d"><span class="zm ${k}"><i class="ph-bold ph-arrow-${k==='up'?'up':'down'}-right"></i>${d}</span>${spark(pts,c)}</div></article>`).join('');
+// ── Lejek ──
+const LEJ=[['Nowy',38,0],['Pierwszy kontakt',21,0],['Spotkanie',9,86],['Wycena',6,148],['Negocjacje',3,92],['Wygrane',2,61]];
+document.getElementById('lejek').innerHTML=LEJ.map(([n,c,v])=>`<div class="w"><span>${n}</span><div class="p"><i style="width:${Math.max(13,c/38*100)}%"></i><b class="num">${c}</b></div><b class="num">${v?v+' tys.':'—'}</b></div>`).join('');
+// ── Finanse: słupki przychodu + linia kosztów ──
+(function(){const M=['VI','VII','VIII','IX','X','XI'],P=[88,96,104,118,121,132],K=[71,74,80,86,92,95],W=400,Hh=170,b=24,mx=150,x=i=>34+i*((W-50)/6),y=v=>Hh-b-(v/mx)*(Hh-b-10);
+ let s='';[0,50,100,150].forEach(v=>{s+=`<line x1="30" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ln)"/><text x="0" y="${y(v)+4}">${v}</text>`});
+ P.forEach((v,i)=>{s+=`<rect x="${x(i)+6}" y="${y(v)}" width="${(W-50)/6-16}" height="${y(0)-y(v)}" rx="6" fill="url(#gp)" opacity="${i===5?1:.55}"/><text x="${x(i)+(W-50)/12-6}" y="${Hh-6}" text-anchor="middle">${M[i]}</text>`});
+ s+=`<path d="${K.map((v,i)=>`${i?'L':'M'}${x(i)+(W-50)/12-2} ${y(v)}`).join(' ')}" fill="none" stroke="var(--ember)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+ K.forEach((v,i)=>s+=`<circle cx="${x(i)+(W-50)/12-2}" cy="${y(v)}" r="3" fill="var(--bg)" stroke="var(--ember)" stroke-width="2"/>`);
+ s+=`<text x="${x(5)+(W-50)/12-6}" y="${y(132)-8}" text-anchor="middle" style="fill:var(--tx);font-weight:700">132</text>`;
+ document.getElementById('fin').innerHTML=`<defs><linearGradient id="gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ac2)"/><stop offset="1" stop-color="var(--ac)"/></linearGradient></defs>`+s;})();
+// ── Tabela leadów ──
+const LD=[['Hotel Bałtyk','Świnoujście','Spotkanie','e3','WI','Spotkanie 12:30','86 tys.','dziś'],['Termo-Bud','Kołobrzeg','Pierwszy kontakt','e1','LA','Oddzwonić','—','10:15'],['Budmax','Kołobrzeg','Wycena','e2','MK','Wysłać wycenę','42 tys.','jutro'],['Apartamenty Wolin','Międzyzdroje','Negocjacje','e2','WI','Rabat 5%?','92 tys.','pt'],['Instal-Pro','Szczecin','Nowy','e1','LA','Pierwszy telefon','—','<span class="dz">wczoraj</span>']];
+document.querySelector('#leady tbody').innerHTML=LD.map(([f,m,e,ec,o,n,v,t])=>`<tr><td><div class="fi"><span class="av">${f.split(' ').map(w=>w[0]).join('').slice(0,2)}</span><div><b>${f}</b><small>${m}</small></div></div></td><td><span class="et ${ec}">${e}</span></td><td class="hm"><span class="av" style="width:26px;height:26px;font-size:10px">${o}</span></td><td class="hm">${n}</td><td class="r num"><b>${v}</b></td><td class="r">${t}</td></tr>`).join('');
+// ── Wyceny ──
+const WY=[['W/2026/005','AquaMarina A · instalacje','148 tys.','Do sprawdzenia','e2'],['W/2026/004','Budmax · C.O.','42 tys.','Wysłana','e1'],['W/2026/003','Dom Kaczmarków','18 tys.','Przyjęta','e3']];
+document.querySelector('#wyceny tbody').innerHTML=WY.map(([n,o,v,s,c])=>`<tr><td><b>${n}</b><br><small style="color:var(--mut)">${o}</small></td><td class="r"><b class="num">${v}</b><br><span class="et ${c}" style="margin-top:4px">${s}</span></td></tr>`).join('');
+// ── Budowa: budynki × branże ──
+const BU=[['Budynek A',[34,22,0]],['Budynek B',[61,40,12]],['Budynek C',[78,55,30]],['Budynek D',[20,8,0]]];
+document.getElementById('bud').innerHTML=BU.map(([n,[a,b,c]])=>`<div class="w"><span>${n}</span><div class="p"><i style="width:${a/3}%;background:var(--ok)"></i><i style="width:${b/3}%;background:var(--ac)"></i><i style="width:${c/3}%;background:var(--ember)"></i></div><b class="num">${Math.round((a+b+c)/3)}%</b></div>`).join('');
+// ── Zespół teraz ──
+const LU=[['LA','Laura','Dzwoni · LoT, Zodiamo','var(--ok)',10,15],['WI','Wiktor','Spotkanie · Świnoujście','var(--ac)',2,5],['MK','Maciej','Na budowie · C','var(--ember)',13,20],['KA','Kacper','Brygada wod-kan','var(--ok)',6,8]];
+document.getElementById('ludzie').innerHTML=LU.map(([i,n,s,c,a,b])=>`<div class="cz"><span class="av" style="--c:${c}">${i}</span><div><b>${n}</b><small>${s}</small></div><div class="pr"><span class="num">${a}/${b}</span><div><i style="width:${a/b*100}%"></i></div></div></div>`).join('');
+
+// Feniks dnia v17 — rozwinięcie FeniksHero (V7): ptak z cząstek; każdy krok wysyła cząstki z przycisku/miejsca kroku
+// po łuku na swoje miejsce. Budowa od ogona do głowy, 4 etapy z impulsem, przy 100% ptak wzlatuje (ember + iskry).
+(function(){
+  const cv=document.getElementById('feniks'); if(!cv) return; const ctx=cv.getContext('2d');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const CEL=20; let zrob=+(new URLSearchParams(location.search).get('kroki')||13); zrob=Math.min(CEL,Math.max(0,zrob));
+  const ETAPY=['Ogon','Skrzydła','Głowa','Lot'], OPIS=['Pierwsze pióra ogona — dobry start.','Rosną skrzydła — połowa drogi.','Głowa się wyłania — jeszcze chwila.','Ostatnie pióra — zaraz wzleci.'],LECI='Feniks leci. Cel dnia osiągnięty!';
+  let W,H,cz=[],post=reduce?zrob/CEL:0,impuls=[],lot=0,dpr=Math.min(2,devicePixelRatio||1);
+  const img=new Image(); img.src=getComputedStyle(document.documentElement).getPropertyValue('--feniks').trim().replace(/^url\(["']?/,'').replace(/["']?\)$/,'');
+  function wymiary(){const r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  function zbuduj(){wymiary();const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const x=c.getContext('2d');x.drawImage(img,0,0);const d=x.getImageData(0,0,c.width,c.height).data;
+    const r0=img.height/img.width,bw=Math.min(W*0.5,(H*0.6)/r0,250),bh=bw*r0,ox=W-bw-10,oy=10,k=W<380?3:2,pts=[];
+    for(let y=0;y<img.height;y+=k)for(let xx=0;xx<img.width;xx+=k){const i=(y*img.width+xx)*4;if(d[i+3]>140){const nx=xx/img.width,ny=y/img.height;
+      // ogon (lewy-dół) → skrzydła → głowa (prawy-dół): kolejność dosadzania
+      pts.push({hx:ox+nx*bw,hy:oy+ny*bh,c:d[i]+','+d[i+1]+','+d[i+2],o:(nx*0.8+(1-ny)*0.2)+Math.random()*0.08});}}
+    pts.sort((a,b)=>a.o-b.o);
+    cz=pts.map((p,i)=>({...p,k:i/pts.length,x:p.hx+(Math.random()-.5)*W*.5,y:H+20,ph:Math.random()*6.28,src:null,t0:0}));
+    if(reduce) rysuj(0);}
+  function krok(n,kolor,ox,oy){const przed=zrob;zrob=Math.min(CEL,zrob+n);const a=przed/CEL,b=zrob/CEL;
+    // cząstki z nowego przedziału startują z miejsca kroku
+    for(const p of cz) if(p.k>=a&&p.k<b){p.src=kolor;p.x=ox+(Math.random()-.5)*20;p.y=oy+(Math.random()-.5)*10;p.t0=performance.now()+Math.random()*450;}
+    const e1=Math.floor(a*4-1e-9),e2=Math.floor(b*4-1e-9); if(e2>e1&&b>0) impuls.push({t:performance.now(),e:e2});
+    ui(n);}
+  function ui(n){document.getElementById('fdNum').innerHTML=zrob+'<small> / '+CEL+' kroków</small>';
+    const e=Math.min(3,Math.floor(zrob/CEL*4-1e-9)); const et=document.getElementById('fdEtap');
+    et.innerHTML=zrob===0?'Każdy krok dosadza pióra.':'<b>'+ETAPY[Math.max(0,e)]+'</b> · '+(zrob>=CEL?LECI:OPIS[Math.max(0,e)]);
+    document.querySelectorAll('#fdSeg div').forEach((d,i)=>{const w=Math.max(0,Math.min(1,zrob/CEL*4-i));d.querySelector('i').style.width=(w*100)+'%';d.classList.toggle('pelny',w>=1);});
+    document.querySelectorAll('#fdSegl span').forEach((s,i)=>s.classList.toggle('on',zrob/CEL*4>i));
+    if(n){const t=document.getElementById('fdToast');t.textContent='+'+n+(n>1?' kroki':' krok');t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),900);}
+    if(reduce) rysuj(0);}
+  function rysuj(t){ctx.clearRect(0,0,W,H);const cel=zrob/CEL;post+=(cel-post)*(reduce?1:.06);
+    const leci=cel>=1; lot+=((leci?1:0)-lot)*.03; const bob=reduce?0:Math.sin(t/650)*4*lot;
+    if(post>.05){ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(W*.68,H*.42,8,W*.68,H*.42,W*.45);
+      g.addColorStop(0,`rgba(${lot>.5?'244,169,59':'205,150,255'},${.22*post})`);g.addColorStop(1,'rgba(205,150,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';}
+    let i=0;for(const p of cz){i++;const dom=p.k<cel;let tx,ty,a;
+      if(dom&&t>=p.t0){tx=p.hx+Math.sin(t/900+p.ph)*.35;ty=p.hy+Math.cos(t/1100+p.ph)*.35-bob;a=1;}
+      else if(dom){continue;}
+      else{ // niedosadzone: blady kontur, który podpowiada kształt
+        if(i%2===0){ctx.fillStyle=`rgba(${p.c},.13)`;ctx.fillRect(p.hx-.8,p.hy-.8-bob,1.6,1.6);} continue;}
+      if(reduce){p.x=tx;p.y=ty;} else if(p.src){ // lot po łuku z miejsca kroku
+        const sp=.085;p.x+=(tx-p.x)*sp;p.y+=(ty-p.y)*sp-(Math.abs(tx-p.x)>4?1.1:0);
+        if(Math.abs(tx-p.x)<.6&&Math.abs(ty-p.y)<.6)p.src=null;}
+      else{p.x+=(tx-p.x)*.08;p.y+=(ty-p.y)*.08;}
+      const z=p.src?2.6:1.9; ctx.fillStyle=p.src?`rgba(${p.src},.95)`:`rgba(${p.c},${a})`;ctx.fillRect(p.x-z/2,p.y-z/2,z,z);}
+    // impuls kamienia milowego
+    impuls=impuls.filter(m=>t-m.t<1100);for(const m of impuls){const q=(t-m.t)/1100;ctx.strokeStyle=`rgba(155,123,242,${(1-q)*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(W*.68,H*.42-bob,20+q*W*.35,0,6.28);ctx.stroke();}
+    // iskry przy locie
+    if(lot>.3&&!reduce)for(let s=0;s<6;s++){const sx=W*.68-W*.3*Math.random(),sy=H*.62+Math.random()*H*.3-bob;ctx.fillStyle=`rgba(244,169,59,${Math.random()*.6*lot})`;ctx.fillRect(sx,sy,1.6,1.6);}
+  }
+  function petla(t){rysuj(t);if(!reduce)requestAnimationFrame(petla);}
+  img.onload=()=>{zbuduj();ui(0);if(!reduce)requestAnimationFrame(petla);};
+  addEventListener('resize',()=>{if(img.complete)zbuduj();});
+  document.querySelectorAll('.kroki button').forEach(b=>b.addEventListener('click',()=>{const r=b.getBoundingClientRect(),c=cv.getBoundingClientRect();krok(+b.dataset.k,b.dataset.c,r.left+r.width/2-c.left,r.top-c.top);}));
+})();
+</script>
+</body>
+</html>

@@ -5,6 +5,9 @@ description: Bramka jakości UX/UI dla każdej zmiany wyglądu Portalu LoT — t
 
 # Design — proces, nie gust
 
+> **Kierunek od 19.11: V17 PRO** (siostra „Feniks v17 pro” z App) — skill `portal-v17-design`,
+> wytyczne `docs/WYTYCZNE-V17-PORTAL.md`, program `docs/PROGRAM-V17-PORTAL.md`. Ten skill zostaje bramką ogólną.
+
 Kierunek i sprinty: `docs/DESIGN-SPRINTY.md`. Paleta primary jest WSPÓLNA z App —
 decyzja zapada w D1 programu App, Portal ją przejmuje (nie prowadź osobnego konkursu).
 
@@ -16,15 +19,18 @@ decyzja zapada w D1 programu App, Portal ją przejmuje (nie prowadź osobnego ko
    z etykietą (czytelność bez rozróżniania barw).
 3. **390 px kciukiem**: cele ≥44 px (pilnuje e2e mobile-shell), akcja główna w zasięgu
    kciuka, dolny pasek 5 slotów nie rośnie.
-4. **ADR-009**: ilustracje i ikony rysujemy SAMI w SVG; zero zasobów z obcych domen
-   w runtime (fonty przez `next/font` zostają — self-host w buildzie).
+4. **ADR-009**: ilustracje rysujemy SAMI w SVG; zero zasobów z obcych domen
+   w runtime (fonty przez `next/font` zostają — self-host w buildzie). Ikony: w wyglądzie
+   V17 PRO wyjątek — Phosphor duotone (`@phosphor-icons/react`), decyzja Macieja 19.11
+   „Phosphor jak w App” (paczka npm, zero sieci w runtime). Poza V17 — własne SVG.
 5. **ADR-010**: żadnych confetti, streaków, liczników wyświetleń, infinite scrolla,
    „ktoś pisze…" — ruch służy orientacji, nie retencji. Gdy animacja ma podnieść
    „zaangażowanie", a nie zrozumienie — wycinamy.
 6. **ADR-004**: żaden element wizualny nie celebruje zapraszania ani aktywności
    społecznej jako drogi do statusu.
 7. **Komplet stanów** (pusty z podpowiedzią ruchu, ładowanie, błąd) + focus states.
-8. Żadnych nowych bibliotek UI — tożsamość na własnych komponentach.
+8. Żadnych nowych bibliotek UI — tożsamość na własnych komponentach. Jedyny wyjątek:
+   ikony Phosphor w V17 PRO (reguła 4).
 
 ## Pętla weryfikacji (po każdej zmianie, przed „gotowe")
 
