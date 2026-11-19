@@ -34,6 +34,7 @@
 .kpi .t{white-space:normal;line-height:1.25}
 .bledbox{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:var(--bads);color:var(--bad);font:600 13.5px Inter}
 .bledbox .btn-glowny{margin-left:auto}
+.v17g-start{align-items:start}
 .zywe .wiersz{border-color:rgba(255,255,255,.12)}
 @media (max-width:820px){.bledbox{flex-wrap:wrap}.bledbox .btn-glowny{margin-left:0}.glowka .btn-glowny{width:100%}}
 </style>
@@ -61,7 +62,7 @@
     <a class="btn-glowny" href="#">Spróbuj ponownie</a>
   </div>
 
-  <div class="g" style="margin-top:16px" data-tylko-stan="dane pusty ladowanie" hidden>
+  <div class="g v17g-start" style="margin-top:16px" data-tylko-stan="dane pusty ladowanie" hidden>
     <!-- KPI: karuzela na telefonie -->
     <div class="c12 kpis" data-przesuw id="kpi"></div>
 
@@ -101,10 +102,10 @@
     </article>
 
     <article class="k c4 wej" style="animation-delay:.15s">
-      <div class="kh"><span class="ik" style="background:var(--oks);color:var(--ok)"><i class="ph-duotone ph-briefcase"></i></span><h3>Zlecenia w Twojej branży</h3>
+      <div class="kh"><span class="ik" style="background:var(--oks);color:var(--ok)"><i class="ph-duotone ph-briefcase"></i></span><h3>Nowe zlecenia</h3>
         <div class="r"><a class="lnk" href="#">Katalog <i class="ph-bold ph-arrow-right"></i></a></div></div>
       <div data-tylko-stan="dane" hidden id="lBranza"></div>
-      <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Brak zleceń w Twojej branży</b><span>Ustaw powiadomienie, a dowiesz się pierwszy.</span><a class="lnk" href="#">Ustaw powiadomienie <i class="ph-bold ph-arrow-right"></i></a></div>
+      <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Brak nowych zleceń</b><span>Ustaw powiadomienie, a dowiesz się pierwszy.</span><a class="lnk" href="#">Ustaw powiadomienie <i class="ph-bold ph-arrow-right"></i></a></div>
       <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:44px"></div><div class="skel" style="height:44px;margin-top:10px"></div></div>
     </article>
   </div>
@@ -135,7 +136,7 @@ const lad=()=>{const c=ja.poziom,p=ja.punkty;
  <div class="ladl">${[1,2,3,4,5,6,7].map(n=>`<span class="${n===c?'tu':''}">${n}</span>`).join('')}</div>
  <div class="zrodla"><div><small>Oceny po zleceniach</small><b class="num"><i>${ja.ocen}</i> pkt</b></div><div><small>Uznane odpowiedzi</small><b class="num"><i>${ja.uznaneOdp}</i> pkt</b></div></div>`};
 const wypelnij=()=>{kp();lad();
- document.getElementById('zywe').innerHTML=`<div class="ro"><span class="av">${toku.firma[0]}</span><div><b>${toku.tytul}</b><small>${toku.firma} · termin ${toku.termin}</small></div><span class="st">W toku</span></div><div class="pary"><div><small>Budżet</small><b class="num">${toku.budzet}</b></div><div><small>Ofert</small><b class="e num">${toku.ofert}</b></div></div>`;
+ document.getElementById('zywe').innerHTML=`<div class="ro"><span class="av">${toku.firma[0]}</span><div><b>${toku.tytul}</b><small>${toku.firma} · termin ${toku.termin}</small></div></div><div class="pary"><div><small>Budżet</small><b class="num">${toku.budzet}</b></div><div><small>Ofert</small><b class="e num">${toku.ofert}</b></div></div>`;
  document.getElementById('lOferty').innerHTML=doOdp.map(z=>wiersz('tag',z.tytul,`${z.firma} · ${z.budzet}`,`<span class="plak em">${z.ofert} ${z.ofert<5?'oferty':'ofert'}</span>`)).join('');
  document.getElementById('lPowi').innerHTML=powi.map(([i,t,s])=>wiersz(i,t,s)).join('');
  document.getElementById('lBranza').innerHTML=brIn.map(z=>wiersz('briefcase',z.tytul,`${z.budzet} · do ${z.termin}`,`<span class="plak ok">otwarte</span>`)).join('');};

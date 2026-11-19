@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Bricolage_Grotesque, Inter } from 'next/font/google';
+import { Bricolage_Grotesque, Inter, Instrument_Serif } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import { BottomNav } from '@/components/bottom-nav';
 import { ServiceWorkerRegistrar } from '@/components/service-worker';
 import { SiteHeader } from '@/components/site-header';
+import { V17Shell } from '@/components/v17/v17-shell';
 import { SiteFooter } from '@/components/ui/footer';
 import { SITE_DESCRIPTION, SITE_URL } from '@/lib/site';
 
@@ -16,6 +17,7 @@ import './styles/mobile-shell.css';
 import './styles/social.css';
 import './styles/climb.css';
 import './styles/search.css';
+import './styles/v17.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({
@@ -29,6 +31,16 @@ const bricolage = Bricolage_Grotesque({
   display: 'swap',
   variable: '--font-bricolage',
   weight: ['600', '700', '800'],
+});
+
+// Instrument Serif (V17): kursywą, jedno słowo-akcent w nagłówku. Pobierany przy
+// budowie przez next/font — w runtime zero zapytań do Google (ADR-009).
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  variable: '--font-serif-v17',
+  weight: '400',
+  style: 'italic',
 });
 
 // Adres bazowy i opis serwisu są w @/lib/site (jedyne źródło prawdy — route
@@ -69,11 +81,11 @@ export const viewport: Viewport = {
 // stąd też suppressHydrationWarning na <html>. Zero cookies(): odczyt cookies
 // w root layoucie uczyniłby dynamiczną KAŻDĄ stronę Portalu (patrz
 // lib/server-api.ts — to naprawiał PD1). Logika lustrzana z lib/theme.ts.
-const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}})();`;
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}try{if(localStorage.getItem('lot_wyglad')==='v17')document.documentElement.dataset.wyglad='v17';}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl" className={`${inter.variable} ${bricolage.variable}`} suppressHydrationWarning>
+    <html lang="pl" className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <div className="climb-rail" aria-hidden="true">
@@ -85,6 +97,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <i />
           <i />
         </div>
+        <V17Shell />
         <SiteHeader />
         {children}
         <SiteFooter />

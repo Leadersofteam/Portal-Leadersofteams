@@ -8,6 +8,8 @@ import { StartHere, type StartStep } from '@/components/ui/start-here';
 import { ORDER_STATUS_LABELS } from '@/lib/labels';
 import { serverApi } from '@/lib/server-api';
 
+import { PanelV17 } from '@/components/v17/panel-v17';
+
 import { LogoutButton } from './logout-button';
 import { VerifyBanner } from './verify-banner';
 
@@ -81,11 +83,18 @@ export default async function PanelPage() {
     (onboarding?.intent === 'COMPANY' || (hasCompany && onboarding?.intent !== 'LEADER'));
   if (isCompanyPanel && !isModerator) {
     return (
-      <CompanyPanel
-        user={user}
-        companies={companies?.companies ?? []}
-        handle={social?.handle ?? null}
-      />
+      <>
+        <div className="v17-hide">
+          <CompanyPanel
+            user={user}
+            companies={companies?.companies ?? []}
+            handle={social?.handle ?? null}
+          />
+        </div>
+        <main className="v17-only">
+          <PanelV17 displayName={user.displayName} profileId={null} ladder={ladder} />
+        </main>
+      </>
     );
   }
 
@@ -115,7 +124,15 @@ export default async function PanelPage() {
   const showChecklist = !onboarding?.checklistDismissedAt && points === 0;
 
   return (
-    <main>
+    <>
+    <main className="v17-only">
+      <PanelV17
+        displayName={user.displayName}
+        profileId={profile?.profile?.id ?? null}
+        ladder={ladder}
+      />
+    </main>
+    <main className="v17-hide">
       <section className="climber-base">
         <div className="climber-base-head">
           <p className="climber-kicker">Panel Lidera · Baza wspinacza</p>
@@ -256,6 +273,7 @@ export default async function PanelPage() {
         <LogoutButton />
       </p>
     </main>
+    </>
   );
 }
 
