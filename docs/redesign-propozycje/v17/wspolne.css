@@ -374,5 +374,5 @@ html[data-pokaz-szkic] [data-szkic]::after{content:attr(data-szkic);position:abs
 .pusty-kom span{color:var(--tx2);font:500 13px Inter}
 
 .zywe .pusty-kom span{color:#fff;opacity:.8}
-@media (max-width:820px){.app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}.kpis{scroll-padding-inline:16px}}
+@media (max-width:820px){.app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}.g>.kpis{scroll-padding-left:16px;padding-left:16px;padding-right:16px}}
 @media (prefers-reduced-motion:reduce){.wej{animation:none;opacity:1;transform:none}*{scroll-behavior:auto!important}}

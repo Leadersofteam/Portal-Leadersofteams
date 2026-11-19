@@ -31,7 +31,7 @@
 .glowka{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .glowka .h{font-size:clamp(26px,3.4vw,38px);margin:0;font-weight:800}
 .glowka .sp{flex:1}
-.kpi .t{white-space:nowrap}
+.kpi .t{white-space:normal;line-height:1.25}
 .bledbox{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:var(--bads);color:var(--bad);font:600 13.5px Inter}
 .bledbox .btn-glowny{margin-left:auto}
 .zywe .wiersz{border-color:rgba(255,255,255,.12)}
@@ -42,7 +42,7 @@
 
 <div class="app">
   <header class="bar">
-    <span class="pill bc"><b>Panel</b></span>
+    <span class="logo mlogo" role="img" aria-label="Leaders of Teams"></span><span class="pill bc"><b>Panel</b></span>
     <span class="sp"></span>
     <span class="pill szuk"><i class="ph-bold ph-magnifying-glass" style="font-size:15px"></i>Szukaj zleceń, Liderów, firm</span>
     <span class="av" style="width:44px;height:44px" title="Ola Wrzos · Lider" id="av"></span>
@@ -78,7 +78,7 @@
 
     <!-- Na żywo: najwyżej jedna ciemna karta na ekran — zlecenie w toku -->
     <aside class="k live c5 wej zywe" style="animation-delay:.1s" aria-label="Zlecenie w toku">
-      <div class="kh"><div><div class="lbl">W toku</div><h3 style="margin-top:3px">Zlecenie w realizacji</h3></div></div>
+      <div class="kh"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="plak em">W toku</span><h3>Zlecenie w realizacji</h3></div></div>
       <div data-tylko-stan="dane" hidden id="zywe"></div>
       <div data-tylko-stan="pusty" hidden class="pusty-kom"><b>Brak zleceń w toku</b><span>Gdy przyjmiesz ofertę, zlecenie pojawi się tutaj.</span></div>
       <div data-tylko-stan="ladowanie" hidden><div class="skel" style="height:56px"></div><div class="skel" style="height:44px;margin-top:12px"></div></div>
@@ -126,7 +126,7 @@ const powi=[['tag','Nowa oferta na „Serwis klimatyzacji — 12 pokoi”','dzi�
 const wiersz=(ic,t,s,pl)=>`<a class="wiersz" href="#"><span class="ik">${ikona(ic)}</span><div><b>${t}</b><small>${s}</small></div>${pl||''}</a>`;
 document.getElementById('ctaTxt').textContent=`Odpowiedz na ${doOdp.reduce((a,z)=>a+z.ofert,0)} ofert`;
 // KPI — tylko to, co Portal liczy: zlecenia, oferty, ocena śr. z liczbą ocen, poziom Drabinki
-const KPI=[['briefcase','Moje zlecenia',pusty()?0:otwarte.length,'otwarte'],['tag','Do odpowiedzi',pusty()?0:doOdp.reduce((a,z)=>a+z.ofert,0),'ofert'],
+const KPI=[['briefcase','Moje zlecenia',pusty()?0:otwarte.length,'otwarte'],['tag','Oferty na moje zlecenia',pusty()?0:doOdp.reduce((a,z)=>a+z.ofert,0),'ofert'],
  ['star','Ocena',pusty()?'—':ja.ocenaSr.toString().replace('.',','),pusty()?'brak ocen':`z ${ja.ocen} ocen`],['ladder','Poziom Drabinki',pusty()?1:ja.poziom,pusty()?'nowy w Portalu':`${ja.punkty} pkt`]];
 const kp=()=>{const l=V17.stan==='ladowanie';document.getElementById('kpi').innerHTML=KPI.map(([ic,t,v,u],i)=>`<article class="k kpi wej" style="animation-delay:${.04*i}s"><div class="t"><span class="ik">${ikona(ic)}</span>${t}</div>${l?'<div class="skel" style="height:32px;width:50%;margin:6px 0 4px"></div>':`<div class="v num">${v}<small> ${u}</small></div>`}</article>`).join('')};
 const lad=()=>{const c=ja.poziom,p=ja.punkty;
