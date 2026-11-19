@@ -124,9 +124,9 @@ const doOdp=F.zlecenia.filter(z=>z.status==='otwarte'&&z.ofert>0);
 const brIn=[F.zlecenia[3],{tytul:'Wymiana grzejników — 14 szt.',firma:'Kamienica Pod Lipą sp. z o.o.',budzet:'6–9 tys. zł',termin:'10.01',ofert:1,status:'otwarte'}];
 const powi=[['tag','Nowa oferta na „Serwis klimatyzacji — 12 pokoi”','dziś, 09:12'],['star','Ocena ★ 5 po zleceniu — Hotel Nad Zatoką','wczoraj'],['check-circle','Twoja odpowiedź uznana: „Pompa ciepła w budynku z 1930 r.”','2 dni temu']];
 const wiersz=(ic,t,s,pl)=>`<a class="wiersz" href="#"><span class="ik">${ikona(ic)}</span><div><b>${t}</b><small>${s}</small></div>${pl||''}</a>`;
-document.getElementById('ctaTxt').textContent=`Odpowiedz na ${doOdp.length} oferty`;
+document.getElementById('ctaTxt').textContent=`Odpowiedz na ${doOdp.reduce((a,z)=>a+z.ofert,0)} ofert`;
 // KPI — tylko to, co Portal liczy: zlecenia, oferty, ocena śr. z liczbą ocen, poziom Drabinki
-const KPI=[['briefcase','Moje zlecenia',pusty()?0:otwarte.length,'otwarte'],['tag','Oferty do odpowiedzi',pusty()?0:doOdp.reduce((a,z)=>a+z.ofert,0),'ofert'],
+const KPI=[['briefcase','Moje zlecenia',pusty()?0:otwarte.length,'otwarte'],['tag','Do odpowiedzi',pusty()?0:doOdp.reduce((a,z)=>a+z.ofert,0),'ofert'],
  ['star','Ocena',pusty()?'—':ja.ocenaSr.toString().replace('.',','),pusty()?'brak ocen':`z ${ja.ocen} ocen`],['ladder','Poziom Drabinki',pusty()?1:ja.poziom,pusty()?'nowy w Portalu':`${ja.punkty} pkt`]];
 const kp=()=>{const l=V17.stan==='ladowanie';document.getElementById('kpi').innerHTML=KPI.map(([ic,t,v,u],i)=>`<article class="k kpi wej" style="animation-delay:${.04*i}s"><div class="t"><span class="ik">${ikona(ic)}</span>${t}</div>${l?'<div class="skel" style="height:32px;width:50%;margin:6px 0 4px"></div>':`<div class="v num">${v}<small> ${u}</small></div>`}</article>`).join('')};
 const lad=()=>{const c=ja.poziom,p=ja.punkty;
