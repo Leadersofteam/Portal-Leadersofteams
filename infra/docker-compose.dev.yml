@@ -5,6 +5,10 @@ name: portal-dev
 services:
   mysql:
     image: mysql:8.4
+    # 20.11.2026 (skill vps-optymalizacja): baza dev ma ~2 MB danych — performance_schema i bufor 128M
+    # trzymały ~430 MB RAM+swap na VPS. Kontener stoi zatrzymany; przed testem: docker start portal-dev-mysql-1.
+    # UWAGA: usługa nie ma nazwanego wolumenu — `up -d` po tej zmianie ODTWORZY kontener z pustą bazą.
+    command: ['--performance-schema=OFF', '--innodb-buffer-pool-size=64M']
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: portal
