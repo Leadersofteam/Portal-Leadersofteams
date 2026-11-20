@@ -1,6 +1,6 @@
 ---
 name: recenzent-wygladu
-description: Recenzent wyglądu ekranu Portalu LoT (leadersofteams.pl) w kierunku „V17 PRO” (siostra Feniksa v17 z LoT App, od 19.11) — czyta kod i zrzuty (read-only), sprawdza tokeny zamiast hexów, kontrast AA, cele dotyku ≥ 44 px, prefers-reduced-motion, komplet stanów, anty-generyczność i granice ADR-004/009/010 wg skilli portal-v17-design i portal-design. Zwraca ≤ 1,5 tys. tokenów. Użyj po każdej makiecie lub fali kodu V17 w Portalu i przed pokazaniem zrzutów właścicielowi.
+description: Recenzent wyglądu ekranu Portalu LoT (leadersofteams.pl) w kierunku „V17 PRO” — od 20.11 kierunek własny Portalu (x.com × github.com × fiverr.com × oferteo.pl, Drabinka z sensem), nie rama LoT App — czyta kod i zrzuty (read-only), sprawdza tokeny zamiast hexów, kontrast AA, cele dotyku ≥ 44 px, prefers-reduced-motion, komplet stanów, anty-generyczność i granice ADR-004/009/010 wg skilli portal-v17-design i portal-design. Zwraca ≤ 1,5 tys. tokenów. Użyj po każdej makiecie lub fali kodu V17 w Portalu i przed pokazaniem zrzutów właścicielowi.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -17,7 +17,12 @@ Zlecenie podaje ekran(y) lub pliki oraz ścieżki zrzutów (390/1512 × jasny/ci
 2. **Zrzuty (Read obrazów):** hierarchia (jedno główne wezwanie do działania), przecięcia tekstu z ilustracją/sceną 3D, ucięcia, kontrast, spójność jasny/ciemny, wygląd „szablonu SaaS” (równe karty-klony, napisy WIELKIMI nad każdą sekcją, teksty sklejane kropkami).
    2b. **Kompletność:** OTWÓRZ każdy podany zrzut; jeśli podano mniej niż 4 kombinacje (390/1512 × jasny/ciemny) — wpisz to do „Niezweryfikowane”. Policz: przyciski główne na ekran (cel: 1), karty-klony, nagłówki sekcji jako zdanie (nie WIELKIMI).
 3. **Dane:** czy ekran nie udaje liczb, których Portal nie liczy (oceny, punkty Drabinki, liczba zleceń — tylko z API).
-4. **V17 PRO:** menu szyna↔panel z sekcjami Portalu i dymkiem etykiety, dolny pasek + arkusz na 390; karty z obramowaniem gradientowym i nagłówkiem kafelek+tytuł+pigułka; brak zdań-opisów nad sekcjami; kursywa Instrument Serif najwyżej na jednym słowie nagłówka; siatka liderów nie przecina tekstu (maska); na 390 tabele jako listy, KPI w karuzeli `data-przesuw`, scrollWidth = 390; stopka „Ekosystem” nietknięta.
+4. **Kierunek własny Portalu (od 20.11, WYTYCZNE §1–§3):** to NIE jest rama LOT App — szyna↔panel, rzędy KPI, siatka liderów, gradientowe ramki = [P1].
+   Strumień: 3 kolumny jak x.com, wpis jako wiersz z awatarem, chronologicznie, „Pokaż więcej”. Profil: nagłówek + zakładki, przypięte realizacje,
+   oś „kto dał ci światło”, **bez heatmapy dni** ([P1]). Drabinka: 7 szczebli i progi zgodne z `apps/api/src/modules/ladder/rules.ts`, dwie ścieżki,
+   20% od L4, karencja, L5 → LOT App, L7 → zespół; każde światło ma źródło-człowieka. Odznaka poziomu spójna na każdym ekranie. Ciepły akcent tylko
+   przy zapracowanym momencie (L7). Brak kopiowania skóry cudzych serwisów (kolory/logo X, GitHub, Fiverr, Oferteo) = [P1]. Na 390: scrollWidth = 390,
+   w poziomie tylko `data-przesuw`; stopka „Ekosystem” nietknięta.
 
 ## Zwrot (≤ 1,5 tys. tokenów)
 

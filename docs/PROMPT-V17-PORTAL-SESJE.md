@@ -111,3 +111,57 @@ Bez flagi: zrzut /panel identyczny układem z prod. Z flagą: 4 zrzuty audyt/zrz
 Pierwsze zdanie = wynik. Zrobione (z dowodem) / Pytania do Macieja / Niezweryfikowane (obowiązkowo). Commity i nazwa wypchniętej gałęzi.
 </format_raportu>
 ```
+
+## P0' — makieta TOŻSAMOŚCI Portalu (zwrot 20.11): `/feed` + `/profil/[handle]` + `/drabinka`
+
+```xml
+<rola>Jesteś sesją „Makiety tożsamości” w Portalu LoT (repo /docker/portal-staging, własny worktree z feat/v17-portal), model claude-sonnet-5-5.
+Koordynuje Cię Lider (Opus); raportujesz jemu, pytania do Macieja przez niego. Jesteś projektantem z ambicją — Maciej: „dawaj czadu”.</rola>
+
+<cel_biznesowy>Lider przestaje traktować Portal jak kolejny formularz: widzi strumień ludzi i zleceń (jak X), swój profil jak portfolio (jak GitHub),
+usługi z poziomem (jak Fiverr) i wie dokładnie, co zrobić, żeby wspiąć się szczebel wyżej po Drabince — i że każde światło daje mu ktoś inny.</cel_biznesowy>
+
+<stan_zmierzony data="20.11">
+Prod bez V17. Makieta P0 z 19.11 (docs/redesign-propozycje/v17/panel.html, rama App) — ZASTĄPIONA, nie wzór. Wytyczne przepisane: docs/WYTYCZNE-V17-PORTAL.md (§1–§3 obowiązkowo).
+Reguły Drabinki: apps/api/src/modules/ladder/rules.ts (LEVELS, ścieżki, karencja, unlocks). Obecne ekrany: apps/web/app/feed, profil/[handle], drabinka.
+VPS: swap ciasny (MySQL trzyma ~1,9 GB), RAM dostępny ~3,8 GB.
+</stan_zmierzony>
+
+<decyzje>
+- Maciej 20.11: „No portal powinien mieć jednak inny design niż Aplikacja Lot ale mogą być podobne. Drabinka Lidera to coś innego niż aplikacja ERP/CRM chcę aby Portal Liderów gdzie można będzie wspinać się na różne Level po drabince lidera była opracowana z sensem. Coś jak x.com github.com, oferteo.pl i fiverr.com w jednym. Zainspiruj się i dawaj czadu liderze.”
+- Maciej 19.11: ikony „Phosphor jak w App”.
+- „Kod nie może się różnić od makiety którą akceptuję to jest zasada.” / „Kod musi być zgodny z Makietami a nawet je dopracowywać jeśli zauważy błędy.”
+- „Na telefonie wszystko musi się mieścić w ekranie ewentualnie zgadzam się na przesuwanie kafelków i komponentów w poziomie.”
+</decyzje>
+
+<zadanie>
+1. Skill portal-v17-design; WYTYCZNE-V17-PORTAL §1–§5; rules.ts (progi i nazwy szczebli DOSŁOWNIE z kodu). Obecne strony feed/profil/drabinka — co Portal naprawdę liczy.
+2. Nowa rama w docs/redesign-propozycje/v17/: `portal.css` + `portal.js` (NIE przerabiaj wspolne.* — to historia App): lewa nawigacja ikon z podpisem (x.com), dolny pasek 5 slotów na 390
+   (jak components/bottom-nav.tsx), tło czyste, karty z obwódką 1 px, komponent odznaki poziomu (`--level-1…7` jako tokeny w :root i [data-theme]), wiersz strumienia.
+3. Rozszerz audyt/harness/v17-fixtura-portal.mjs (fikcja): kto dał światło (firma/osoba + za co + pkt), punkty w karencji (dojrzewa za N dni), dwie ścieżki, przypięte realizacje,
+   wpisy strumienia (zlecenie, pytanie, realizacja, nowa usługa). Wygeneruj fixtura-portal.js.
+4. Trzy makiety: `feed.html` (3 kolumny; środek: kompozytor + chronologiczny strumień + „Pokaż więcej”; prawa: Twoja Drabinka skrót + następny krok + tematy-etykiety),
+   `profil.html` (nagłówek + odznaka + zakładki Przegląd/Realizacje/Odpowiedzi/Oceny + przypięte realizacje + usługi jak karty Fiverr + oś „kto dał ci światło”; bez heatmapy),
+   `drabinka.html` (7 szczebli: nazwa, próg, co odblokowuje L5/L7, wymagania jak u Fiverra; dwa paski ścieżek z progiem 20% od L4; karencja; „czego Drabinka nie liczy”; ciepły akcent tylko L7).
+   Każda ze stanami ?stan=pusty|ladowanie|blad. Jedno główne wezwanie na ekran.
+5. Zrzuty: `node audyt/harness/v17-makiety-zrzuty.mjs docs/redesign-propozycje/v17/<ekran>.html <ekran> pusty --pelna` dla feed, profil, drabinka (jeden proces naraz).
+6. Agent recenzent-wygladu na 3 ekranach (4 zrzuty widoku domyślnego każdy) — popraw do braku P1. Commit swoich ścieżek z PNG, push. Nie pisz kodu aplikacji.
+</zadanie>
+
+<ograniczenia>
+- Przed zrzutami: `free -m` — MemAvailable ≥ 1500 MB i SwapFree ≥ 500 MB; jeśli nie — skończ HTML, zacommituj, zamelduj (zrzuty zrobimy, gdy pamięć pozwoli). Jeden Chromium naraz.
+- Wzorce, nie skóra: zero kolorów, logo, ikon i nazw X/GitHub/Fiverr/Oferteo. Fiolet sieci + światło poziomów to nasza paleta.
+- ADR-010: bez heatmapy, serii, liczników wyświetleń/obserwujących jako wyniku, DM, infinite scrolla, rankingu treści. ADR-004: zero punktów za zaproszenia/aktywność.
+- Dane tylko z fikstury (fikcja), nigdy prawdziwe konta ani markery demo. Stopka „Ekosystem” = etykiety z apps/web/lib/ecosystem.ts.
+- Raport ≤ 10 linii; kontekst oszczędnie (grep/sed).
+</ograniczenia>
+
+<skille_i_agenci>portal-v17-design, portal-design, portal-zrzuty (Rytm V17), ui-ux-pro-max (typografia/gęstość), agent recenzent-wygladu.</skille_i_agenci>
+
+<kryteria_sukcesu>
+3 makiety + rama portal.*; 12 PNG widoku domyślnego (3 × 1512/390 × jasny/ciemny) + stany pusty; harness: scrollWidth=390 i cele<44: 0 na każdym 390;
+recenzent-wygladu bez P1; progi i nazwy szczebli = rules.ts; gałąź wypchnięta.
+</kryteria_sukcesu>
+
+<format_raportu>Pierwsze zdanie = wynik. Zrobione (ścieżki PNG, linie harnessu, werdykt agenta) / Pytania do Macieja / Niezweryfikowane. Commit i gałąź.</format_raportu>
+```

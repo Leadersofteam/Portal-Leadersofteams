@@ -1,87 +1,82 @@
-# Wytyczne „V17 PRO” Portalu — design, UX i UI dla każdego ekranu leadersofteams.pl
+# Wytyczne „Portal Liderów” — kierunek własny Portalu (od 20.11.2026)
 
-Dla Lidera i sesji roboczych. Obowiązuje od 19.11.2026. Siostra „Feniks v17 pro” z LoT App
-(`/docker/leaders-of-teams-app/docs/WYTYCZNE-V17.md`) — ta sama rodzina, inny produkt: marketplace B2B + społeczność Liderów.
-Skill: `portal-v17-design`. Program i akceptacje: `docs/PROGRAM-V17-PORTAL.md`. Recenzja: agent `recenzent-wygladu`, zgodność: `zgodnosc-makiety`.
+Dla Lidera i sesji roboczych. Zastępuje wersję z 19.11 („siostra Feniks v17” — rama App przeniesiona 1:1).
+Skill: `portal-v17-design`. Program i akceptacje: `docs/PROGRAM-V17-PORTAL.md`. Recenzja: `recenzent-wygladu`, zgodność: `zgodnosc-makiety`.
 
-> Zasada nadrzędna: **ekran istnieje, żeby ktoś szybciej znalazł wykonawcę, zlecenie albo odpowiedź — albo zapracował status.**
-> Jeśli nie umiesz napisać „X przestaje robić Y dzięki temu ekranowi”, ekran nie jest gotowy do makiety.
+> Maciej 20.11: „Portal powinien mieć jednak inny design niż Aplikacja Lot ale mogą być podobne. Drabinka Lidera to coś innego niż
+> aplikacja ERP/CRM chcę aby Portal Liderów gdzie można będzie wspinać się na różne Level po drabince lidera była opracowana z sensem.
+> Coś jak x.com github.com, oferteo.pl i fiverr.com w jednym.”
 
-## 1. Pięć zasad
+> Zasada nadrzędna: **ekran istnieje, żeby ktoś znalazł wykonawcę, zlecenie albo odpowiedź — albo zapracował następny szczebel.**
+> Prawo sieci (SIEC-LOT §4.2): **twój punkt nigdy nie świeci sam** — każde światło przychodzi od innego człowieka.
 
-| #   | Zasada                                                                                                                                                                                                                                                                                                                                       | Jak sprawdzić                                                             |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 1   | **Dane zamiast opisów.** Zero zdań-wyjaśnień nad sekcjami. Miejsce idzie na ślad zaufania (oceny, zrealizowane zlecenia, uznane odpowiedzi, poziom Drabinki), budżety, terminy, liczby ofert.                                                                                                                                                | Policz zdania, które nie są daną ani akcją → cel 0 (wyjątek: landing P7). |
-| 2   | **Wszystko dobrze poukładane.** Siatka 12 kolumn (desktop), jedna oś wyrównania, odstępy 16/12 px, karty tej samej wysokości w rzędzie.                                                                                                                                                                                                      | Zrzut 1512: krawędzie kart w jednej linii, brak „dziur”.                  |
-| 3   | **Telefon pierwszy — wszystko mieści się w ekranie.** Maciej: „Na telefonie wszystko musi się mieścić w ekranie ewentualnie zgadzam się na przesuwanie kafelków i komponentów w poziomie.” Strona nigdy nie przewija się w poziomie; w poziomie przesuwa się tylko kontener `data-przesuw` (scroll-snap, widoczne ucięcie następnego kafla). | scrollWidth = 390 w każdym stanie; nic nie ucięte w kaflu.                |
-| 4   | **Nawigacja, która tłumaczy się sama.** Szyna ↔ panel z sekcjami Rynek / Liderzy / Społeczność / Moje, dymek etykiety; na telefonie dolny pasek (bottom-nav) + arkusz modułów.                                                                                                                                                               | Nowa osoba znajduje Zlecenia, Drabinkę i Pytania w < 10 s.                |
-| 5   | **Status świeci tylko z cudzych rąk.** Światło poziomów (`--level-1…7`) i każdy „postęp” pochodzi wyłącznie z ocen po zleceniu i uznanych odpowiedzi (ADR-004). Żadnego Feniksa/licznika z własnej aktywności.                                                                                                                               | Każdy wskaźnik postępu ma źródło: ocena albo uznana odpowiedź (SELECT).   |
+## 1. Cztery inspiracje → wzorce Portalu
 
-## 2. System wizualny (tokeny z `apps/web/app/globals.css` — nie wymyślaj nowych)
+Bierzemy **wzorce zachowania i układu**, nie wygląd, kolory, logo ani nazwy cudzych serwisów.
 
-Mapowanie rodziny App → Portal (nowe tokeny tylko w `:root`/`[data-theme]`, zapadka w globals.css zabrania hexów poza nimi):
+| Inspiracja | Wzorzec                                                                                                                                                                            | Ekrany Portalu                                             | Granica                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| x.com      | 3 kolumny: wąska nawigacja ikon (lewa) · strumień 600 px (środek) · kontekst (prawa). Wpis = wiersz z awatarem, nie karta. Kompozytor na górze strumienia.                         | `/feed` (dom zalogowanego), `/pytania`, `/watki`, `/wpisy` | ADR-010: chronologicznie, „Pokaż więcej”, zero liczników wyświetleń, zero DM, zero „trendów” w kolejności treści |
+| github.com | Profil jak repozytorium: nagłówek (awatar, poziom, branża, miasto) + zakładki **Przegląd · Realizacje · Odpowiedzi · Oceny**; przypięte realizacje (2×3); oś „kto dał ci światło”. | `/profil/[handle]`, `/liderzy/[id]`                        | **Bez heatmapy dni** — to mechanika serii (ADR-010)                                                              |
+| fiverr.com | Karta usługi: miniatura, tytuł, Lider + odznaka poziomu, ocena (liczba ocen), cena „od”. **Poziom z jawną listą wymagań** do następnego.                                           | `/uslugi`, `/uslugi/[id]`, odznaka poziomu wszędzie        | Poziom wyłącznie z punktów Drabinki (ADR-004)                                                                    |
+| oferteo.pl | „Opisz, czego potrzebujesz → dostaniesz oferty”: kreator zlecenia w 3 krokach, licznik ofert na zleceniu, porównanie ofert obok siebie.                                            | `/zlecenia`, `/dla-firm`, `/porownanie`, `/zapytania`      | click = 0 zł: żadnych płatnych leadów ani opłat za ofertę                                                        |
 
-| App v17               | Portal                                                              | Uwagi                                               |
-| --------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
-| `--ac` / `--ac2`      | `--primary-500` / `--violet-500` (`--accent`)                       | wspólny fiolet sieci                                |
-| `--acs` (tło akcentu) | `rgba(var(--primary-500-rgb), .12)` jako nowy token `--accent-soft` | dodać przy fali kodu P0                             |
-| `--ember` (na żywo)   | `--amber-rgb` / `--warning`                                         | tylko zlecenie „w toku” i stan „na żywo”            |
-| `--ok/--warn/--bad`   | `--success` / `--warning` / `--danger` (+ `*-soft-text`)            |                                                     |
-| —                     | **`--level-1…7`**                                                   | sygnatura Portalu: poziom Lidera, zawsze z etykietą |
+## 2. Drabinka z sensem (reguły z `apps/api/src/modules/ladder/rules.ts`, nie z pamięci)
 
-**Typografia:** Bricolage Grotesque (`--font-display`) — nagłówki 28–40 px, tytuły kart 15 px, liczby tabelaryczne; Inter (`--font-sans`) — treść 13–14 px, etykiety 11–12 px;
-**Instrument Serif kursywą** — najwyżej jedno słowo-akcent w nagłówku („Twoja _Drabinka_”, „Zlecenia _w okolicy_”). Ładowany przez `next/font/google` (build, nie runtime).
-Wersaliki tylko w nagłówkach kolumn tabel.
+- 7 szczebli: **Adept 100 · Praktyk 300 · Specjalista 700 · Ekspert 1500 · Mentor 3000 · Autorytet 6000 · Architekt Zespołów 12 000 pkt.**
+- Dwie ścieżki: **rynek** (ocena 5/5 po zleceniu = 100 pkt, malejące zwroty od tego samego kontrahenta) i **społeczność**
+  (uznana odpowiedź 50 pkt, kwalifikowany głos 10 pkt, limit 300 pkt / 7 dni).
+- **Od L4 min. 20% progu z każdej ścieżki** — pokazujemy dwa paski, nie jeden.
+- **Karencja 7 dni**: punkty „dojrzewają” (stan pending) — pokazujemy „dojrzewa za N dni”, nie ukrywamy.
+- **Co odblokowuje szczebel:** L5 → dostęp do LOT App, L7 → własny zespół. Pozostałe szczeble: tylko to, co kod naprawdę daje
+  (nie dopisujemy nagród, których nie ma).
+- Każde światło ma **źródło-człowieka**: awatar firmy/osoby, która oceniła albo uznała odpowiedź. Rekrutacja, logowania, aktywność → zero
+  (pokazujemy to jako „czego Drabinka nie liczy”, nie chowamy).
+- Gdzie: pełna drabina na `/drabinka` (z obecną sceną 3D w nagłówku), skrót w prawej kolumnie strumienia, pasek na profilu, odznaka na karcie.
 
-**Ikony:** Phosphor duotone w kafelku 30–32 px (gradient akcentu + obwódka), akcje `bold`. Decyzja Macieja 19.11: „Phosphor jak w App”. Ilustracje — własne SVG.
+## 3. Tożsamość wizualna — podobna do App, ale nie ta sama
 
-**Kontenery:** `Karta v17` (obramowanie gradientowe, promień 22/20, padding 16/18, reflektor, nagłówek kafelek+tytuł+pigułka+przerywana linia) ·
-`Karta na żywo` (ciemna, jedna na ekran — np. zlecenie w toku) · `KPI` (etykieta, wartość Bricolage 24–30, plakietka zmiany, mini-wykres; telefon = karuzela) ·
-`Ślad zaufania` (ocena ★ + liczba ocen + zrealizowane + poziom w świetle `--level-n`) · `Plakietka statusu` (kropka + tekst + obwódka) · `Pigułki` filtrów.
+|           | Portal Liderów                                                                                      | LOT App (dla porównania — NIE kopiujemy) |
+| --------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Układ     | sieć + rynek: 3 kolumny / katalog / profil                                                          | panel ERP: szyna↔panel, rzędy KPI        |
+| Nawigacja | lewa kolumna ikon z podpisem (desktop), dolny pasek 5 slotów (telefon, `bottom-nav.tsx`)            | szyna 76 ↔ panel 256                     |
+| Tło       | czyste (`--bg`/`--surface`), światło poziomów jako jedyny „efekt”; scena 3D tylko `/` i `/drabinka` | siatka liderów (canvas)                  |
+| Karty     | lekkie: obwódka 1 px `--border`, promień `--radius`, bez gradientowych ramek i reflektora           | obramowanie gradientowe                  |
+| Gęstość   | wiersze jak X/GitHub (awatar 40 px, 2 linie, separatory)                                            | kafle i wykresy                          |
 
-**Tło:** „siatka liderów” na stronach zalogowanego i katalogach (P0–P6). Scena 3D Drabinki tylko na publicznych/landingu (P7). Nigdy obie naraz, nigdy w karcie, maska rozjaśnia środek.
+**Wspólne z siecią:** fiolet = sieć (`--primary-*`, `--violet-500`), **ciepły akcent = zapracowane** (`--level-7`/bursztyn tylko przy L7 i
+zapracowanym momencie), Bricolage (nagłówki, liczby) + Inter (tekst), **Phosphor duotone** (decyzja 19.11 „Phosphor jak w App”),
+stopka „Ekosystem” (`apps/web/lib/ecosystem.ts`, treść nietykalna). Instrument Serif — opcjonalnie jedno słowo na stronach publicznych.
 
-**Ruch:** wejście kart 0,6 s / 12 px, kaskada 40–60 ms, hover −3 px; `prefers-reduced-motion` = statycznie (siatka też). Canvas pauzuje w tle i poza ekranem.
+**Odznaka poziomu** (komponent wspólny dla całego Portalu): numer w kółku w kolorze `--level-n` + nazwa szczebla; temperatura zawsze z etykietą.
 
-## 3. Wzorce ekranów (wybierz jeden)
+## 4. UX — reguły
 
-| Typ                  | Ekrany Portalu                                                               | Desktop 1512                                                                                  | Telefon 390                                                                  |
-| -------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| **Panel / przegląd** | `/panel` (zalogowany)                                                        | rząd KPI (zlecenia, oferty, oceny, poziom) → karta Drabinki + karta „na żywo” → lista działań | karuzela KPI → karty pod sobą                                                |
-| **Katalog**          | `/zlecenia`, `/uslugi`, `/firmy`, `/liderzy`                                 | filtry-pigułki u góry, lista kart (8) + mapa zaufania / filtry boczne (4)                     | pigułki przewijane `data-przesuw`, lista kart dwuwierszowych, „Pokaż więcej” |
-| **Karta obiektu**    | `/zlecenia/[id]`, `/uslugi/[id]`, `/liderzy/[id]`, `/profil/[handle]`, firma | nagłówek + ślad zaufania; oś (oceny/oferty) 8 + fakty/akcja 4                                 | nagłówek, zakładki pigułkami, akcja przyklejona u dołu                       |
-| **Drabinka / droga** | `/drabinka`, `/droga`, `/panel/punkty`                                       | drabinka poziomów w świetle `--level-*` + skąd punkty (oceny, odpowiedzi)                     | pionowa drabinka, karty źródeł punktów                                       |
-| **Wątek / Q&A**      | `/pytania`, `/watki`, `/feed`, `/grupy`, `/tematy`                           | chronologicznie (ADR-010), kolumna 720 px + boczna (tematy jako etykiety)                     | jedna kolumna, „Pokaż więcej”                                                |
-| **Formularz**        | dodaj zlecenie/usługę/ofertę, `/firma/nowa`, konto                           | formularz (8) + podgląd karty (4)                                                             | sekcje zwijane, „Opublikuj” przyklejone                                      |
-| **Publiczne / auth** | `/`, `/dla-firm`, `/start`, logowanie, rejestracja, reset                    | landing ze sceną 3D; auth: kolumna 440 px na siatce                                           | pełna szerokość                                                              |
+1. Jedno główne wezwanie do działania na ekran (strumień: kompozytor; katalog: „Dodaj zlecenie” / „Zaproponuj usługę”; profil: „Zaproponuj zlecenie”).
+2. Stan pusty mówi, co zrobić, i nigdy nie udaje danych („Nowy w Portalu”, nie 5 pustych gwiazdek).
+3. Komplet stanów: pusty, ładowanie (szkielety w kształcie wierszy), błąd z „Spróbuj ponownie”.
+4. Listy kończą się „Pokaż więcej” z liczbą („20 z 87”) — nigdy nieskończone przewijanie.
+5. Telefon 390 pierwszy. Maciej: „Na telefonie wszystko musi się mieścić w ekranie ewentualnie zgadzam się na przesuwanie kafelków i
+   komponentów w poziomie.” — w poziomie tylko `data-przesuw` (zakładki profilu, filtry-pigułki, przypięte realizacje).
+6. Dostępność: kontrast AA, fokus widoczny, ARIA na ikonach bez tekstu, cele ≥ 44 px.
 
-## 4. UX — reguły zachowania
+## 5. Antywzorce
 
-1. **Jedno główne wezwanie do działania na ekran.** Reszta: pigułki, ikony, linki.
-2. **Następny krok zawsze widoczny**: stan pusty mówi, co zrobić („Brak zleceń w Twojej branży — ustaw powiadomienie →”).
-3. **Komplet stanów** w makiecie (`?stan=pusty|ladowanie|blad`) i kodzie. Żadnego `catch {}` bez komunikatu.
-4. **Obcięcie listy nigdy ciche, nigdy nieskończone**: „Pokazano 20 z 87 · Pokaż więcej” (ADR-010 — bez infinite scrolla).
-5. **Ślad zaufania z danych**, nie z dekoracji: brak ocen = „Nowy w Portalu”, nie 5 pustych gwiazdek.
-6. **Teksty**: prosto, po polsku, bez żargonu; liczby z jednostką (tys. zł, ofert, ocen).
-7. **Dostępność**: kontrast AA, fokus widoczny, ARIA na ikonach bez tekstu, temperatura poziomu zawsze z etykietą.
-
-## 5. Antywzorce (odrzucone)
-
-- Zdania-opisy nad sekcjami, „Witaj w…”, teksty sklejane kropkami; karty-klony; kilka głównych przycisków.
-- Liczby, których Portal nie liczy (dopasowanie %, „popularność”, wyświetlenia — ADR-010).
-- Punkty, odznaki, postęp za zaproszenia, logowanie, aktywność (ADR-004). Feniks dnia z App jako licznik aktywności.
-- Infinite scroll, ranking treści algorytmem, streaki, DM (ADR-010).
-- **Google Fonts / unpkg / CDN w kodzie aplikacji** (ADR-009). W makietach HTML wolno — to pliki lokalne; w kodzie tylko `next/font` i paczki npm.
-- Tabela przewijana w bok na telefonie; tekst na ilustracji/scenie 3D.
-- Zmiana etykiet lub kolejności stopki „Ekosystem” (`apps/web/lib/ecosystem.ts`, wspólne dla czterech repo).
+- Rama i pulpit z LOT App (szyna↔panel, rzędy KPI, siatka liderów, gradientowe ramki) — Portal to nie ERP.
+- Heatmapa aktywności, serie, liczniki wyświetleń/obserwujących jako wynik, ranking treści, DM, infinite scroll (ADR-010).
+- Punkty/odznaki za zaproszenia, logowanie, wpisy, obserwowanie (ADR-004); drzewo poleceń, piramida.
+- Kopiowanie wyglądu cudzych serwisów (ich kolory, logo, ikony, układ 1:1) — bierzemy wzorce, nie skórę.
+- Liczby, których Portal nie liczy; zdania-opisy nad sekcjami.
+- Google Fonts / CDN w kodzie aplikacji (ADR-009) — w makietach HTML wolno.
+- Zmiana etykiet stopki „Ekosystem”.
 
 ## 6. Bramka „ekran gotowy” (Definition of Done)
 
-1. Makieta zaakceptowana przez Macieja (cytat + data w tabeli `PROGRAM-V17-PORTAL.md`).
-2. Kod pod flagą `html[data-wyglad="v17"]`, wspólne komponenty (nie kopie stylów).
-3. Zrzuty Portalu 1512 + 390 × jasny + ciemny (skill `portal-zrzuty`, sekcja „Rytm V17”) → `zgodnosc-makiety` **ZGODNY w 4 parach**.
-   Maciej: „Kod nie może się różnić od makiety którą akceptuję to jest zasada.” / „Kod musi być zgodny z Makietami a nawet je dopracowywać jeśli zauważy błędy.”
-   Błąd w makiecie wykryty przez kod → poprawka makiety w tym samym commicie + wiersz „Poprawki z kodu” w `docs/redesign-propozycje/v17/README.md` + zrzut do Macieja.
-4. `recenzent-wygladu` bez P1; scrollWidth = szerokość; cele ≥ 44 px; reduced-motion sprawdzony.
-5. Ścieżka użytkownika przejdziona na żywo (CLAUDE.md, lekcja 1), konta testowe posprzątane.
-6. `portal-bramki` zielone (w tym `antimlm.integration.test.ts` — rozszerzony, jeśli ekran dodaje funkcję społeczną).
+1. Makieta zaakceptowana przez Macieja (cytat + data w `PROGRAM-V17-PORTAL.md`).
+2. Kod pod flagą `html[data-wyglad="v17"]`, wspólne komponenty (odznaka poziomu, wiersz strumienia, karta usługi, karta zlecenia).
+3. Zrzuty 1512 + 390 × jasny + ciemny → `zgodnosc-makiety` ZGODNY w 4 parach. Maciej: „Kod nie może się różnić od makiety którą
+   akceptuję to jest zasada.” / „Kod musi być zgodny z Makietami a nawet je dopracowywać jeśli zauważy błędy.” Poprawka makiety z kodu →
+   wiersz „Poprawki z kodu” w `docs/redesign-propozycje/v17/README.md` + zrzut do Macieja.
+4. `recenzent-wygladu` bez P1; scrollWidth = szerokość; cele ≥ 44 px; reduced-motion.
+5. Ścieżka przejdziona na żywo; konta testowe posprzątane.
+6. `portal-bramki` zielone (w tym `antimlm.integration.test.ts` rozszerzony przy funkcji społecznej).

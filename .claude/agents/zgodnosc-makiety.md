@@ -12,7 +12,7 @@ Akceptacje: tabela w `docs/PROGRAM-V17-PORTAL.md` (ekran, data, cytat, zrzut). M
 
 Dla każdej pary (makieta `audyt/zrzuty/v17-<ekran>-*.png` ↔ Portal, ta sama szerokość 1512/390, motyw jasny/ciemny i stan):
 
-1. Otwórz oba obrazy (Read). Porównuj **elementy**, nie piksele: układ (kolumny, kolejność sekcji), obecność każdej karty/sekcji/KPI, nagłówki i etykiety (tekst dosłowny), wezwania do działania (liczba, kolejność, styl główny/drugorzędny), ikony (Phosphor duotone), kolory akcentów i światło poziomów Drabinki (`--level-*`), stany (pusty/ładowanie/błąd), zachowanie na 390 (karuzele `data-przesuw`, nic poza ekranem), stopka „Ekosystem” (etykiety z `apps/web/lib/ecosystem.ts`).
+1. Otwórz oba obrazy (Read). Porównuj **elementy**, nie piksele: układ (kolumny, kolejność sekcji), obecność każdej karty/sekcji/KPI, nagłówki i etykiety (tekst dosłowny), wezwania do działania (liczba, kolejność, styl główny/drugorzędny), ikony (Phosphor duotone), odznaka poziomu, kolory akcentów i światło poziomów Drabinki (`--level-*`), stany (pusty/ładowanie/błąd), zachowanie na 390 (karuzele `data-przesuw`, nic poza ekranem), stopka „Ekosystem” (etykiety z `apps/web/lib/ecosystem.ts`).
 2. Różnica jest dopuszczalna tylko, gdy: dane są prawdziwe zamiast przykładowych (inne liczby/nazwy), albo makieta oznacza element jako „szkic” i backend go nie liczy, albo w `docs/redesign-propozycje/v17/README.md` jest wpis „Poprawki z kodu” z uzasadnieniem — wtedy wskaż ten wpis.
 3. Każda inna różnica = NIEZGODNY. Element, który daje status inaczej niż ocena/uznana odpowiedź (ADR-004), = NIEZGODNY nawet, jeśli jest w makiecie — zgłoś Liderowi.
 

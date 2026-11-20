@@ -1,9 +1,9 @@
 ---
 name: portal-v17-design
-description: Wygląd „V17 PRO” Portalu LoT (leadersofteams.pl, od 19.11) — siostra zatwierdzonego „Feniks v17 pro” z LoT App z akcentem marketplace'u B2B i społeczności Liderów: szyna↔panel menu z sekcjami Portalu, ikony Phosphor duotone, tło „siatka liderów”, karty z obramowaniem gradientowym, gęste dane, światło poziomów Drabinki; flaga wyglądu, procedura makieta→akceptacja→kod, lista kontrolna ekranu. Użyj przy KAŻDEJ zmianie wyglądu Portalu w programie V17, przy słowach „V17”, „V17 PRO”, „nowy wygląd Portalu”, „redesign”, „makieta”, „paczka P0…P7”, oraz przed uznaniem ekranu za dopracowany. Bramka jakości ogólna (tokeny, a11y, anty-generyczność) zostaje w portal-design.
+description: Wygląd „V17 PRO” Portalu LoT (leadersofteams.pl, od 19.11) — od 20.11 kierunek WŁASNY Portalu (podobny do LOT App, ale nie ten sam): strumień jak x.com, profil jak github.com, usługi i poziomy jak fiverr.com, zlecenia z ofertami jak oferteo.pl, Drabinka Lidera z sensem (7 szczebli, dwie ścieżki, co odblokowuje), Phosphor duotone, światło poziomów; flaga wyglądu, procedura makieta→akceptacja→kod, lista kontrolna ekranu. Użyj przy KAŻDEJ zmianie wyglądu Portalu w programie V17, przy słowach „V17”, „V17 PRO”, „nowy wygląd Portalu”, „redesign”, „makieta”, „paczka P0…P7”, oraz przed uznaniem ekranu za dopracowany. Bramka jakości ogólna (tokeny, a11y, anty-generyczność) zostaje w portal-design.
 ---
 
-# V17 PRO Portalu — OBOWIĄZUJE od 19.11.2026
+# V17 PRO Portalu — kierunek własny od 20.11.2026 (program od 19.11)
 
 Cel Macieja (19.11): nowy wygląd Portalu „w stylu siostrzanym do zatwierdzonego Feniks v17 pro” — ta sama rodzina, akcent
 i treść marketplace'u B2B i społeczności Liderów. **Portal i App mają wyglądać jak jedna sieć.**
@@ -26,29 +26,23 @@ Zasady Macieja (cytuj dosłownie w briefach): „Kod nie może się różnić od
 „Kod musi być zgodny z Makietami a nawet je dopracowywać jeśli zauważy błędy.” / „Na telefonie wszystko musi się mieścić w ekranie
 ewentualnie zgadzam się na przesuwanie kafelków i komponentów w poziomie.”
 
-## Zasady V17 w Portalu (z App + to, co Portal ma inaczej)
+## Kierunek własny Portalu (od 20.11 — ZASTĘPUJE ramę App z 19.11)
 
-- **Menu:** szyna 76 px ↔ panel 256 px (przycisk + skrót `[` + zapamiętany stan), sekcje Portalu: _Rynek_ (Zlecenia, Usługi, Firmy),
-  _Liderzy_ (Liderzy, Drabinka, Droga Lidera), _Społeczność_ (Feed, Pytania, Grupy, Tematy), _Moje_ (Panel, Oferty, Zapisane, Powiadomienia, Konto).
-  Dymek etykiety w szynie. Telefon: dolny pasek (istniejący `components/bottom-nav.tsx` — pozycje bez zmian sensu) + arkusz modułów w sekcjach.
-  Jedno źródło listy pozycji (plik konfiguracyjny), nie kopie w szynie, panelu i arkuszu.
-- **Ikony:** Phosphor **duotone** (`@phosphor-icons/react`) w kafelku z gradientem i obwódką; akcje `bold`.
-  **Wyjątek od reguły „ikony rysujemy sami”** — decyzja Macieja 19.11: „Phosphor jak w App”. Paczka npm, zero wywołań sieci w runtime (ADR-009 nietknięty).
-  Ilustracje (stany puste, onboarding, Drabinka) — nadal własne SVG.
-- **Tło:** „siatka liderów” (kratka CSS 48/36 px, alfa ≈ .06–.07 + liderzy na węzłach w canvas + impuls po liniach; maska rozjaśnia środek)
-  na stronach zalogowanego i katalogach (P0–P6). **Scena 3D Drabinki zostaje** na stronach publicznych/landingu (P7, skill `portal-scena-3d`) —
-  nigdy oba naraz na jednym ekranie. Reduced-motion = statycznie; pauza w tle (`visibilitychange`).
-- **Akcent Portalu:** fiolet rodziny (`--primary-*`, `--violet-500`) + **światło poziomów Drabinki `--level-1…7`** jako sygnatura Portalu
-  (cieplejsze światło — DESIGN-SPRINTY). Żar/ember z App = w Portalu „na żywo” tylko dla zlecenia w toku.
-- **Karty:** obramowanie gradientowe (padding-box/border-box), reflektor pod kursorem, nagłówek = kafelek ikony + tytuł + akcja-pigułka + przerywana linia.
-  Ciemna karta „na żywo” najwyżej jedna na ekran.
-- **Treść:** zero zdań-opisów nad sekcjami; liczby z API (oceny, zrealizowane zlecenia, uznane odpowiedzi, poziom Drabinki).
-  Ślad zaufania na karcie Lidera/firmy zawsze z danych, nigdy ozdobnik.
-- **Typografia:** Bricolage (już w `next/font`), Inter (już), **Instrument Serif dochodzi przez `next/font/google`** (pobierany przy budowie,
-  nie w runtime) — kursywą wyłącznie jedno słowo-akcent w nagłówku ekranu.
-- **Telefon 390 pierwszy:** przyklejony nagłówek, KPI/kafle jako karuzela `data-przesuw` (scroll-snap), tabele → listy dwuwierszowe,
-  safe-area, cele ≥ 44 px, scrollWidth = 390.
-- **Motyw:** Portal ma DOMYŚLNIE ciemny, jasny przez `[data-theme='light']` (`lot_theme=light`). Makiety i zrzuty: oba, jasny pokazujemy Maciejowi pierwszy.
+Maciej 20.11: „Portal powinien mieć jednak inny design niż Aplikacja Lot ale mogą być podobne… Coś jak x.com github.com, oferteo.pl
+i fiverr.com w jednym.” Pełne zasady: `docs/WYTYCZNE-V17-PORTAL.md` §1–§3. Skrót:
+
+- **x.com → strumień:** 3 kolumny (lewa nawigacja ikon z podpisem · środek 600 px · prawa: Drabinka + tematy-etykiety), wpis = wiersz z awatarem.
+- **github.com → profil:** nagłówek + zakładki Przegląd · Realizacje · Odpowiedzi · Oceny, przypięte realizacje, oś „kto dał ci światło”. Bez heatmapy.
+- **fiverr.com → usługi i poziomy:** karta usługi z odznaką poziomu, oceną i ceną „od”; poziom z jawną listą wymagań.
+- **oferteo.pl → zlecenia:** kreator „opisz potrzebę → dostań oferty” w 3 krokach, licznik ofert, porównanie ofert obok siebie.
+- **Drabinka z sensem:** 7 szczebli i progi z `apps/api/src/modules/ladder/rules.ts`, dwie ścieżki (rynek/społeczność) z progiem 20% od L4,
+  karencja 7 dni, L5 → LOT App, L7 → zespół, każde światło z awatarem osoby, która je dała.
+- **Tożsamość:** NIE rama App (bez szyny↔panel, rzędów KPI, siatki liderów, gradientowych ramek). Tło czyste, karty z obwódką 1 px,
+  gęste wiersze. Wspólne z siecią: fiolet, „ciepły = zapracowane” (`--level-7` tylko przy L7), Bricolage + Inter, Phosphor duotone,
+  stopka Ekosystem. Scena 3D Drabinki: `/` i `/drabinka`.
+- **Odznaka poziomu** = jeden komponent wszędzie: numer w kółku `--level-n` + nazwa szczebla.
+- **Telefon 390:** dolny pasek (`components/bottom-nav.tsx`), w poziomie tylko `data-przesuw` (zakładki, filtry, przypięte), scrollWidth = 390.
+- **Motyw:** domyślnie ciemny, jasny przez `[data-theme='light']`; zrzuty w obu, Maciej dostaje jasny pierwszy.
 
 ## Granice, których V17 nie przesuwa (złamanie = zmiana produktu, nie wyglądu)
 
