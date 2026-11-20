@@ -67,8 +67,11 @@ for (const stan of stany.length ? stany : ['']) {
       await p.waitForTimeout(700);
       const baza = `v17-${nazwa}${stan ? '-' + stan : ''}-${motyw}-${w}`;
       const full = w < 500 || pelna;
-      await p.screenshot({ path: path.join(out, baza + '.png'), fullPage: full });
+      // Pierwszy ekran telefonu z przyklejonym dolnym paskiem; pełna strona z paskiem na końcu dokumentu
+      // (fullPage rysuje elementy sticky/fixed w połowie strony — artefakt zrzutu, nie makiety).
       if (w < 500) await p.screenshot({ path: path.join(out, baza + '-ekran.png') });
+      if (full) await p.addStyleTag({ content: '.dolny{position:static!important}' });
+      await p.screenshot({ path: path.join(out, baza + '.png'), fullPage: full });
       const m = await p.evaluate((CEL) => {
         const male = [
           ...document.querySelectorAll('button,a,[role=button],input,select,.pill[onclick],.lnk'),
