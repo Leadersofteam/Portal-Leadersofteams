@@ -26,7 +26,8 @@ Tu ta sama dyscyplina, dopasowana do Portalu. Bieżący program: `docs/PROGRAM-V
 - Każda sesja: `start_session` z `context: fresh`, własny worktree z bieżącej gałęzi programu (`feat/v17-portal`; prod Portalu nie stoi na `main` — pamięć `portal-prod-nie-na-main`).
 - Prompt składasz z `szablon-promptu.md` (obok). Sekcji nie pomijasz. Decyzje i zasady Macieja wklejasz **dosłownie** w `<decyzje>`.
 - Zgoda nie przenosi się między sesjami (schemat bazy, masowe dane, hasła realnych kont — osobno, z datą i cytatem).
-- Budowa wyłącznie pod `flock /tmp/lot-v17-build.lock …` (ta sama blokada co LoT App V17), zrzuty jednym procesem naraz.
+- Wszystko ciężkie przez kolejkę VPS (wspólną z LoT App i Zodiamo): `/root/scripts/vps-kolejka.sh budowa -- <budowa>` (zawsze jedna),
+  `… lekkie -- <typecheck/test/lint>`, `… zrzuty -- <harness headless>`; `… stan` pokazuje, kto trzyma i od kiedy. Nie używaj gołego `flock`.
 
 ## 2b. Gdy start sesji się nie udaje
 

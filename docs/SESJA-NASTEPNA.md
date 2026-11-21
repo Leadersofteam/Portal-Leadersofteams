@@ -33,7 +33,7 @@
 ## Czego nie robić
 
 - Nie wdrażaj `main` wprost — wdrażaj gałąź prod (lub `main` dopiero po scaleniu PR gałęzi prod).
-- Nie zostawiaj stagingu uruchomionego po wdrożeniu (RAM). Budowy przez `flock /root/.vps-build.lock …`.
+- Nie zostawiaj stagingu uruchomionego po wdrożeniu (RAM). Budowy przez `/root/scripts/vps-kolejka.sh budowa -- …` (typecheck/testy: `… lekkie -- …`, zrzuty: `… zrzuty -- …`).
 - Usunięcie danych sprawdzaj w API (404), nie w kodzie strony (200 przez streaming).
 
 ## Prompt startowy
