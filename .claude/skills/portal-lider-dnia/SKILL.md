@@ -34,6 +34,17 @@ Tu ta sama dyscyplina, dopasowana do Portalu. Bieżący program: `docs/PROGRAM-V
 - `start_session` z tury wywołanej wiadomością innej sesji jest odrzucany — tylko karta propozycji; startujesz na słowa właściciela.
 - Gdy host nie odpowiada: zapisz pełne prompty do `docs/PROMPT-V17-PORTAL-SESJE.md`, wypchnij, a w następnej turze startuj krótkim „przeczytaj sekcję X”.
 
+## 2z. Po każdej budowie — sprzątanie (zasada VPS od 22.11.2026)
+
+Pomiar 22.11: 14 osieroconych wolumenów po bazach próbnych w jeden dzień (3 GB), dysk 86–93 %, blokada budowy trzymana 20–40 min przy budowie obrazu trwającej 2–6 min. Wpisz te punkty do promptu każdej sesji, która buduje:
+
+1. **Kolejka po zadaniu `budowa` wypisuje linie `po-budowie:`** — przeczytaj je i usuń swoje pozycje przed meldunkiem „wdrożone” (ręcznie: `/root/scripts/po-budowie.sh`). Osierocone wolumeny usuwa sama.
+2. **Kontener próbny (baza, aplikacja) usuwasz `docker rm -fv`**, nigdy samym `rm -f` — bez `-v` zostaje wolumen 214 MB.
+3. **Po zrzutach usuń swój katalog `dist`** (`/tmp/*dist*`, `/root/v17-artefakty/<paczka>/dist`) i zakończ procesy podglądu; obrazy `kandydat-*` — zostaw jeden do powrotu, resztę `docker rmi <tag>`.
+4. **Pod `budowa` tylko to, co buduje obraz.** Bramka, lint, typecheck, testy → `vps-kolejka.sh lekkie`; weryfikacja po wdrożeniu → bez kolejki. Inaczej dwa pozostałe repo czekają na Twoje testy.
+5. **`docker builder prune` wyłącznie pod blokadą** (`vps-kolejka.sh budowa -- docker builder prune -af --max-used-space 4GB`), nigdy luzem — luzem psuje cudzą trwającą budowę. Pełne `-af` dopiero, gdy po tym nadal brakuje miejsca: kasuje pamięć podręczną wszystkim trzem repo (następna budowa każdego idzie od zera).
+6. **Worktree po scaleniu zgłoś do usunięcia** (`/root/scripts/worktree-kandydaci.sh --rozmiar`) — to one zajmują dysk, nie pamięć podręczna budowy.
+
 ## 3. W trakcie
 
 - Notatka sesji to raport, nie dowód. „Zrobione” piszesz po **własnym** pomiarze: zrzut (Read obrazu), wynik agenta, hash bundla z HTTPS, SELECT.

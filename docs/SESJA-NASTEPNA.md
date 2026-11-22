@@ -31,6 +31,7 @@
 4. Dziura w analityce 30.09–14.10 — czy nie działał zapis, czy Portal.
 
 ## Czego nie robić
+- **Po każdej budowie sprzątaj (VPS 22.11):** czytaj linie `po-budowie:` z kolejki; kontenery próbne `docker rm -fv`; `docker builder prune` tylko pod `vps-kolejka.sh budowa --` i najpierw z `--max-used-space 4GB` (`-af` dopiero gdy nadal brakuje miejsca); pod `budowa` tylko budowa obrazu (testy → `lekkie`). Szczegóły: skill lidera dnia, sekcja 2z.
 
 - Nie wdrażaj `main` wprost — wdrażaj gałąź prod (lub `main` dopiero po scaleniu PR gałęzi prod).
 - Nie zostawiaj stagingu uruchomionego po wdrożeniu (RAM). Budowy przez `/root/scripts/vps-kolejka.sh budowa -- …` (typecheck/testy: `… lekkie -- …`, zrzuty: `… zrzuty -- …`).
