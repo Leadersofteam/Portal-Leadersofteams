@@ -1,0 +1,20 @@
+# 25.11 (optymalizacja VPS): kontekst budowy = całe repo (compose: context: ..), bez tego pliku leciało ok. 2,5 GB
+# (node_modules 760 MB, .claude z worktree 1,2 GB, .git). Dockerfile.web/.api kopiują tylko pnpm-*, package.json,
+# packages/ i apps/<app>; zależności i .next budowa i tak odtwarza w kontenerze.
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+.git
+.github
+.claude
+.agents
+audyt
+docs
+wyprawa
+infra/*.yml
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
