@@ -39,8 +39,9 @@ export interface SocialDeps {
     | 'getUserIdByHandle'
     | 'getUserIdsByHandles'
     | 'getUserCreatedAt'
+    | 'getPublicCompanies'
   >;
-  ladder: Pick<LadderService, 'getLevels'>;
+  ladder: Pick<LadderService, 'getLevels' | 'getPublicLedger'>;
   // Walidacja własności obrazów przy wpisie — ten sam wzorzec co w listings.
   // Opcjonalna, bo worker buduje ten sam serwis bez warstwy uploadów.
   files?: { assertOwned(fileId: string, ownerId: string, kind?: string): Promise<void> };
@@ -920,6 +921,103 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
           meta: (a.meta ?? {}) as Record<string, unknown>,
           createdAt: a.createdAt,
         })),
+      };
+    },
+
+    // V17 „Światło”: publiczna Oś światła Lidera — kto dał punkt, za co, ile (po wagach).
+    // WYŁĄCZNIE ODCZYT (ADR-004: nie dodaje źródeł punktów). Księgę czyta przez moduł ladder,
+    // a nazwy źródeł i tytuły dokłada z treści, które i tak są publiczne (ocena, odpowiedź).
+    async getLeaderLedger(handle: string, opts: { limit: number; cursor?: string }) {
+      const userId = await identity.getUserIdByHandle(handle);
+      if (!userId) throw new NotFoundError('Profil nie istnieje');
+      const ledger = await ladder.getPublicLedger(userId, opts);
+
+      const reviewIds = ledger.events
+        .filter((e) => e.sourceType === 'Review')
+        .map((e) => e.sourceId);
+      const answerIds = ledger.events
+        .filter((e) => e.sourceType === 'Answer')
+        .map((e) => e.sourceId);
+      const voteIds = ledger.events
+        .filter((e) => e.sourceType === 'AnswerVote')
+        .map((e) => e.sourceId);
+      const [reviews, answers, votes] = await Promise.all([
+        reviewIds.length
+          ? prisma.review.findMany({
+              where: { id: { in: reviewIds } },
+              select: { id: true, order: { select: { title: true, companyId: true } } },
+            })
+          : [],
+        answerIds.length
+          ? prisma.answer.findMany({
+              where: { id: { in: answerIds } },
+              select: { id: true, thread: { select: { id: true, title: true } } },
+            })
+          : [],
+        voteIds.length
+          ? prisma.answerVote.findMany({
+              where: { id: { in: voteIds } },
+              select: {
+                id: true,
+                answer: { select: { thread: { select: { id: true, title: true } } } },
+              },
+            })
+          : [],
+      ]);
+      const reviewById = new Map(reviews.map((r) => [r.id, r.order]));
+      const answerById = new Map(answers.map((a) => [a.id, a.thread]));
+      const voteById = new Map(votes.map((v) => [v.id, v.answer.thread]));
+      const [companies, people] = await Promise.all([
+        identity.getPublicCompanies([...new Set(reviews.map((r) => r.order.companyId))]),
+        identity.getPublicUsers([
+          ...new Set(
+            ledger.events
+              .filter((e) => e.sourceType !== 'Review' && e.grantedByUserId)
+              .map((e) => e.grantedByUserId as string),
+          ),
+        ]),
+      ]);
+
+      return {
+        summary: ledger.summary,
+        total: ledger.total,
+        nextCursor: ledger.nextCursor,
+        events: ledger.events.map((e) => {
+          let title: string | null = null;
+          let threadId: string | null = null;
+          let source: {
+            kind: 'company' | 'person';
+            id: string;
+            name: string;
+            handle: string | null;
+          } | null = null;
+          if (e.sourceType === 'Review') {
+            const order = reviewById.get(e.sourceId);
+            title = order?.title ?? null;
+            const c = order ? companies.get(order.companyId) : undefined;
+            if (order && c) source = { kind: 'company', id: c.id, name: c.name, handle: null };
+          } else {
+            const thread =
+              e.sourceType === 'Answer' ? answerById.get(e.sourceId) : voteById.get(e.sourceId);
+            title = thread?.title ?? null;
+            threadId = thread?.id ?? null;
+            const u = e.grantedByUserId ? people.get(e.grantedByUserId) : undefined;
+            if (u) source = { kind: 'person', id: u.id, name: u.displayName, handle: u.handle };
+          }
+          return {
+            id: e.id,
+            type: e.type,
+            path: e.path,
+            points: e.points,
+            weight: e.weight,
+            status: e.status,
+            createdAt: e.createdAt,
+            maturesAt: e.maturesAt,
+            title,
+            threadId,
+            source,
+          };
+        }),
       };
     },
 

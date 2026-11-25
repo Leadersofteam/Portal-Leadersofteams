@@ -111,6 +111,19 @@ export function socialRoutes({ social, auth }: SocialRoutesDeps) {
       return reply.send(await social.getPublicProfile(request.params.handle));
     });
 
+    // V17 „Światło”: publiczna Oś światła (punkty po wagach — decyzja właściciela 25.11).
+    // Chronologicznie (ADR-010), kursor + „N z M” (`total`). Read-only.
+    app.get<{ Params: { handle: string } }>(
+      '/profiles/:handle/ladder-events',
+      async (request, reply) => {
+        const q = (request.query ?? {}) as { limit?: string; cursor?: string };
+        const limit = Math.min(Math.max(Number.parseInt(q.limit ?? '10', 10) || 10, 1), 50);
+        return reply.send(
+          await social.getLeaderLedger(request.params.handle, { limit, cursor: q.cursor }),
+        );
+      },
+    );
+
     app.get('/me/social', async (request, reply) => {
       const user = await auth.requireUser(request);
       return reply.send(await social.getMySocial(user.id));

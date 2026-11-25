@@ -4,7 +4,8 @@
 import Link from 'next/link';
 
 import { LEVEL_NAMES, FIRST_POINT } from '@/lib/levels';
-import { basePoints, budget, plural, timeAgo } from '@/lib/v17';
+import { budget, plural, timeAgo } from '@/lib/v17';
+import { dniDoDojrzenia } from '@/lib/v17-data';
 import type { Wpis } from '@/lib/v17-data';
 
 import { Ico } from './ico';
@@ -178,7 +179,8 @@ export function WierszStrumienia({ w, idx }: { w: Wpis; idx: number }) {
   if (w.k === 'realizacja') {
     const lh = w.lider.handle ? `/profil/${w.lider.handle}` : null;
     const src = w.lider.avatarFileId ? `/api/v1/files/${w.lider.avatarFileId}/thumb` : null;
-    const pkt = basePoints(w.ocena);
+    const dni = dniDoDojrzenia(w.dojrzewa);
+    const waga = w.waga !== null && w.waga < 1 ? ` · ×${String(w.waga).replace('.', ',')}` : '';
     return (
       <article className="wpis">
         <Aw name={w.lider.name} size={40} ring level={w.lider.level} src={src} />
@@ -195,13 +197,19 @@ export function WierszStrumienia({ w, idx }: { w: Wpis; idx: number }) {
             <div className="scena">
               <Aw name={w.firma} size={48} company industry={w.branza.name} />
               <div className="promien">
-                {/* „Promień”: ocena Firmy → punkty Lidera. Pokazujemy punkty BAZOWE z jawnej reguły
-                    (wagi i karencja żyją w prywatnej księdze Lidera — PL3), więc podpis to mówi. */}
+                {/* „Promień”: ocena Firmy → punkty Lidera, FAKTYCZNE po wagach (decyzja właściciela 25.11:
+                    publiczne). Brak zdarzenia (cofnięte / jeszcze nienaliczone) → myślnik, nie wymysł. */}
                 <b>
-                  {pkt ? `+${pkt}` : '0'}
+                  {w.pkt !== null ? `+${w.pkt}` : '—'}
                   <span> pkt</span>
                 </b>
-                <small>ocena {w.ocena}/5 · punkty bazowe, dojrzewa 7 dni</small>
+                <small>
+                  ocena {w.ocena}/5
+                  {w.pkt !== null && dni
+                    ? ` · dojrzewa za ${dni} ${plural(dni, 'dzień', 'dni', 'dni')}`
+                    : ''}
+                  {waga}
+                </small>
               </div>
               <Aw name={w.lider.name} size={48} ring level={w.lider.level} src={src} />
             </div>

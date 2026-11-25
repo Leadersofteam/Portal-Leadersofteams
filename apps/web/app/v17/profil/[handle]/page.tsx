@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Suspense, cache } from 'react';
+import { Fragment, Suspense, cache } from 'react';
 
 import { Ico } from '@/components/v17/ico';
 import { Komunikat, Sz, SzWiersz } from '@/components/v17/karty';
@@ -13,8 +13,8 @@ import { Udostepnij } from '@/components/v17/udostepnij';
 import { Aw, Miernik, Odznaka, Okladka, Schodki, rodzajZBranzy } from '@/components/v17/znaki';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi, serverApiStatus } from '@/lib/server-api';
-import { basePoints, levelsOrFallback, nf, plural, progress } from '@/lib/v17';
-import { loadJa, loadMojaDrabinka } from '@/lib/v17-data';
+import { levelsOrFallback, nf, plural, progress } from '@/lib/v17';
+import { dniDoDojrzenia, loadJa, loadSwiatlo, mojaZLedgera } from '@/lib/v17-data';
 
 interface SocialProfile {
   user: {
@@ -40,6 +40,9 @@ interface LeaderFull {
   journey: { joinedAt: string | null; achievements: Array<{ level: number; achievedAt: string }> };
 }
 interface Review {
+  points: number | null;
+  weight: number | null;
+  maturesAt: string | null;
   id: string;
   rating: number;
   comment: string | null;
@@ -144,15 +147,17 @@ async function ProfilTresc({
   const u = data.user;
   const isSelf = ja?.id === u.id;
   const lid = data.leaderProfile?.id ?? null;
-  const [full, rev, list, lv, follow, moja] = await Promise.all([
+  const [full, rev, list, lv, follow, swiatlo] = await Promise.all([
     lid ? serverApi<LeaderFull>(`/leaders/${lid}`) : null,
     lid ? serverApi<{ reviews: Review[] }>(`/leaders/${lid}/reviews`) : null,
     lid ? serverApi<{ listings: Listing[] }>(`/listings?leaderProfileId=${lid}&limit=6`) : null,
     serverApi<{ levels: LevelRule[] }>('/ladder/levels'),
     ja && !isSelf ? serverApi<{ following: boolean }>(`/users/${u.id}/follow`) : null,
-    isSelf ? loadMojaDrabinka() : null,
+    loadSwiatlo(handle, 12),
   ]);
   const rules = levelsOrFallback(lv?.levels);
+  // Punkty po wagach są publiczne (decyzja 25.11) — te same liczby dla własnego i cudzego profilu.
+  const moja = swiatlo ? mojaZLedgera(swiatlo, rules) : null;
   const level = full?.profile.level ?? u.level;
   const reviews = rev?.reviews ?? [];
   const src = u.avatarFileId ? `/api/v1/files/${u.avatarFileId}/thumb` : null;
@@ -160,7 +165,7 @@ async function ProfilTresc({
   const bio = full?.profile.bio ?? full?.profile.headline ?? data.leaderProfile?.headline ?? '';
   const prog = moja ? progress(moja.level, moja.razem, rules) : 0;
 
-  const pusty = reviews.length === 0 && level === 0;
+  const pusty = reviews.length === 0 && level === 0 && !swiatlo?.events.length;
   const akcje = (
     <div className="prof-akcje">
       {isSelf ? (
@@ -307,7 +312,8 @@ async function ProfilTresc({
                         (moja.next!.pointsRequired * moja.next!.minPathSharePct) / 100,
                       );
                       return (
-                        <div key={t}>
+                        // Fragment, nie div: w makiecie wiersz/miernik/podpis są rodzeństwem w siatce .sciezka (gap 7px).
+                        <Fragment key={t}>
                           <div className="wiersz">
                             <span>{t}</span>
                             <b>{nf(v)}</b>
@@ -331,7 +337,7 @@ async function ProfilTresc({
                               </div>
                             )
                           ) : null}
-                        </div>
+                        </Fragment>
                       );
                     })}
                   </div>
@@ -339,11 +345,9 @@ async function ProfilTresc({
               </>
             ) : (
               <>
-                {/* Punkty innych Liderów są prywatne (księga widoczna tylko dla właściciela — PL3): publiczny jest szczebel i oceny. */}
+                {/* Fallback, gdy publiczna księga jest niedostępna: sam szczebel (punkty są publiczne — decyzja 25.11). */}
                 <Schodki level={level} progress={0} />
-                <div className="pod">
-                  Publiczny jest szczebel i oceny od firm. Liczba punktów jest prywatna.
-                </div>
+                <div className="pod">Punkty chwilowo niedostępne.</div>
               </>
             )}
             {level >= 5 ? (
@@ -432,7 +436,7 @@ async function ProfilTresc({
                           <Ico n="star" />
                           {r.rating.toFixed(1).replace('.', ',')}
                         </span>
-                        <span className="pk">+{basePoints(r.rating)} pkt</span>
+                        <span className="pk">{r.points !== null ? `+${r.points} pkt` : '—'}</span>
                         <span>{mies(r.publishedAt)}</span>
                       </span>
                     </span>
@@ -445,9 +449,9 @@ async function ProfilTresc({
           <section className="sekcja">
             <header>
               <h2>Oś światła</h2>
-              <small>kto dał punkt, za co, ile — od najnowszych (punkty bazowe)</small>
+              <small>kto dał punkt, za co, ile — od najnowszych</small>
             </header>
-            {reviews.length === 0 ? (
+            {!swiatlo || swiatlo.events.length === 0 ? (
               <Komunikat
                 ikona="hand-heart"
                 tytul="Jeszcze nikt nie dał tu światła"
@@ -456,28 +460,41 @@ async function ProfilTresc({
             ) : (
               <>
                 <ol className="os-sw">
-                  {reviews.slice(0, 6).map((r) => (
-                    <li key={r.id}>
-                      <Aw
-                        name={r.companyName}
-                        size={36}
-                        company
-                        industry={full?.profile.industry.name}
-                      />
-                      <span className="co">
-                        <b>{r.companyName}</b> · Ocena {r.rating}/5
-                        <small>
-                          {r.orderTitle} · {dm(r.publishedAt)}
-                        </small>
-                      </span>
-                      <span className="pkt">+{basePoints(r.rating)}</span>
-                    </li>
-                  ))}
+                  {swiatlo.events.slice(0, 6).map((e) => {
+                    const dni = dniDoDojrzenia(e.maturesAt);
+                    const co =
+                      e.type === 'ORDER_COMPLETED_RATED'
+                        ? 'Ocena po zleceniu'
+                        : e.type === 'ANSWER_ACCEPTED'
+                          ? 'Uznała odpowiedź'
+                          : 'Głos za odpowiedź';
+                    return (
+                      <li key={e.id}>
+                        <Aw
+                          name={e.source?.name ?? '?'}
+                          size={36}
+                          company={e.source?.kind === 'company'}
+                          industry={full?.profile.industry.name}
+                        />
+                        <span className="co">
+                          <b>{e.source?.name ?? 'Użytkownik'}</b> · {co}
+                          {e.weight < 1 ? ` · waga ×${String(e.weight).replace('.', ',')}` : ''}
+                          <small>
+                            {e.title ? `${e.title} · ` : ''}
+                            {dm(e.createdAt)}
+                            {dni
+                              ? ` · dojrzewa za ${dni} ${plural(dni, 'dzień', 'dni', 'dni')}`
+                              : ''}
+                          </small>
+                        </span>
+                        <span className="pkt">+{e.points}</span>
+                      </li>
+                    );
+                  })}
                 </ol>
-                {/* ADR-010: koniec listy mówi, ile widzisz z ilu. M = liczba opublikowanych ocen z API. */}
+                {/* ADR-010: koniec listy mówi, ile widzisz z ilu (M = liczba przyznanych i dojrzewających zdarzeń). */}
                 <span className="wiecej-link">
-                  Pokaż więcej · {Math.min(6, reviews.length)} z{' '}
-                  {full?.profile.reviewCount ?? reviews.length}
+                  Pokaż więcej · {Math.min(6, swiatlo.events.length)} z {swiatlo.total}
                 </span>
               </>
             )}

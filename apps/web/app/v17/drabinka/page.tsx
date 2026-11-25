@@ -10,7 +10,7 @@ import { FIRST_POINT } from '@/lib/levels';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
 import { basePoints, levelsOrFallback, nf, plural, progress } from '@/lib/v17';
-import { loadJa, loadMojaDrabinka } from '@/lib/v17-data';
+import { dniDoDojrzenia, loadJa, loadMojaDrabinka, loadSwiatlo } from '@/lib/v17-data';
 
 export const metadata = {
   title: 'Drabinka Lidera — zasady punktacji — Leaders of Teams',
@@ -102,20 +102,15 @@ export default async function DrabinkaV17() {
       ? Math.round((next.pointsRequired * next.minPathSharePct) / 100)
       : 0;
   const brakSpol = Math.max(0, kreska - (moja?.spol ?? 0));
-  const tydzien = (moja?.events ?? [])
+  // Publiczna księga (punkty po wagach, ze źródłami po imieniu) — ta sama, którą widzą inni na profilu.
+  const ksiega = ja?.handle ? await loadSwiatlo(ja.handle, 12) : null;
+  const swiatlo = ksiega?.events ?? [];
+  const tydzien = swiatlo
     .filter(
       (e) =>
-        e.status !== 'REVERSED' &&
-        ['ANSWER_ACCEPTED', 'ANSWER_UPVOTED_QUALIFIED'].includes(e.type) &&
-        Date.now() - new Date(e.createdAt).getTime() < 7 * 86_400_000,
+        e.path === 'spolecznosc' && Date.now() - new Date(e.createdAt).getTime() < 7 * 86_400_000,
     )
-    .reduce((s, e) => s + e.points, 0);
-  const swiatlo = (moja?.events ?? []).filter(
-    (e) =>
-      e.status !== 'REVERSED' &&
-      e.points > 0 &&
-      ['ORDER_COMPLETED_RATED', 'ANSWER_ACCEPTED', 'ANSWER_UPVOTED_QUALIFIED'].includes(e.type),
-  );
+    .reduce((sum, e) => sum + e.points, 0);
 
   return (
     <Rama aktywny="drabinka" ja={ja ? shell : null} szeroka>
@@ -340,7 +335,7 @@ export default async function DrabinkaV17() {
             <h2>Kto dał ci światło</h2>
             {ja && swiatlo.length ? (
               <small>
-                {Math.min(6, swiatlo.length)} z {swiatlo.length}
+                {Math.min(6, swiatlo.length)} z {ksiega?.total ?? swiatlo.length}
               </small>
             ) : null}
           </header>
@@ -367,50 +362,40 @@ export default async function DrabinkaV17() {
           ) : (
             <ol className="os">
               {swiatlo.slice(0, 6).map((e) => {
-                const rynek = e.type === 'ORDER_COMPLETED_RATED';
                 const dojrzewa = e.status === 'PENDING';
+                const dni = dniDoDojrzenia(e.maturesAt);
                 const d = new Date(e.createdAt).toLocaleDateString('pl-PL', {
                   day: '2-digit',
                   month: '2-digit',
                 });
-                // /me/ladder nie niesie imienia osoby, która dała punkt — pokazujemy rodzaj i wyjaśnienie wagi.
-                const expl = typeof e.meta.explanation === 'string' ? e.meta.explanation : '';
+                const co =
+                  e.type === 'ORDER_COMPLETED_RATED'
+                    ? 'Ocena po zleceniu'
+                    : e.type === 'ANSWER_ACCEPTED'
+                      ? 'Uznała twoją odpowiedź'
+                      : 'Głos za odpowiedź';
                 return (
                   <li key={e.id} className={dojrzewa ? 'czeka' : ''}>
-                    <span
-                      className="aw osoba"
-                      style={
-                        {
-                          width: 40,
-                          height: 40,
-                          '--fs': '18px',
-                          '--fh': rynek ? 250 : 200,
-                        } as React.CSSProperties
-                      }
-                      aria-hidden="true"
-                    >
-                      <span className="twarz" style={{ width: 40, height: 40 }}>
-                        <Ico n={rynek ? 'clipboard-text' : 'chats-circle'} />
-                      </span>
-                    </span>
+                    <Aw
+                      name={e.source?.name ?? '?'}
+                      size={40}
+                      company={e.source?.kind === 'company'}
+                    />
                     <span className="co">
-                      <b>
-                        {rynek
-                          ? 'Ocena firmy'
-                          : e.type === 'ANSWER_ACCEPTED'
-                            ? 'Uznana odpowiedź'
-                            : 'Głos za odpowiedź'}
-                      </b>{' '}
-                      <span style={{ color: 'var(--text-muted)' }}>{expl}</span>
+                      <b>{e.source?.name ?? 'Użytkownik'}</b> · {co}
+                      {e.weight < 1 ? ` · waga ×${String(e.weight).replace('.', ',')}` : ''}{' '}
+                      {e.title ? (
+                        <span style={{ color: 'var(--text-muted)' }}>„{e.title}”</span>
+                      ) : null}
                       <small>
-                        {d} · {rynek ? 'rynek' : 'społeczność'}
-                        {dojrzewa ? (
+                        {d} · {e.path === 'rynek' ? 'rynek' : 'społeczność'}
+                        {dojrzewa && dni ? (
                           <>
                             {' '}
                             ·{' '}
                             <span className="dojrzewa">
                               <Ico n="hourglass-medium" />
-                              dojrzewa
+                              dojrzewa za {dni} {plural(dni, 'dzień', 'dni', 'dni')}
                             </span>
                           </>
                         ) : null}

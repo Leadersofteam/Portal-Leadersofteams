@@ -50,14 +50,15 @@ wynikają z **brakującego pola w API** albo z decyzji o prywatności i są **zn
 | Wiersz zlecenia | Budżet / Termin / Miasto / Branża | Budżet / Branża (pierwsze słowo, jak w makiecie) | model `Order` nie ma terminu ani miasta |
 | Wiersz zlecenia | awatary oferentów, „zbiera do 28.11” | licznik ofert (`offersCount`) | API nie niesie oferentów ani terminu zbierania |
 | Wiersz zlecenia | „Firma zweryfikowana · 14 zleceń · średnia ocen 4,8” | „Firma zweryfikowana” (NIP) albo „Firma bez potwierdzonego NIP” | lista zleceń niesie tylko `companyVerified` |
-| Promień realizacji i Oś światła | „+100 pkt” po wagach | „+100 pkt” = punkty BAZOWE z oceny, podpisane „punkty bazowe” | księga punktów Lidera jest prywatna (PL3); publiczne punkty po wagach to decyzja Macieja |
-| „Kto dał ci światło” (Drabinka) | awatar i imię osoby | ikona typu zdarzenia + wyjaśnienie wagi | `/me/ladder` nie zwraca, kto dał punkt |
 | Pytanie | chip branży, awatary odpowiadających | nazwa grupy, liczba odpowiedzi | wątek nie ma branży ani listy odpowiadających w liście |
 | Akcje wpisu | Odpowiedz / Zapisz / Udostępnij | Odpowiedz / Udostępnij | zakładki są tylko dla wpisów portalowych |
 | Profil | „Przypięte realizacje”, zakładka „Odpowiedzi”, „uznane odpowiedzi” w liczbach, miasto | „Realizacje”, brak zakładki i licznika, brak miasta | brak przypinania, liczników i miasta w API |
-| Profil cudzy | punkty i ścieżki Lidera | tylko szczebel i oceny | punkty innych są prywatne |
 | Powiadomienia | badge „3” | bez badge | brak źródła licznika w tym widoku |
 | Strumień — stan pusty | przycisk „Wybierz branże”, tekst o wyborze branż | „Zobacz zlecenia” + „Zadaj pierwsze pytanie”, tekst bez wątku o wyborze branż | w Portalu nie ma wyboru/subskrypcji branż do strumienia |
 | Drabinka — wezwania | „12 pytań z twoich branż czeka”, „9 otwartych zleceń w twojej branży” | „N pytań czeka na odpowiedź”, „N otwartych zleceń” (z listy publicznej, „+” gdy >50) | wątki nie mają branży, więc licznik nie jest per branża |
 | Profil własny — menu | podświetlone „Liderzy” w stanie pustym | podświetlone „Profil” (własny profil) | kod logiczniejszy; pozycja „Profil” prowadzi do własnego profilu |
 | Prawa kolumna feedu (stany pusty/błąd) | „Zlecenia w twojej branży”, „Tematy” | te karty tylko gdy API zwróci dane | karta znika zamiast pokazywać puste |
+| Punkty (feed, profil, Drabinka) | „+pkt” po wagach | **jak w makiecie**: faktyczne punkty po wagach, publiczne (decyzja Macieja 25.11); „dojrzewa za N dni” dla zdarzeń w karencji; „waga ×0,5” przy obniżonej wadze | API: `GET /profiles/:handle/ladder-events`, `points`/`weight`/`maturesAt` na `/realizations` i `/leaders/:id/reviews`; bez cofniętych, wstrzymanych przez antyfraud i korekt moderacji |
+| „Kto dał ci światło” | awatar i imię osoby | monogram i nazwa firmy albo osoby, tytuł zlecenia/pytania | źródła są publiczne przy ocenie i odpowiedzi |
+| Profil — linki „Wszystkie 41” / „Wszystkie 37” | link do pełnej listy realizacji i ocen | brak linku; Oś światła kończy się „Pokaż więcej · N z M” (tekst) | nie ma jeszcze stron pełnych list |
+| Okładki realizacji i usług | wzór zależny od branży HVAC/PV/elektryka… | wzór dla rozpoznanych branż, dla pozostałych neutralny „obwód” | makieta znała tylko branże instalacyjne; słownik branż Portalu jest szerszy |

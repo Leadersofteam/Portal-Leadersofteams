@@ -41,65 +41,7 @@ async function main() {
     create: { userId: anna.id, level: 3, achievedAt: ago(6 * D) },
     update: {},
   });
-  const ev = (
-    type: 'ORDER_COMPLETED_RATED' | 'ANSWER_ACCEPTED',
-    key: string,
-    points: number,
-    status: 'CONFIRMED' | 'PENDING',
-    when: number,
-    why: string,
-  ) =>
-    prisma.pointEvent.upsert({
-      where: { type_sourceId_userId: { type, sourceId: `v17-${key}`, userId: anna.id } },
-      create: {
-        userId: anna.id,
-        type,
-        points,
-        weightApplied: 1,
-        status,
-        sourceType: 'V17Fixture',
-        sourceId: `v17-${key}`,
-        rulesetVersion: 'v1',
-        createdAt: ago(when),
-        confirmedAt: status === 'CONFIRMED' ? ago(when - 7 * D) : null,
-        meta: { explanation: `${why} (fixture porównania V17)` },
-      },
-      update: {},
-    });
-  await ev(
-    'ORDER_COMPLETED_RATED',
-    'r1',
-    310,
-    'CONFIRMED',
-    20 * D,
-    'Ocena 5/5 za zlecenie: 100 pkt bazowych',
-  );
-  await ev(
-    'ORDER_COMPLETED_RATED',
-    'r2',
-    100,
-    'PENDING',
-    2 * D,
-    'Ocena 5/5 za zlecenie: 100 pkt bazowych',
-  );
-  await ev(
-    'ANSWER_ACCEPTED',
-    'a1',
-    70,
-    'CONFIRMED',
-    15 * D,
-    'Odpowiedź zaakceptowana przez autora: 50 pkt bazowych',
-  );
-  await ev(
-    'ANSWER_ACCEPTED',
-    'a2',
-    50,
-    'PENDING',
-    3 * D,
-    'Odpowiedź zaakceptowana przez autora: 50 pkt bazowych',
-  );
-
-  // 1a) Różne szczeble pozostałych Liderów, żeby pierścienie i odznaki miały co pokazać (jak w makiecie).
+  // Różne szczeble pozostałych Liderów, żeby pierścienie i odznaki miały co pokazać (jak w makiecie).
   const spread: Record<string, [number, number]> = {
     'lider.marek@demo.leadersofteams.pl': [4, 1720],
     'lider.kasia@demo.leadersofteams.pl': [5, 3300],
@@ -120,12 +62,103 @@ async function main() {
         },
       });
   }
-
-  // 1b) Firmy demo „zweryfikowane” (wiersz zaufania zlecenia jak w makiecie).
+  // Firmy demo „zweryfikowane” (wiersz zaufania zlecenia jak w makiecie).
   await prisma.company.updateMany({
     where: { nip: 'DEMO-SEED' },
     data: { nipVerifiedAt: ago(40 * D) },
   });
+
+  // Zdarzenia punktowe jako fixture, ale z ROZWIĄZYWALNYMI źródłami: wskazują na istniejące oceny i
+  // odpowiedzi demo (cudze), żeby publiczna Oś światła miała nazwy firm/osób i tytuły. Wagi różne,
+  // m.in. ×0,5 (kolejna ocena tej samej firmy) i ×0,1 (minimum), jak w rules.ts.
+  await prisma.pointEvent.deleteMany({ where: { userId: anna.id, sourceType: 'V17Fixture' } });
+  const cudzeOceny = await prisma.review.findMany({
+    where: {
+      direction: 'COMPANY_TO_LEADER',
+      publishedAt: { not: null },
+      subjectLeaderUserId: { not: anna.id },
+    },
+    include: { order: { select: { companyId: true } } },
+    orderBy: { id: 'asc' },
+    take: 8,
+  });
+  const cudzeOdpowiedzi = await prisma.answer.findMany({
+    where: { authorUserId: { not: anna.id } },
+    include: { thread: { select: { authorUserId: true } } },
+    orderBy: { id: 'asc' },
+    take: 8,
+  });
+  const evR = (
+    i: number,
+    points: number,
+    weight: number,
+    status: 'CONFIRMED' | 'PENDING',
+    when: number,
+  ) => {
+    const r = cudzeOceny[i];
+    if (!r) return null;
+    return prisma.pointEvent.upsert({
+      where: {
+        type_sourceId_userId: { type: 'ORDER_COMPLETED_RATED', sourceId: r.id, userId: anna.id },
+      },
+      create: {
+        userId: anna.id,
+        type: 'ORDER_COMPLETED_RATED',
+        points,
+        weightApplied: weight,
+        status,
+        sourceType: 'Review',
+        sourceId: r.id,
+        grantedByUserId: r.authorUserId,
+        counterpartyId: r.order.companyId,
+        rulesetVersion: 'v1',
+        createdAt: ago(when),
+        confirmedAt: status === 'CONFIRMED' ? ago(when - 7 * D) : null,
+        meta: { explanation: 'fixture porównania V17' },
+      },
+      update: {},
+    });
+  };
+  const evA = (
+    i: number,
+    type: 'ANSWER_ACCEPTED' | 'ANSWER_UPVOTED_QUALIFIED',
+    points: number,
+    status: 'CONFIRMED' | 'PENDING',
+    when: number,
+  ) => {
+    const a = cudzeOdpowiedzi[i];
+    if (!a) return null;
+    return prisma.pointEvent.upsert({
+      where: { type_sourceId_userId: { type, sourceId: a.id, userId: anna.id } },
+      create: {
+        userId: anna.id,
+        type,
+        points,
+        weightApplied: 1,
+        status,
+        sourceType: type === 'ANSWER_ACCEPTED' ? 'Answer' : 'AnswerVote',
+        sourceId: a.id,
+        grantedByUserId: a.thread.authorUserId,
+        counterpartyId: a.thread.authorUserId,
+        rulesetVersion: 'v1',
+        createdAt: ago(when),
+        confirmedAt: status === 'CONFIRMED' ? ago(when - 7 * D) : null,
+        meta: { explanation: 'fixture porównania V17' },
+      },
+      update: {},
+    });
+  };
+  await Promise.all([
+    evR(0, 100, 1, 'CONFIRMED', 22 * D),
+    evR(1, 100, 1, 'CONFIRMED', 21 * D),
+    evR(2, 100, 1, 'CONFIRMED', 20 * D),
+    evR(3, 10, 0.1, 'CONFIRMED', 19 * D), // minimum ×0,1
+    evR(4, 100, 1, 'PENDING', 2 * D),
+    evA(0, 'ANSWER_ACCEPTED', 50, 'CONFIRMED', 15 * D),
+    evA(1, 'ANSWER_UPVOTED_QUALIFIED', 10, 'CONFIRMED', 14 * D),
+    evA(2, 'ANSWER_UPVOTED_QUALIFIED', 10, 'CONFIRMED', 13 * D),
+    evA(3, 'ANSWER_ACCEPTED', 50, 'PENDING', 3 * D),
+  ]);
 
   // 2) Dwie uznane odpowiedzi Anny (realne wiersze Answer + wskaźnik w wątku).
   const threads = await prisma.thread.findMany({
@@ -182,6 +215,28 @@ async function main() {
       where: { id: l.id },
       data: { publishedAt: i === 0 ? ago(1 * D) : old(i + 15) },
     });
+  // 1c) Dwie najnowsze realizacje w strumieniu: jedna „dojrzewa”, druga z wagą ×0,5 (jak w makiecie).
+  const najnowsze = await prisma.review.findMany({
+    where: { direction: 'COMPANY_TO_LEADER', publishedAt: { not: null } },
+    orderBy: { id: 'asc' },
+    take: 12,
+  });
+  const dwie = najnowsze.filter((r) => r.subjectLeaderUserId !== anna.id).slice(0, 2);
+  if (dwie[0]) {
+    await prisma.review.update({ where: { id: dwie[0].id }, data: { publishedAt: ago(90 * MIN) } });
+    await prisma.pointEvent.updateMany({
+      where: { sourceType: 'Review', sourceId: dwie[0].id },
+      data: { status: 'PENDING', confirmedAt: null, createdAt: ago(2 * H) },
+    });
+  }
+  if (dwie[1]) {
+    await prisma.review.update({ where: { id: dwie[1].id }, data: { publishedAt: ago(5 * H) } });
+    await prisma.pointEvent.updateMany({
+      where: { sourceType: 'Review', sourceId: dwie[1].id },
+      data: { points: 50, weightApplied: 0.5 },
+    });
+  }
+
   console.log('Fixture V17 gotowy: Anna L3 770 pkt, odpowiedzi uznane:', accepted);
 }
 

@@ -25,7 +25,7 @@ export interface MarketplaceRoutesDeps {
   profiles: ProfilesService;
   orders: OrdersService;
   reviews: ReviewsService;
-  ladder: Pick<LadderService, 'getLevel' | 'getLevels' | 'getAchievements'>;
+  ladder: Pick<LadderService, 'getLevel' | 'getLevels' | 'getAchievements' | 'getReviewPoints'>;
   // Dane firmy do publicznego profilu — przez publiczne API identity (ADR-002),
   // marketplace nie czyta tabeli `companies`.
   identity: Pick<IdentityService, 'getCompanyMeta' | 'getPublicUsers' | 'getUserCreatedAt'>;
@@ -120,12 +120,19 @@ export function marketplaceRoutes({
       const limit = Math.min(Math.max(Number.parseInt(q.limit ?? '10', 10) || 10, 1), 50);
       const page = await reviews.listRealizations(limit, q.cursor);
       // Poziom Lidera dokładamy tu (jak w /leaders): moduł reviews nie zna ladder.
-      const levels = await ladder.getLevels(page.realizations.map((r) => r.leader.userId));
+      const [levels, points] = await Promise.all([
+        ladder.getLevels(page.realizations.map((r) => r.leader.userId)),
+        // Punkty po wagach (decyzja 25.11): tylko przyznane i dojrzewające, bez cofniętych.
+        ladder.getReviewPoints(page.realizations.map((r) => r.id)),
+      ]);
       return reply.send({
         ...page,
         realizations: page.realizations.map((r) => ({
           ...r,
           leader: { ...r.leader, level: levels.get(r.leader.userId) ?? 0 },
+          points: points.get(r.id)?.points ?? null,
+          weight: points.get(r.id)?.weight ?? null,
+          maturesAt: points.get(r.id)?.maturesAt ?? null,
         })),
       });
     });
@@ -133,7 +140,18 @@ export function marketplaceRoutes({
     app.get('/leaders/:id/reviews', async (request, reply) => {
       const { id } = request.params as { id: string };
       const profile = (await profiles.getPublicProfile(id)) as { userId: string };
-      return reply.send(await reviews.listLeaderReviews(profile.userId));
+      const list = await reviews.listLeaderReviews(profile.userId);
+      // Punkty po wagach przy każdej ocenie (decyzja 25.11: publiczne); null = brak zdarzenia / cofnięte.
+      const pts = await ladder.getReviewPoints(list.reviews.map((r) => r.id));
+      return reply.send({
+        ...list,
+        reviews: list.reviews.map((r) => ({
+          ...r,
+          points: pts.get(r.id)?.points ?? null,
+          weight: pts.get(r.id)?.weight ?? null,
+          maturesAt: pts.get(r.id)?.maturesAt ?? null,
+        })),
+      });
     });
 
     app.get('/leaders/:id', async (request, reply) => {

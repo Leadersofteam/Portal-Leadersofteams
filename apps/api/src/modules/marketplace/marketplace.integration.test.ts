@@ -366,7 +366,7 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     expect(mine.completedOrders).toBe(1);
   });
 
-  it('strumień realizacji (V17): publiczny, chronologiczny, bez punktów z prywatnej księgi', async () => {
+  it('strumień realizacji (V17): publiczny, chronologiczny, z punktami po wagach', async () => {
     const res = await ctx.app.inject({ method: 'GET', url: '/api/v1/realizations?limit=5' });
     expect(res.statusCode).toBe(200);
     const body = res.json() as {
@@ -375,7 +375,8 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
       >;
     };
     for (const r of body.realizations) {
-      expect(r).not.toHaveProperty('points'); // księga punktowa Lidera jest prywatna (PL3)
+      // punkty po wagach są publiczne (decyzja 25.11); null, gdy zdarzenia nie ma / jest cofnięte
+      expect(r).toHaveProperty('points');
       expect(typeof r.leader.level).toBe('number');
     }
     const dates = body.realizations.map((r) => r.publishedAt);

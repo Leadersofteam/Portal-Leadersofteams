@@ -2,6 +2,7 @@
 // z czterech publicznych źródeł i sortujemy chronologicznie (ADR-010: bez rankingu, bez algorytmu).
 // Czego API nie niesie (miasto i termin zlecenia, termin zbierania ofert, awatary oferentów,
 // liczba powiadomień), tego NIE zmyślamy — komponenty pomijają pole albo pokazują stan pusty.
+import type { LevelRule } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
 
 export interface Aktor {
@@ -44,6 +45,9 @@ export type Wpis =
       branza: { name: string; slug: string };
       tytul: string;
       ocena: number;
+      pkt: number | null;
+      waga: number | null;
+      dojrzewa: string | null;
     }
   | {
       k: 'usluga';
@@ -82,6 +86,9 @@ interface ThreadRow {
 interface RealRow {
   id: string;
   rating: number;
+  points: number | null;
+  weight: number | null;
+  maturesAt: string | null;
   publishedAt: string;
   orderTitle: string;
   industry: { name: string; slug: string };
@@ -207,6 +214,9 @@ export async function loadStrumien(
       branza: r.industry,
       tytul: r.orderTitle,
       ocena: r.rating,
+      pkt: r.points,
+      waga: r.weight,
+      dojrzewa: r.maturesAt,
     });
   }
   for (const l of lists?.listings ?? [])
@@ -319,5 +329,69 @@ export async function loadJa(): Promise<Zalogowany | null> {
     handle: social?.handle ?? null,
     avatarFileId: me.user.avatarFileId ?? null,
     level: ladder?.state.level ?? 0,
+  };
+}
+
+// ── Publiczna Oś światła (punkty po wagach — decyzja właściciela 25.11) ──
+export interface ZdarzenieSwiatla {
+  id: string;
+  type: string;
+  path: 'rynek' | 'spolecznosc';
+  points: number;
+  weight: number;
+  status: 'CONFIRMED' | 'PENDING';
+  createdAt: string;
+  maturesAt: string | null;
+  title: string | null;
+  threadId: string | null;
+  source: { kind: 'company' | 'person'; id: string; name: string; handle: string | null } | null;
+}
+export interface Swiatlo {
+  summary: {
+    level: number;
+    marketplacePoints: number;
+    communityPoints: number;
+    totalPoints: number;
+  };
+  total: number;
+  nextCursor: string | null;
+  events: ZdarzenieSwiatla[];
+}
+
+export const loadSwiatlo = (handle: string, limit = 6) =>
+  serverApi<Swiatlo>(`/profiles/${encodeURIComponent(handle)}/ladder-events?limit=${limit}`);
+
+/** Ile dni do końca karencji (zaokrąglone w górę, min. 1) — albo null, gdy punkt jest już dojrzały. */
+export function dniDoDojrzenia(maturesAt: string | null, now = new Date()): number | null {
+  if (!maturesAt) return null;
+  return Math.max(1, Math.ceil((new Date(maturesAt).getTime() - now.getTime()) / 86_400_000));
+}
+
+/** Stan Drabinki dowolnego Lidera z PUBLICZNEJ księgi (summary + dojrzewające zdarzenia). */
+export function mojaZLedgera(sw: Swiatlo, rules: LevelRule[]): MojaDrabinka {
+  const { level, marketplacePoints, communityPoints, totalPoints } = sw.summary;
+  const czeka = (path: 'rynek' | 'spolecznosc') =>
+    sw.events
+      .filter((e) => e.status === 'PENDING' && e.path === path)
+      .reduce((a, e) => a + e.points, 0);
+  const nextRule = level < 7 ? rules[level] : undefined;
+  return {
+    level,
+    levelName: level ? (rules[level - 1]?.name ?? null) : null,
+    rynek: marketplacePoints,
+    spol: communityPoints,
+    razem: totalPoints,
+    czekaRynek: czeka('rynek'),
+    czekaSpol: czeka('spolecznosc'),
+    next: nextRule
+      ? {
+          level: nextRule.level,
+          name: nextRule.name,
+          pointsRequired: nextRule.pointsRequired,
+          missingPoints: Math.max(0, nextRule.pointsRequired - totalPoints),
+          minPathSharePct: nextRule.minPathSharePct,
+        }
+      : null,
+    events: [],
   };
 }

@@ -202,9 +202,8 @@ export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
     },
 
     // V17 „Światło”: strumień realizacji — opublikowane oceny Firma→Lider od najnowszych
-    // (ADR-010: chronologicznie, kursor, zero rankingu). Punkty NIE są tu zwracane:
-    // księga punktowa Lidera jest prywatna (PL3), a rating→punkty bazowe to jawna reguła
-    // z rules.ts, którą frontend liczy sam z oceny.
+    // (ADR-010: chronologicznie, kursor, zero rankingu). Punkty po wagach dokłada route
+    // z modułu ladder (decyzja właściciela 25.11: publiczne) — ten serwis ladder nie zna.
     async listRealizations(limit = 10, cursor?: string) {
       const rows = await prisma.review.findMany({
         where: {
