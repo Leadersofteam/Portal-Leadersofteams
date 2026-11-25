@@ -13,7 +13,7 @@ import { Ocena, Wstecz } from '@/components/v17/rynek';
 import { Aw, Miernik, Odznaka, Okladka, rodzajRynek } from '@/components/v17/znaki';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi, serverApiStatus } from '@/lib/server-api';
-import { levelsOrFallback, nf, plural, progress, temu } from '@/lib/v17';
+import { ddmm, levelsOrFallback, nf, plural, progress, temu } from '@/lib/v17';
 import { dniDoDojrzenia, loadJa, loadSwiatlo, mojaZLedgera } from '@/lib/v17-data';
 
 interface ListingDetail {
@@ -33,6 +33,8 @@ interface ListingDetail {
       deliveryDays: number;
     }>;
     industry: { id: string; name: string };
+    publishedAt?: string | null;
+    createdAt?: string;
     leader: {
       userId: string;
       profileId?: string;
@@ -158,14 +160,27 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
           <Wstecz href="/uslugi">Usługi</Wstecz>
           <div className="nad" style={{ marginTop: 10, fontSize: 13, color: 'var(--text-muted)' }}>
             {listing.industry.name}
+            {listing.publishedAt || listing.createdAt
+              ? ` · dodana ${ddmm((listing.publishedAt ?? listing.createdAt) as string)}`
+              : ''}
           </div>
           <h1>{listing.title}</h1>
           <div className="rn-lw">
             <Aw name={leader.displayName} size={36} src={avatar} />
             <b>{leader.displayName}</b>
             <Odznaka level={leader.level} />
-            <span className="sep">·</span>
-            <Ocena srednia={leader.averageRating} liczba={leader.reviewCount} />
+            {/* „·” i ocena w jednym niełamliwym spanie: separator nie zostaje sam na końcu wiersza (390 px). */}
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 12,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span className="sep">·</span>
+              <Ocena srednia={leader.averageRating} liczba={leader.reviewCount} />
+            </span>
             {ja && !isOwner ? (
               <FollowButton
                 userId={leader.userId}

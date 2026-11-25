@@ -122,7 +122,14 @@ export function createOrdersService({
             LIMIT 200`;
         fulltextIds = rows.map((r) => r.id);
         if (fulltextIds.length === 0)
-          return { orders: [], nextCursor: null, total: 0, industryCounts: {} };
+          return {
+            orders: [],
+            nextCursor: null,
+            total: 0,
+            industryCounts: {},
+            budgetCounts: {},
+            levelCounts: {},
+          };
       } else {
         likeQ = filters.q;
       }
@@ -137,26 +144,30 @@ export function createOrdersService({
         .filter(Boolean)
         .slice(0, 20),
     ];
-    // Bez filtra branży: z tego `where` liczymy liczniki przy opcjach branży (checkbox pokazuje, ILE dałby po zaznaczeniu).
-    const baseWhere: Prisma.OrderWhereInput = {
+    // Filtr składa się z trzech niezależnych części. Licznik przy opcji danego filtra (checkbox branży, przedział budżetu,
+    // przedział poziomu) liczymy z pozostałych DWÓCH — pokazuje, ILE zleceń dałoby zaznaczenie opcji przy reszcie filtrów.
+    const wspolne: Prisma.OrderWhereInput = {
       status: 'PUBLISHED',
       ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
       ...(likeQ ? { title: { contains: likeQ } } : {}),
-      ...(filters.maxMinLevel !== undefined || filters.minLevelFrom !== undefined
+    };
+    const levelW: Prisma.OrderWhereInput =
+      filters.maxMinLevel !== undefined || filters.minLevelFrom !== undefined
         ? {
             minLevel: {
               ...(filters.maxMinLevel !== undefined ? { lte: filters.maxMinLevel } : {}),
               ...(filters.minLevelFrom !== undefined ? { gte: filters.minLevelFrom } : {}),
             },
           }
-        : {}),
+        : {};
+    const budgetW: Prisma.OrderWhereInput = {
       ...(filters.budgetMin !== undefined ? { budgetMax: { gte: filters.budgetMin } } : {}),
       ...(filters.budgetMax !== undefined ? { budgetMin: { lte: filters.budgetMax } } : {}),
     };
-    const where: Prisma.OrderWhereInput = {
-      ...baseWhere,
-      ...(industryIds.length ? { industryId: { in: industryIds } } : {}),
-    };
+    const industryW: Prisma.OrderWhereInput = industryIds.length
+      ? { industryId: { in: industryIds } }
+      : {};
+    const where: Prisma.OrderWhereInput = { ...wspolne, ...levelW, ...budgetW, ...industryW };
 
     const rows = await prisma.order.findMany({
       where,
@@ -166,9 +177,39 @@ export function createOrdersService({
       ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
     });
 
-    const [total, byIndustry] = await Promise.all([
+    // Przedziały jak w filtrach V17 „Rynek” (te same granice co parametry budgetMin/budgetMax/minLevelFrom/maxMinLevel).
+    const BUDGET_BUCKETS: Record<string, Prisma.OrderWhereInput> = {
+      '': {},
+      do5: { budgetMin: { lte: 5000 } },
+      '5-20': { budgetMax: { gte: 5000 }, budgetMin: { lte: 20000 } },
+      '20-60': { budgetMax: { gte: 20000 }, budgetMin: { lte: 60000 } },
+      '60+': { budgetMax: { gte: 60000 } },
+    };
+    const LEVEL_BUCKETS: Record<string, Prisma.OrderWhereInput> = {
+      bez: { minLevel: 0 },
+      do3: { minLevel: { gte: 1, lte: 3 } },
+      l4: { minLevel: { gte: 4 } },
+    };
+    const countBuckets = async (
+      buckets: Record<string, Prisma.OrderWhereInput>,
+      rest: Prisma.OrderWhereInput,
+    ) =>
+      Object.fromEntries(
+        await Promise.all(
+          Object.entries(buckets).map(
+            async ([k, w]) => [k, await prisma.order.count({ where: { AND: [rest, w] } })] as const,
+          ),
+        ),
+      );
+    const [total, byIndustry, budgetCounts, levelCounts] = await Promise.all([
       prisma.order.count({ where }),
-      prisma.order.groupBy({ by: ['industryId'], where: baseWhere, _count: { _all: true } }),
+      prisma.order.groupBy({
+        by: ['industryId'],
+        where: { ...wspolne, ...levelW, ...budgetW },
+        _count: { _all: true },
+      }),
+      countBuckets(BUDGET_BUCKETS, { ...wspolne, ...levelW, ...industryW }),
+      countBuckets(LEVEL_BUCKETS, { ...wspolne, ...budgetW, ...industryW }),
     ]);
     const hasMore = rows.length > filters.limit;
     const page = hasMore ? rows.slice(0, filters.limit) : rows;
@@ -198,6 +239,8 @@ export function createOrdersService({
       // V17 „Rynek”: „N z M” i liczniki przy branżach (addytywnie — stare trasy je ignorują).
       total,
       industryCounts: Object.fromEntries(byIndustry.map((g) => [g.industryId, g._count._all])),
+      budgetCounts,
+      levelCounts,
     };
   }
 
@@ -433,6 +476,8 @@ export function createOrdersService({
         messagesCount: o._count.messages,
         leader: {
           profileId: o.leaderProfile.id,
+          // V17 „Rynek”: handle → punkty i poziom oferenta z publicznej Osi światła (to samo źródło co profil).
+          handle: users.get(o.leaderProfile.userId)?.handle ?? null,
           displayName: users.get(o.leaderProfile.userId)?.displayName ?? 'Lider',
           headline: o.leaderProfile.headline,
           industry: o.leaderProfile.industry.name,

@@ -8,7 +8,7 @@ import { Naglowek, Ocena, zl } from '@/components/v17/rynek';
 import { Aw, Odznaka, Okladka, rodzajRynek } from '@/components/v17/znaki';
 import type { ListingCardData } from '@/components/ui/listing-card';
 import { publicApi } from '@/lib/server-api';
-import { plural } from '@/lib/v17';
+import { ddmm, plural } from '@/lib/v17';
 import { loadJa } from '@/lib/v17-data';
 
 // Metadane jak na liście ze starego wyglądu (ten sam adres).
@@ -69,10 +69,10 @@ export default async function UslugiV17({
   const ja = await loadJa();
   const [data, branzeData] = await Promise.all([
     // Jak w starym katalogu: publicApi, katalog jest publiczny i bez cookies.
-    publicApi<{ listings: ListingCardData[]; nextCursor: string | null }>(
-      `/listings?${query.toString()}`,
-      0,
-    ),
+    publicApi<{
+      listings: Array<ListingCardData & { publishedAt?: string | null; createdAt?: string }>;
+      nextCursor: string | null;
+    }>(`/listings?${query.toString()}`, 0),
     publicApi<{ industries: Branza[] }>('/industries'),
   ]);
   const branze = branzeData?.industries ?? [];
@@ -156,7 +156,7 @@ export default async function UslugiV17({
         >
           {POZIOM.map(([k, t]) => (
             <option key={k} value={k}>
-              Poziom: {t}
+              Poziom Lidera: {t}
             </option>
           ))}
         </select>
@@ -244,7 +244,12 @@ export default async function UslugiV17({
                     od <b>{zl(u.priceFrom)}</b>
                   </span>
                 </div>
-                <div className="data">{u.industry.name}</div>
+                <div className="data">
+                  {u.industry.name}
+                  {u.publishedAt || u.createdAt
+                    ? ` · dodana ${ddmm((u.publishedAt ?? u.createdAt) as string)}`
+                    : ''}
+                </div>
               </Link>
             ))}
           </div>

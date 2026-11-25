@@ -9,6 +9,8 @@ import { useAction } from '@/components/action-button';
 import { apiFetch } from '@/lib/api';
 
 import { Ico } from './ico';
+import { nf } from '@/lib/v17';
+
 import { zl } from './rynek';
 import { Aw, Odznaka } from './znaki';
 
@@ -24,6 +26,7 @@ export interface OfertaWiersz {
   cena: number | null;
   dni: number | null;
   poziom: number;
+  punkty: number | null;
   srednia: number | null;
   liczbaOcen: number;
   wiadomosci: string;
@@ -66,7 +69,7 @@ export function OfertyPorownanie({
             const zaznaczona = wybrana === o.id;
             const poziom = (
               <span className="m-poz of-poz">
-                <Odznaka level={o.poziom} />
+                <Odznaka level={o.poziom} kreski />
               </span>
             );
             return (
@@ -115,7 +118,8 @@ export function OfertyPorownanie({
                   </div>
                 </td>
                 <td className="poz of-poz">
-                  <Odznaka level={o.poziom} />
+                  <Odznaka level={o.poziom} kreski />
+                  <span className="pk">{nf(o.punkty ?? 0)} pkt</span>
                 </td>
                 <td data-e="Cena" className="of-c">
                   {o.cena ? zl(o.cena) : '—'}

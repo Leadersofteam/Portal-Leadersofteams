@@ -21,7 +21,7 @@ import { OFFER_STATUS_LABELS, ORDER_STATUS_LABELS } from '@/lib/labels';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi, serverApiStatus } from '@/lib/server-api';
 import { budget, dodaneGodz, levelsOrFallback, plural, temu } from '@/lib/v17';
-import { loadJa } from '@/lib/v17-data';
+import { loadJa, loadSwiatlo } from '@/lib/v17-data';
 
 interface ReviewsData {
   reviews: Array<{
@@ -66,7 +66,13 @@ interface OfferRow {
   status: string;
   createdAt: string;
   messagesCount: number;
-  leader: { profileId: string; displayName: string; headline: string; industry: string };
+  leader: {
+    profileId: string;
+    handle?: string | null;
+    displayName: string;
+    headline: string;
+    industry: string;
+  };
 }
 
 const messagesLabel = (n: number) =>
@@ -132,7 +138,7 @@ export default async function ZlecenieV17({
       ? ((await serverApi<{ offers: OfferRow[] }>(`/orders/${id}/offers`))?.offers ?? [])
       : [];
   // Poziom i oceny oferenta: lista ofert ich nie niesie, a to one odróżniają ofertę od oferty (Drabinka + oceny po zleceniach).
-  const [profile, levels] = await Promise.all([
+  const [profile, swiatla, levels] = await Promise.all([
     Promise.all(
       offers.map((o) =>
         serverApi<{
@@ -140,6 +146,8 @@ export default async function ZlecenieV17({
         }>(`/leaders/${o.leader.profileId}`),
       ),
     ),
+    // Punkty oferenta z PUBLICZNEJ Osi światła (to samo źródło co profil), gdy ma handle.
+    Promise.all(offers.map((o) => (o.leader.handle ? loadSwiatlo(o.leader.handle, 1) : null))),
     offers.length ? serverApi<{ levels: LevelRule[] }>('/ladder/levels') : null,
   ]);
   const rules = levelsOrFallback(levels?.levels);
@@ -154,7 +162,8 @@ export default async function ZlecenieV17({
     wiadomosc: o.message,
     cena: o.proposedBudget,
     dni: o.proposedDays,
-    poziom: profile[i]?.profile.level ?? 0,
+    poziom: swiatla[i]?.summary.level ?? profile[i]?.profile.level ?? 0,
+    punkty: swiatla[i]?.summary.totalPoints ?? null,
     srednia: profile[i]?.profile.averageRating ?? null,
     liczbaOcen: profile[i]?.profile.reviewCount ?? 0,
     wiadomosci: messagesLabel(o.messagesCount),
@@ -215,21 +224,62 @@ export default async function ZlecenieV17({
           {dodane ? ` · dodane ${dodane}` : ''}
         </div>
         <h1>{order.title}</h1>
-        <div className="rn-firma">
-          <Aw name={order.companyName} size={40} company industry={order.industry.name} />
-          <div>
-            {/* Nazwa firmy jest LINKIEM do jej profilu (/firmy/[id]) — Lider decyduje, czy warto składać ofertę. */}
-            <b>
-              <Link href={`/firmy/${order.companyId}`}>{order.companyName}</Link>
-            </b>
-            <small>
-              <Ico n={order.companyVerified ? 'seal-check' : 'question'} />
-              {order.companyVerified ? 'Firma zweryfikowana' : 'Firma bez potwierdzonego NIP'}
-              {order.companyOrdersCount
-                ? ` · ${order.companyOrdersCount} ${plural(order.companyOrdersCount, 'zlecenie', 'zlecenia', 'zleceń')}`
-                : ''}
-            </small>
+        <div className="rn-head-row">
+          <div className="rn-firma">
+            <Aw name={order.companyName} size={40} company industry={order.industry.name} />
+            <div>
+              {/* Nazwa firmy jest LINKIEM do jej profilu (/firmy/[id]) — Lider decyduje, czy warto składać ofertę. */}
+              <b>
+                <Link href={`/firmy/${order.companyId}`}>{order.companyName}</Link>
+              </b>
+              <small>
+                <Ico n={order.companyVerified ? 'seal-check' : 'question'} />
+                {order.companyVerified ? 'Firma zweryfikowana' : 'Firma bez potwierdzonego NIP'}
+                {order.companyOrdersCount
+                  ? ` · ${order.companyOrdersCount} ${plural(order.companyOrdersCount, 'zlecenie', 'zlecenia', 'zleceń')}`
+                  : ''}
+              </small>
+            </div>
           </div>
+          {viewer.isCompanyMember ? (
+            <div className="rn-akcje-wl">
+              {order.status === 'DRAFT' && publishLocked && (
+                <span className="publish-locked">
+                  <button
+                    type="button"
+                    className="vbtn glowny"
+                    disabled
+                    aria-describedby="publish-locked-why"
+                  >
+                    Opublikuj zlecenie
+                  </button>
+                  <span id="publish-locked-why" className="muted">
+                    Dostępne po potwierdzeniu adresu e-mail.
+                  </span>
+                </span>
+              )}
+              {order.status === 'DRAFT' && !publishLocked && (
+                <ActionButton path={`/orders/${order.id}/publish`} label="Opublikuj zlecenie" />
+              )}
+              {['DRAFT', 'PUBLISHED', 'AWARDED'].includes(order.status) && (
+                <ActionButton
+                  path={`/orders/${order.id}/cancel`}
+                  label="Anuluj zlecenie"
+                  variant="secondary"
+                />
+              )}
+              {order.status === 'DELIVERED' && (
+                <ActionButton path={`/orders/${order.id}/confirm`} label="Potwierdź wykonanie" />
+              )}
+              {['IN_PROGRESS', 'DELIVERED'].includes(order.status) && (
+                <ActionButton
+                  path={`/orders/${order.id}/dispute`}
+                  label="Zgłoś spór"
+                  variant="secondary"
+                />
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className="rn-2">
@@ -275,46 +325,6 @@ export default async function ZlecenieV17({
               czeka. Nie dotarł? Wyślemy nowy.
             </p>
             <ResendVerificationButton email={verification.email} />
-          </div>
-        ) : null}
-
-        {viewer.isCompanyMember ? (
-          <div className="rn-akcje">
-            {order.status === 'DRAFT' && publishLocked && (
-              <span className="publish-locked">
-                <button
-                  type="button"
-                  className="vbtn glowny"
-                  disabled
-                  aria-describedby="publish-locked-why"
-                >
-                  Opublikuj zlecenie
-                </button>
-                <span id="publish-locked-why" className="muted">
-                  Dostępne po potwierdzeniu adresu e-mail.
-                </span>
-              </span>
-            )}
-            {order.status === 'DRAFT' && !publishLocked && (
-              <ActionButton path={`/orders/${order.id}/publish`} label="Opublikuj zlecenie" />
-            )}
-            {['DRAFT', 'PUBLISHED', 'AWARDED'].includes(order.status) && (
-              <ActionButton
-                path={`/orders/${order.id}/cancel`}
-                label="Anuluj"
-                variant="secondary"
-              />
-            )}
-            {order.status === 'DELIVERED' && (
-              <ActionButton path={`/orders/${order.id}/confirm`} label="Potwierdź wykonanie" />
-            )}
-            {['IN_PROGRESS', 'DELIVERED'].includes(order.status) && (
-              <ActionButton
-                path={`/orders/${order.id}/dispute`}
-                label="Zgłoś spór"
-                variant="secondary"
-              />
-            )}
           </div>
         ) : null}
 

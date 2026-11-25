@@ -150,7 +150,24 @@ export function Szczebelki({ level, h = 12 }: { level: number; h?: number }) {
   );
 }
 
-export function Odznaka({ level, big = false }: { level: number; big?: boolean }) {
+// `kreski`: L0 też rysuje szczebelki (same szare) obok „Nowy w Portalu” — tabela ofert porównuje oferentów tym samym znakiem
+// dla każdego; P0 zostaje przy samym tekście.
+export function Odznaka({
+  level,
+  big = false,
+  kreski = false,
+}: {
+  level: number;
+  big?: boolean;
+  kreski?: boolean;
+}) {
+  if (!level && kreski)
+    return (
+      <span className="odz nowy" style={{ '--lv': 'var(--text-muted)' } as Css}>
+        <Szczebelki level={0} h={big ? 14 : 12} />
+        Nowy w Portalu
+      </span>
+    );
   if (!level) return <span className="odz nowy">Nowy w Portalu</span>;
   return (
     <span

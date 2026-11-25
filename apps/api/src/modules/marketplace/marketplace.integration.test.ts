@@ -272,6 +272,17 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     expect(doL3.orders.some((o) => o.id === orderId)).toBe(false);
     const l4 = await get(`industryId=${industryId}&minLevelFrom=4`);
     expect(l4.orders.some((o) => o.id === gatedOrderId)).toBe(false);
+    // Liczniki przy opcjach budżetu i poziomu (jedna liczba na opcję, z pozostałych filtrów).
+    const fac = (
+      await ctx.app.inject({ method: 'GET', url: `/api/v1/orders?industryId=${industryId}` })
+    ).json() as {
+      budgetCounts: Record<string, number>;
+      levelCounts: Record<string, number>;
+    };
+    expect(fac.budgetCounts['']).toBe(single.total);
+    expect(fac.levelCounts.bez ?? 0).toBeGreaterThanOrEqual(1);
+    expect(fac.levelCounts.do3 ?? 0).toBeGreaterThanOrEqual(1);
+    expect(Object.values(fac.levelCounts).reduce((a, b) => a + b, 0)).toBe(single.total);
     // „N z M”: total to suma poza limitem strony.
     const page = await get(`industryId=${industryId}&limit=1`);
     expect(page.orders).toHaveLength(1);
@@ -341,6 +352,8 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     });
     expect(offers.statusCode).toBe(200);
     expect(offers.json().offers).toHaveLength(1);
+    // V17 „Rynek”: handle oferenta (może być null, ale pole istnieje) — z niego web bierze punkty z Osi światła.
+    expect('handle' in offers.json().offers[0].leader).toBe(true);
     expect(offers.json().offers[0].leader.displayName).toBe('Lider Testowy');
 
     const accept = await ctx.app.inject({

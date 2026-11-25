@@ -97,3 +97,12 @@ export function dodaneGodz(iso: string | Date, now = new Date()): string {
     dzien(d) === dzien(now) ? 'dziś' : dzien(d) === dzien(wczoraj) ? 'wczoraj' : temu(d, now);
   return `${rel}, ${godz}`;
 }
+
+// „24.11” — data dodania w meta karty/nagłówka (strefa Polski).
+export function ddmm(iso: string | Date): string {
+  return new Date(iso).toLocaleDateString('pl-PL', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'Europe/Warsaw',
+  });
+}

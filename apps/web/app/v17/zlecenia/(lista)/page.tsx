@@ -88,6 +88,8 @@ export default async function ZleceniaV17({
       nextCursor: string | null;
       total?: number;
       industryCounts?: Record<string, number>;
+      budgetCounts?: Record<string, number>;
+      levelCounts?: Record<string, number>;
     }>(`/orders?${query.toString()}`, 0),
     publicApi<{ industries: Branza[] }>('/industries'),
     ja ? loadMojaDrabinka() : null,
@@ -98,6 +100,8 @@ export default async function ZleceniaV17({
   const zlecenia = data?.orders ?? [];
   const total = data?.total ?? zlecenia.length;
   const liczniki = data?.industryCounts ?? {};
+  const licznikiBudzet = data?.budgetCounts ?? {};
+  const licznikiPoziom = data?.levelCounts ?? {};
 
   const href = (zmiana: Record<string, string | string[] | undefined>) => {
     const p = new URLSearchParams();
@@ -153,6 +157,9 @@ export default async function ZleceniaV17({
               <label key={k}>
                 <input type="radio" name="budzet" value={k} defaultChecked={k === budzet[0]} />
                 {t}
+                {licznikiBudzet[k] !== undefined ? (
+                  <span className="n">{licznikiBudzet[k]}</span>
+                ) : null}
               </label>
             ))}
           </div>
@@ -164,6 +171,9 @@ export default async function ZleceniaV17({
               <label key={k}>
                 <input type="radio" name="poziom" value={k} defaultChecked={k === poziom?.[0]} />
                 {t}
+                {licznikiPoziom[k] !== undefined ? (
+                  <span className="n">{licznikiPoziom[k]}</span>
+                ) : null}
               </label>
             ))}
           </div>
