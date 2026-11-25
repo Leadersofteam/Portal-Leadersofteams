@@ -54,14 +54,26 @@
     }
     return `<svg class="pier" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
   }
-  function aw(o, S = 44) {
+  // Portret rysowany z nazwy: geometryczny, każdy człowiek inny (tło, skóra, włosy, ubiór). Zdjęcia dopiero z uploadu w kodzie.
+  function portret(o, w) {
+    const h = hue(o.n), h2 = (h * 7 + 140) % 360;
+    const skora = ['#f1c9a5', '#e0a982', '#c68863', '#9a6240', '#6f4529'][h % 5];
+    const wlos = ['#2a1d14', '#5a3a22', '#8a5a2b', '#c9a35a', '#1b1b1f', '#7d4a3a'][(h >> 1) % 6];
+    const styl = (h >> 2) % 4;
+    let wl = '';
+    if (styl === 0) wl = `<path d="M14.5 21c0-7 4-10.5 9.5-10.5S33.5 14 33.5 21c-2-3-5-4.6-9.5-4.6S16.5 18 14.5 21z" fill="${wlos}"/>`;
+    else if (styl === 1) wl = `<path d="M13.5 30c-1.2-11 2-19.5 10.5-19.5S35.2 19 34.5 30c-1.2-2.4-1.6-6-1.6-9-2.2-2.6-5-3.8-8.9-3.8s-6.7 1.2-8.9 3.8c0 3-.4 6.6-1.6 9z" fill="${wlos}"/>`;
+    else if (styl === 2) wl = `<circle cx="24" cy="9.5" r="4.2" fill="${wlos}"/><path d="M14.8 21.5c0-6.6 3.6-9.6 9.2-9.6s9.2 3 9.2 9.6c-2-3.2-5-4.8-9.2-4.8s-7.2 1.6-9.2 4.8z" fill="${wlos}"/>`;
+    else wl = `<path d="M14 22c-1-8 3-12.5 10-12.5S35 14 34 22c-1.5-2.5-3-4.8-5-5.6-1.2 1.4-3.2 2-5 2s-3.8-.6-5-2c-2 .8-3.5 3.1-5 5.6z" fill="${wlos}"/>`;
+    return `<svg viewBox="0 0 48 48" width="${w}" height="${w}" aria-hidden="true"><rect width="48" height="48" fill="hsl(${h} 38% 78%)"/><circle cx="38" cy="8" r="14" fill="hsl(${(h + 30) % 360} 45% 70%)" opacity=".55"/><path d="M5 49c0-9 8-14.5 19-14.5S43 40 43 49z" fill="hsl(${h2} 38% 36%)"/><rect x="20.5" y="27" width="7" height="9" rx="3" fill="${skora}"/><ellipse cx="24" cy="21.5" rx="8.6" ry="9.6" fill="${skora}"/>${wl}</svg>`;
+  }
+  function aw(o, S = 44, ring = false) {
     if (o.firma) {
       const f = Math.round(S * 0.34);
-      return `<span class="aw firma" style="width:${S}px;height:${S}px;--fs:${f}px" aria-hidden="true"><span class="twarz" style="width:${S}px;height:${S}px">${o.skrot}</span></span>`;
+      return `<span class="aw firma" style="width:${S}px;height:${S}px;--fs:${f}px;--fh:${hue(o.branza)}" aria-hidden="true"><span class="twarz" style="width:${S}px;height:${S}px">${o.skrot}</span></span>`;
     }
-    const h = hue(o.n), w = S - 9, f = Math.round(w * 0.38);
-    const tlo = `background:radial-gradient(120% 120% at 20% 10%, hsl(${h} 70% 66%), hsl(${(h + 38) % 360} 55% 42%) 60%, hsl(${(h + 70) % 360} 50% 26%))`;
-    return `<span class="aw" style="width:${S}px;height:${S}px;--fs:${f}px" aria-hidden="true">${o.lv ? pierscien(S, o.lv, postep(o)) : ''}<span class="twarz" style="width:${w}px;height:${w}px;${tlo}">${ini(o.n)}</span></span>`;
+    const w = ring && o.lv ? S - 9 : S;
+    return `<span class="aw" style="width:${S}px;height:${S}px" aria-hidden="true">${ring && o.lv ? pierscien(S, o.lv, postep(o)) : ''}<span class="twarz" style="width:${w}px;height:${w}px">${portret(o, w)}</span></span>`;
   }
   // Odznaka: szczebelki — 7 słupków rosnących, wypełnione do poziomu
   function szczebelki(lv, h = 12) {
@@ -76,7 +88,7 @@
     lv
       ? `<span class="odz${duza ? ' duza' : ''}" style="--lv:var(--level-${lv})" title="Szczebel ${lv} z 7">${szczebelki(lv, duza ? 14 : 12)}${L[lv - 1].nazwa}</span>`
       : `<span class="odz nowy">Nowy w Portalu</span>`;
-  const znakOsoby = (o) => (o.firma ? `<span class="chip-firma">Firma</span>` : odz(o.lv));
+  const znakOsoby = (o) => (o.firma ? '' : odz(o.lv));
 
   // ── Okładki rysowane w SVG (zero zdjęć z sieci); wzór zależy od branży ──
   const BR = {
@@ -129,7 +141,7 @@
     return `<nav class="nav" aria-label="Nawigacja główna">
       <a class="znak" href="feed.html">${ZNAK}<span>Portal Liderów</span></a>
       <ul>${MENU.map(([k, t, ik, kr]) => `<li><a class="poz" href="${k}.html"${k === akt ? ' aria-current="page"' : ''} title="${t}">${I(ik)}<span class="etk">${t}</span>${kr ? `<span class="kropka etk">${kr}</span>` : ''}</a></li>`).join('')}</ul>
-      <button class="btn glowny duzy utworz" type="button" aria-label="Utwórz">${I('plus')}<span>Utwórz</span></button>
+      <button class="btn jasny duzy utworz" type="button" aria-label="Utwórz">${I('plus')}<span>Utwórz</span></button>
       <a class="ja" href="drabinka.html">${aw(ja, 44)}<span class="kto"><b>${ja.n}</b><small>${odz(ja.lv)}</small></span><span class="ikonka" aria-hidden="true">${I('dots-three')}</span></a>
     </nav>`;
   }
@@ -163,22 +175,16 @@
     return `<div class="miernik" style="--c:${c}" role="img" aria-label="${fmt(war)} z ${fmt(max)}"><span style="width:${p}%"></span>${czeka ? `<em style="left:${p}%;width:${pc}%"></em>` : ''}${prog !== null ? `<i class="prog" style="left:${(prog / max) * 100}%"></i>` : ''}</div>`;
   }
   function kartaDrabinki() {
-    const o = P.ola;
-    return `<section class="karta" aria-labelledby="kd">
-      <header><h2 id="kd">Twoja Drabinka</h2>${odz(o.lv)}</header>
-      <div class="wnetrze">
-        <div class="duza-liczba"><b>${o.pkt}</b><span>z ${fmt(1500)} pkt do „Ekspert”</span></div>
-        ${schodki(o.lv, postep(o))}
-        <div class="sciezka">
-          <div class="wiersz"><span>Rynek</span><b>${JA.rynek} <span class="dojrzewa">+${JA.czekaRynek}</span></b></div>
-          ${miernik(JA.rynek, 1500, 'var(--primary-400)', JA.czekaRynek, 300)}
-          <div class="wiersz" style="margin-top:6px"><span>Społeczność</span><b>${JA.spol} <span class="dojrzewa">+${JA.czekaSpol}</span></b></div>
-          ${miernik(JA.spol, 1500, 'var(--t-pytanie)', JA.czekaSpol, 300)}
-          <div class="pod">Kreska = 20% progu „Ekspert” (300 pkt) — wymóg dla każdej ścieżki</div>
-        </div>
-        <div class="krok">${I('footprints')}<span><b>Najkrótsza droga:</b> 4 uznane odpowiedzi domkną próg społeczności (brakuje 170 pkt).</span></div>
+    const o = P.ola, c = `var(--level-${o.lv})`;
+    return `<section class="karta hero-dr" aria-labelledby="kd">
+      <header><h2 id="kd">Twoja Drabinka</h2><a href="drabinka.html">Pełna Drabinka ${I('arrow-right')}</a></header>
+      <div class="hd">${aw(o, 88, true)}<div class="liczby"><div class="duza-liczba"><b>${o.pkt}</b><span>pkt</span></div>${odz(o.lv, true)}<small>730 do „Ekspert”</small></div></div>
+      <div class="dwie-sc">
+        <div class="sc"><div class="wiersz"><span>${I('clipboard-text')}Rynek</span><b>${JA.rynek} <span class="dojrzewa">+${JA.czekaRynek}</span></b></div>${miernik(JA.rynek, 1500, c, JA.czekaRynek, 300)}</div>
+        <div class="sc"><div class="wiersz"><span>${I('chats-circle')}Społeczność</span><b>${JA.spol} <span class="dojrzewa">+${JA.czekaSpol}</span></b></div>${miernik(JA.spol, 1500, c, JA.czekaSpol, 300)}</div>
+        <div class="pod">Kreska: 300 pkt, czyli 20% progu „Ekspert” — wymóg dla każdej ścieżki</div>
       </div>
-      <a href="drabinka.html" class="btn obrys" style="margin:0 18px 18px;display:flex">Pełna Drabinka ${I('arrow-right')}</a>
+      <div class="krok">${I('footprints')}<span><b>Najkrótsza droga:</b> 4 uznane odpowiedzi domkną próg społeczności (brakuje 170 pkt).</span></div>
     </section>`;
   }
   function kartaZlecen() {
@@ -201,9 +207,9 @@
     usluga: `<span class="typ" style="--c:var(--t-usluga)">${I('storefront')}<span>Nowa usługa</span></span>`,
   })[t];
   const glowa = (o, czas, t) =>
-    `<div class="glowa"><a href="profil.html" class="imie">${o.n}</a>${znakOsoby(o)}<span class="czas">· ${czas}</span>${typ(t)}</div><div class="meta">${o.branza} · ${o.miasto}</div>`;
+    `<div class="glowa"><a href="profil.html" class="imie">${o.n}</a>${znakOsoby(o)}<span class="czas">· ${czas}</span></div><div class="meta">${typ(t)}<span class="sep" aria-hidden="true">·</span>${o.branza} · ${o.miasto}</div>`;
   const akcje = (glowny) =>
-    `<div class="akcje"><button class="akcja" type="button">${I('arrow-bend-up-left')}<span>Odpowiedz</span></button><button class="akcja" type="button">${I('bookmark-simple')}<span>Zapisz</span></button><button class="akcja" type="button">${I('share-network')}<span>Udostępnij</span></button>${glowny || ''}</div>`;
+    `<div class="akcje"><button class="akcja" type="button" aria-label="Odpowiedz" title="Odpowiedz">${I('arrow-bend-up-left')}</button><button class="akcja" type="button" aria-label="Zapisz" title="Zapisz">${I('bookmark-simple')}</button><button class="akcja" type="button" aria-label="Udostępnij" title="Udostępnij">${I('share-network')}</button>${glowny || ''}</div>`;
   const gw = (n) => `<span class="gwiazdy" aria-label="${n} na 5">${I('star-fill').repeat(n)}</span>`.replaceAll('ph-star-fill', 'ph-star');
 
   function wZlecenie(f, czas, tresc, tyt, budzet, termin, miasto, oferty, oferenci, zbiera) {
@@ -214,8 +220,8 @@
       </div>${akcje(`<a class="btn obrys maly" href="#">Złóż ofertę</a>`)}</div></article>`;
   }
   function wRealizacja(lider, firma, czas, tresc, tyt, ocena, pkt, opis, rodz) {
-    return `<article class="wpis">${aw(lider, 48)}<div>${glowa(lider, czas, 'realizacja')}<p class="tresc">${tresc}</p>
-      <div class="swiatlo"><div class="scena">${aw(firma, 44)}<div class="promien"><b>+${pkt} pkt</b><small>${opis}</small></div>${aw(lider, 44)}</div>
+    return `<article class="wpis">${aw(lider, 48, true)}<div>${glowa(lider, czas, 'realizacja')}<p class="tresc">${tresc}</p>
+      <div class="swiatlo"><div class="scena">${aw(firma, 52)}<div class="promien"><b>+${pkt}<span> pkt</span></b><small>${opis}</small></div>${aw(lider, 52, true)}</div>
         <div class="dol">${okl(rodz, 2, false).replace('class="okl"', 'class="okl" style="width:44px;height:44px;border-radius:10px;flex:none"')}<span style="min-width:0;flex:1"><span class="tyt">${tyt}</span><br><span class="pod">${firma.n} · ${gw(ocena)} ${ocena}/5</span></span></div>
       </div>${akcje()}</div></article>`;
   }
@@ -223,7 +229,7 @@
     return `<article class="wpis">${aw(o, 48)}<div>${glowa(o, czas, 'pytanie')}
       <div class="pyt"><div class="tyt">${tyt}</div><p class="tresc" style="margin-top:6px">${tresc}</p>
       <div class="pod"><span class="temat">${temat}</span>${odpowiadajacy.length ? `<span class="stos">${odpowiadajacy.map((x) => aw(x, 24)).join('')}</span>` : ''}<span>${odp ? `${odp} ${odp === 1 ? 'odpowiedź' : 'odpowiedzi'}` : 'Bez odpowiedzi'}</span><span class="nagroda" style="margin-left:auto">${I('sparkle')}+50 pkt za uznaną</span></div></div>
-      ${akcje(`<a class="btn obrys maly" href="#">Odpowiedz</a>`).replace(/<button class="akcja" type="button"><i class="ph-duotone ph-arrow-bend-up-left[^]*?<\/button>/, '')}</div></article>`;
+      ${akcje(`<a class="btn obrys maly" href="#">Odpowiedz</a>`).replace(/<button class="akcja" type="button" aria-label="Odpowiedz"[^]*?<\/button>/, '')}</div></article>`;
   }
   function wUsluga(o, czas, tresc, tyt, cena, ocena, ile, rodz) {
     return `<article class="wpis">${aw(o, 48)}<div>${glowa(o, czas, 'usluga')}<p class="tresc">${tresc}</p>
@@ -246,7 +252,7 @@
   const szkielet = () =>
     Array.from({ length: 4 }, () => `<div class="wpis" aria-hidden="true"><span class="aw" style="width:48px;height:48px;background:var(--surface-3)"></span><div style="display:grid;gap:10px;padding-top:4px"><span style="height:12px;width:40%;border-radius:6px;background:var(--surface-3)"></span><span style="height:12px;width:92%;border-radius:6px;background:var(--surface-2)"></span><span style="height:96px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)"></span></div></div>`).join('');
   const komunikat = (ik, t, p, przyciski) =>
-    `<div style="display:grid;justify-items:center;text-align:center;gap:10px;padding:56px 24px"><span style="display:grid;place-items:center;width:64px;height:64px;border-radius:20px;background:rgb(var(--primary-rgb)/.12);color:var(--primary-400)">${I(ik).replace('class="', 'style="font-size:32px" class="')}</span><h2 style="margin:6px 0 0;font:750 20px/1.2 var(--font-display);color:var(--text-strong)">${t}</h2><p style="margin:0;max-width:40ch;color:var(--text-muted)">${p}</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">${przyciski}</div></div>`;
+    `<div style="display:grid;justify-items:center;text-align:center;gap:10px;padding:56px 24px"><span style="display:grid;place-items:center;width:64px;height:64px;border-radius:20px;background:var(--surface-3);color:var(--text-muted)">${I(ik).replace('class="', 'style="font-size:32px" class="')}</span><h2 style="margin:6px 0 0;font:750 20px/1.2 var(--font-display);color:var(--text-strong)">${t}</h2><p style="margin:0;max-width:40ch;color:var(--text-muted)">${p}</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">${przyciski}</div></div>`;
 
   // ═════════ Strumień ═════════
   function feed() {
@@ -259,10 +265,10 @@
     document.body.innerHTML = `${gora()}<div class="rama">${nav('feed')}
       <main class="kolumna" id="tresc">
         <div class="naglowek"><h1>Strumień</h1></div>
-        ${STAN === 'pusty' ? '' : `<a class="pasek-drabinki" href="drabinka.html">${aw(P.ola, 40)}<span class="t"><b>Specjalista · 770 pkt</b><small>730 do „Ekspert” · +150 dojrzewa</small>${miernik(70, 800, 'var(--level-3)', 150)}</span>${I('caret-right')}</a>`}
+        ${STAN === 'pusty' ? '' : `<a class="pasek-drabinki" href="drabinka.html">${aw(P.ola, 40, true)}<span class="t"><b>Specjalista · 770 pkt</b><small>730 do „Ekspert” · +150 dojrzewa</small>${miernik(70, 800, 'var(--level-3)', 150)}</span>${I('caret-right')}</a>`}
         <div class="kompozytor">${aw(P.ola, 48)}<div class="pole"><button class="wpisz" type="button">Opisz, czego potrzebujesz, albo zapytaj o radę…</button>
-          <div class="rodzaje"><button class="rodzaj" style="--c:var(--t-zlecenie)" type="button">${I('clipboard-text')}Zlecenie</button><button class="rodzaj" style="--c:var(--t-pytanie)" type="button">${I('chats-circle')}Pytanie</button><button class="rodzaj" style="--c:var(--t-realizacja)" type="button">${I('seal-check')}Realizacja</button><button class="btn glowny maly" type="button" disabled style="opacity:.55">Opublikuj</button></div></div></div>
-        <div class="filtry" data-przesuw role="toolbar" aria-label="Filtr strumienia">${filtry.map(([t, n, a]) => `<button class="filtr" type="button" aria-pressed="${!!a}">${t}<span class="ile">${n}</span></button>`).join('')}</div>
+          <div class="rodzaje"><button class="rodzaj" style="--c:var(--t-zlecenie)" type="button">${I('clipboard-text')}Zlecenie</button><button class="rodzaj" style="--c:var(--t-pytanie)" type="button">${I('chats-circle')}Pytanie</button><button class="rodzaj" style="--c:var(--t-realizacja)" type="button">${I('seal-check')}Realizacja</button><button class="btn glowny maly" type="button">Opublikuj</button></div></div></div>
+        <div class="filtry" data-przesuw role="toolbar" aria-label="Filtr strumienia">${filtry.map(([t, n, a]) => `<button class="filtr" type="button" aria-pressed="${!!a}">${t}</button>`).join('')}</div>
         ${srodek}
       </main>
       <aside class="bok"><div class="bok-lepki">${kartaDrabinki()}${kartaZlecen()}${kartaTematow()}${stopka()}</div></aside>
@@ -293,7 +299,7 @@
     document.body.innerHTML = `${gora()}<div class="rama">${nav('liderzy')}
       <main class="kolumna" id="tresc">
         ${okladkaProfilu()}
-        <div class="prof-glowa">${aw(b, 128)}
+        <div class="prof-glowa">${aw(b, 128, true)}
           <div class="prof-akcje"><button class="ikonka" type="button" aria-label="Udostępnij profil" style="border:1px solid var(--line-2)">${I('share-network')}</button><button class="btn obrys" type="button">${I('plus')}Obserwuj</button><a class="btn glowny" href="#">${I('clipboard-text')}Zaproponuj zlecenie</a></div>
           <h1>${b.n} ${odz(b.lv, true)}</h1>
           <div class="rola">Instalacje HVAC · ${b.miasto} · zespół 4 monterów</div>
@@ -330,8 +336,8 @@
       <div class="duza-liczba"><b>${fmt(b.pkt)}</b><span>z ${fmt(6000)} do „Autorytet”</span></div>
       ${schodki(b.lv, postep(b))}
       <div class="sciezka">
-        <div class="wiersz"><span>Rynek</span><b>${fmt(rynek)}</b></div>${miernik(rynek, 6000, 'var(--primary-400)', 0, 1200)}<div class="pod ok">${I('check-circle')} próg ścieżki spełniony</div>
-        <div class="wiersz" style="margin-top:6px"><span>Społeczność</span><b>${spol}</b></div>${miernik(spol, 6000, 'var(--t-pytanie)', 0, 1200)}<div class="pod">brakuje 300 pkt do progu 20% (1200)</div>
+        <div class="wiersz"><span>Rynek</span><b>${fmt(rynek)}</b></div>${miernik(rynek, 6000, 'var(--level-5)', 0, 1200)}<div class="pod ok">${I('check-circle')} próg ścieżki spełniony</div>
+        <div class="wiersz" style="margin-top:6px"><span>Społeczność</span><b>${spol}</b></div>${miernik(spol, 6000, 'var(--level-5)', 0, 1200)}<div class="pod">brakuje 300 pkt do progu 20% (1200)</div>
       </div>
       <div class="krok" style="margin-top:14px">${I('app-window')}<span><b>Szczebel 5</b> dał Bartkowi dostęp do LOT App.</span></div>`;
   }
@@ -388,7 +394,7 @@
             <div class="etk">Drabinka Lidera</div>
             <h1>Twój punkt nigdy <em>nie świeci sam.</em></h1>
             <p>Siedem szczebli. Punkty daje ci wyłącznie drugi człowiek — firma, która oceniła zlecenie, albo Lider, który uznał twoją odpowiedź.</p>
-            <div class="dr-ja">${aw(pusty ? { ...P.ola, lv: 0 } : P.ola, 60)}<div class="t">
+            <div class="dr-ja">${aw(pusty ? { ...P.ola, lv: 0 } : P.ola, 64, true)}<div class="t">
               <div class="r"><b>${pkt} pkt</b><span>${pusty ? '100 do „Adept”' : '730 do „Ekspert”'}</span></div>
               ${pusty ? miernik(0, 100, 'var(--level-1)') : miernik(70, 800, 'var(--level-3)', 150)}
               <div class="pod">${pusty ? '<span>Nowy w Portalu</span>' : `${odz(3)}<span class="dojrzewa">${I('hourglass-medium')}+150 dojrzewa</span>`}</div>
@@ -401,7 +407,7 @@
           <div class="wymogi">
             <div class="wymog">${I('circle-dashed')}<span class="co">Łącznie 1500 pkt</span><span class="ile"><b>770</b> / 1500</span>${miernik(770, 1500, 'var(--level-4)', 150)}</div>
             <div class="wymog ok">${I('check-circle')}<span class="co">Rynek — min. 300 pkt</span><span class="ile"><b>640</b> / 300</span>${miernik(300, 300, 'var(--success)')}</div>
-            <div class="wymog">${I('circle-dashed')}<span class="co">Społeczność — min. 300 pkt</span><span class="ile"><b>130</b> / 300</span>${miernik(130, 300, 'var(--t-pytanie)', 50)}</div>
+            <div class="wymog">${I('circle-dashed')}<span class="co">Społeczność — min. 300 pkt</span><span class="ile"><b>130</b> / 300</span>${miernik(130, 300, 'var(--level-4)', 50)}</div>
           </div>
           <div class="drogi">
             <div class="droga"><span class="x">4 uznane odpowiedzi<span>+200 pkt</span></span><p>Domykają próg społeczności. Limit: 300 pkt na 7 dni — w tym tygodniu masz 50 z 300.</p><a href="#">12 pytań z twoich branż czeka ${I('arrow-right')}</a></div>
