@@ -2,16 +2,19 @@
 
 ## Stan (zmierzony 25.11)
 
-- Prod web = `b871406` (gałąź `feat/v17-portal`, wypchnięta; brak z main: 0). API/worker bez zmian od 22.10. `healthz` ok.
+- Prod api+worker+web = `d8c6834` (25.11 ~14:23 UTC, gałąź `feat/v17-portal`). V17 P0 „Światło” (`/feed`, `/profil/[handle]`, `/drabinka`)
+  za flagą: domyślnie OFF, podgląd `?wyglad=v17` (ciasteczko `lot_wyglad`), `?wyglad=off` zdejmuje. Publiczne punkty po wagach:
+  `GET /api/v1/profiles/:handle/ladder-events` (tylko przyznane/dojrzewające). `healthz` ok, 0 błędów w logach.
 - Martwe linki szczegółów → 404 (naprawiony zastany błąd `loading.tsx`). Na żywo: blok „Pierwszy szczebel” (landing, `/start`, `/panel/punkty`).
 - Strategia pozyskania liderów: `docs/STRATEGIA-LIDERZY-PL.md` (realni: 2, Google: 0).
 - V17 „Światło”: po „AI loop” i 3 rundach jakości — zaakceptowane 25.11 (`claude/charming-mcclintock-043cc3` @ `8a4a602`). Kodu V17 brak.
 
 ## Zadania w kolejności
 
-1. V17 „Światło” **ZAAKCEPTOWANE 25.11** („Akceptuję Światło”, makieta @ `8a4a602`). Kod P0 (`/feed`, `/profil/[handle]`,
-   `/drabinka`) za `data-wyglad="v17"` — sesja Sonnet wg briefu z karty „V17 P0 Światło: kod…”; Lider weryfikuje zrzutami
-   (`zgodnosc-makiety` ZGODNY), bramki, wdrożenie z flagą wyłączoną, włączenie flagi tylko za zgodą Macieja.
+1. V17 P0 na prodzie za flagą — przed włączeniem dla wszystkich: (a) profil powtarza długie bio w lewej kolumnie i w „O mnie”
+   (zmierzone na `/profil/konrad-jaworowski`) — w lewej kolumnie 1–2 linie; (b) `zgodnosc-makiety` profilu po poprawce kreski
+   (3 z 4 par) i Drabinki 390 ciemny; (c) zrzuty stanów po zmianie punktów; (d) linki „Wszystkie N” bez stron docelowych.
+   Potem zgoda Macieja na flagę ON. Następna paczka V17: P1 rynek (`/zlecenia`, `/uslugi`) — makieta → akceptacja → kod.
 2. Szkice wiadomości „Pierwszy Krąg” (20 osób z `/docker/leaders-of-teams-app/docs/strategia/lejek-tworcow.csv`) — wysyła Maciej.
 3. Scena 3D na telefonie: TBT `/` 394–1002 ms (CPU ×4) — pomiar na prawdziwym telefonie; ewentualnie scena tylko ≥ 900 px.
 4. Dziura w analityce 30.09–14.10 — czy nie działał zapis, czy Portal.
@@ -26,7 +29,7 @@
 
 ## Czego nie robić
 
-- Kodu V17 przed wpisem akceptacji Macieja. Nie przenosić `loading.tsx` nad `[id]`/`[slug]` (MINY: 200 zamiast 404).
+- Kodu V17 przed wpisem akceptacji Macieja. `pnpm lint` = eslint + lint-tokens (sesja P0 puściła sam eslint — 42 kolory). Nie przenosić `loading.tsx` nad `[id]`/`[slug]` (MINY: 200 zamiast 404).
 - Nie wdrażaj `main` wprost — wdrażaj `feat/v17-portal`. Po wdrożeniu staging wyłączony (RAM).
 - **Po każdej budowie sprzątaj (VPS 22.11):** czytaj linie `po-budowie:`; kontenery próbne `docker rm -fv`; `docker builder prune`
   tylko pod `vps-kolejka.sh budowa --` (najpierw `--max-used-space 4GB`). Typecheck/testy → `lekkie`, zrzuty → `zrzuty`.
@@ -35,5 +38,5 @@
 
 ## Prompt startowy
 
-Repo `/docker/portal-staging`, gałąź `feat/v17-portal`. Cel: kod P0 zaakceptowanej makiety „Światło” za flagą data-wyglad="v17" → zgodność z makietą → wdrożenie z flagą wyłączoną.
-Zacznij od punktu 1 „Zadań”; zrzuty i diagnoza są na gałęzi `claude/charming-mcclintock-043cc3`.
+Repo `/docker/portal-staging`, gałąź `feat/v17-portal`. Cel: domknąć P0 „Światło” (bio, zgodność profilu) → zgoda na flagę ON → makieta P1 rynek.
+Zacznij od punktu 1 „Zadań”; podgląd V17 na prodzie: `https://leadersofteams.pl/drabinka?wyglad=v17`.
