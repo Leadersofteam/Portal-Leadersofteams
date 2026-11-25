@@ -12,7 +12,7 @@ ani za zaproszenie (ADR-004) — piszemy to, bo to jest właśnie wyróżnik.
 - Dalej: najbliżej rynku Portalu (zawody, sprzedaż B2B, IT, praca kreatywna na zlecenie).
 - **Pominięte:** bieganie i wspinaczka poza TreCime (bliżej App/„Droga młodych” niż rynku zleceń B2B), „Nie tylko design”
   (uśpiony od 2022), Gynvael Coldwind („wzorzec, mała szansa”), Music Laboratory, Zieniu, stałka.pl, Natalia Sadowska.
-- ⚠️ **Do decyzji Macieja przed wysłaniem do Pana Hydraulika i OSFIS:** `TWORCY-LOT.md` zaznacza możliwą konkurencję z HydroSpark.
+- Pan Hydraulik i OSFIS: możliwa konkurencja z HydroSpark — Maciej 25.11: „Tak, wysyłam”.
 
 ## Szkielet (do każdej wiadomości)
 
@@ -28,14 +28,14 @@ Link w każdej wiadomości: `https://leadersofteams.pl/drabinka` (tam widać, za
 
 ## Zawody
 
-### 1. Pan Hydraulik (Rafał Krupiński) — ⚠️ najpierw decyzja o HydroSpark
+### 1. Pan Hydraulik (Rafał Krupiński)
 > Cześć Rafał, tu Maciej Kucharski — też siedzę w instalacjach (HydroSpark), więc Twoje materiały o uzdatnianiu znam z praktyki.
 > Buduję Portal LOT: miejsce, gdzie fachowiec nie może sam sobie „nabić” statusu — punkt daje tylko firma po zakończonym
 > zleceniu albo ktoś, komu realnie pomogła Twoja odpowiedź. Mówię wprost: Portal jest dopiero na starcie, ruchu jeszcze nie ma.
 > Szukam pierwszych dwudziestu osób, które mają co pokazać. Jedna prośba: profil i jedna usługa (np. dobór uzdatniacza) —
 > ok. 10 minut. Jeśli to nie dla Ciebie, w pełni rozumiem. leadersofteams.pl/drabinka
 
-### 2. OSFIS — ⚠️ jak wyżej
+### 2. OSFIS
 > Dzień dobry, piszę jako właściciel firmy instalacyjnej HydroSpark i twórca Portalu LOT. „Instruktor Zawodu” robi dokładnie to,
 > o co nam chodzi: status ze sprawdzonej pracy, nie z marketingu. W Portalu punkt Lidera może dać tylko druga osoba — firma po
 > zleceniu albo autor pytania, któremu odpowiedź pomogła. Portal jest na starcie i nie obiecuję ruchu. Prośba: czy jeden z
