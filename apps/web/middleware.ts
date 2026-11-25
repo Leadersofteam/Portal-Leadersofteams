@@ -24,6 +24,30 @@ const SESSION_COOKIE = 'lot_sid';
 // odsiać uczciwie przedstawiające się crawlery, nie walczyć z podszywaniem.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|monitor|curl|wget|headless/i;
 
+// Flaga wyglądu V17 „Światło” — DOMYŚLNIE WYŁĄCZONA. Podgląd: `?wyglad=v17` ustawia
+// ciasteczko (rok), `?wyglad=off` je zdejmuje. Przy włączonej fladze trzy ekrany P0 są
+// przepisywane (rewrite, URL zostaje) na wersje z app/v17/*; reszta Portalu bez zmian.
+// DLACZEGO rewrite w middleware, a nie cookies() na stronach: odczyt cookies w page.tsx
+// uczyniłby dynamiczną /drabinkę nawet z wyłączoną flagą (mina PD1 — patrz lib/server-api.ts).
+const V17_FLAG = 'lot_wyglad';
+const V17_ROUTES = [/^\/feed$/, /^\/drabinka$/, /^\/profil\/[^/]+$/];
+
+function v17Flag(request: NextRequest): { on: boolean; set?: 'v17' | 'off' } {
+  const q = request.nextUrl.searchParams.get('wyglad');
+  if (q === 'v17') return { on: true, set: 'v17' };
+  if (q === 'off') return { on: false, set: 'off' };
+  return { on: request.cookies.get(V17_FLAG)?.value === 'v17' };
+}
+
+function withFlagCookie(response: NextResponse, set?: 'v17' | 'off'): NextResponse {
+  if (set === 'v17') {
+    response.cookies.set(V17_FLAG, 'v17', { path: '/', maxAge: 31_536_000, sameSite: 'lax' });
+  } else if (set === 'off') {
+    response.cookies.delete(V17_FLAG);
+  }
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   // Zalogowany na „/" ląduje w /panel — landing sprzedażowy ma sens raz
   // (ta sama decyzja co `start_url: /feed` w manifeście PWA). Bez tego
@@ -61,7 +85,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(`${origin}/panel`, 307);
   }
 
-  const response = NextResponse.next();
+  const flag = v17Flag(request);
+  const path = request.nextUrl.pathname;
+  const response =
+    flag.on && V17_ROUTES.some((re) => re.test(path))
+      ? NextResponse.rewrite(new URL(`/v17${path}${request.nextUrl.search}`, request.url))
+      : NextResponse.next();
+  withFlagCookie(response, flag.set);
 
   const userAgent = request.headers.get('user-agent') ?? '';
   if (BOT_UA.test(userAgent)) return response;

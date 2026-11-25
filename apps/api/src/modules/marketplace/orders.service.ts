@@ -148,6 +148,14 @@ export function createOrdersService({
     const hasMore = rows.length > filters.limit;
     const page = hasMore ? rows.slice(0, filters.limit) : rows;
     const companies = await identity.getPublicCompanies(page.map((o) => o.companyId));
+    // V17 „Światło” (expand-only): licznik złożonych ofert i znacznik firmy ze
+    // sprawdzonym NIP. Jedno groupBy na stronę — bez N+1. Wycofane oferty nie liczą się.
+    const offerCounts = await prisma.offer.groupBy({
+      by: ['orderId'],
+      where: { orderId: { in: page.map((o) => o.id) }, status: { not: 'WITHDRAWN' } },
+      _count: { _all: true },
+    });
+    const offersByOrder = new Map(offerCounts.map((c) => [c.orderId, c._count._all]));
     return {
       orders: page.map((o) => ({
         id: o.id,
@@ -158,6 +166,8 @@ export function createOrdersService({
         minLevel: o.minLevel,
         publishedAt: o.publishedAt,
         companyName: companies.get(o.companyId)?.name ?? 'Firma',
+        companyVerified: Boolean(companies.get(o.companyId)?.nipVerifiedAt),
+        offersCount: offersByOrder.get(o.id) ?? 0,
       })),
       nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
     };

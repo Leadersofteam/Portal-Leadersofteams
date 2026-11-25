@@ -294,6 +294,111 @@ export function createLadderService(prisma: PrismaClient) {
       };
     },
 
+    // V17 „Światło” — PUBLICZNA księga Lidera (decyzja Macieja 25.11: „Tak, publicznie”).
+    // CZYSTY ODCZYT: nic tu nie zapisuje i nie dodaje źródła punktów (ADR-004). Zwraca wyłącznie
+    // zdarzenia przyznane (CONFIRMED) i dojrzewające (PENDING, z `maturesAt`) z trzech źródeł
+    // uznania przez drugiego człowieka. NIE zwraca cofniętych (REVERSED), wstrzymanych przez
+    // antyfraud (HOLD), korekt moderacji (ADJUSTMENT_MODERATION) ani żadnych powodów/meta —
+    // wagi są jawne jako `weight` (×0,5 dla kolejnej oceny tej samej firmy itd.).
+    async getPublicLedger(userId: string, opts: { limit: number; cursor?: string }) {
+      const where = {
+        userId,
+        status: { in: ['CONFIRMED', 'PENDING'] as Array<'CONFIRMED' | 'PENDING'> },
+        type: {
+          in: ['ORDER_COMPLETED_RATED', 'ANSWER_ACCEPTED', 'ANSWER_UPVOTED_QUALIFIED'] as Array<
+            'ORDER_COMPLETED_RATED' | 'ANSWER_ACCEPTED' | 'ANSWER_UPVOTED_QUALIFIED'
+          >,
+        },
+      };
+      const [state, total, rows] = await Promise.all([
+        prisma.ladderState.findUnique({ where: { userId } }),
+        prisma.pointEvent.count({ where }),
+        prisma.pointEvent.findMany({
+          where,
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: opts.limit + 1,
+          ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
+          select: {
+            id: true,
+            type: true,
+            points: true,
+            weightApplied: true,
+            status: true,
+            createdAt: true,
+            sourceType: true,
+            sourceId: true,
+            grantedByUserId: true,
+            counterpartyId: true,
+          },
+        }),
+      ]);
+      const hasMore = rows.length > opts.limit;
+      const page = hasMore ? rows.slice(0, opts.limit) : rows;
+      return {
+        summary: {
+          level: state?.level ?? 0,
+          marketplacePoints: state?.marketplacePoints ?? 0,
+          communityPoints: state?.communityPoints ?? 0,
+          totalPoints: (state?.marketplacePoints ?? 0) + (state?.communityPoints ?? 0),
+        },
+        total,
+        events: page.map((e) => ({
+          id: e.id,
+          type: e.type,
+          path: e.type === 'ORDER_COMPLETED_RATED' ? ('rynek' as const) : ('spolecznosc' as const),
+          points: e.points,
+          weight: e.weightApplied,
+          status: e.status as 'CONFIRMED' | 'PENDING',
+          createdAt: e.createdAt,
+          // Koniec karencji: PENDING dojrzewa MATURATION_DAYS od utworzenia.
+          maturesAt:
+            e.status === 'PENDING'
+              ? new Date(e.createdAt.getTime() + MATURATION_DAYS * 86_400_000)
+              : null,
+          sourceType: e.sourceType,
+          sourceId: e.sourceId,
+          grantedByUserId: e.grantedByUserId,
+          counterpartyId: e.counterpartyId,
+        })),
+        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+      };
+    },
+
+    // Punkty po wagach za konkretne oceny (strumień realizacji). Ten sam zakres publiczności
+    // co getPublicLedger: tylko CONFIRMED/PENDING.
+    async getReviewPoints(reviewIds: string[]) {
+      if (reviewIds.length === 0)
+        return new Map<string, { points: number; weight: number; maturesAt: Date | null }>();
+      const rows = await prisma.pointEvent.findMany({
+        where: {
+          type: 'ORDER_COMPLETED_RATED',
+          sourceType: 'Review',
+          sourceId: { in: reviewIds },
+          status: { in: ['CONFIRMED', 'PENDING'] },
+        },
+        select: {
+          sourceId: true,
+          points: true,
+          weightApplied: true,
+          status: true,
+          createdAt: true,
+        },
+      });
+      return new Map(
+        rows.map((r) => [
+          r.sourceId,
+          {
+            points: r.points,
+            weight: r.weightApplied,
+            maturesAt:
+              r.status === 'PENDING'
+                ? new Date(r.createdAt.getTime() + MATURATION_DAYS * 86_400_000)
+                : null,
+          },
+        ]),
+      );
+    },
+
     async listLevels() {
       return prisma.levelDefinition.findMany({
         where: { rulesetVersion: RULESET_VERSION },

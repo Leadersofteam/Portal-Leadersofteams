@@ -201,6 +201,49 @@ export function createReviewsService({ prisma, identity }: ReviewsServiceDeps) {
       };
     },
 
+    // V17 „Światło”: strumień realizacji — opublikowane oceny Firma→Lider od najnowszych
+    // (ADR-010: chronologicznie, kursor, zero rankingu). Punkty po wagach dokłada route
+    // z modułu ladder (decyzja właściciela 25.11: publiczne) — ten serwis ladder nie zna.
+    async listRealizations(limit = 10, cursor?: string) {
+      const rows = await prisma.review.findMany({
+        where: {
+          direction: 'COMPANY_TO_LEADER',
+          publishedAt: { not: null },
+          subjectLeaderUserId: { not: null },
+        },
+        include: { order: { select: { title: true, companyId: true, industry: true } } },
+        orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      const hasMore = rows.length > limit;
+      const page = hasMore ? rows.slice(0, limit) : rows;
+      const [companies, users] = await Promise.all([
+        identity.getPublicCompanies([...new Set(page.map((r) => r.order.companyId))]),
+        identity.getPublicUsers(page.map((r) => r.subjectLeaderUserId as string)),
+      ]);
+      return {
+        realizations: page.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          publishedAt: r.publishedAt,
+          orderTitle: r.order.title,
+          industry: { name: r.order.industry.name, slug: r.order.industry.slug },
+          company: {
+            id: r.order.companyId,
+            name: companies.get(r.order.companyId)?.name ?? 'Firma',
+          },
+          leader: {
+            userId: r.subjectLeaderUserId as string,
+            displayName: users.get(r.subjectLeaderUserId as string)?.displayName ?? 'Lider',
+            handle: users.get(r.subjectLeaderUserId as string)?.handle ?? null,
+            avatarFileId: users.get(r.subjectLeaderUserId as string)?.avatarFileId ?? null,
+          },
+        })),
+        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+      };
+    },
+
     async getLeaderReviewStats(leaderUserId: string) {
       const [agg, completedOrders] = await Promise.all([
         prisma.review.aggregate({
