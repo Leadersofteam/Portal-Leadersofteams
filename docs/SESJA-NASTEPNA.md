@@ -1,42 +1,44 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-## Stan (zmierzony 25.11)
+## Stan (zmierzony 25.11 ~16:35 UTC)
 
-- Prod api+worker+web = `d8c6834` (25.11 ~14:23 UTC, gałąź `feat/v17-portal`). V17 P0 „Światło” (`/feed`, `/profil/[handle]`, `/drabinka`)
-  za flagą: domyślnie OFF, podgląd `?wyglad=v17` (ciasteczko `lot_wyglad`), `?wyglad=off` zdejmuje. Publiczne punkty po wagach:
-  `GET /api/v1/profiles/:handle/ladder-events` (tylko przyznane/dojrzewające). `healthz` ok, 0 błędów w logach.
-- Martwe linki szczegółów → 404 (naprawiony zastany błąd `loading.tsx`). Na żywo: blok „Pierwszy szczebel” (landing, `/start`, `/panel/punkty`).
-- Strategia pozyskania liderów: `docs/STRATEGIA-LIDERZY-PL.md` (realni: 2, Google: 0).
-- V17 „Światło”: po „AI loop” i 3 rundach jakości — zaakceptowane 25.11 (`claude/charming-mcclintock-043cc3` @ `8a4a602`). Kodu V17 brak.
+- Prod web = `3787e5b` (api+worker bez zmian, `d8c6834`), gałąź `feat/v17-portal` +104 vs main, brak z main 0, wypchnięta.
+  `healthz`: mysql/redis ok, `worker.alive` true, uploads ok. Rollback web: obraz `portal-web:przed-flaga-on-2511`.
+- **V17 „Światło” (`/feed`, `/profil/[handle]`, `/drabinka`) WŁĄCZONE DLA WSZYSTKICH** (Maciej 25.11). Opt-out `?wyglad=off`
+  (ciasteczko `lot_wyglad=off`). Zmierzone: bez ciasteczka HTML `/drabinka` ma klasy `v17`, z `off` — nie; bio w lewej = 2 linie.
+- Makieta **P1 „Rynek”** zaakceptowana („Akceptuję Rynek”, `docs/PROGRAM-V17-PORTAL.md`), źródło
+  `docs/redesign-propozycje/v17/pro/{zlecenia,zlecenie,uslugi,usluga}.html`, zrzuty `audyt/zrzuty/v17-p1-*.png` (64). Kodu P1 brak.
+- Szkice „Pierwszy Krąg”: `docs/PIERWSZY-KRAG-SZKICE.md` (20 osób, wysyła Maciej). Realni użytkownicy: 2, wejścia z Google: 0.
+- Dysk 86 % (14 GB wolne); cache budowy 14,3 GB — `--max-used-space 4GB` odzyskał tylko 0,04 GB (reszta współdzielona z obrazami).
 
 ## Zadania w kolejności
 
-1. V17 P0 na prodzie za flagą — przed włączeniem dla wszystkich: (a) profil powtarza długie bio w lewej kolumnie i w „O mnie”
-   (zmierzone na `/profil/konrad-jaworowski`) — w lewej kolumnie 1–2 linie; (b) `zgodnosc-makiety` profilu po poprawce kreski
-   (3 z 4 par) i Drabinki 390 ciemny; (c) zrzuty stanów po zmianie punktów; (d) linki „Wszystkie N” bez stron docelowych.
-   Potem zgoda Macieja na flagę ON. Następna paczka V17: P1 rynek (`/zlecenia`, `/uslugi`) — makieta → akceptacja → kod.
-2. Szkice wiadomości „Pierwszy Krąg” (20 osób z `/docker/leaders-of-teams-app/docs/strategia/lejek-tworcow.csv`) — wysyła Maciej.
-3. Scena 3D na telefonie: TBT `/` 394–1002 ms (CPU ×4) — pomiar na prawdziwym telefonie; ewentualnie scena tylko ≥ 900 px.
-4. Dziura w analityce 30.09–14.10 — czy nie działał zapis, czy Portal.
+1. **Kod P1 „Rynek” za flagą** (sesja Sonnet, worktree z `feat/v17-portal`): trasy `app/v17/{zlecenia,uslugi}` + rewrite
+   w `V17_ROUTES` (`apps/web/middleware.ts`), 1:1 z makietą; kółka wyboru oferty ≥ 44 px (uwaga z akceptacji).
+   Potem `zgodnosc-makiety` ZGODNY w 4 parach × 4 ekrany → `portal-bramki` → wdrożenie.
+2. Przejść ścieżką na prodzie V17 jako zalogowany Lider (feed → profil → Drabinka) na telefonie; konto testowe posprzątać.
+3. Miara Pierwszego Kręgu po 14 dniach (≥ 5 z 20: profil + usługa albo odpowiedź), etapy w `lejek-tworcow.csv`.
+4. Scena 3D na telefonie: TBT `/` 394–1002 ms (CPU ×4) — pomiar na prawdziwym telefonie.
+5. Dziura w analityce 30.09–14.10 — czy nie działał zapis, czy Portal.
 
 ## Czeka na właściciela
 
-- Zgoda na włączenie flagi V17 dla wszystkich (po wdrożeniu kodu P0).
 - D5 Search Console + Bing (DNS, sitemap) — 10 min. 3–5 prawdziwych zleceń HydroSpark. D3 purge demo (25.11: „nie teraz”).
+- Wysłanie 20 wiadomości Pierwszego Kręgu.
+- Gałęzie do zamknięcia (wchłonięte): `claude/charming-mcclintock-043cc3`, `claude/dazzling-bose-0da725`,
+  `claude/v17-p0-domkniecie-fd4ade`, `claude/v17-p1-makieta-f98340`, `claude/youthful-grothendieck-7ef708`,
+  `docs/program-droga-lidera`, `feat/droga-lidera-pl0-pl1`, `feat/s12-widziec-i-reagowac`, `fix/ux-fala2-2110`, `fix/ux-szybkie-2110`.
 - Workflow `.github/workflows/deploy-staging.yml` sprzeczny z „wdrożenia ręczne” — decyzja przed PR do main.
-- Gałęzie do zamknięcia (wchłonięte): `claude/dazzling-bose-0da725`, `docs/program-droga-lidera`, `feat/droga-lidera-pl0-pl1`,
-  `feat/s12-widziec-i-reagowac`, `fix/ux-fala2-2110`, `fix/ux-szybkie-2110`. Wstrzymana: `claude/agitated-rubin-da3bd4` (rama App).
 
 ## Czego nie robić
 
-- Kodu V17 przed wpisem akceptacji Macieja. `pnpm lint` = eslint + lint-tokens (sesja P0 puściła sam eslint — 42 kolory). Nie przenosić `loading.tsx` nad `[id]`/`[slug]` (MINY: 200 zamiast 404).
-- Nie wdrażaj `main` wprost — wdrażaj `feat/v17-portal`. Po wdrożeniu staging wyłączony (RAM).
-- **Po każdej budowie sprzątaj (VPS 22.11):** czytaj linie `po-budowie:`; kontenery próbne `docker rm -fv`; `docker builder prune`
-  tylko pod `vps-kolejka.sh budowa --` (najpierw `--max-used-space 4GB`). Typecheck/testy → `lekkie`, zrzuty → `zrzuty`.
-- Po przeniesieniu tras usuń `apps/web/.next/types` przed typecheckiem (stare typy wskazują nieistniejące `page.js`).
-- Usunięcie danych sprawdzaj w API (404), nie w kodzie strony.
+- Kodu V17 poza zaakceptowanymi makietami (P0 „Światło”, P1 „Rynek”). `pnpm lint` = eslint + lint-tokens.
+- `loading.tsx` tylko obok page.tsx listy, nigdy nad `[id]`/`[slug]`/`[handle]` (200 zamiast 404).
+- Nie wdrażaj `main` wprost — `feat/v17-portal`. Pierwsze sekundy po starcie `web` potrafią dać 404 — mierz po `healthy` + 10 s.
+- `docker builder prune` tylko pod `vps-kolejka.sh budowa --`; pełne `-af` kasuje cache trzem repo. Po budowie czytaj `po-budowie:`
+  (sprzątanie zdejmuje starsze tagi — sprawdź, że został obraz do wycofania).
 
 ## Prompt startowy
 
-Repo `/docker/portal-staging`, gałąź `feat/v17-portal`. Cel: domknąć P0 „Światło” (bio, zgodność profilu) → zgoda na flagę ON → makieta P1 rynek.
-Zacznij od punktu 1 „Zadań”; podgląd V17 na prodzie: `https://leadersofteams.pl/drabinka?wyglad=v17`.
+Jesteś Liderem Portalu LOT (Opus, repo /docker/portal-staging, gałąź feat/v17-portal). Skill `portal-lider-dnia`, potem punkt 1:
+kod P1 „Rynek” za flagą przez sesję Sonnet, 1:1 z zaakceptowaną makietą; każde „zrobione” weryfikujesz własnym pomiarem.

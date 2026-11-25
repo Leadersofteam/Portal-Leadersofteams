@@ -1,5 +1,15 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-11-25 wieczór — V17 „Światło” WŁĄCZONE DLA WSZYSTKICH (web z `3787e5b`, Maciej: „Włącz dla wszystkich”).**
+> Domknięte P0: bio w lewej kolumnie profilu ≤ 2 linie (pełne w „O mnie”), „Pokaż więcej · N z M” Osi światła był martwym
+> `<span>` → link `?swiatlo=N#os-swiatla` (+6, maks. 48) albo sam „N z M”. Linków „Wszystkie N” z makiety nie ma (brak stron
+> list — brief dopuszczał usunięcie). Flaga: brak ciasteczka = V17; `?wyglad=off` zapisuje `lot_wyglad=off` (rok) jako opt-out;
+> wycofanie dla wszystkich = `=== 'v17'` w `middleware.ts` + rebuild web. **Zastany błąd naprawiony:** obraz web miał
+> `.next` root:root, serwer jako `node` → EACCES przy każdej rewalidacji prerendera (`infra/Dockerfile.web`, `0956a58`).
+> **Makieta P1 „Rynek”** (`/zlecenia`, `/zlecenia/[id]` porównanie ofert, `/uslugi`, `/uslugi/[slug]` pakiety) zaakceptowana:
+> „Akceptuję Rynek” — wiersz w `docs/PROGRAM-V17-PORTAL.md`, kodu P1 jeszcze brak. Szkice „Pierwszy Krąg” (20 osób):
+> `docs/PIERWSZY-KRAG-SZKICE.md`, wysyła Maciej (także Pan Hydraulik i OSFIS — decyzja 25.11). Rollback web: `portal-web:przed-flaga-on-2511`.
+
 > **🟢 2026-11-25 — Fala A lejka Liderów na prodzie (web `b871406`, obraz `portal-web:local` 25.11), V17 „Światło” w rundzie jakości.**
 > **Zastany błąd naprawiony (od 11.08):** główny `app/loading.tsx` + `loading.tsx` w segmentach list streamowały 200 przed
 > `notFound()` — 18 stron szczegółów dawało 200 dla martwych linków. Szkielety list w grupach `(lista)`; prod: 404 na
