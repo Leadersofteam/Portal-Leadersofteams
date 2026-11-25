@@ -10,6 +10,12 @@ Skill: `portal-v17-design`. Program i akceptacje: `docs/PROGRAM-V17-PORTAL.md`. 
 > Zasada nadrzędna: **ekran istnieje, żeby ktoś znalazł wykonawcę, zlecenie albo odpowiedź — albo zapracował następny szczebel.**
 > Prawo sieci (SIEC-LOT §4.2): **twój punkt nigdy nie świeci sam** — każde światło przychodzi od innego człowieka.
 
+> Maciej 25.11: „Portal LOT to taki portal łączący to wszystko. i dodaje swoje możliwości tak jak fivver i drabinkę lidera.”
+> → **Jeden produkt, nie cztery skórki.** Strumień (X) jest skrzyżowaniem, na którym płyną zlecenia (Oferteo), usługi (Fiverr),
+> pytania i realizacje. Profil (GitHub) jest dowodem. **Spoiwem jest Drabinka**, czyli nasza własna możliwość: każdy ekran
+> pokazuje, jak dana czynność przybliża do następnego szczebla i od kogo przychodzi punkt. Test zrzutu: czy po 5 s widać jedno
+> miejsce do pracy, reputacji i wspinaczki, a nie klon X albo Fiverra?
+
 ## 1. Cztery inspiracje → wzorce Portalu
 
 Bierzemy **wzorce zachowania i układu**, nie wygląd, kolory, logo ani nazwy cudzych serwisów.

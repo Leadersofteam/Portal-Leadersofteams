@@ -22,6 +22,10 @@
 - Konkret zamiast hasła (od 25.11 na landingu, w `/start` i w pustym `/panel/punkty`):
   **Adept = 100 pkt = jedna ocena 5/5 po zleceniu; uznana odpowiedź = 50 pkt; punkty dojrzewają 7 dni.**
 
+**Czym jest Portal (Maciej 25.11):** „portal łączący to wszystko” — zlecenia jak Oferteo, usługi i poziomy jak Fiverr,
+społeczność jak X, profil-dowód jak GitHub — plus własna możliwość, której nie ma nikt z nich: **Drabinka Lidera**.
+Komunikat dla lidera: jedno miejsce, gdzie praca, reputacja i awans to ta sama rzecz.
+
 ## Dwa tory wejścia, jedno CTA na tor
 
 | Tor   | Wejście                                           | Pierwszy ruch                                    | Dowód, że zadziałało               |
