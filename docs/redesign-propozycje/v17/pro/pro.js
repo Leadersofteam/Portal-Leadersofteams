@@ -136,20 +136,19 @@
     ['powiadomienia', 'Powiadomienia', 'bell', 3], ['profil', 'Profil', 'user-circle'],
   ];
   const ZNAK = `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="5" cy="20" r="3.4" style="fill:var(--level-2)"/><circle cx="12.5" cy="12.5" r="4.2" style="fill:var(--primary-400)"/><circle cx="20.5" cy="5.5" r="4.6" style="fill:var(--level-6)"/></svg>`;
-  function nav(akt) {
-    const ja = P.ola;
+  function nav(akt, ja = P.ola) {
     return `<nav class="nav" aria-label="Nawigacja główna">
       <a class="znak" href="feed.html">${ZNAK}<span>Portal Liderów</span></a>
       <ul>${MENU.map(([k, t, ik, kr]) => `<li><a class="poz" href="${k}.html"${k === akt ? ' aria-current="page"' : ''} title="${t}">${I(ik)}<span class="etk">${t}</span>${kr ? `<span class="kropka etk">${kr}</span>` : ''}</a></li>`).join('')}</ul>
       <button class="btn obrys duzy utworz" type="button" aria-label="Utwórz">${I('plus')}<span>Utwórz</span></button>
-      <a class="ja" href="drabinka.html">${aw(ja, 44)}<span class="kto"><b>${ja.n}</b><small>${odz(ja.lv)}</small></span><span class="ikonka" aria-hidden="true">${I('dots-three')}</span></a>
+      <a class="ja" href="drabinka.html">${aw(ja, 44)}<span class="kto"><b>${ja.n}</b><small>${ja.firma ? 'Konto firmy' : odz(ja.lv)}</small></span><span class="ikonka" aria-hidden="true">${I('dots-three')}</span></a>
     </nav>`;
   }
-  function gora() {
+  function gora(ja = P.ola) {
     return `<header class="gora"><a class="znak" href="feed.html">${ZNAK}<span>Portal Liderów</span></a>
       <a class="ikonka" href="#" aria-label="Szukaj">${I('magnifying-glass')}</a>
       <a class="ikonka" href="#" aria-label="Powiadomienia: 3 nowe">${I('bell')}</a>
-      <a href="profil.html" aria-label="Twój profil">${aw(P.ola, 36)}</a></header>`;
+      <a href="profil.html" aria-label="Twój profil">${aw(ja, 36)}</a></header>`;
   }
   function dolny(akt) {
     const D = [['feed', 'Strumień', 'house-simple'], ['zlecenia', 'Zlecenia', 'clipboard-text'], ['uslugi', 'Usługi', 'storefront'], ['pytania', 'Pytania', 'chats-circle'], ['drabinka', 'Drabinka', 'ladder']];
@@ -474,6 +473,8 @@
   });
 
   window.Pro = {
+    // wspólne klocki dla rynek.js (P1, 25.11): ta sama rama, awatary, odznaki i okładki co strumień
+    h: { q, STAN, L, P, fmt, I, ini, hue, aw, odz, szczebelki, okl, gw, nav, gora, dolny, stopka, stany, miernik, komunikat, sz, szWiersz, powloka, bladEkranu, postep, pierscien, znakOsoby },
     feed,
     profil: () => { if (STAN) { document.body.innerHTML = stanProfilu(); } else { profil(); document.body.insertAdjacentHTML('beforeend', stany(['pusty', 'ladowanie', 'blad'])); } },
     drabinka: () => { if (STAN === 'ladowanie' || STAN === 'blad') { document.body.innerHTML = stanDrabinki(); } else drabinka(); },
