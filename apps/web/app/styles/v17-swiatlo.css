@@ -2955,6 +2955,11 @@ body:has(.v17) {
 }
 .v17 .gh-lewa .bio {
   margin: 12px 0 0;
+  /* Pełne bio jest tylko w „O mnie” — tu najwyżej 2 linie. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   color: var(--text-body);
   font-size: 14.5px;
   line-height: 1.55;

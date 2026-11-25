@@ -83,8 +83,17 @@ const dm = (iso: string) =>
 const mies = (iso: string) =>
   new Date(iso).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
 
-export default async function ProfilV17({ params }: { params: Promise<{ handle: string }> }) {
+export default async function ProfilV17({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ handle: string }>;
+  searchParams?: Promise<{ swiatlo?: string }>;
+}) {
   const { handle } = await params;
+  // Okno „Osi światła” rośnie o 6 w obrębie tej samej strony (bez nowej trasy); limit API = 50.
+  const sp = (await searchParams) ?? {};
+  const okno = Math.min(Math.max(Number.parseInt(sp.swiatlo ?? '6', 10) || 6, 6), 48);
   const { status, data } = await getProfile(handle);
   // 404 MUSI zapaść przed jakimkolwiek Suspense/loading — inaczej strona odda 200 (MINY).
   if (status === 404) notFound();
@@ -107,7 +116,7 @@ export default async function ProfilV17({ params }: { params: Promise<{ handle: 
         </Rama>
       }
     >
-      <ProfilTresc data={data} handle={handle} ja={ja} rama={rama} />
+      <ProfilTresc data={data} handle={handle} ja={ja} rama={rama} okno={okno} />
     </Suspense>
   );
 }
@@ -138,7 +147,9 @@ async function ProfilTresc({
   handle,
   ja,
   rama,
+  okno,
 }: {
+  okno: number;
   data: SocialProfile;
   handle: string;
   ja: Awaited<ReturnType<typeof loadJa>>;
@@ -153,7 +164,7 @@ async function ProfilTresc({
     lid ? serverApi<{ listings: Listing[] }>(`/listings?leaderProfileId=${lid}&limit=6`) : null,
     serverApi<{ levels: LevelRule[] }>('/ladder/levels'),
     ja && !isSelf ? serverApi<{ following: boolean }>(`/users/${u.id}/follow`) : null,
-    loadSwiatlo(handle, 12),
+    loadSwiatlo(handle, Math.max(12, okno)),
   ]);
   const rules = levelsOrFallback(lv?.levels);
   // Punkty po wagach są publiczne (decyzja 25.11) — te same liczby dla własnego i cudzego profilu.
@@ -446,7 +457,7 @@ async function ProfilTresc({
             )}
           </section>
 
-          <section className="sekcja">
+          <section className="sekcja" id="os-swiatla">
             <header>
               <h2>Oś światła</h2>
               <small>kto dał punkt, za co, ile — od najnowszych</small>
@@ -460,7 +471,7 @@ async function ProfilTresc({
             ) : (
               <>
                 <ol className="os-sw">
-                  {swiatlo.events.slice(0, 6).map((e) => {
+                  {swiatlo.events.slice(0, okno).map((e) => {
                     const dni = dniDoDojrzenia(e.maturesAt);
                     const co =
                       e.type === 'ORDER_COMPLETED_RATED'
@@ -493,9 +504,19 @@ async function ProfilTresc({
                   })}
                 </ol>
                 {/* ADR-010: koniec listy mówi, ile widzisz z ilu (M = liczba przyznanych i dojrzewających zdarzeń). */}
-                <span className="wiecej-link">
-                  Pokaż więcej · {Math.min(6, swiatlo.events.length)} z {swiatlo.total}
-                </span>
+                {swiatlo.total > okno && okno < 48 ? (
+                  <Link
+                    className="wiecej-link"
+                    href={`?swiatlo=${okno + 6}#os-swiatla`}
+                    scroll={false}
+                  >
+                    Pokaż więcej · {Math.min(okno, swiatlo.events.length)} z {swiatlo.total}
+                  </Link>
+                ) : (
+                  <span className="wiecej-link">
+                    {Math.min(okno, swiatlo.events.length)} z {swiatlo.total}
+                  </span>
+                )}
               </>
             )}
           </section>
