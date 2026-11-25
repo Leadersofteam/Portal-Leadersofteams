@@ -2768,6 +2768,7 @@ a.quoted-post:hover {
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
   grid-row: span 2;
+  white-space: nowrap;
   padding-left: 0.6rem;
   border-left: 3px solid var(--level-1);
 }
@@ -2790,6 +2791,7 @@ a.quoted-post:hover {
 }
 @media (max-width: 480px) {
   .first-point-paths li {
-    grid-template-columns: 4.5rem 1fr;
+    grid-template-columns: 5.25rem 1fr;
+    column-gap: 0.5rem;
   }
 }
