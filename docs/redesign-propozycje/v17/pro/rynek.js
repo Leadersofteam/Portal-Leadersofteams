@@ -94,7 +94,7 @@
   const firma = P.hotel;
   const OFERTY = [
     { o: P.bartek, ile: '10 400', cena: 10400, dni: 8, ocena: '4,9', n: 37, nota: 'Zaczynam od jednostek z recepcji. Dojazd z Poznania wlicza się w cenę.', ost: 'Piekarnia Złoty Kłos · 3 dni temu', kiedy: 'dziś 09:30' },
-    { o: P.ewa, cena: 11200, dni: 5, ocena: '4,9', n: 31, nota: 'Filtry i czynnik mam na magazynie w Sopocie — zaczynam od ręki, 3 pokoje dziennie rano.', ost: 'Hotel Pod Żaglem · 2 tyg. temu', kiedy: 'dziś 07:15', wyb: true },
+    { o: P.ewa, cena: 11200, dni: 5, ocena: '4,9', n: 31, nota: 'Filtry i czynnik mam na magazynie w Sopocie — zaczynam od ręki, 3 pokoje dziennie rano.', ost: 'Hotel Pod Żaglem · 2 tyg. temu', kiedy: 'dziś 07:15' },
     { o: P.kuba, cena: 9800, dni: 6, ocena: '4,8', n: 14, nota: 'Serwis po 2 pokoje dziennie, 8–12. Protokół do każdej jednostki.', ost: 'Biuro Rachunkowe Kalkulus · 3 tyg. temu', kiedy: 'wczoraj 18:42' },
     { o: F.pawel, cena: 8200, dni: 9, ocena: '5,0', n: 2, nota: 'Pierwsze zlecenia w Portalu, stąd niższa cena. Do 12 pokoi potrzebuję jednego pomocnika.', ost: 'Kamienica Pod Lipą · 5 tyg. temu', kiedy: 'wczoraj 21:10' },
   ];
@@ -127,14 +127,14 @@
     const ofBlok = pusty
       ? `${komunikat('hourglass', 'Pierwsze oferty jeszcze nie przyszły', 'Zlecenie widzą Liderzy z branży Instalacje HVAC. Zbieranie trwa do 28.11 — dostaniesz powiadomienie przy każdej ofercie.', `<a class="btn glowny" href="#">${I('share-network')}Udostępnij zlecenie</a><a class="btn obrys" href="#">Edytuj zlecenie</a>`)}`
       : `<table class="of"><thead><tr><th style="width:44px"><span class="sr">Wybór</span></th><th>Oferent</th><th>Poziom w Drabince</th><th>Cena</th><th>Termin</th><th>Oceny po zleceniach</th></tr></thead><tbody>${OFERTY.map(wierszOferty).join('')}</tbody></table>
-        <div class="of-pod"><div class="wyb" id="of-wyb"></div><button class="btn glowny" type="button">Wybierz wykonawcę</button></div>
+        <div class="of-pod"><div class="wyb" id="of-wyb"></div><button class="btn glowny" id="of-btn" type="button" disabled>Wybierz wykonawcę</button></div>
         <p class="rn-nic">${I('seal-check')}<span>Po zakończeniu pracy ocenisz wykonawcę. <b>Dopiero ta ocena daje mu punkty — do +100.</b> Oferta ani wybór wykonawcy punktów nie dają.</span></p>`;
     document.body.innerHTML = `${gora(firma)}<div class="rama szeroka">${nav('zlecenia', firma)}
       <main class="kolumna" id="tresc"><div class="rn-det">
         <a class="rn-wstecz" href="zlecenia.html">${I('arrow-left')}Zlecenia</a>
         <div class="nad">Twoje zlecenie · Instalacje HVAC · dodane wczoraj, 16:40</div>
         <h1>Serwis klimatyzacji — 12 pokoi</h1>
-        <div class="rn-firma">${aw(firma, 40)}<div><b>${firma.n}</b><small>${I('seal-check')}Firma zweryfikowana · 14 zleceń · średnia wystawianych ocen 4,8</small></div></div>
+        <div class="rn-firma">${aw(firma, 40)}<div><b>${firma.n}</b><small>${I('seal-check')}Firma zweryfikowana · 14 zleceń</small></div></div>
         <div class="rn-2"><div class="rn-opis">
           <p>Szukamy ekipy do serwisu klimatyzacji w 12 pokojach przed sezonem zimowym. Jednostki kasetonowe 2,5 kW, montaż 2019. Prace przy gościach — tylko w godzinach 8–12.</p>
           <h2>Zakres</h2><ul><li>${I('check')}Przegląd i czyszczenie każdej z 12 jednostek</li><li>${I('check')}Wymiana filtrów i pomiar ciśnień</li><li>${I('check')}Protokół z przeglądu dla każdego pokoju</li></ul></div>
@@ -144,8 +144,10 @@
       </div></main></div>${dolny('zlecenia')}${stany(['pusty', 'ladowanie', 'blad'])}`;
     const wiersze = [...document.querySelectorAll('[data-oferta]')];
     const wypisz = () => {
-      const r = wiersze.find((w) => w.querySelector('input').checked); const el = document.getElementById('of-wyb');
-      if (!r || !el) return;
+      const r = wiersze.find((w) => w.querySelector('input').checked); const el = document.getElementById('of-wyb'); const bt = document.getElementById('of-btn');
+      if (!el) return;
+      if (!r) { el.innerHTML = '<span>Zaznacz jedną ofertę, żeby ją wybrać</span>'; bt.disabled = true; return; }
+      bt.disabled = false;
       const x = OFERTY[wiersze.indexOf(r)];
       el.innerHTML = `${aw(x.o, 36)}<span>Wybrana oferta: <b>${x.o.n}</b><br><span class="n">${zl(x.cena)}</span> · ${dniW(x.dni)}</span>`;
       wiersze.forEach((w) => w.classList.toggle('wyb', w === r));
@@ -209,9 +211,9 @@
   function osSwiatla() {
     const E = [
       [ZAP.piekarnia, '+100', 'ocena 5/5 po zleceniu „Wentylacja zaplecza”', '', 'dojrzewa za 4 dni'],
-      [ZAP.zagiel, '+100', 'ocena 5/5 po zleceniu „Serwis 18 jednostek”', '12.11'],
+      [ZAP.zagiel, '+50', 'druga ocena od tej firmy w roku, waga ×0,5', '12.11'],
       [P.tomek, '+50', 'uznana odpowiedź „Jaki czynnik do starszych jednostek”', '09.11'],
-      [ZAP.zagiel, '+50', 'druga ocena od tej firmy w roku, waga ×0,5', '02.11'],
+      [ZAP.zagiel, '+100', 'ocena 5/5 po zleceniu „Serwis 18 jednostek”', '02.11'],
     ];
     return `<ul class="os-sw">${E.map(([k, p, co, d, dz]) => `<li>${aw(k, 36)}<div class="co"><b>${k.n}</b> · ${co}<small>${dz ? `<span class="dojrzewa">${I('hourglass-medium')}${dz}</span>` : d}</small></div><span class="pkt">${p}</span></li>`).join('')}</ul>`;
   }
