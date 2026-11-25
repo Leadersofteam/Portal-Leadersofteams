@@ -1682,3 +1682,20 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* Chipy kategorii: szersze wygaszenie prawej krawędzi — nic nie widać „uciętego w pół słowa” (np. „Ma…”) bez wskazania, że lista się przewija. */
+.v17 .filtry.rn-chipy {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 88px), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 88px), transparent);
+  padding-right: 88px;
+}
+
+/* Wiersz autora usługi na telefonie: Lider, szczebel i ocena w jednej linii; separator „·” znika zamiast wisieć na początku wiersza. */
+@media (max-width: 720px) {
+  .v17 .rn-lw {
+    gap: 8px;
+  }
+  .v17 .rn-lw .sep {
+    display: none;
+  }
+}
