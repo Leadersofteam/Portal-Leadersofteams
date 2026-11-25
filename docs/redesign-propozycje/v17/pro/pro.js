@@ -357,7 +357,7 @@
       if (teraz) s += `<circle cx="${n.x}" cy="${n.y}" r="22" style="fill:${c}" opacity=".45" filter="url(#bl)"/><circle cx="${n.x}" cy="${n.y}" r="17" fill="none" style="stroke:${c}" stroke-width="1.5" opacity=".6"/>`;
       if (n.n === 7) s += `<circle cx="${n.x}" cy="${n.y}" r="18" style="fill:var(--level-7)" opacity=".25" filter="url(#bl)"/>`;
       s += `<circle cx="${n.x}" cy="${n.y}" r="${ma ? 10 : 8}" style="fill:${ma ? c : 'var(--surface)'};stroke:${c}" stroke-width="2"/>`;
-      const etk = teraz ? [`${n.nazwa} · tu jesteś`, 'var(--text-strong)', 700] : n.n === 5 ? ['Mentor · LOT App', 'var(--text-muted)', 600] : n.n === 7 ? ['Architekt · zespół', 'var(--warm)', 650] : null;
+      const etk = teraz ? [`${n.nazwa} · tu jesteś`, 'var(--text-strong)', 700] : n.n === 5 ? ['Mentor · LOT App', 'var(--text-muted)', 600] : n.n === 7 ? ['Architekt Zespołów', 'var(--warm)', 650] : null;
       if (etk) s += `<text x="${n.x - 18}" y="${n.y + 4}" text-anchor="end" style="fill:${etk[1]};font:${etk[2]} 12px var(--font-sans)">${etk[0]}</text>`;
     });
     return `<div class="dr-scena" aria-hidden="true"><svg viewBox="0 0 420 340" preserveAspectRatio="xMidYMid meet">${s}</svg></div>`;
