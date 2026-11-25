@@ -83,7 +83,8 @@ export function Rama({
   children,
 }: {
   aktywny: MenuKlucz;
-  ja: Ja | null;
+  /** null = gość; undefined = nieznany (ładowanie/błąd) — wtedy nie pokazujemy zaproszenia do logowania. */
+  ja?: Ja | null;
   szeroka?: boolean;
   boczna?: ReactNode;
   children: ReactNode;
@@ -109,11 +110,11 @@ export function Rama({
           <Link href={profilHref} aria-label="Twój profil">
             <Aw name={ja.name} size={36} src={avatarSrc(ja.avatarFileId)} />
           </Link>
-        ) : (
+        ) : ja === null ? (
           <Link className="vbtn obrys maly" href="/logowanie">
             Zaloguj się
           </Link>
-        )}
+        ) : null}
       </header>
       <div className={`rama${szeroka ? ' szeroka' : ''}`}>
         <nav className="nav" aria-label="Nawigacja główna">
@@ -153,14 +154,14 @@ export function Rama({
                 <Ico n="dots-three" />
               </span>
             </Link>
-          ) : (
+          ) : ja === null ? (
             <Link className="ja" href="/logowanie">
               <span className="kto">
                 <b>Gość</b>
                 <small>Zaloguj się, żeby budować szczebel</small>
               </span>
             </Link>
-          )}
+          ) : null}
         </nav>
         <div className="kolumna" id="tresc" role="main">
           {children}

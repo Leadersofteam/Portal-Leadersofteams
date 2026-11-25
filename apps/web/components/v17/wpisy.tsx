@@ -109,7 +109,7 @@ export function WierszStrumienia({ w, idx }: { w: Wpis; idx: number }) {
               {w.zweryfikowana ? (
                 <>
                   <Ico n="seal-check" />
-                  <span>Firma z potwierdzonym NIP</span>
+                  <span>Firma zweryfikowana</span>
                 </>
               ) : (
                 <span>Firma bez potwierdzonego NIP</span>

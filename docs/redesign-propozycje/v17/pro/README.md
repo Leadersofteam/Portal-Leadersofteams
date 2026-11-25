@@ -38,3 +38,26 @@ Istniejące `--level-*`, `--primary-*` i `--text-*` zostają bez zmian (jasne wa
 ## CDN tylko w makiecie
 
 Pliki HTML ładują Bricolage i Inter z Google Fonts, a Phosphor Web z unpkg. **W kodzie aplikacji jest to zabronione (ADR-009).** Tam używamy `next/font` (fonty self-hosted) i `@phosphor-icons/react` (duotone, decyzja z 19.11).
+
+## Poprawki z kodu (25.11, P0 za flagą `?wyglad=v17`)
+
+Kod ekranów `/feed`, `/profil/[handle]`, `/drabinka` odtwarza makietę 1:1 (styl wygenerowany z `pro.css`). Poniższe różnice
+wynikają z **brakującego pola w API** albo z decyzji o prywatności i są **znane** — sędzia zgodności ma je traktować jako
+świadome odstępstwa, nie jako niezgodność:
+
+| Miejsce | Makieta | Kod | Powód |
+|---|---|---|---|
+| Wiersz zlecenia | Budżet / Termin / Miasto / Branża | Budżet / Branża (pierwsze słowo, jak w makiecie) | model `Order` nie ma terminu ani miasta |
+| Wiersz zlecenia | awatary oferentów, „zbiera do 28.11” | licznik ofert (`offersCount`) | API nie niesie oferentów ani terminu zbierania |
+| Wiersz zlecenia | „Firma zweryfikowana · 14 zleceń · średnia ocen 4,8” | „Firma zweryfikowana” (NIP) albo „Firma bez potwierdzonego NIP” | lista zleceń niesie tylko `companyVerified` |
+| Promień realizacji i Oś światła | „+100 pkt” po wagach | „+100 pkt” = punkty BAZOWE z oceny, podpisane „punkty bazowe” | księga punktów Lidera jest prywatna (PL3); publiczne punkty po wagach to decyzja Macieja |
+| „Kto dał ci światło” (Drabinka) | awatar i imię osoby | ikona typu zdarzenia + wyjaśnienie wagi | `/me/ladder` nie zwraca, kto dał punkt |
+| Pytanie | chip branży, awatary odpowiadających | nazwa grupy, liczba odpowiedzi | wątek nie ma branży ani listy odpowiadających w liście |
+| Akcje wpisu | Odpowiedz / Zapisz / Udostępnij | Odpowiedz / Udostępnij | zakładki są tylko dla wpisów portalowych |
+| Profil | „Przypięte realizacje”, zakładka „Odpowiedzi”, „uznane odpowiedzi” w liczbach, miasto | „Realizacje”, brak zakładki i licznika, brak miasta | brak przypinania, liczników i miasta w API |
+| Profil cudzy | punkty i ścieżki Lidera | tylko szczebel i oceny | punkty innych są prywatne |
+| Powiadomienia | badge „3” | bez badge | brak źródła licznika w tym widoku |
+| Strumień — stan pusty | przycisk „Wybierz branże”, tekst o wyborze branż | „Zobacz zlecenia” + „Zadaj pierwsze pytanie”, tekst bez wątku o wyborze branż | w Portalu nie ma wyboru/subskrypcji branż do strumienia |
+| Drabinka — wezwania | „12 pytań z twoich branż czeka”, „9 otwartych zleceń w twojej branży” | „N pytań czeka na odpowiedź”, „N otwartych zleceń” (z listy publicznej, „+” gdy >50) | wątki nie mają branży, więc licznik nie jest per branża |
+| Profil własny — menu | podświetlone „Liderzy” w stanie pustym | podświetlone „Profil” (własny profil) | kod logiczniejszy; pozycja „Profil” prowadzi do własnego profilu |
+| Prawa kolumna feedu (stany pusty/błąd) | „Zlecenia w twojej branży”, „Tematy” | te karty tylko gdy API zwróci dane | karta znika zamiast pokazywać puste |

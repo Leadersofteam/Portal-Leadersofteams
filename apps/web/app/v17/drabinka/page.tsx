@@ -37,6 +37,19 @@ export default async function DrabinkaV17() {
   // Źródłem progów jest API; lib/levels (lustro rules.ts) to zapas, gdy API milczy.
   const rules = levelsOrFallback(lv?.levels);
   const moja = ja ? await loadMojaDrabinka() : null;
+  // Liczniki do wezwań („N pytań czeka”): z publicznych list; „+” gdy jest więcej niż okno 50.
+  const [otwarte, zlecenia] = await Promise.all([
+    moja
+      ? serverApi<{ threads: unknown[]; nextCursor: string | null }>(
+          '/threads?status=OPEN&limit=50',
+        )
+      : null,
+    moja ? serverApi<{ orders: unknown[]; nextCursor: string | null }>('/orders?limit=50') : null,
+  ]);
+  const ile = (r: { nextCursor: string | null } | null, n: number | undefined) =>
+    n === undefined ? null : `${n}${r?.nextCursor ? '+' : ''}`;
+  const nPytan = ile(otwarte, otwarte?.threads.length);
+  const nZlecen = ile(zlecenia, zlecenia?.orders.length);
   const shell = {
     name: ja?.displayName ?? '',
     level: ja?.level ?? 0,
@@ -220,7 +233,7 @@ export default async function DrabinkaV17() {
         </ol>
       </section>
 
-      {moja && next ? (
+      {moja && next && level >= 1 ? (
         <section className="sekcja">
           <header>
             <h2>Następny: {next.name}</h2>
@@ -295,7 +308,10 @@ export default async function DrabinkaV17() {
                   {FIRST_POINT.communityWeeklyCap}.
                 </p>
                 <Link href="/pytania">
-                  Pytania czekające na odpowiedź <Ico n="arrow-right" />
+                  {nPytan && nPytan !== '0'
+                    ? `${nPytan} ${plural(Number.parseInt(nPytan, 10), 'pytanie czeka', 'pytania czekają', 'pytań czeka')} na odpowiedź`
+                    : 'Pytania czekające na odpowiedź'}{' '}
+                  <Ico n="arrow-right" />
                 </Link>
               </div>
             ) : null}
@@ -308,7 +324,10 @@ export default async function DrabinkaV17() {
                 ×0,25… min. ×0,1.
               </p>
               <Link href="/zlecenia">
-                Otwarte zlecenia <Ico n="arrow-right" />
+                {nZlecen && nZlecen !== '0'
+                  ? `${nZlecen} ${plural(Number.parseInt(nZlecen, 10), 'otwarte zlecenie', 'otwarte zlecenia', 'otwartych zleceń')}`
+                  : 'Otwarte zlecenia'}{' '}
+                <Ico n="arrow-right" />
               </Link>
             </div>
           </div>

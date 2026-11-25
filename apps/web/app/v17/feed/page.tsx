@@ -84,7 +84,7 @@ export default async function FeedV17({
             avatarFileId={ja.avatarFileId}
             rules={rules}
           />
-        ) : (
+        ) : ja ? null : (
           <KartaGoscia />
         )}
         <KartaZlecen
@@ -122,7 +122,7 @@ export default async function FeedV17({
       <div className="naglowek">
         <h1>Strumień</h1>
       </div>
-      {moja && ja ? (
+      {moja && ja && (strumien.wpisy.length > 0 || wszystkieBledy) ? (
         <Link className="pasek-drabinki" href="/drabinka">
           <Aw
             name={ja.displayName}

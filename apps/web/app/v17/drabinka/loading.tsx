@@ -3,7 +3,7 @@ import { Rama } from '@/components/v17/rama';
 
 export default function Loading() {
   return (
-    <Rama aktywny="drabinka" ja={null} szeroka>
+    <Rama aktywny="drabinka" szeroka>
       <div role="status" aria-busy="true" aria-label="Wczytywanie Drabinki">
         <section className="dr-hero" style={{ display: 'grid', gap: 14 }}>
           <Sz w="30%" />
