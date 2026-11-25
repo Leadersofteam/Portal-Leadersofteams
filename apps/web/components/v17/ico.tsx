@@ -4,6 +4,15 @@
 // font-size elementu <i> (CSS z pro.css ustawia go per miejsce), kolor dziedziczy currentColor.
 import {
   AppWindow,
+  Robot,
+  PencilRuler,
+  ShoppingCart,
+  Coins,
+  Code,
+  Megaphone,
+  Truck,
+  Handshake,
+  Kanban,
   Article,
   ArrowBendUpLeft,
   ArrowLeft,
@@ -57,6 +66,15 @@ import type { Icon } from '@phosphor-icons/react/dist/lib/types';
 
 const MAP = {
   'app-window': AppWindow,
+  robot: Robot,
+  'pencil-ruler': PencilRuler,
+  'shopping-cart': ShoppingCart,
+  coins: Coins,
+  code: Code,
+  megaphone: Megaphone,
+  truck: Truck,
+  handshake: Handshake,
+  kanban: Kanban,
   article: Article,
   'arrow-bend-up-left': ArrowBendUpLeft,
   'arrow-left': ArrowLeft,

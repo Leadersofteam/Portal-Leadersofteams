@@ -69,3 +69,31 @@ export function plural(n: number, one: string, few: string, many: string): strin
 export function basePoints(rating: number): number {
   return rating >= 5 ? 100 : rating === 4 ? 80 : rating === 3 ? 40 : 0;
 }
+
+// „3 dni temu”, „2 tyg. temu”, „4 mies. temu” — zawsze względnie (lista zleceń nie pokazuje dat). „teraz” i „wczoraj” bez „temu”.
+export function temu(iso: string | Date, now = new Date()): string {
+  const d = new Date(iso);
+  const dni = Math.floor((now.getTime() - d.getTime()) / 86_400_000);
+  if (dni >= 30) {
+    if (dni < 60) return `${Math.floor(dni / 7)} tyg. temu`;
+    if (dni < 730) return `${Math.floor(dni / 30)} mies. temu`;
+    return `${Math.floor(dni / 365)} lat temu`;
+  }
+  const t = timeAgo(d, now);
+  return /(min|godz\.|dni)$/.test(t) ? `${t} temu` : t;
+}
+
+// „dodane wczoraj, 16:40” — względnie plus godzina (strefa Polski, niezależnie od strefy serwera).
+export function dodaneGodz(iso: string | Date, now = new Date()): string {
+  const d = new Date(iso);
+  const godz = d.toLocaleTimeString('pl-PL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Warsaw',
+  });
+  const dzien = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+  const wczoraj = new Date(now.getTime() - 86_400_000);
+  const rel =
+    dzien(d) === dzien(now) ? 'dziś' : dzien(d) === dzien(wczoraj) ? 'wczoraj' : temu(d, now);
+  return `${rel}, ${godz}`;
+}

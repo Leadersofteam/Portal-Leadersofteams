@@ -9,3 +9,23 @@
 ## Poprawki z kodu
 | Data | Ekran | Co w makiecie było nie tak | Poprawka | Zgłoszone Maciejowi |
 |---|---|---|---|---|
+
+## Poprawki z kodu — P1 „Rynek” (25.11, za `?wyglad=v17` / ciasteczkiem `lot_wyglad=v17`)
+
+Kod `/zlecenia`, `/zlecenia/[id]`, `/uslugi`, `/uslugi/[slug]` odtwarza makietę. Różnice poniżej wynikają z **braku pola w bazie** albo z **prawdy o produkcie** i są świadome:
+
+| Miejsce | Makieta | Kod | Powód |
+|---|---|---|---|
+| Wiersz zlecenia | miasto, „wykonanie do”, „zbiera do” | brak | model `Order` nie ma miasta ani terminów |
+| Szczegóły zlecenia | „Zakres”, miejsce, „zbiera oferty do” | opis jednym blokiem, budżet, branża, poziom, status | j.w. |
+| Filtr „Poziom oferenta” | trzy opcje, pierwsza zaznaczona | trzy opcje, **żadna** zaznaczona z góry | zaznaczenie „Bez wymagań” z góry ukrywałoby zlecenia z wymogiem, a makietowa lista je pokazuje; reset przez „Wyczyść filtry” |
+| Filtr „Poziom oferenta” | liczniki | bez liczników | API liczy liczniki tylko dla branż |
+| Tabela ofert — gość i Lider spoza firmy | tabela (widok firmy) | w miejscu tabeli: liczba ofert + „Zaloguj się jako firma, by porównać oferty” (gość) albo „Treść ofert widzi tylko firma” (zalogowany) | API ujawnia treść ofert wyłącznie firmie zlecającej; nie odsłaniamy więcej niż dziś |
+| Tabela ofert — firma | punkty oferenta, „ostatnia: …” | poziom i średnia ocen z `GET /leaders/:id` | lista ofert nie niesie punktów ani ostatniej oceny |
+| Pakiet usługi | „Zleć pakiet X · cena” | „Zapytaj o pakiet X · cena”; formularz zapytania rozwija się dopiero po kliknięciu; gość → logowanie z powrotem (`?next=`) | w Portalu nie ma zamówienia pakietu — jest zapytanie, które Lider zamienia w zlecenie; „Zleć” obiecywałoby zakup |
+| Pakiet usługi | „Wizyty” | brak | brak pola w bazie |
+| Usługa — tagi | brak w makiecie | usunięte z widoku v17 | makieta nie ma tagów |
+| Okładki kategorii | HVAC, PV, elektryka… | własna ikona dla każdej z 10 kategorii produkcji (AI, UX, e-commerce, finanse, HR, IT, marketing, logistyka, sprzedaż, projekty) | słownik branż Portalu jest szerszy niż makiety; zapasowy piorun tylko dla nieznanych |
+| Usługa — „Oceny po zleceniach” | „Pokaż więcej · 3 z 31” jako przycisk | tekst „3 z N” bez przycisku | nie ma jeszcze strony pełnej listy ocen |
+| Ulubione (gwiazdka) | brak w makiecie | pominięte w karcie v17 | lista jest publiczna (bez cookies), więc stan „zapisana” byłby nieprawdziwy |
+| Liczniki list | „8 z 31” | „N z M” z `total` API | zgodnie z makietą (dodane pole `total`) |

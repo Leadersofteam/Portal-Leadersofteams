@@ -121,7 +121,8 @@ export function createOrdersService({
               AND status = 'PUBLISHED'
             LIMIT 200`;
         fulltextIds = rows.map((r) => r.id);
-        if (fulltextIds.length === 0) return { orders: [], nextCursor: null, total: 0, industryCounts: {} };
+        if (fulltextIds.length === 0)
+          return { orders: [], nextCursor: null, total: 0, industryCounts: {} };
       } else {
         likeQ = filters.q;
       }

@@ -25,7 +25,11 @@ export default function LoginPage() {
           password: form.get('password'),
         }),
       });
-      router.push('/panel');
+      // `?next=/ścieżka` — powrót tam, skąd gość przyszedł (np. „Zapytaj o pakiet” na usłudze). Wyłącznie ścieżka
+      // względna w obrębie Portalu: `//host` i `/\\host` odpadają (open redirect). Bez parametru — jak dotąd /panel.
+      // window.location zamiast useSearchParams: hook wymusiłby Suspense i zmienił prerender strony logowania.
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && /^\/[^/\\]/.test(next) ? next : '/panel');
       router.refresh();
     } catch (err) {
       setError(

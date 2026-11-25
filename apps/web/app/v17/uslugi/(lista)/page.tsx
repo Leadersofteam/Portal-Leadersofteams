@@ -5,7 +5,7 @@ import { Ico } from '@/components/v17/ico';
 import { Komunikat } from '@/components/v17/karty';
 import { Rama, Stopka } from '@/components/v17/rama';
 import { Naglowek, Ocena, zl } from '@/components/v17/rynek';
-import { Aw, Odznaka, Okladka, rodzajZBranzy } from '@/components/v17/znaki';
+import { Aw, Odznaka, Okladka, rodzajRynek } from '@/components/v17/znaki';
 import type { ListingCardData } from '@/components/ui/listing-card';
 import { publicApi } from '@/lib/server-api';
 import { plural } from '@/lib/v17';
@@ -117,7 +117,7 @@ export default async function UslugiV17({
         }
         cta={{ href: '/uslugi/nowa', etykieta: 'Zaproponuj usługę' }}
       />
-      <nav className="filtry" data-przesuw aria-label="Branża">
+      <nav className="filtry rn-chipy" data-przesuw aria-label="Branża">
         <Link
           className="filtr"
           href={href({ industryId: '' })}
@@ -139,6 +139,7 @@ export default async function UslugiV17({
       <FiltrAuto className="rn-pasek" label="Cena, poziom i kolejność">
         {q ? <input type="hidden" name="q" value={q} /> : null}
         {tag ? <input type="hidden" name="tag" value={tag} /> : null}
+        {sort[0] !== 'newest' ? <input type="hidden" name="sort" value={sort[0]} /> : null}
         {branzaId ? <input type="hidden" name="industryId" value={branzaId} /> : null}
         <select className="rn-sel" name="cena" aria-label="Cena" defaultValue={cena[0]}>
           {CENA.map(([k, t]) => (
@@ -156,13 +157,6 @@ export default async function UslugiV17({
           {POZIOM.map(([k, t]) => (
             <option key={k} value={k}>
               Poziom: {t}
-            </option>
-          ))}
-        </select>
-        <select className="rn-sel" name="sort" aria-label="Kolejność" defaultValue={sort[0]}>
-          {SORT.map(([k, t]) => (
-            <option key={k} value={k}>
-              {t}
             </option>
           ))}
         </select>
@@ -230,7 +224,7 @@ export default async function UslugiV17({
                     />
                   </div>
                 ) : (
-                  <Okladka rodzaj={rodzajZBranzy(u.industry.name)} seed={i + 1} id={`ok-${u.id}`} />
+                  <Okladka rodzaj={rodzajRynek(u.industry.name)} seed={i + 1} id={`ok-${u.id}`} />
                 )}
                 <div className="ul">
                   <Aw

@@ -1,8 +1,13 @@
 'use client';
 
 // Pakiety usługi (Fiverr): przełącznik Podstawowy / Standard / Premium z jednym aktywnym panelem — port z rynek.js.
-// Ceny to deklaracja Lidera; rozliczenie idzie przez zapytanie → zlecenie, więc CTA prowadzi do formularza zapytania.
+// W Portalu NIE MA zamówienia pakietu (cena to deklaracja Lidera; rozliczenie idzie zapytanie → zlecenie), więc CTA
+// jest „Zapytaj o pakiet”, a nie „Zleć pakiet” z makiety. Formularz zapytania rozwija się dopiero po kliknięciu CTA —
+// nie stoi jako osobna sekcja. Gość po kliknięciu trafia do logowania i wraca na tę usługę (?next=).
+import Link from 'next/link';
 import { useState } from 'react';
+
+import { InquiryForm } from '@/app/uslugi/[slug]/inquiry-form';
 
 import { Ico } from './ico';
 import { zl } from './rynek';
@@ -16,12 +21,25 @@ export interface PakietDane {
   zakres: string;
 }
 
-export function Pakiety({ pakiety, wlasciciel }: { pakiety: PakietDane[]; wlasciciel: boolean }) {
+export type ZapytanieDane =
+  | { tryb: 'formularz'; listingId: string; firmy: Array<{ id: string; name: string }> }
+  | { tryb: 'gosc'; next: string }
+  | { tryb: 'bez-firmy' };
+
+export function Pakiety({
+  pakiety,
+  zapytanie,
+}: {
+  pakiety: PakietDane[];
+  /** null = właściciel usługi (nie pyta sam siebie). */
+  zapytanie: ZapytanieDane | null;
+}) {
   const start = Math.max(
     0,
     pakiety.findIndex((p) => p.tier === 'STANDARD'),
   );
   const [aktywny, setAktywny] = useState(start);
+  const [otwarte, setOtwarte] = useState(false);
   if (pakiety.length === 0) return null;
 
   function naKlawisz(e: React.KeyboardEvent, i: number) {
@@ -57,6 +75,7 @@ export function Pakiety({ pakiety, wlasciciel }: { pakiety: PakietDane[]; wlasci
           .split(/\n+/)
           .map((l) => l.replace(/^[-•*]\s*/, '').trim())
           .filter(Boolean);
+        const etykietaCta = `Zapytaj o pakiet ${p.etykieta} · ${zl(p.cena)}`;
         return (
           <div
             className="pp"
@@ -83,18 +102,51 @@ export function Pakiety({ pakiety, wlasciciel }: { pakiety: PakietDane[]; wlasci
                 </li>
               ))}
             </ul>
-            {wlasciciel ? null : (
-              <a className="vbtn glowny" href="#zapytaj">
-                Zapytaj o pakiet {p.etykieta} · {zl(p.cena)}
-              </a>
-            )}
+            {zapytanie?.tryb === 'gosc' ? (
+              <Link
+                className="vbtn glowny"
+                href={`/logowanie?next=${encodeURIComponent(zapytanie.next)}`}
+              >
+                {etykietaCta}
+              </Link>
+            ) : zapytanie ? (
+              <button
+                className="vbtn glowny"
+                type="button"
+                aria-expanded={otwarte}
+                aria-controls="zapytaj"
+                onClick={() => setOtwarte((o) => !o)}
+              >
+                {etykietaCta}
+              </button>
+            ) : null}
             <p className="male">
               Lider potwierdzi zakres i termin, zanim cokolwiek zaczniecie.{' '}
-              <a href="/zlecenia/nowe">Potrzebujesz czegoś innego? Zaproponuj własne zlecenie</a>
+              <Link href="/zlecenia/nowe">
+                Potrzebujesz czegoś innego? Zaproponuj własne zlecenie
+              </Link>
             </p>
           </div>
         );
       })}
+      {zapytanie && zapytanie.tryb !== 'gosc' && otwarte ? (
+        <div className="zap" id="zapytaj">
+          {zapytanie.tryb === 'formularz' ? (
+            <InquiryForm
+              key={pakiety[aktywny]?.tier}
+              listingId={zapytanie.listingId}
+              companies={zapytanie.firmy}
+              packages={pakiety.map((p) => p.tier)}
+              defaultTier={pakiety[aktywny]?.tier}
+            />
+          ) : (
+            <p>
+              Zapytania wysyłają Firmy — <Link href="/firma/nowa">dodaj profil swojej firmy</Link>,
+              żeby napisać do Lidera.
+            </p>
+          )}
+        </div>
+      ) : null}
     </aside>
   );
 }

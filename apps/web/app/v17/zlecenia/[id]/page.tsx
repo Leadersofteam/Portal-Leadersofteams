@@ -20,7 +20,7 @@ import { orderJsonLd } from '@/lib/jsonld';
 import { OFFER_STATUS_LABELS, ORDER_STATUS_LABELS } from '@/lib/labels';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi, serverApiStatus } from '@/lib/server-api';
-import { budget, levelsOrFallback, timeAgo } from '@/lib/v17';
+import { budget, dodaneGodz, levelsOrFallback, plural, temu } from '@/lib/v17';
 import { loadJa } from '@/lib/v17-data';
 
 interface ReviewsData {
@@ -47,6 +47,9 @@ interface OrderDetail {
     publishedAt: string | null;
     companyId: string;
     companyName: string;
+    companyVerified?: boolean;
+    companyOrdersCount?: number;
+    offersCount?: number;
   };
   viewer: {
     isCompanyMember: boolean;
@@ -68,11 +71,6 @@ interface OfferRow {
 
 const messagesLabel = (n: number) =>
   n === 0 ? 'Zapytaj Lidera' : n === 1 ? '1 wiadomość' : `${n} wiadomości`;
-
-const temu = (iso: string) => {
-  const t = timeAgo(iso);
-  return /(min|godz\.|dni)$/.test(t) ? `${t} temu` : t;
-};
 
 // 404 → notFound(); każda inna porażka API → błąd ekranu (error.tsx), a nie fałszywe „nie znaleziono”.
 const getOrder = cache(async (id: string) => {
@@ -178,9 +176,7 @@ export default async function ZlecenieV17({
   const isParticipant = viewer.isCompanyMember || viewer.isAwardedLeader;
   const canReview = order.status === 'CONFIRMED' && isParticipant && !reviewsData?.myReview;
   const wymog = order.minLevel > 0 ? rules[order.minLevel - 1] : undefined;
-  const dodane = order.publishedAt
-    ? new Date(order.publishedAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' })
-    : null;
+  const dodane = order.publishedAt ? dodaneGodz(order.publishedAt) : null;
 
   return (
     <Rama
@@ -226,7 +222,13 @@ export default async function ZlecenieV17({
             <b>
               <Link href={`/firmy/${order.companyId}`}>{order.companyName}</Link>
             </b>
-            <small>{ORDER_STATUS_LABELS[order.status] ?? order.status}</small>
+            <small>
+              <Ico n={order.companyVerified ? 'seal-check' : 'question'} />
+              {order.companyVerified ? 'Firma zweryfikowana' : 'Firma bez potwierdzonego NIP'}
+              {order.companyOrdersCount
+                ? ` · ${order.companyOrdersCount} ${plural(order.companyOrdersCount, 'zlecenie', 'zlecenia', 'zleceń')}`
+                : ''}
+            </small>
           </div>
         </div>
 
@@ -250,6 +252,10 @@ export default async function ZlecenieV17({
             <div>
               <dt>Poziom oferenta</dt>
               <dd>{wymog ? `od L${order.minLevel} · ${wymog.name}` : 'bez wymagań'}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>{ORDER_STATUS_LABELS[order.status] ?? order.status}</dd>
             </div>
           </dl>
         </div>
@@ -330,13 +336,14 @@ export default async function ZlecenieV17({
           </div>
         ) : null}
 
-        {/* Widok Firmy: porównanie ofert obok siebie (Oferteo). Oferty widzi wyłącznie Firma — API ich nie ujawnia reszcie. */}
-        {viewer.isCompanyMember && ['PUBLISHED', 'AWARDED'].includes(order.status) ? (
+        {/* Porównanie ofert obok siebie (Oferteo) widzi wyłącznie Firma — API nie ujawnia treści ofert reszcie.
+            Reszta widzi w tym miejscu sam licznik (fakt zlecenia) i drogę do porównania. */}
+        {['PUBLISHED', 'AWARDED'].includes(order.status) ? (
           <section className="rn-oferty" aria-labelledby="of-h">
             <header>
               <h2 id="of-h">
                 Oferty
-                {oferty.length ? (
+                {viewer.isCompanyMember && oferty.length ? (
                   <small>
                     {oferty.length} ·{' '}
                     {kolejnosc === 'nowe'
@@ -347,7 +354,7 @@ export default async function ZlecenieV17({
                   </small>
                 ) : null}
               </h2>
-              {oferty.length > 1 ? (
+              {viewer.isCompanyMember && oferty.length > 1 ? (
                 <FiltrAuto label="Kolejność ofert">
                   <select
                     className="rn-sel"
@@ -362,7 +369,30 @@ export default async function ZlecenieV17({
                 </FiltrAuto>
               ) : null}
             </header>
-            {oferty.length ? (
+            {!viewer.isCompanyMember ? (
+              <Komunikat
+                ikona="lock-simple"
+                tytul={
+                  (order.offersCount ?? 0) > 0
+                    ? `Złożono ${order.offersCount} ${plural(order.offersCount ?? 0, 'ofertę', 'oferty', 'ofert')}`
+                    : 'Jeszcze nie złożono ofert'
+                }
+                opis={
+                  isLoggedIn
+                    ? 'Treść ofert widzi tylko firma, która zleciła pracę — porównuje je cena, termin i poziom w Drabince.'
+                    : 'Zaloguj się jako firma, by porównać oferty.'
+                }
+              >
+                {isLoggedIn ? null : (
+                  <Link
+                    className="vbtn glowny"
+                    href={`/logowanie?next=${encodeURIComponent(`/zlecenia/${order.id}`)}`}
+                  >
+                    Zaloguj się
+                  </Link>
+                )}
+              </Komunikat>
+            ) : oferty.length ? (
               <OfertyPorownanie oferty={oferty} mozeWybierac={order.status === 'PUBLISHED'} />
             ) : (
               <Komunikat
@@ -380,6 +410,15 @@ export default async function ZlecenieV17({
                 </Link>
               </Komunikat>
             )}
+            {/* ADR-004: przypis stoi pod ofertami zawsze, nie tylko przy porównaniu — oferta ani wybór nie dają punktów. */}
+            <p className="rn-nic">
+              <Ico n="seal-check" />
+              <span>
+                Po zakończeniu pracy ocenisz wykonawcę.{' '}
+                <b>Dopiero ta ocena daje mu punkty — do +100.</b> Oferta ani wybór wykonawcy punktów
+                nie dają.
+              </span>
+            </p>
           </section>
         ) : null}
 

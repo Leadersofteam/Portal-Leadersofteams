@@ -1597,3 +1597,55 @@
 .v17 p.rn-akcje {
   display: block;
 }
+
+/* Zakładki/chipy kategorii przewijane w poziomie: wygaszenie prawej krawędzi mówi „jest dalej”, zamiast ucinać
+   etykietę w pół słowa bez wskazania. Słowa kluczowe zamiast hexów (lint-tokens). */
+.v17 .filtry.rn-chipy {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 40px), transparent);
+  padding-right: 40px;
+}
+
+/* Stan „brak ocen” w sekcji szczegółów: mały, jak w makiecie — nie pełnoekranowy komunikat listy. */
+.v17 .rn-sek .komunikat {
+  padding: 8px 0 4px;
+  gap: 6px;
+  justify-items: start;
+  text-align: left;
+}
+.v17 .rn-sek .komunikat-ik {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.v17 .rn-sek .komunikat h2 {
+  font-size: 15px;
+}
+.v17 .rn-sek .komunikat p {
+  font-size: 14px;
+  max-width: 52ch;
+}
+
+/* Formularz zapytania rozwijany pod CTA pakietu (nie osobna sekcja strony). */
+.v17 .pak .zap {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--line);
+}
+.v17 .pak .zap .card {
+  margin-top: 16px;
+  max-width: none !important;
+}
+
+/* Dwa selektory w jednym rzędzie na 390 px bez ucinania etykiet. */
+@media (max-width: 720px) {
+  .v17 .rn-pasek {
+    flex-wrap: nowrap;
+  }
+  .v17 .rn-pasek .rn-sel {
+    flex: 1 1 0;
+    padding: 0 28px 0 12px;
+    background-position: right 10px center;
+    font-size: 13.5px;
+    text-overflow: ellipsis;
+  }
+}

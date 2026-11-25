@@ -183,13 +183,6 @@ export function OfertyPorownanie({
           ) : null}
         </div>
       ) : null}
-      <p className="rn-nic">
-        <Ico n="seal-check" />
-        <span>
-          Po zakończeniu pracy ocenisz wykonawcę. <b>Dopiero ta ocena daje mu punkty — do +100.</b>{' '}
-          Oferta ani wybór wykonawcy punktów nie dają.
-        </span>
-      </p>
     </>
   );
 }
