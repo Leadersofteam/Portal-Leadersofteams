@@ -16,10 +16,13 @@ export function InquiryForm({
   listingId,
   companies,
   packages,
+  defaultTier = '',
 }: {
   listingId: string;
   companies: Array<{ id: string; name: string }>;
   packages: string[];
+  // V17 „Rynek”: pakiet wybrany na zakładce, z której otwarto formularz.
+  defaultTier?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +64,7 @@ export function InquiryForm({
       </div>
       <div className="field">
         <label htmlFor="inq-package">Pakiet (opcjonalnie)</label>
-        <select id="inq-package" name="packageTier" defaultValue="">
+        <select id="inq-package" name="packageTier" defaultValue={defaultTier}>
           <option value="">Jeszcze nie wiem</option>
           {packages.map((tier) => (
             <option key={tier} value={tier}>

@@ -319,7 +319,12 @@ export type UpdateOrderInput = z.infer<typeof updateOrderInputSchema>;
 
 export const orderFiltersSchema = z.object({
   industryId: idSchema.optional(),
+  // V17 „Rynek”: wiele branż naraz (checkboxy). Lista identyfikatorów po przecinku; łączy się z `industryId`.
+  // Walidacja elementów jest w serwisie — nieznany id po prostu nic nie zwróci, nie psuje zapytania.
+  industryIds: z.string().trim().max(600).optional(),
   maxMinLevel: z.coerce.number().int().min(0).max(7).optional(),
+  // Dolna granica wymaganego poziomu (≥): razem z maxMinLevel daje przedziały „do L3” i „L4 i wyżej”.
+  minLevelFrom: z.coerce.number().int().min(1).max(7).optional(),
   budgetMin: z.coerce.number().int().min(0).optional(),
   budgetMax: z.coerce.number().int().min(0).optional(),
   q: z.string().trim().min(2).max(200).optional(),

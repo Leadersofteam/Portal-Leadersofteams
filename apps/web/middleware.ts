@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { decydujWyglad } from '@/lib/v17-routing';
+
 // Zliczanie odsłon (S12) — 0 zł, bez cookies, bez skryptu w przeglądarce.
 //
 // DLACZEGO tutaj, a nie w API: strony są SSR-owane, a jedno wejście użytkownika
@@ -24,21 +26,14 @@ const SESSION_COOKIE = 'lot_sid';
 // odsiać uczciwie przedstawiające się crawlery, nie walczyć z podszywaniem.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|monitor|curl|wget|headless/i;
 
-// Flaga wyglądu V17 „Światło” — od 25.11.2026 DOMYŚLNIE WŁĄCZONA (Maciej: „Włącz dla wszystkich”).
-// `?wyglad=off` zapisuje ciasteczko „off” (rok) — stary wygląd jako awaryjne wyjście; `?wyglad=v17`
-// zdejmuje opt-out. Wycofanie dla wszystkich = przywrócić tu `=== 'v17'` i przebudować web. Przy włączonej fladze trzy ekrany P0 są
-// przepisywane (rewrite, URL zostaje) na wersje z app/v17/*; reszta Portalu bez zmian.
+// Flaga wyglądu V17 — P0 „Światło” (feed/profil/drabinka) od 25.11.2026 DOMYŚLNIE WŁĄCZONE (Maciej: „Włącz dla wszystkich”),
+// P1 „Rynek” (zlecenia/usługi) WYŁĄCZNIE za jawnym opt-inem (?wyglad=v17 / ciasteczko lot_wyglad=v17). Reguły i
+// uzasadnienie dwóch list: lib/v17-routing.ts (czysta funkcja, testowana w e2e/v17-routing.spec.ts).
+// `?wyglad=off` zapisuje ciasteczko „off” (rok) — stary wygląd jako awaryjne wyjście; `?wyglad=v17` zdejmuje opt-out
+// (P0) i włącza P1. Wycofanie P0 dla wszystkich = zmienić warunek `p0` w decydujWyglad i przebudować web.
 // DLACZEGO rewrite w middleware, a nie cookies() na stronach: odczyt cookies w page.tsx
 // uczyniłby dynamiczną /drabinkę nawet z wyłączoną flagą (mina PD1 — patrz lib/server-api.ts).
 const V17_FLAG = 'lot_wyglad';
-const V17_ROUTES = [/^\/feed$/, /^\/drabinka$/, /^\/profil\/[^/]+$/];
-
-function v17Flag(request: NextRequest): { on: boolean; set?: 'v17' | 'off' } {
-  const q = request.nextUrl.searchParams.get('wyglad');
-  if (q === 'v17') return { on: true, set: 'v17' };
-  if (q === 'off') return { on: false, set: 'off' };
-  return { on: request.cookies.get(V17_FLAG)?.value !== 'off' };
-}
 
 function withFlagCookie(response: NextResponse, set?: 'v17' | 'off'): NextResponse {
   if (set === 'v17') {
@@ -87,13 +82,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(`${origin}/panel`, 307);
   }
 
-  const flag = v17Flag(request);
   const path = request.nextUrl.pathname;
-  const response =
-    flag.on && V17_ROUTES.some((re) => re.test(path))
-      ? NextResponse.rewrite(new URL(`/v17${path}${request.nextUrl.search}`, request.url))
-      : NextResponse.next();
-  withFlagCookie(response, flag.set);
+  const decyzja = decydujWyglad(
+    path,
+    request.nextUrl.searchParams.get('wyglad'),
+    request.cookies.get(V17_FLAG)?.value,
+  );
+  const response = decyzja.rewrite
+    ? NextResponse.rewrite(new URL(`/v17${path}${request.nextUrl.search}`, request.url))
+    : NextResponse.next();
+  withFlagCookie(response, decyzja.set);
 
   const userAgent = request.headers.get('user-agent') ?? '';
   if (BOT_UA.test(userAgent)) return response;

@@ -150,7 +150,24 @@ export function Szczebelki({ level, h = 12 }: { level: number; h?: number }) {
   );
 }
 
-export function Odznaka({ level, big = false }: { level: number; big?: boolean }) {
+// `kreski`: L0 też rysuje szczebelki (same szare) obok „Nowy w Portalu” — tabela ofert porównuje oferentów tym samym znakiem
+// dla każdego; P0 zostaje przy samym tekście.
+export function Odznaka({
+  level,
+  big = false,
+  kreski = false,
+}: {
+  level: number;
+  big?: boolean;
+  kreski?: boolean;
+}) {
+  if (!level && kreski)
+    return (
+      <span className="odz nowy" style={{ '--lv': 'var(--text-muted)' } as Css}>
+        <Szczebelki level={0} h={big ? 14 : 12} />
+        Nowy w Portalu
+      </span>
+    );
   if (!level) return <span className="odz nowy">Nowy w Portalu</span>;
   return (
     <span
@@ -228,13 +245,26 @@ export function Schodki({ level, progress }: { level: number; progress: number }
 
 // ── Okładki rysowane w SVG (zero zdjęć z sieci); wzór zależy od branży ──
 export type OkladkaRodzaj = 'hvac' | 'pv' | 'el' | 'wyk' | 'san' | 'chlod';
-const BR: Record<OkladkaRodzaj, { c: string; ik: IcoName }> = {
-  hvac: { c: 'var(--level-2)', ik: 'wind' },
-  pv: { c: 'var(--br-pv)', ik: 'solar-panel' },
-  el: { c: 'var(--primary-400)', ik: 'lightning' },
-  wyk: { c: 'var(--violet-500)', ik: 'paint-roller' },
-  san: { c: 'var(--br-san)', ik: 'drop' },
-  chlod: { c: 'var(--br-chlod)', ik: 'snowflake' },
+// Kategorie Rynku (słownik branż z produkcji). Osobny typ: P0 zostaje przy sześciu branżach instalacyjnych.
+export type OkladkaRynek =
+  OkladkaRodzaj | 'ai' | 'ux' | 'ecom' | 'fin' | 'hr' | 'it' | 'mkt' | 'log' | 'sale' | 'proj';
+const BR: Record<OkladkaRynek, { c: string; ik: IcoName; wz: OkladkaRodzaj }> = {
+  hvac: { c: 'var(--level-2)', ik: 'wind', wz: 'hvac' },
+  pv: { c: 'var(--br-pv)', ik: 'solar-panel', wz: 'pv' },
+  el: { c: 'var(--primary-400)', ik: 'lightning', wz: 'el' },
+  wyk: { c: 'var(--violet-500)', ik: 'paint-roller', wz: 'wyk' },
+  san: { c: 'var(--br-san)', ik: 'drop', wz: 'san' },
+  chlod: { c: 'var(--br-chlod)', ik: 'snowflake', wz: 'chlod' },
+  ai: { c: 'var(--level-5)', ik: 'robot', wz: 'el' },
+  ux: { c: 'var(--violet-500)', ik: 'pencil-ruler', wz: 'wyk' },
+  ecom: { c: 'var(--level-3)', ik: 'shopping-cart', wz: 'pv' },
+  fin: { c: 'var(--level-4)', ik: 'coins', wz: 'san' },
+  hr: { c: 'var(--level-6)', ik: 'users-three', wz: 'san' },
+  it: { c: 'var(--primary-400)', ik: 'code', wz: 'el' },
+  mkt: { c: 'var(--level-7)', ik: 'megaphone', wz: 'hvac' },
+  log: { c: 'var(--level-2)', ik: 'truck', wz: 'pv' },
+  sale: { c: 'var(--level-3)', ik: 'handshake', wz: 'hvac' },
+  proj: { c: 'var(--level-5)', ik: 'kanban', wz: 'wyk' },
 };
 
 // Branża z API → wzór okładki. Nieznana branża dostaje neutralny wzór „el” (linie obwodu).
@@ -248,6 +278,22 @@ export function rodzajZBranzy(slugOrName: string | undefined): OkladkaRodzaj {
   return 'el';
 }
 
+// Rynek (zlecenia/usługi): każda kategoria z produkcji ma własną ikonę; zapasowy piorun zostaje tylko dla nieznanych.
+export function rodzajRynek(slugOrName: string | undefined): OkladkaRynek {
+  const s = (slugOrName ?? '').toLowerCase();
+  if (/\bai\b|automaty/.test(s)) return 'ai';
+  if (/design|\bux\b/.test(s)) return 'ux';
+  if (/e-?commerce|sklep/.test(s)) return 'ecom';
+  if (/finans|księg|ksieg/.test(s)) return 'fin';
+  if (/\bhr\b|rekrut/.test(s)) return 'hr';
+  if (/\bit\b|programow/.test(s)) return 'it';
+  if (/marketing/.test(s)) return 'mkt';
+  if (/produkc|logist/.test(s)) return 'log';
+  if (/sprzeda/.test(s)) return 'sale';
+  if (/zarządz|zarzadz|projekt/.test(s)) return 'proj';
+  return rodzajZBranzy(slugOrName);
+}
+
 export function Okladka({
   rodzaj,
   seed = 1,
@@ -255,17 +301,18 @@ export function Okladka({
   id,
   style,
 }: {
-  rodzaj: OkladkaRodzaj;
+  rodzaj: OkladkaRynek;
   seed?: number;
   ikona?: boolean;
   id: string;
   style?: CSSProperties;
 }) {
   const b = BR[rodzaj];
+  const wzor = b.wz;
   const W = 320;
   const H = 160;
   const wz: ReactNode[] = [];
-  if (rodzaj === 'hvac' || rodzaj === 'chlod') {
+  if (wzor === 'hvac' || wzor === 'chlod') {
     for (let i = 0; i < 7; i++) {
       const y = 20 + i * 20 + (seed % 3) * 4;
       wz.push(
@@ -278,7 +325,7 @@ export function Okladka({
         />,
       );
     }
-  } else if (rodzaj === 'pv') {
+  } else if (wzor === 'pv') {
     for (let r = 0; r < 4; r++)
       for (let c = 0; c < 7; c++) {
         const x = 30 + c * 44 + r * 14 - (seed % 2) * 10;
@@ -291,7 +338,7 @@ export function Okladka({
           />,
         );
       }
-  } else if (rodzaj === 'el') {
+  } else if (wzor === 'el') {
     const pts = [
       [0, 120],
       [60, 120],
@@ -327,7 +374,7 @@ export function Okladka({
         opacity=".3"
       />,
     );
-  } else if (rodzaj === 'wyk') {
+  } else if (wzor === 'wyk') {
     for (let i = 0; i < 5; i++)
       wz.push(
         <rect
