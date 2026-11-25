@@ -55,7 +55,7 @@
     return `<svg class="pier" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
   }
   // Portret rysowany z nazwy: geometryczny, każdy człowiek inny (tło, skóra, włosy, ubiór). Zdjęcia dopiero z uploadu w kodzie.
-  function portret(o, w) {
+  function portretNieuzywany(o, w) {
     const h = hue(o.n), h2 = (h * 7 + 140) % 360;
     const skora = ['#f1c9a5', '#e0a982', '#c68863', '#9a6240', '#6f4529'][h % 5];
     const wlos = ['#2a1d14', '#5a3a22', '#8a5a2b', '#c9a35a', '#1b1b1f', '#7d4a3a'][(h >> 1) % 6];
@@ -73,7 +73,7 @@
       return `<span class="aw firma" style="width:${S}px;height:${S}px;--fs:${f}px;--fh:${hue(o.branza)}" aria-hidden="true"><span class="twarz" style="width:${S}px;height:${S}px">${o.skrot}</span></span>`;
     }
     const w = ring && o.lv ? S - 9 : S;
-    return `<span class="aw" style="width:${S}px;height:${S}px" aria-hidden="true">${ring && o.lv ? pierscien(S, o.lv, postep(o)) : ''}<span class="twarz" style="width:${w}px;height:${w}px">${portret(o, w)}</span></span>`;
+    return `<span class="aw osoba" style="width:${S}px;height:${S}px;--fs:${Math.round(w * 0.36)}px;--fh:${hue(o.n)}" aria-hidden="true">${ring && o.lv ? pierscien(S, o.lv, postep(o)) : ''}<span class="twarz" style="width:${w}px;height:${w}px">${ini(o.n)}</span></span>`;
   }
   // Odznaka: szczebelki — 7 słupków rosnących, wypełnione do poziomu
   function szczebelki(lv, h = 12) {
@@ -141,7 +141,7 @@
     return `<nav class="nav" aria-label="Nawigacja główna">
       <a class="znak" href="feed.html">${ZNAK}<span>Portal Liderów</span></a>
       <ul>${MENU.map(([k, t, ik, kr]) => `<li><a class="poz" href="${k}.html"${k === akt ? ' aria-current="page"' : ''} title="${t}">${I(ik)}<span class="etk">${t}</span>${kr ? `<span class="kropka etk">${kr}</span>` : ''}</a></li>`).join('')}</ul>
-      <button class="btn jasny duzy utworz" type="button" aria-label="Utwórz">${I('plus')}<span>Utwórz</span></button>
+      <button class="btn obrys duzy utworz" type="button" aria-label="Utwórz">${I('plus')}<span>Utwórz</span></button>
       <a class="ja" href="drabinka.html">${aw(ja, 44)}<span class="kto"><b>${ja.n}</b><small>${odz(ja.lv)}</small></span><span class="ikonka" aria-hidden="true">${I('dots-three')}</span></a>
     </nav>`;
   }

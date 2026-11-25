@@ -737,3 +737,10 @@ i.ph-duotone { font-size: 20px; line-height: 1; }
   .prof-akcje .btn.glowny { order: 0; flex: 1 1 100%; }
   .zakladki a { min-height: 44px; display: inline-flex; align-items: center; }
 }
+
+/* osoby: monogram dwuliterowy na tle z nazwy — spójnie z firmami (te kwadratowe, osoby okrągłe); portret rysowany odrzucony jako sztuczny */
+.aw.osoba .twarz { border-radius: 50%; font: 750 var(--fs, 14px)/1 var(--font-display); letter-spacing: 0;
+  background: color-mix(in srgb, hsl(var(--fh) 62% var(--fl)) 22%, var(--surface));
+  color: hsl(var(--fh) 58% var(--fl)); border: 1px solid color-mix(in srgb, hsl(var(--fh) 62% var(--fl)) 40%, transparent); }
+.nav .utworz.btn.obrys { background: var(--surface); color: var(--text-strong); border: 1px solid var(--line-2); }
+.nav .utworz.btn.obrys:hover { background: var(--surface-3); }
