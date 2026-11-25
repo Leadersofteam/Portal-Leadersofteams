@@ -744,3 +744,80 @@ i.ph-duotone { font-size: 20px; line-height: 1; }
   color: hsl(var(--fh) 58% var(--fl)); border: 1px solid color-mix(in srgb, hsl(var(--fh) 62% var(--fl)) 40%, transparent); }
 .nav .utworz.btn.obrys { background: var(--surface); color: var(--text-strong); border: 1px solid var(--line-2); }
 .nav .utworz.btn.obrys:hover { background: var(--surface-3); }
+
+/* ═════════ Runda 3 (25.11): wzorce układu X / GitHub / Oferteo / Fiverr, nasza skóra; spoiwem jest Drabinka ═════════ */
+/* STRUMIEŃ jak X: wiersz 40 px, separator 1 px, przypięty nagłówek z zakładkami, akcje równo pod treścią */
+.wpis { grid-template-columns: 40px minmax(0, 1fr); gap: 0 12px; padding: 14px 20px 6px; }
+.naglowek { position: sticky; top: 0; z-index: 4; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); }
+.wpis .akcje { display: flex; justify-content: space-between; max-width: 360px; margin: 2px 0 0 -10px; }
+/* nić „ile to może dać i od kogo” — jedna cicha linia pod formą treści */
+.nic { display: flex; align-items: center; gap: 8px; padding: 9px 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--text-muted); }
+.nic i { font-size: 15px; color: var(--text-faint); flex: none; }
+.nic b { margin-left: auto; font-weight: 650; color: var(--text-strong); text-align: right; }
+.pyt .nic, .usl + .nic { margin-top: 10px; border-top: 0; padding: 0; }
+.usl + .nic { padding: 8px 2px 0; }
+/* ZLECENIE jak Oferteo: fakty w jednym rzędzie, zaufanie firmy, jedyny przycisk w stopce */
+.fakty { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.zaufanie { display: flex; align-items: center; gap: 8px; padding: 0 16px 12px; font-size: 12.5px; color: var(--text-muted); }
+.zaufanie i { font-size: 15px; color: var(--success); }
+.oferty { flex-wrap: wrap; }
+.oferty .pasek { margin-left: auto; }
+.oferty .btn { margin-left: 4px; }
+/* USŁUGA jak Fiverr: okładka 16:9, cena „od” */
+.usl { grid-template-columns: 1fr; max-width: 380px; }
+.usl .okl { aspect-ratio: 16 / 9; min-height: 0; }
+.usl .opis { padding: 12px 14px 14px; }
+/* PROFIL jak GitHub: lewa kolumna z dużym awatarem, po prawej zakładki i treść */
+.gh { display: grid; grid-template-columns: 296px minmax(0, 1fr); gap: 0 32px; padding: 28px 28px 40px; }
+.gh-lewa { min-width: 0; }
+.gh-lewa h1 { margin: 16px 0 6px; font: 800 28px/1.1 var(--font-display); letter-spacing: -0.03em; color: var(--text-strong); }
+.gh-poz { margin-bottom: 6px; }
+.gh-lewa .rola { color: var(--text-muted); font-size: 15px; }
+.gh-lewa .bio { margin: 12px 0 0; color: var(--text-body); font-size: 14.5px; line-height: 1.55; }
+.gh-lewa .prof-akcje { position: static; flex-wrap: wrap; margin-top: 16px; }
+.gh-lewa .prof-akcje .btn.glowny { flex: 1 1 100%; justify-content: center; }
+.gh-lewa .prof-akcje .btn.obrys { flex: 1; justify-content: center; }
+.gh-aw .aw .twarz { box-shadow: none; }
+.gh-liczby { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px; color: var(--text-muted); }
+.gh-liczby li { display: flex; align-items: center; gap: 8px; }
+.gh-liczby i { font-size: 17px; color: var(--text-faint); }
+.gh-liczby b { color: var(--text-strong); font-weight: 700; font-variant-numeric: tabular-nums; }
+.gh-dr { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.gh-dr h2 { margin: 0 0 10px; font: 700 14px/1 var(--font-sans); color: var(--text-muted); }
+.gh-dr .duza-liczba b { font-size: 34px; }
+.gh-dr .schodki { height: 40px; margin: 10px 0 4px; }
+.gh-prawa { min-width: 0; }
+.gh-prawa .naglowek { border-bottom: 1px solid var(--line); }
+.gh-prawa .zakladki { padding: 0; }
+.gh-prawa .sekcja { padding-left: 0; padding-right: 0; }
+.readme { border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--surface); }
+.readme > header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); font: 650 13.5px var(--font-sans); color: var(--text-muted); background: var(--surface-2); border-radius: var(--radius) var(--radius) 0 0; }
+.readme .tr { padding: 4px 16px 8px; color: var(--text-body); font-size: 15px; line-height: 1.6; }
+.real { border-radius: var(--radius); box-shadow: none; }
+.real:hover { border-color: var(--text-muted); transform: none; }
+.real .dno .pk { color: var(--amber); font-weight: 700; }
+/* Oś światła zamiast heatmapy (ADR-010): chronologicznie, kto dał punkt, za co, ile */
+.os-sw { list-style: none; margin: 0; padding: 0; }
+.os-sw li { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); }
+.os-sw li:first-child { border-top: 0; }
+.os-sw .co { min-width: 0; font-size: 14.5px; color: var(--text-body); }
+.os-sw .co b { color: var(--text-strong); font-weight: 650; }
+.os-sw .co small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-muted); }
+.os-sw .pkt { font: 800 18px/1 var(--font-display); color: var(--amber); font-variant-numeric: tabular-nums; }
+.wiecej-link { display: inline-block; margin-top: 6px; font-weight: 600; font-size: 14px; color: var(--text-muted); }
+.wiecej-link:hover { color: var(--text-strong); text-decoration: underline; }
+@media (max-width: 720px) {
+  .gh { display: block; padding: 0 0 24px; }
+  .gh-lewa { padding: 16px 16px 0; }
+  .gh-aw .aw { zoom: 0.4; }
+  .gh-lewa h1 { font-size: 26px; }
+  .gh-prawa .sekcja { padding-left: 16px; padding-right: 16px; }
+  .gh-prawa .naglowek { top: 0; }
+  .fakty { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .usl { max-width: none; }
+  .wpis { grid-template-columns: 40px minmax(0, 1fr); padding: 14px 16px 6px; }
+  .wpis .akcje { max-width: none; margin-left: -10px; }
+}
+.wpis .akcje { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; justify-items: start; }
+.usl { max-width: 340px; }
+@media (max-width: 720px) { .wiecej-link { display: inline-flex; align-items: center; min-height: 44px; } }

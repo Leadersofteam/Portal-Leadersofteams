@@ -210,30 +210,34 @@
     `<div class="glowa"><a href="profil.html" class="imie">${o.n}</a>${znakOsoby(o)}<span class="czas">· ${czas}</span></div><div class="meta">${typ(t)}<span class="sep" aria-hidden="true">·</span>${o.branza} · ${o.miasto}</div>`;
   const akcje = (glowny) =>
     `<div class="akcje"><button class="akcja" type="button" aria-label="Odpowiedz" title="Odpowiedz">${I('arrow-bend-up-left')}</button><button class="akcja" type="button" aria-label="Zapisz" title="Zapisz">${I('bookmark-simple')}</button><button class="akcja" type="button" aria-label="Udostępnij" title="Udostępnij">${I('share-network')}</button>${glowny || ''}</div>`;
+  const nic = (t, od) => `<div class="nic">${I('seal-check')}<span>${t}</span><b>${od}</b></div>`;
   const gw = (n) => `<span class="gwiazdy" aria-label="${n} na 5">${I('star-fill').repeat(n)}</span>`.replaceAll('ph-star-fill', 'ph-star');
 
   function wZlecenie(f, czas, tresc, tyt, budzet, termin, miasto, oferty, oferenci, zbiera) {
-    return `<article class="wpis">${aw(f, 48)}<div>${glowa(f, czas, 'zlecenie')}<p class="tresc">${tresc}</p>
+    return `<article class="wpis">${aw(f, 40)}<div>${glowa(f, czas, 'zlecenie')}<p class="tresc">${tresc}</p>
       <div class="zlec"><div class="tyt">${tyt}</div>
-        <dl class="fakty"><div><dt>Budżet</dt><dd>${budzet}</dd></div><div><dt>Termin</dt><dd>${termin}</dd></div><div><dt>Miejsce</dt><dd>${miasto}</dd></div></dl>
-        <div class="oferty">${oferenci.length ? `<span class="stos">${oferenci.map((o) => aw(o, 26)).join('')}</span>` : ''}<span><b>${oferty} ${oferty === 1 ? 'oferta' : oferty < 5 ? 'oferty' : 'ofert'}</b> · zbiera do ${zbiera}</span><span class="pasek" style="margin-left:auto" aria-hidden="true"><span style="width:${Math.min(100, oferty * 12.5)}%"></span></span></div>
-      </div>${akcje(`<a class="btn obrys maly" href="#">Złóż ofertę</a>`)}</div></article>`;
+        <dl class="fakty"><div><dt>Budżet</dt><dd>${budzet}</dd></div><div><dt>Termin</dt><dd>${termin}</dd></div><div><dt>Miasto</dt><dd>${miasto}</dd></div><div><dt>Branża</dt><dd>${f.branza.split(' ')[0]}</dd></div></dl>
+        <div class="zaufanie">${I('seal-check')}<span>Firma zweryfikowana · 14 zleceń · średnia wystawianych ocen 4,8</span></div>
+        <div class="oferty">${oferenci.length ? `<span class="stos">${oferenci.map((o) => aw(o, 26)).join('')}</span>` : ''}<span><b>${oferty} ${oferty === 1 ? 'oferta' : oferty < 5 ? 'oferty' : 'ofert'}</b> · zbiera do ${zbiera}</span><span class="pasek" aria-hidden="true"><span style="width:${Math.min(100, oferty * 12.5)}%"></span></span><a class="btn obrys maly" href="#">Złóż ofertę</a></div>
+        ${nic('Po ocenie 5/5 po realizacji zlecenia', 'do +100 pkt dla Lidera')}
+      </div>${akcje()}</div></article>`;
   }
   function wRealizacja(lider, firma, czas, tresc, tyt, ocena, pkt, opis, rodz) {
-    return `<article class="wpis">${aw(lider, 48, true)}<div>${glowa(lider, czas, 'realizacja')}<p class="tresc">${tresc}</p>
-      <div class="swiatlo"><div class="scena">${aw(firma, 52)}<div class="promien"><b>+${pkt}<span> pkt</span></b><small>${opis}</small></div>${aw(lider, 52, true)}</div>
+    return `<article class="wpis">${aw(lider, 40, true)}<div>${glowa(lider, czas, 'realizacja')}<p class="tresc">${tresc}</p>
+      <div class="swiatlo"><div class="scena">${aw(firma, 48)}<div class="promien"><b>+${pkt}<span> pkt</span></b><small>${opis}</small></div>${aw(lider, 48, true)}</div>
         <div class="dol">${okl(rodz, 2, false).replace('class="okl"', 'class="okl" style="width:44px;height:44px;border-radius:10px;flex:none"')}<span style="min-width:0;flex:1"><span class="tyt">${tyt}</span><br><span class="pod">${firma.n} · ${gw(ocena)} ${ocena}/5</span></span></div>
       </div>${akcje()}</div></article>`;
   }
   function wPytanie(o, czas, tresc, tyt, odp, temat, odpowiadajacy) {
-    return `<article class="wpis">${aw(o, 48)}<div>${glowa(o, czas, 'pytanie')}
+    return `<article class="wpis">${aw(o, 40)}<div>${glowa(o, czas, 'pytanie')}
       <div class="pyt"><div class="tyt">${tyt}</div><p class="tresc" style="margin-top:6px">${tresc}</p>
-      <div class="pod"><span class="temat">${temat}</span>${odpowiadajacy.length ? `<span class="stos">${odpowiadajacy.map((x) => aw(x, 24)).join('')}</span>` : ''}<span>${odp ? `${odp} ${odp === 1 ? 'odpowiedź' : 'odpowiedzi'}` : 'Bez odpowiedzi'}</span><span class="nagroda" style="margin-left:auto">${I('sparkle')}+50 pkt za uznaną</span></div></div>
-      ${akcje(`<a class="btn obrys maly" href="#">Odpowiedz</a>`).replace(/<button class="akcja" type="button" aria-label="Odpowiedz"[^]*?<\/button>/, '')}</div></article>`;
+      <div class="pod"><span class="temat">${temat}</span>${odpowiadajacy.length ? `<span class="stos">${odpowiadajacy.map((x) => aw(x, 24)).join('')}</span>` : ''}<span>${odp ? `${odp} ${odp === 1 ? 'odpowiedź' : 'odpowiedzi'}` : 'Bez odpowiedzi'}</span></div>${nic('Gdy autor uzna odpowiedź', '+50 pkt dla odpowiadającego')}</div>
+      ${akcje()}</div></article>`;
   }
   function wUsluga(o, czas, tresc, tyt, cena, ocena, ile, rodz) {
-    return `<article class="wpis">${aw(o, 48)}<div>${glowa(o, czas, 'usluga')}<p class="tresc">${tresc}</p>
+    return `<article class="wpis">${aw(o, 40)}<div>${glowa(o, czas, 'usluga')}<p class="tresc">${tresc}</p>
       <a class="usl" href="#">${okl(rodz, 3)}<span class="opis"><span class="tyt">${tyt}</span><span class="ocena">${I('star')}${ocena}<span>(${ile} ocen)</span></span><span class="dno"><span class="cena">od <b>${cena}</b></span></span></span></a>
+      ${nic('Po ocenie 5/5 od klienta', '+100 pkt dla Lidera')}
       ${akcje()}</div></article>`;
   }
 
@@ -256,7 +260,7 @@
 
   // ═════════ Strumień ═════════
   function feed() {
-    const filtry = [['Wszystko', 87, true], ['Zlecenia', 31], ['Pytania', 24], ['Realizacje', 19], ['Usługi', 13]];
+    const filtry = [['Wszystko', 87, true], ['Moja branża', 41], ['Zlecenia', 31], ['Pytania', 24], ['Realizacje', 19], ['Usługi', 13]];
     let srodek;
     if (STAN === 'ladowanie') srodek = szkielet();
     else if (STAN === 'blad') srodek = komunikat('cloud-slash', 'Nie udało się wczytać strumienia', 'To po naszej stronie. Twoje wpisy są bezpieczne.', `<button class="btn glowny" type="button" data-ponow>${I('arrow-clockwise')}Spróbuj ponownie</button>`);
@@ -291,43 +295,45 @@
   function profil() {
     const b = P.bartek;
     const R = [
-      ['Klimatyzacja 12 pokoi', P.hotel, '5,0', 'listopad 2026', 'chlod'], ['Wentylacja piekarni', P.piekarnia, '5,0', 'październik 2026', 'hvac'],
-      ['Pompa ciepła, kamienica z 1930 r.', P.kamienica, '5,0', 'wrzesień 2026', 'san'], ['Modernizacja węzła cieplnego', P.hotel, '4,0', 'sierpień 2026', 'el'],
-      ['Rekuperacja w biurowcu', P.biuro, '5,0', 'lipiec 2026', 'hvac'], ['Serwis chłodni', P.piekarnia, '5,0', 'czerwiec 2026', 'chlod'],
+      ['Klimatyzacja 12 pokoi', P.hotel, '5,0', 'listopad 2026', 'chlod', 100], ['Wentylacja piekarni', P.piekarnia, '5,0', 'październik 2026', 'hvac', 50],
+      ['Pompa ciepła, kamienica z 1930 r.', P.kamienica, '5,0', 'wrzesień 2026', 'san', 100], ['Modernizacja węzła cieplnego', P.hotel, '4,0', 'sierpień 2026', 'el', 40],
+      ['Rekuperacja w biurowcu', P.biuro, '5,0', 'lipiec 2026', 'hvac', 100], ['Serwis chłodni', P.piekarnia, '5,0', 'czerwiec 2026', 'chlod', 100],
     ];
-    const zrodla = [P.hotel, P.marta, P.piekarnia, P.iga, P.kamienica, P.ewa];
-    document.body.innerHTML = `${gora()}<div class="rama">${nav('liderzy')}
-      <main class="kolumna" id="tresc">
-        ${okladkaProfilu()}
-        <div class="prof-glowa">${aw(b, 128, true)}
-          <div class="prof-akcje"><button class="ikonka" type="button" aria-label="Udostępnij profil" style="border:1px solid var(--line-2)">${I('share-network')}</button><button class="btn obrys" type="button">${I('plus')}Obserwuj</button><a class="btn glowny" href="#">${I('clipboard-text')}Zaproponuj zlecenie</a></div>
-          <h1>${b.n} ${odz(b.lv, true)}</h1>
-          <div class="rola">Instalacje HVAC · ${b.miasto} · zespół 4 monterów</div>
-          <p class="bio">Klimatyzacja, wentylacja i pompy ciepła w obiektach usługowych. Projekt, montaż i odbiór — z jednym człowiekiem do kontaktu od pierwszej wizji do protokołu.</p>
-          <div class="prof-fakty"><span>${I('star')}<b>4,9</b> (37 ocen)</span><span>${I('seal-check')}<b>41</b> realizacji</span><span>${I('chats-circle')}<b>12</b> uznanych odpowiedzi</span><span>${I('calendar-blank')}W Portalu od marca 2026</span></div>
-        </div>
-        <div class="naglowek" style="position:sticky"><nav class="zakladki" data-przesuw aria-label="Sekcje profilu"><a href="#" aria-current="page">Przegląd</a><a href="#">Realizacje<span class="ile">41</span></a><a href="#">Odpowiedzi<span class="ile">12</span></a><a href="#">Oceny<span class="ile">37</span></a><a href="#">Usługi<span class="ile">2</span></a></nav></div>
-        <section class="sekcja tylko-telefon">${miniDrabinkaProfilu(b)}</section>
-        <section class="sekcja"><header><h2>Przypięte realizacje</h2><a href="#">Wszystkie 41</a></header>
-          <div class="przypiete" data-przesuw>${R.map(([t, f, o, d, rz]) => `<a class="real" href="#">${okl(rz, t.length)}<span class="w"><span class="tyt">${t}</span><span class="kto">${aw(f, 22).replace('--fs:7px', '--fs:8px')}${f.n}</span><span class="dno"><span class="ocena">${I('star')}${o}</span><span>${d}</span></span></span></a>`).join('')}</div></section>
-        <section class="sekcja"><header><h2>Usługi</h2><small>ceny orientacyjne, wycena po wizji</small></header>
-          <div class="uslugi" data-przesuw>
-            <a class="kusl" href="#">${okl('chlod', 4)}<span class="w"><span class="tyt">Przegląd i czyszczenie klimatyzacji z protokołem</span><span class="ocena">${I('star')}4,9<span>(24 oceny)</span></span><span class="dno"><span class="cena">od <b>180 zł</b> / jedn.</span><span class="cena">2–5 dni</span></span></span></a>
-            <a class="kusl" href="#">${okl('hvac', 1)}<span class="w"><span class="tyt">Projekt wentylacji z rekuperacją dla lokalu usługowego</span><span class="ocena">${I('star')}4,8<span>(9 ocen)</span></span><span class="dno"><span class="cena">od <b>3500 zł</b></span><span class="cena">2–3 tyg.</span></span></span></a>
-          </div></section>
-        <section class="sekcja"><header><h2>Ostatnie oceny</h2><a href="#">Wszystkie 37</a></header>
-          ${[[P.hotel, 5, 'Serwis zrobiony rano, zanim goście zeszli na śniadanie. Protokół z pomiarami dostaliśmy tego samego dnia.', 'Klimatyzacja 12 pokoi', '12.11'], [P.piekarnia, 5, 'Ani jednego dnia przestoju produkcji. Ekipa pracowała w oknach między wypiekami.', 'Wentylacja piekarni', '30.10'], [P.hotel, 4, 'Dobra robota, jeden termin przesunięty o dwa dni — uprzedzili z wyprzedzeniem.', 'Modernizacja węzła cieplnego', '28.08']].map(([f, o, t, z, d]) => `<div class="cytat">${aw(f, 40)}<div><q>${t}</q><div class="kto"><b style="color:var(--text-strong);font-weight:600">${f.n}</b>${gw(o)}<span>${z} · ${d}</span></div></div></div>`).join('')}
-        </section>
-        <div class="sekcja tylko-telefon" style="border:0">${stopka()}</div>
+    const os = [
+      [P.hotel, 'Ocena 5/5', 'Klimatyzacja 12 pokoi', '12.11', 100], [P.marta, 'Uznała odpowiedź', 'Pompa ciepła w budynku z 1930 r.', '09.11', 50],
+      [P.piekarnia, 'Ocena 5/5', 'Wentylacja piekarni', '30.10', 50], [P.iga, 'Głos za odpowiedź', 'Rekuperacja w lokalu usługowym', '22.10', 10],
+      [P.kamienica, 'Ocena 5/5', 'Pompa ciepła, kamienica z 1930 r.', '12.09', 100], [P.hotel, 'Ocena 4/5', 'Modernizacja węzła cieplnego', '28.08', 40],
+    ];
+    document.body.innerHTML = `${gora()}<div class="rama szeroka">${nav('liderzy')}
+      <main class="kolumna" id="tresc"><div class="gh">
+        <aside class="gh-lewa" aria-label="Lider">
+          <div class="gh-aw">${aw(b, 260, true)}</div>
+          <h1>${b.n}</h1><div class="gh-poz">${odz(b.lv, true)}</div>
+          <div class="rola">Instalacje HVAC · ${b.miasto}</div>
+          <p class="bio">Klimatyzacja, wentylacja i pompy ciepła w obiektach usługowych. Projekt, montaż i odbiór — z jednym człowiekiem do kontaktu.</p>
+          <div class="prof-akcje"><a class="btn glowny" href="#">${I('clipboard-text')}Zaproponuj zlecenie</a><button class="btn obrys" type="button">${I('plus')}Obserwuj</button><button class="ikonka" type="button" aria-label="Udostępnij profil" style="border:1px solid var(--line-2)">${I('share-network')}</button></div>
+          <ul class="gh-liczby"><li>${I('seal-check')}<b>41</b> realizacji</li><li>${I('chats-circle')}<b>12</b> uznanych odpowiedzi</li><li>${I('star')}<b>4,9</b> średnia z 37 ocen</li><li>${I('calendar-blank')}W Portalu od marca 2026</li></ul>
+          <section class="gh-dr" aria-label="Do następnego szczebla"><h2>Do następnego szczebla</h2>${miniDrabinkaProfilu(b, true)}</section>
+        </aside>
+        <div class="gh-prawa">
+          <div class="naglowek" style="position:sticky"><nav class="zakladki" data-przesuw aria-label="Sekcje profilu"><a href="#" aria-current="page">Przegląd</a><a href="#">Realizacje<span class="ile">41</span></a><a href="#">Odpowiedzi<span class="ile">12</span></a><a href="#">Oceny<span class="ile">37</span></a><a href="#">Usługi<span class="ile">2</span></a></nav></div>
+          <section class="sekcja"><div class="readme"><header>${I('article')}<span>O mnie</span></header><div class="tr"><p>Od ośmiu lat montuję klimatyzację, wentylację i pompy ciepła w hotelach, piekarniach i biurowcach. Pracuję w oknach, w których obiekt nie traci ani dnia: serwis rano, protokół z pomiarów tego samego dnia.</p><p>Pytania o dobór urządzeń i formalności odbioru? Odpowiadam w Portalu — tak zdobywam punkty od innych Liderów.</p></div></div></section>
+          <section class="sekcja"><header><h2>Przypięte realizacje</h2><a href="#">Wszystkie 41</a></header>
+            <div class="przypiete" data-przesuw>${R.map(([t, f, o, d, rz, p]) => `<a class="real" href="#">${okl(rz, t.length)}<span class="w"><span class="tyt">${t}</span><span class="kto">${aw(f, 22).replace('--fs:7px', '--fs:8px')}${f.n}</span><span class="dno"><span class="ocena">${I('star')}${o}</span><span class="pk">+${p} pkt</span><span>${d}</span></span></span></a>`).join('')}</div></section>
+          <section class="sekcja"><header><h2>Oś światła</h2><small>kto dał punkt, za co, ile — od najnowszych</small></header>
+            <ol class="os-sw">${os.map(([z, co, za, d, p]) => `<li>${aw(z, 36)}<span class="co"><b>${z.n}</b> · ${co}<small>${za} · ${d}</small></span><span class="pkt">+${p}</span></li>`).join('')}</ol>
+            <a class="wiecej-link" href="#">Pokaż więcej · 6 z 23</a></section>
+          <section class="sekcja"><header><h2>Usługi</h2><small>ceny orientacyjne, wycena po wizji</small></header>
+            <div class="uslugi" data-przesuw>
+              <a class="kusl" href="#">${okl('chlod', 4)}<span class="w"><span class="tyt">Przegląd i czyszczenie klimatyzacji z protokołem</span><span class="ocena">${I('star')}4,9<span>(24 oceny)</span></span><span class="dno"><span class="cena">od <b>180 zł</b> / jedn.</span><span class="cena">2–5 dni</span></span></span></a>
+              <a class="kusl" href="#">${okl('hvac', 1)}<span class="w"><span class="tyt">Projekt wentylacji z rekuperacją dla lokalu usługowego</span><span class="ocena">${I('star')}4,8<span>(9 ocen)</span></span><span class="dno"><span class="cena">od <b>3500 zł</b></span><span class="cena">2–3 tyg.</span></span></span></a>
+            </div></section>
+          <section class="sekcja"><header><h2>Ostatnie oceny</h2><a href="#">Wszystkie 37</a></header>
+            ${[[P.hotel, 5, 'Serwis zrobiony rano, zanim goście zeszli na śniadanie. Protokół z pomiarami dostaliśmy tego samego dnia.', 'Klimatyzacja 12 pokoi', '12.11'], [P.piekarnia, 5, 'Ani jednego dnia przestoju produkcji. Ekipa pracowała w oknach między wypiekami.', 'Wentylacja piekarni', '30.10'], [P.hotel, 4, 'Dobra robota, jeden termin przesunięty o dwa dni — uprzedzili z wyprzedzeniem.', 'Modernizacja węzła cieplnego', '28.08']].map(([f, o, t, z, d]) => `<div class="cytat">${aw(f, 40)}<div><q>${t}</q><div class="kto"><b style="color:var(--text-strong);font-weight:600">${f.n}</b>${gw(o)}<span>${z} · ${d}</span></div></div></div>`).join('')}
+          </section>
+          <div class="sekcja" style="border:0">${stopka()}</div>
+        </div></div>
       </main>
-      <aside class="bok"><div class="bok-lepki">
-        <section class="karta"><header><h2>Drabinka</h2>${odz(b.lv)}</header><div class="wnetrze">${miniDrabinkaProfilu(b, true)}</div></section>
-        <section class="karta"><header><h2>Kto dał światło</h2><a href="#">Wszyscy</a></header><div class="wnetrze">
-          <div class="zrodla"><span class="stos">${zrodla.map((z) => aw(z, 32)).join('')}</span><p><b>23 firmy i osoby</b><br>dały Bartkowi punkty</p></div>
-          <ul class="lista" style="padding:12px 0 0;margin:0 -10px">${[[P.hotel, 'Ocena 5/5 · Klimatyzacja 12 pokoi', '12.11', 100], [P.marta, 'Uznała odpowiedź o pompie ciepła', '09.11', 50], [P.piekarnia, 'Ocena 5/5 · Wentylacja piekarni', '30.10', 50], [P.iga, 'Głos za odpowiedź o rekuperacji', '22.10', 10]].map(([z, t, d, p]) => `<li><a href="#" class="mz">${aw(z, 36)}<span class="t"><b>${z.n}</b><small>${t} · ${d}</small></span><span class="pkt">+${p}</span></a></li>`).join('')}</ul>
-        </div></section>
-        ${stopka()}
-      </div></aside>
     </div>${dolny('')}`;
   }
   function miniDrabinkaProfilu(b, bok) {
@@ -425,7 +431,7 @@
           </div></section>
         </div>
         <section class="sekcja" style="border-bottom:0"><header><h2>Czego Drabinka nie liczy</h2><small>żeby status znaczył to samo dla każdego</small></header>
-          <div class="zero">${[['user-plus', 'Zaproszenia i polecenia'], ['sign-in', 'Logowanie i dni aktywności'], ['note-pencil', 'Wpisy i komentarze'], ['heart', 'Reakcje'], ['eye', 'Wyświetlenia'], ['users', 'Obserwujący'], ['magnifying-glass', 'Wyszukiwanie']].map(([ik, t]) => `<span>${I(ik)}${t}<b>0</b></span>`).join('')}</div>
+          <div class="zero">${[['user-plus', 'Zaproszenia i polecenia'], ['sign-in', 'Logowanie i dni aktywności'], ['note-pencil', 'Wpisy i komentarze'], ['heart', 'Reakcje'], ['eye', 'Wyświetlenia'], ['users', 'Obserwujący'], ['magnifying-glass', 'Wyszukiwanie']].map(([ik, t]) => `<span>${I(ik)}${t}<b>0 pkt</b></span>`).join('')}</div>
           <div class="tylko-telefon" style="margin-top:24px">${stopka()}</div>
         </section>
       </main>
