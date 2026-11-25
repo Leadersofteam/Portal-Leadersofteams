@@ -35,6 +35,9 @@ WORKDIR /app
 COPY --from=build /repo/apps/web/.next/standalone ./
 COPY --from=build /repo/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build /repo/apps/web/public ./apps/web/public
+# Next zapisuje cache ISR/prerender w .next/cache w czasie działania. COPY daje root:root,
+# a serwer działa jako node → EACCES przy każdej rewalidacji (zastane do 25.11.2026).
+RUN mkdir -p apps/web/.next/cache && chown -R node:node apps/web/.next/cache
 USER node
 EXPOSE 3000
 CMD ["node", "apps/web/server.js"]
