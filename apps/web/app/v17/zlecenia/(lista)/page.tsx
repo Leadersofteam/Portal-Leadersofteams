@@ -8,7 +8,7 @@ import { Naglowek, ofertyEtykieta } from '@/components/v17/rynek';
 import { Aw } from '@/components/v17/znaki';
 import type { LevelRule } from '@/lib/levels';
 import { publicApi, serverApi } from '@/lib/server-api';
-import { budget, levelsOrFallback, nf, temu } from '@/lib/v17';
+import { budget, levelsOrFallback, nf, plural, temu } from '@/lib/v17';
 import { loadJa, loadMojaDrabinka } from '@/lib/v17-data';
 
 // Metadane jak na liście ze starego wyglądu (zachowane 1:1 — to ten sam adres).
@@ -209,7 +209,11 @@ export default async function ZleceniaV17({
     >
       <Naglowek
         tytul="Zlecenia"
-        meta={data ? `${nf(total)} otwartych · najnowsze u góry` : ''}
+        meta={
+          data
+            ? `${nf(total)} ${plural(total, 'otwarte', 'otwarte', 'otwartych')} · najnowsze u góry`
+            : ''
+        }
         cta={{ href: '/zlecenia/nowe', etykieta: 'Dodaj zlecenie' }}
       />
 
