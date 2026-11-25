@@ -45,6 +45,10 @@ Bierzemy **wzorce zachowania i układu**, nie wygląd, kolory, logo ani nazwy cu
   (nie dopisujemy nagród, których nie ma).
 - Każde światło ma **źródło-człowieka**: awatar firmy/osoby, która oceniła albo uznała odpowiedź. Rekrutacja, logowania, aktywność → zero
   (pokazujemy to jako „czego Drabinka nie liczy”, nie chowamy).
+- **Punkty są publiczne po wagach (Maciej 25.11: „Tak, publicznie”).** Na profilu, w strumieniu i na „Osi światła”
+  pokazujemy FAKTYCZNE punkty z księgi (po ×0,5ⁿ, ×0,5 młodej firmy, limicie 300/7 dni), ze źródłem-człowiekiem i stanem
+  „dojrzewa za N dni”. Wyłącznie zdarzenia przyznane i dojrzewające; cofnięte/odrzucone (antyfraud) i ich powody — nie.
+  Przejrzystość jest dowodem anty-MLM: każdy może sprawdzić, skąd wziął się czyjś poziom.
 - Gdzie: pełna drabina na `/drabinka` (z obecną sceną 3D w nagłówku), skrót w prawej kolumnie strumienia, pasek na profilu, odznaka na karcie.
 
 ## 3. Tożsamość wizualna — podobna do App, ale nie ta sama
