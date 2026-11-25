@@ -9,7 +9,7 @@
  *
  * Zasady:
  *  - liczymy `rgb(`/`rgba(` bez `var(--` w tej samej linii oraz hexy kolorów,
- *  - POZA blokami `:root { ... }` i `[data-theme='...'] { ... }` (tam literały
+ *  - POZA blokami `:root`, `[data-theme='...']` oraz motywu V17 `html[data-wyglad=...]`/`.v17 {` (tam literały
  *    są definicjami tokenów — to ich jedyne legalne miejsce),
  *  - data-URI (ziarno szumu SVG) jest ignorowane w całości,
  *  - wynik > BASELINE → exit 1; wynik < BASELINE → przypomnienie o obniżeniu.
@@ -49,7 +49,10 @@ for (const plik of PLIKI) {
   for (let i = 0; i < linie.length; i++) {
     const linia = linie[i];
 
-    if (!wewnatrzTokenow && /^\s*(:root|\[data-theme=)/.test(linia)) {
+    // Bloki motywu V17 (flaga wyglądu, 25.11) są tym samym co [data-theme]: definiują
+    // tokeny dla jednego wyglądu. Wyłącznie selektor otwierający blok — reguły komponentów
+    // `.v17 .x { … }` dalej muszą używać var(--…).
+    if (!wewnatrzTokenow && /^\s*(:root|\[data-theme=|html\[data-wyglad=|\.v17\s*\{)/.test(linia)) {
       wewnatrzTokenow = true;
       nawiasy = 0;
     }
