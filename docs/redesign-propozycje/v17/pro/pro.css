@@ -560,3 +560,14 @@ i.ph-duotone { font-size: 20px; line-height: 1; }
 .stany a { padding: 6px 10px; border-radius: 999px; color: var(--text-muted); }
 .stany a[aria-current] { background: var(--text-strong); color: var(--bg); }
 @media (max-width: 720px) { .stany { display: none; } }
+
+/* szkielety: kształt wiersza, nie spinner; ruch tylko gdy użytkownik go nie wyłączył */
+.sz { display: block; background: var(--surface-3); border-radius: 8px; }
+.sz.m { background: var(--surface-2); }
+.sz.kolo { border-radius: 50%; }
+.sz-wiersz { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 8px 0; }
+.sz-wiersz > div { display: grid; gap: 8px; }
+@media (prefers-reduced-motion: no-preference) {
+  .sz, .wpis[aria-hidden="true"] span { animation: sz-puls 1.4s ease-in-out infinite; }
+  @keyframes sz-puls { 50% { opacity: .55; } }
+}

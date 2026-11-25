@@ -253,7 +253,7 @@
     const filtry = [['Wszystko', 87, true], ['Zlecenia', 31], ['Pytania', 24], ['Realizacje', 19], ['Usługi', 13]];
     let srodek;
     if (STAN === 'ladowanie') srodek = szkielet();
-    else if (STAN === 'blad') srodek = komunikat('cloud-slash', 'Nie udało się wczytać strumienia', 'To po naszej stronie. Twoje wpisy są bezpieczne.', `<button class="btn glowny" type="button">${I('arrow-clockwise')}Spróbuj ponownie</button>`);
+    else if (STAN === 'blad') srodek = komunikat('cloud-slash', 'Nie udało się wczytać strumienia', 'To po naszej stronie. Twoje wpisy są bezpieczne.', `<button class="btn glowny" type="button" data-ponow>${I('arrow-clockwise')}Spróbuj ponownie</button>`);
     else if (STAN === 'pusty') srodek = komunikat('sparkle', 'Tu pojawią się zlecenia, pytania i realizacje', 'Wybierz branże, a strumień pokaże wpisy z nich — najnowsze na górze, bez algorytmu.', `<a class="btn glowny" href="#">Wybierz branże</a><a class="btn obrys" href="#">Zadaj pierwsze pytanie</a>`);
     else srodek = wpisy() + `<div class="wiecej"><button class="btn obrys" type="button">Pokaż więcej</button><small class="num">8 z 87</small></div>`;
     document.body.innerHTML = `${gora()}<div class="rama">${nav('feed')}
@@ -423,8 +423,47 @@
           <div class="tylko-telefon" style="margin-top:24px">${stopka()}</div>
         </section>
       </main>
-    </div>${dolny('drabinka')}${stany(['pusty'])}`;
+    </div>${dolny('drabinka')}${stany(['pusty', 'ladowanie', 'blad'])}`;
   }
 
-  window.Pro = { feed, profil, drabinka };
+  // ═════════ Stany profilu i Drabinki: ładowanie (szkielet w kształcie wierszy) / błąd / pusty ═════════
+  const sz = (w, h = 12, kl = '') => `<span class="sz ${kl}" style="width:${w};height:${h}px"></span>`;
+  const szWiersz = () => `<div class="sz-wiersz"><span class="sz kolo" style="width:40px;height:40px"></span><div>${sz('46%')}${sz('88%', 10, 'm')}</div>${sz('44px', 20)}</div>`;
+  const powloka = (akt, szeroka, tresc, lista, pasekTel = '') => `${gora()}<div class="rama${szeroka ? ' szeroka' : ''}">${nav(akt)}<main class="kolumna" id="tresc">${tresc}</main></div>${dolny(akt)}${stany(lista)}`;
+  const bladEkranu = (t) => komunikat('cloud-slash', t, 'To po naszej stronie. Twoje punkty i wpisy są bezpieczne.', `<button class="btn glowny" type="button" data-ponow>${I('arrow-clockwise')}Spróbuj ponownie</button><a class="btn obrys" href="feed.html">Wróć do strumienia</a>`);
+
+  function stanProfilu() {
+    const lista = ['pusty', 'ladowanie', 'blad'];
+    if (STAN === 'ladowanie') {
+      return powloka('', false, `<div role="status" aria-busy="true" aria-label="Wczytywanie profilu"><div class="sz" style="height:150px;border-radius:0"></div>
+        <div style="padding:0 20px;margin-top:-48px">${sz('96px', 96, 'kolo')}<div style="display:grid;gap:10px;margin-top:16px">${sz('46%', 22)}${sz('30%', 12, 'm')}${sz('80%', 12, 'm')}</div></div>
+        <div style="padding:20px">${szWiersz()}${szWiersz()}${szWiersz()}${szWiersz()}</div></div>`, lista);
+    }
+    if (STAN === 'blad') return powloka('', false, `<div class="naglowek"><h1>Profil</h1></div>${bladEkranu('Nie udało się wczytać profilu')}`, lista);
+    // pusty = nowy Lider bez punktów, widziany przez siebie
+    const o = { ...P.ola, lv: 0, pkt: 0, n: 'Ola Wrzos' };
+    return powloka('liderzy', false, `${okladkaProfilu()}
+      <div class="prof-glowa">${aw(o, 128)}<div class="prof-akcje"><a class="btn glowny" href="#">${I('pencil-simple')}Uzupełnij profil</a></div>
+        <h1>${o.n} ${odz(0, true)}</h1><div class="rola">${o.branza} · ${o.miasto}</div>
+        <p class="bio" style="color:var(--text-muted)">Dodaj dwa zdania o tym, co robisz i dla kogo. Firmy czytają to przed wysłaniem zlecenia.</p></div>
+      <section class="sekcja"><header><h2>Realizacje</h2></header>${komunikat('seal-check', 'Pierwsza realizacja pojawi się po zleceniu', 'Firma ocenia pracę po jej zakończeniu — dopiero wtedy wpis trafia na profil. Nie da się go dodać samemu.', `<a class="btn glowny" href="feed.html">Zobacz otwarte zlecenia</a>`)}</section>
+      <section class="sekcja"><header><h2>Odpowiedzi</h2></header>${komunikat('chats-circle', 'Brak uznanych odpowiedzi', 'Odpowiedz na pytanie z twojej branży. Punkt dostaniesz, gdy autor uzna odpowiedź.', `<a class="btn obrys" href="feed.html">Pytania czekające na odpowiedź</a>`)}</section>`, lista);
+  }
+  function stanDrabinki() {
+    if (STAN === 'ladowanie') {
+      return powloka('drabinka', true, `<div role="status" aria-busy="true" aria-label="Wczytywanie Drabinki"><section class="dr-hero" style="display:grid;gap:14px">${sz('30%', 12)}${sz('70%', 36)}${sz('55%', 14, 'm')}<div style="display:flex;gap:14px;align-items:center;margin-top:8px">${sz('60px', 60, 'kolo')}<div style="flex:1;display:grid;gap:10px">${sz('40%', 16)}${sz('100%', 8, 'm')}</div></div></section>
+        <section class="sekcja">${sz('36%', 18)}<div style="display:grid;gap:12px;margin-top:16px">${[0, 1, 2, 3, 4, 5, 6].map(szWiersz).join('')}</div></section></div>`, ['pusty', 'ladowanie', 'blad']);
+    }
+    return powloka('drabinka', true, `<div class="naglowek"><h1>Drabinka Lidera</h1></div>${bladEkranu('Nie udało się wczytać Drabinki')}`, ['pusty', 'ladowanie', 'blad']);
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-ponow]')) return;
+    const u = new URLSearchParams(location.search); u.delete('stan'); location.search = u.toString();
+  });
+
+  window.Pro = {
+    feed,
+    profil: () => { if (STAN) { document.body.innerHTML = stanProfilu(); } else { profil(); document.body.insertAdjacentHTML('beforeend', stany(['pusty', 'ladowanie', 'blad'])); } },
+    drabinka: () => { if (STAN === 'ladowanie' || STAN === 'blad') { document.body.innerHTML = stanDrabinki(); } else drabinka(); },
+  };
 })();
