@@ -821,3 +821,7 @@ i.ph-duotone { font-size: 20px; line-height: 1; }
 .wpis .akcje { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; justify-items: start; }
 .usl { max-width: 340px; }
 @media (max-width: 720px) { .wiecej-link { display: inline-flex; align-items: center; min-height: 44px; } }
+
+.zaufanie { flex-wrap: wrap; }
+.zaufanie .wymaga { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-weight: 650; color: var(--text-strong); }
+.zaufanie .wymaga i { color: var(--text-muted); }

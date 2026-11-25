@@ -213,11 +213,11 @@
   const nic = (t, od) => `<div class="nic">${I('seal-check')}<span>${t}</span><b>${od}</b></div>`;
   const gw = (n) => `<span class="gwiazdy" aria-label="${n} na 5">${I('star-fill').repeat(n)}</span>`.replaceAll('ph-star-fill', 'ph-star');
 
-  function wZlecenie(f, czas, tresc, tyt, budzet, termin, miasto, oferty, oferenci, zbiera) {
+  function wZlecenie(f, czas, tresc, tyt, budzet, termin, miasto, oferty, oferenci, zbiera, minLv = 0) {
     return `<article class="wpis">${aw(f, 40)}<div>${glowa(f, czas, 'zlecenie')}<p class="tresc">${tresc}</p>
       <div class="zlec"><div class="tyt">${tyt}</div>
         <dl class="fakty"><div><dt>Budżet</dt><dd>${budzet}</dd></div><div><dt>Termin</dt><dd>${termin}</dd></div><div><dt>Miasto</dt><dd>${miasto}</dd></div><div><dt>Branża</dt><dd>${f.branza.split(' ')[0]}</dd></div></dl>
-        <div class="zaufanie">${I('seal-check')}<span>Firma zweryfikowana · 14 zleceń · średnia wystawianych ocen 4,8</span></div>
+        <div class="zaufanie">${I('seal-check')}<span>Firma zweryfikowana · 14 zleceń · średnia wystawianych ocen 4,8</span>${minLv ? `<span class="wymaga">${I('lock-simple')}Oferty od L${minLv} · ${L[minLv - 1].nazwa}</span>` : ''}</div>
         <div class="oferty">${oferenci.length ? `<span class="stos">${oferenci.map((o) => aw(o, 26)).join('')}</span>` : ''}<span><b>${oferty} ${oferty === 1 ? 'oferta' : oferty < 5 ? 'oferty' : 'ofert'}</b> · zbiera do ${zbiera}</span><span class="pasek" aria-hidden="true"><span style="width:${Math.min(100, oferty * 12.5)}%"></span></span><a class="btn obrys maly" href="#">Złóż ofertę</a></div>
         ${nic('Po ocenie 5/5 po realizacji zlecenia', 'do +100 pkt dla Lidera')}
       </div>${akcje()}</div></article>`;
@@ -247,7 +247,7 @@
       wRealizacja(P.marta, P.hotel, '2 godz.', 'Skończyliśmy 15 kWp na dachu hotelu. Najtrudniejsze były mocowania na starej papie — opisałam to w realizacji.', 'Montaż paneli PV 15 kWp', 5, 100, 'ocena 5/5 · dojrzewa 7 dni', 'pv'),
       wPytanie(P.tomek, '4 godz.', 'Wymiana instalacji w lokalu usługowym, odbiór w przyszłym tygodniu.', 'Co musi być w protokole pomiarów, żeby odbiór przeszedł za pierwszym razem?', 2, 'Formalności', [P.iga, P.bartek]),
       wUsluga(P.iga, 'wczoraj', 'Dodałam usługę: wykończenie lokalu pod klucz, z harmonogramem w etapach i odbiorem częściowym.', 'Projekt i wykończenie lokalu usługowego', '2400 zł', '4,7', 22, 'wyk'),
-      wZlecenie(P.kamienica, 'wczoraj', 'Remont klatki schodowej w kamienicy z 1910 r. Dwa etapy, konserwator zabytków już uzgodniony.', 'Remont klatki schodowej', '25–40 tys. zł', '20.01', 'Kraków', 2, [P.iga], '05.12'),
+      wZlecenie(P.kamienica, 'wczoraj', 'Remont klatki schodowej w kamienicy z 1910 r. Dwa etapy, konserwator zabytków już uzgodniony.', 'Remont klatki schodowej', '25–40 tys. zł', '20.01', 'Kraków', 2, [P.iga], '05.12', 3),
       wPytanie(P.ola, '2 dni', 'Mam zlecenie na 24 tys. — firma chce zaliczkę bez aneksu.', 'Przy jakiej wartości zlecenia podpisujecie aneks z zaliczką?', 0, 'Rozliczenia', []),
       wRealizacja(P.bartek, P.piekarnia, '3 dni', 'Wentylacja piekarni gotowa bez zatrzymania produkcji. Najtrudniejsze były okna czasowe, nie sama instalacja.', 'Wentylacja piekarni', 5, 50, 'druga ocena od tej firmy w roku · ×0,5', 'hvac'),
       wZlecenie(P.piekarnia, '4 dni', 'Potrzebny przegląd instalacji elektrycznej przed kontrolą, najlepiej w dni bez wypieku.', 'Przegląd instalacji elektrycznej', '2–3 tys. zł', '28.11', 'Toruń', 6, [P.tomek, P.kuba], '25.11'),
@@ -295,14 +295,14 @@
   function profil() {
     const b = P.bartek;
     const R = [
-      ['Klimatyzacja 12 pokoi', P.hotel, '5,0', 'listopad 2026', 'chlod', 100], ['Wentylacja piekarni', P.piekarnia, '5,0', 'październik 2026', 'hvac', 50],
-      ['Pompa ciepła, kamienica z 1930 r.', P.kamienica, '5,0', 'wrzesień 2026', 'san', 100], ['Modernizacja węzła cieplnego', P.hotel, '4,0', 'sierpień 2026', 'el', 40],
+      ['Klimatyzacja 12 pokoi', P.hotel, '5,0', 'listopad 2026', 'chlod', 50], ['Wentylacja piekarni', P.piekarnia, '5,0', 'październik 2026', 'hvac', 50],
+      ['Pompa ciepła, kamienica z 1930 r.', P.kamienica, '5,0', 'wrzesień 2026', 'san', 100], ['Modernizacja węzła cieplnego', P.hotel, '4,0', 'sierpień 2026', 'el', 80],
       ['Rekuperacja w biurowcu', P.biuro, '5,0', 'lipiec 2026', 'hvac', 100], ['Serwis chłodni', P.piekarnia, '5,0', 'czerwiec 2026', 'chlod', 100],
     ];
     const os = [
-      [P.hotel, 'Ocena 5/5', 'Klimatyzacja 12 pokoi', '12.11', 100], [P.marta, 'Uznała odpowiedź', 'Pompa ciepła w budynku z 1930 r.', '09.11', 50],
+      [P.hotel, 'Ocena 5/5 · druga od tej firmy w roku, ×0,5', 'Klimatyzacja 12 pokoi', '12.11', 50], [P.marta, 'Uznała odpowiedź', 'Pompa ciepła w budynku z 1930 r.', '09.11', 50],
       [P.piekarnia, 'Ocena 5/5', 'Wentylacja piekarni', '30.10', 50], [P.iga, 'Głos za odpowiedź', 'Rekuperacja w lokalu usługowym', '22.10', 10],
-      [P.kamienica, 'Ocena 5/5', 'Pompa ciepła, kamienica z 1930 r.', '12.09', 100], [P.hotel, 'Ocena 4/5', 'Modernizacja węzła cieplnego', '28.08', 40],
+      [P.kamienica, 'Ocena 5/5', 'Pompa ciepła, kamienica z 1930 r.', '12.09', 100], [P.hotel, 'Ocena 4/5 · pierwsza od tej firmy', 'Modernizacja węzła cieplnego', '28.08', 80],
     ];
     document.body.innerHTML = `${gora()}<div class="rama szeroka">${nav('liderzy')}
       <main class="kolumna" id="tresc"><div class="gh">
