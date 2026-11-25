@@ -186,6 +186,10 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
     const packages = (detail.json() as { listing: { packages: Array<{ tier: string }> } }).listing
       .packages;
     expect(packages.map((p) => p.tier)).toEqual(['BASIC', 'PREMIUM']);
+    // V17 „Rynek”: profileId i handle Lidera → link „Cały profil”, oceny i Oś światła bez zgadywania.
+    const leader = (detail.json() as { listing: { leader: { profileId: string } } }).listing.leader;
+    expect(typeof leader.profileId).toBe('string');
+    expect(leader.profileId.length).toBeGreaterThan(10);
   });
 
   it('ulubione: dodanie i lista', async () => {

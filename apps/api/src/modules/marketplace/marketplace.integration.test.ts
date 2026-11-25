@@ -248,6 +248,43 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     expect(res.json().error.code).toBe('LEVEL_TOO_LOW');
   });
 
+  it('listing V17 „Rynek”: wiele branż, przedziały poziomu, total i liczniki branż; szczegóły z licznikami', async () => {
+    const get = async (qs: string) =>
+      (await ctx.app.inject({ method: 'GET', url: `/api/v1/orders?${qs}` })).json() as {
+        orders: Array<{ id: string; minLevel: number }>;
+        total: number;
+        industryCounts: Record<string, number>;
+      };
+    // Wiele branż: lista po przecinku (nieznany id nie psuje zapytania) + stare `industryId` dalej działa.
+    const multi = await get(`industryIds=${industryId},cnieistnieje000000000000000`);
+    expect(multi.orders.some((o) => o.id === orderId)).toBe(true);
+    const single = await get(`industryId=${industryId}`);
+    expect(single.total).toBe(multi.total);
+    expect(single.total).toBeGreaterThanOrEqual(2);
+    // Liczniki przy branżach liczą się BEZ filtra branży, ale z resztą filtrów.
+    expect(multi.industryCounts[industryId]).toBeGreaterThanOrEqual(2);
+    // Przedziały poziomu: „bez wymagań” (0), „do L3” (1–3), „L4 i wyżej” (≥4).
+    const bez = await get(`industryId=${industryId}&maxMinLevel=0`);
+    expect(bez.orders.every((o) => o.minLevel === 0)).toBe(true);
+    expect(bez.orders.some((o) => o.id === orderId)).toBe(true);
+    const doL3 = await get(`industryId=${industryId}&minLevelFrom=1&maxMinLevel=3`);
+    expect(doL3.orders.some((o) => o.id === gatedOrderId)).toBe(true);
+    expect(doL3.orders.some((o) => o.id === orderId)).toBe(false);
+    const l4 = await get(`industryId=${industryId}&minLevelFrom=4`);
+    expect(l4.orders.some((o) => o.id === gatedOrderId)).toBe(false);
+    // „N z M”: total to suma poza limitem strony.
+    const page = await get(`industryId=${industryId}&limit=1`);
+    expect(page.orders).toHaveLength(1);
+    expect(page.total).toBeGreaterThan(1);
+    // Szczegóły: licznik ofert i ślad firmy dla GOŚCIA — same liczby, bez treści ofert.
+    const det = await ctx.app.inject({ method: 'GET', url: `/api/v1/orders/${orderId}` });
+    const d = det.json().order;
+    expect(typeof d.offersCount).toBe('number');
+    expect(d.companyOrdersCount).toBeGreaterThanOrEqual(2);
+    expect(typeof d.companyVerified).toBe('boolean');
+    expect(det.json().offers).toBeUndefined();
+  });
+
   it('członek firmy nie może ofertować własnego zlecenia (konflikt interesów)', async () => {
     await ctx.app.inject({
       method: 'POST',

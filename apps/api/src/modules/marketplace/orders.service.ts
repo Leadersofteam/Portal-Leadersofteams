@@ -121,20 +121,40 @@ export function createOrdersService({
               AND status = 'PUBLISHED'
             LIMIT 200`;
         fulltextIds = rows.map((r) => r.id);
-        if (fulltextIds.length === 0) return { orders: [], nextCursor: null };
+        if (fulltextIds.length === 0) return { orders: [], nextCursor: null, total: 0, industryCounts: {} };
       } else {
         likeQ = filters.q;
       }
     }
 
-    const where: Prisma.OrderWhereInput = {
+    // Branże: `industryId` (stare trasy) + `industryIds` (lista po przecinku, V17 „Rynek”).
+    const industryIds = [
+      ...(filters.industryId ? [filters.industryId] : []),
+      ...(filters.industryIds ?? '')
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .slice(0, 20),
+    ];
+    // Bez filtra branży: z tego `where` liczymy liczniki przy opcjach branży (checkbox pokazuje, ILE dałby po zaznaczeniu).
+    const baseWhere: Prisma.OrderWhereInput = {
       status: 'PUBLISHED',
       ...(fulltextIds ? { id: { in: fulltextIds } } : {}),
       ...(likeQ ? { title: { contains: likeQ } } : {}),
-      ...(filters.industryId ? { industryId: filters.industryId } : {}),
-      ...(filters.maxMinLevel !== undefined ? { minLevel: { lte: filters.maxMinLevel } } : {}),
+      ...(filters.maxMinLevel !== undefined || filters.minLevelFrom !== undefined
+        ? {
+            minLevel: {
+              ...(filters.maxMinLevel !== undefined ? { lte: filters.maxMinLevel } : {}),
+              ...(filters.minLevelFrom !== undefined ? { gte: filters.minLevelFrom } : {}),
+            },
+          }
+        : {}),
       ...(filters.budgetMin !== undefined ? { budgetMax: { gte: filters.budgetMin } } : {}),
       ...(filters.budgetMax !== undefined ? { budgetMin: { lte: filters.budgetMax } } : {}),
+    };
+    const where: Prisma.OrderWhereInput = {
+      ...baseWhere,
+      ...(industryIds.length ? { industryId: { in: industryIds } } : {}),
     };
 
     const rows = await prisma.order.findMany({
@@ -145,6 +165,10 @@ export function createOrdersService({
       ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
     });
 
+    const [total, byIndustry] = await Promise.all([
+      prisma.order.count({ where }),
+      prisma.order.groupBy({ by: ['industryId'], where: baseWhere, _count: { _all: true } }),
+    ]);
     const hasMore = rows.length > filters.limit;
     const page = hasMore ? rows.slice(0, filters.limit) : rows;
     const companies = await identity.getPublicCompanies(page.map((o) => o.companyId));
@@ -170,6 +194,9 @@ export function createOrdersService({
         offersCount: offersByOrder.get(o.id) ?? 0,
       })),
       nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+      // V17 „Rynek”: „N z M” i liczniki przy branżach (addytywnie — stare trasy je ignorują).
+      total,
+      industryCounts: Object.fromEntries(byIndustry.map((g) => [g.industryId, g._count._all])),
     };
   }
 
@@ -282,6 +309,14 @@ export function createOrdersService({
       }
 
       const companies = await identity.getPublicCompanies([order.companyId]);
+      // V17 „Rynek”: licznik ofert (fakt zlecenia, nie popularność) i ślad firmy; goście i inni Liderzy
+      // dostają same liczby — treść ofert zostaje widoczna wyłącznie dla firmy.
+      const [offersCount, companyOrdersCount] = await Promise.all([
+        prisma.offer.count({ where: { orderId, status: { not: 'WITHDRAWN' } } }),
+        prisma.order.count({
+          where: { companyId: order.companyId, status: { notIn: ['DRAFT', 'CANCELLED'] } },
+        }),
+      ]);
       const myOffer =
         viewerId && !isCompanyMember
           ? await prisma.offer.findFirst({
@@ -303,6 +338,9 @@ export function createOrdersService({
           publishedAt: order.publishedAt,
           companyId: order.companyId,
           companyName: companies.get(order.companyId)?.name ?? 'Firma',
+          companyVerified: Boolean(companies.get(order.companyId)?.nipVerifiedAt),
+          companyOrdersCount,
+          offersCount,
         },
         viewer: { isCompanyMember, isAwardedLeader, myOffer },
       };

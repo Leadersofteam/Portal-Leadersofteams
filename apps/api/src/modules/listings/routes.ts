@@ -27,7 +27,7 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
     // Karta katalogowa: usługa + DOŁĄCZONE dane Lidera (poziom/oceny/awatar) —
     // batch, ten sam wzorzec co /leaders.
     async function withLeaderMeta<
-      T extends { leaderProfile: { userId: string; headline: string; isVisible: boolean } },
+      T extends { leaderProfile: { id: string; userId: string; headline: string; isVisible: boolean } },
     >(rows: T[]) {
       const userIds = [...new Set(rows.map((l) => l.leaderProfile.userId))];
       const [levels, stats, users] = await Promise.all([
@@ -39,6 +39,9 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
         ...l,
         leader: {
           userId: leaderProfile.userId,
+          // V17 „Rynek”: profileId i handle → link „Cały profil”, oceny (/leaders/:id/reviews) i Oś światła (/profiles/:handle/ladder-events).
+          profileId: leaderProfile.id,
+          handle: users.get(leaderProfile.userId)?.handle ?? null,
           headline: leaderProfile.headline,
           displayName: users.get(leaderProfile.userId)?.displayName ?? 'Lider',
           avatarFileId: users.get(leaderProfile.userId)?.avatarFileId ?? null,
