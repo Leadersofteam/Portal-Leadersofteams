@@ -1,5 +1,15 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟡 2026-11-25 noc — V17 P1 „Rynek” NA PRODZIE ZA FLAGĄ OPT-IN (`?wyglad=v17` / `lot_wyglad=v17`), czeka na Macieja.**
+> Kod `0fc50ae`+`553487f` (feat/v17-portal), web+api przebudowane, layout `91ca8b8f…`. `/zlecenia`, `/uslugi` bez flagi = stary
+> wygląd; P0 dalej dla wszystkich. Osobna lista `V17_P1_ROUTES` w `apps/web/lib/v17-routing.ts` (P1 w `V17_ROUTES` = publiczne od
+> razu — P0 jest domyślnie ON), test `e2e/v17-routing.spec.ts` 7/7. API addytywnie (bez migracji): `/orders` `industryIds`,
+> `minLevelFrom`, `total`, `industryCounts/budgetCounts/levelCounts`; `/orders/:id` `offersCount/companyVerified/companyOrdersCount`;
+> `/listings/slug` `leader.profileId/handle`; `/logowanie?next=` (tylko ścieżka względna). Zgodność: 3 rundy sędziów
+> `zgodnosc-makiety`; 8 ODSTĘPSTW (tabela w `docs/PROGRAM-V17-PORTAL.md`) — niezaakceptowane, pytanie wysłane. Zastane: symlink
+> `packages/contracts/node_modules` wchodził do gita (`.gitignore` `node_modules/` nie łapie symlinku → `node_modules`),
+> prettier na 3 plikach. Rollback: `portal-web:przed-p1-2511`, `portal-api:przed-p1-2511`. Backup `portal-20261125-175737`.
+
 > **🟢 2026-11-25 wieczór — V17 „Światło” WŁĄCZONE DLA WSZYSTKICH (web z `3787e5b`, Maciej: „Włącz dla wszystkich”).**
 > Domknięte P0: bio w lewej kolumnie profilu ≤ 2 linie (pełne w „O mnie”), „Pokaż więcej · N z M” Osi światła był martwym
 > `<span>` → link `?swiatlo=N#os-swiatla` (+6, maks. 48) albo sam „N z M”. Linków „Wszystkie N” z makiety nie ma (brak stron

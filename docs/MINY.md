@@ -239,6 +239,19 @@ do tego czasu widzi 403. Kosztowało 5 czerwonych testów, zanim przyczyna stał
 
 ## Kod i UI
 
+### Flaga V17: nowa paczka NIE idzie do `V17_ROUTES` (25.11)
+
+P0 jest domyślnie ON dla wszystkich — każda trasa dopisana do `V17_ROUTES` staje się publiczna w chwili wdrożenia.
+Paczka przed akceptacją Macieja na prodzie idzie do osobnej listy opt-in (`V17_P1_ROUTES` w `apps/web/lib/v17-routing.ts`)
+i do testu `e2e/v17-routing.spec.ts`. Skutek uboczny opt-in: kto ma ciasteczko `lot_wyglad=v17`, widzi też P1.
+
+### Subagent w worktree: symlink `node_modules` trafia do gita, sędzia pomija pary (25.11)
+
+`.gitignore` miał `node_modules/` (z ukośnikiem = tylko katalog) — symlink z worktree wszedł w commit i po scaleniu
+podmienił `packages/contracts/node_modules` (typecheck: „Cannot find module zod”). Wzorzec jest już bez ukośnika;
+po scaleniu z worktree i tak `pnpm install --offline`. Agent `zgodnosc-makiety` przy 8 parach potrafi otworzyć 4–6 —
+w prompcie żądaj „otwórz KAŻDY obraz” i werdyktu na każdą parę. Zrzuty z `next dev` mają znaczek „N” na dolnym pasku — rób z buildu.
+
 ### Zrzut ekranu widzi więcej niż test
 
 Złapane wyłącznie na zrzucie, przy zielonych testach: odwrócona szyna postępu, monospace
