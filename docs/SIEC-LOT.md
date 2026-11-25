@@ -1,6 +1,6 @@
 # Sieć Leaders of Teams — cztery marki, jedna opowieść
 
-<!-- SIEC_VERSION: 2 · 2026-10-22 -->
+<!-- SIEC_VERSION: 4 · 2026-11-24 -->
 
 > **Karta sieci.** Ten sam plik leży w czterech repozytoriach, bajt w bajt:
 > `Leadersofteam` (kanon — strona „O firmie”), `Portal-Leadersofteams`,
@@ -42,16 +42,23 @@ sąsiada”, nie działa bez drzwi do sąsiada:**
    nie ma ani `leadersofteam.pl`, ani `app.leadersofteams.com`. Pętla z §2 jest
    przerwana dokładnie w miejscu, w którym Lider dochodzi do L5 i ma przejść do
    aplikacji. Linki wychodzące nie są wywołaniem HTTP, więc ADR-009 ich nie dotyczy.
-   **Stan 25.11 (Portal): NIEAKTUALNE** — stopka linkuje trzy adresy z `lib/ecosystem.ts`
-   (od `d0de690`), plik jest bajt w bajt jak w App, Organization `sameAs` na landingu.
-   Do przeniesienia w karcie v3 we wszystkich czterech repo.
+   **Fala 0 (2026-11-24, SIEC_VERSION 4):** stopka portalu dostaje kolumnę „Sieć LOT”
+   z trzema pozostałymi adresami.
 2. **`.com` podpisuje adresy inaczej niż reszta sieci.** `src/config/network.ts`:
    `Agencja` (reszta: `O firmie`) i `International` (reszta: `International / EN`).
    Oba wiersze powstały tego samego dnia (2026-08-27) w dwóch sesjach; `.pl`
    odrzucił „Agencja” z uzasadnieniem w swoim `CLAUDE.md` §6 (teza „Polska nie
-   potrzebuje kolejnej korporacji/agencji”), aplikacja poszła za `.pl`. Trzy do
-   jednego, z powodem zapisanym — poprawić `.com` (etykiety + `docs/DOMAIN-STRATEGY.md`
-   §4a + opis `t.footer.network.agency`, który dziś mówi „cennik usług”).
+   potrzebuje kolejnej korporacji/agencji”), aplikacja poszła za `.pl`.
+   **Rozstrzygnięte 2026-11-24 (właściciel):** obowiązuje zestaw
+   `LOT App · Sieć Liderów · O firmie · International / EN`; `network.ts` na `.com`
+   zniknął.
+
+**Wspólna lista adresów (fala 0, SIEC_VERSION 4).** Cztery wpisy z etykietą, adresem,
+`id` i hostem żyją w pliku `ecosystem.ts`, **bajt w bajt tym samym** w czterech repo
+(App `apps/web/config/`, portal `apps/web/lib/`, `.pl` `src/data/`, `.com`
+`src/config/`). To, która właściwość jest „tu”, żyje obok w `ecosystem.self.ts` —
+jedynym pliku sieci, który się różni. Kontrola:
+`md5sum */apps/web/config/ecosystem.ts */apps/web/lib/ecosystem.ts */src/data/ecosystem.ts */src/config/ecosystem.ts`.
 
 Wzorzec, do którego właściciel odsyła (aim24.pl, AIM Motion), robi jedną rzecz,
 której my nie robimy: **całe przewijanie strony jest jedną osią czasu jednej sceny.**
@@ -138,8 +145,7 @@ Marki są różne: inny znak, inny akcent, inne tło, inny bohater. Wspólna jes
 Ostatni rozdział każdej opowieści **wskazuje sąsiada w sieci** (tabela §2) —
 formacja otwiera się w stronę drzwi, a pod nią stoi zwykły link z tekstem. Pod
 całą stroną: wiersz czterech adresów w stopce (etykiety z §2 są kontraktem;
-`NETWORK` na `.pl`, `src/config/network.ts` na `.com`, `apps/web/config/ecosystem.ts`
-w aplikacji; **w portalu go nie ma** — §1). Przejścia **między** domenami są narracyjne,
+wspólny `ecosystem.ts` we wszystkich czterech repo — §1, fala 0). Przejścia **między** domenami są narracyjne,
 nie techniczne: przeglądarka nie animuje nawigacji między originami.
 
 ### 3.4 Wspólna prawda
@@ -226,24 +232,23 @@ ręczne, gałąź bez merge, PR otwiera właściciel; jasny motyw domyślny, a s
 sceny ciemna; zrzuty 1512 i 390, oba motywy. Skille: `lot-design`, `lot-zrzuty`,
 `lot-scena-3d`.
 
-### 4.4 `leadersofteams.com` — **Droga leada** (International / EN · co to za produkt)
+### 4.4 `leadersofteams.com` — **Feniks z połączonych liderów** (International / EN · co to za produkt)
 
-Kierunek: orbita z hero przestaje być ozdobnikiem i staje się pierwszym ujęciem
-opowieści o jednym leadzie, w dwóch językach.
+Zmiana 2026-11-24 (SIEC_VERSION 3): właściciel zaakceptował makietę V17 PRO — zastępuje „Drogę leada”.
+Znak Feniksa z logo, zbudowany z połączonych cząstek, przy przewijaniu rozpada się na sieć Liderów,
+a pod nią pracuje prawdziwa aplikacja; w finale Feniks składa się z powrotem przy wezwaniu do startu.
+Plan i makieta: `docs/PLAN-V17-COM.md` §3 (tylko w repo `.com`).
 
-| Rozdział | Sekcja             | Formacja                                                         | Znaczenie                                              |
-| -------- | ------------------ | ---------------------------------------------------------------- | ------------------------------------------------------ |
-| 0        | Hero               | orbita, pasma = etapy                                            | wszystkie leady zespołu                                |
-| 1        | Problem            | leady wypadają z orbity bez śladu                                | lead ginie, bo nikt nie zapisał następnego kroku       |
-| 2        | How it works       | kamera idzie za jednym leadem: nowy → kontakt → oferta → wygrana | ten sam lead przez lejek (`ROLE` z `formations.ts`)    |
-| 3        | Proof / Case study | wiele orbit w rzędzie — zespół                                   | menedżer widzi cały zespół                             |
-| 4        | Doors / CTA        | lead wygrany odlatuje ku drzwiom                                 | trial w aplikacji; „Leader track” → `leadersofteam.pl` |
+| Rozdział | Sekcja                        | Formacja                               | Znaczenie                                              |
+| -------- | ----------------------------- | -------------------------------------- | ------------------------------------------------------ |
+| 0        | Hero                          | Feniks z logo, punkty + linie sąsiadów | marka; stoi nieruchomo do ok. 40% drogi (`hold`)       |
+| 1        | Produkt, dzień, fakty, cennik | sieć Liderów (przygaszona za ekranami) | węzeł = Lider, linia = wspólne zlecenie, jeden = „ty”  |
+| 2        | Finał / CTA                   | Feniks składa się z powrotem           | trial w aplikacji; „Leader track” → `leadersofteam.pl` |
 
-`/jak-to-dziala` zachowuje `ScrollAssembly` — mówi tą samą gramatyką i nie
-dostaje drugiej sceny. Ograniczenia: `npm run check:all` (w tym `check:perf (2)`
-i `check:wcag` na 2 × wszystkie trasy), parzystość i18n, pre-render bez
-`opacity:0`, porównanie A/B z `main` na tej samej maszynie przy każdym czerwonym
-`check:perf`. Kanon silnika: `docs/KIERUNEK-3D.md`. Skill: `lot-scena-3d`.
+Sieć ma legendę (Lider, zlecenie) — jest daną, nie ozdobnikiem (§3.1 pkt 7). Silnik: kanon
+`particleField.ts`, `FIELD_VERSION` 4 (okno formacji, pkt 13, i linie). `/jak-to-dziala` zachowuje
+`ScrollAssembly`. Ograniczenia jak wcześniej: `npm run check:all`, parzystość i18n, pre-render bez
+`opacity:0`, A/B z `main` przy czerwonym `check:perf`. Skill: `lot-scena-3d`.
 
 ## 5. Kolejność i zależności
 
