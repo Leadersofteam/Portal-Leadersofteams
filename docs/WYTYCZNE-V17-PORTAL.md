@@ -14,6 +14,13 @@ Skill: `portal-v17-design`. Program i akceptacje: `docs/PROGRAM-V17-PORTAL.md`. 
 
 Bierzemy **wzorce zachowania i układu**, nie wygląd, kolory, logo ani nazwy cudzych serwisów.
 
+> Maciej 25.11 (po makiecie, która „wygląda trochę na AI Loop”): „Inspiruj się X.com github.com oferteo.pl itp... w naszej
+> identyfikacji wizualnej.” → **Układ i gęstość od nich, skóra nasza.** Gęstość i spokój jak GitHub/X: wpis to wiersz z
+> separatorem 1 px (bez ramki), promienie 4–8 px, szare obwódki, mało cieni, hierarchia z typografii, nie z koloru.
+> Kolor ma znaczenie: fiolet = sieć i JEDNA akcja główna; bursztyn = wyłącznie zapracowane (+pkt, L7); poziomy `--level-*`.
+> Antywzorzec „AI loop” (zmierzony 25.11): fiolet na wszystkim, pigułki, ta sama postać-awatar w innym kolorze,
+> płaska typografia, stos widżetów w prawej kolumnie, dwa konkurujące przyciski główne.
+
 | Inspiracja | Wzorzec                                                                                                                                                                            | Ekrany Portalu                                             | Granica                                                                                                          |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | x.com      | 3 kolumny: wąska nawigacja ikon (lewa) · strumień 600 px (środek) · kontekst (prawa). Wpis = wiersz z awatarem, nie karta. Kompozytor na górze strumienia.                         | `/feed` (dom zalogowanego), `/pytania`, `/watki`, `/wpisy` | ADR-010: chronologicznie, „Pokaż więcej”, zero liczników wyświetleń, zero DM, zero „trendów” w kolejności treści |
