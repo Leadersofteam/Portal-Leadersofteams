@@ -1,5 +1,16 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-11-25 — Fala A lejka Liderów na prodzie (web `b871406`, obraz `portal-web:local` 25.11), V17 „Światło” w rundzie jakości.**
+> **Zastany błąd naprawiony (od 11.08):** główny `app/loading.tsx` + `loading.tsx` w segmentach list streamowały 200 przed
+> `notFound()` — 18 stron szczegółów dawało 200 dla martwych linków. Szkielety list w grupach `(lista)`; prod: 404 na
+> `/zlecenia|liderzy|uslugi|profil/<brak>` (też UA Googlebota), istniejące 200. **Sprostowanie MINY 22.10:** porównanie
+> z `/pytania/<id>` było mylące (trasa nie istnieje). **Nowe:** blok `FirstPoint` (Adept 100 pkt = jedna ocena 5/5; uznana
+> odpowiedź 50; 0 pkt za zaproszenia) na landingu, w `/start` Lidera i w pustym `/panel/punkty`; `/start` Lidera zaczyna od
+> profilu; `description` `/zlecenia`; Organization `sameAs` z siecią; `ecosystem.ts` bajt w bajt z App. Scalony `origin/main`
+> (PR #24 Fala 0) — kod bez zmian, brak z main 0. **Strategia:** `docs/STRATEGIA-LIDERZY-PL.md`. **V17:** makieta „Światło”
+> dokończona (48 zrzutów, `claude/charming-mcclintock-043cc3`), Maciej: „Wygląda trochę na AI Loop. Trzeba dopracować” —
+> runda jakości w toku, akceptacji brak, kodu V17 brak. Zastane: lint padał na 80 `no-undef` z makiet (ignor przeniesiony).
+
 > **🟢 2026-10-22 — `origin/main` SCALONY do gałęzi prod i WDROŻONY (prod `52ff25c`).** Dług gałęzi wobec main: 24 → 0.
 > Konflikty: logo — wersja z PR #19 (drabina z poręczami, gradient sieci; og.tsx i ikony PWA z main już jej używały,
 > mieszanka dałaby dwa znaki), `page.tsx` — hero fali 2 + `LadderScene`, dokumenty — obie strony. Schemat: bez migracji.

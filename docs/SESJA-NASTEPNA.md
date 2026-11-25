@@ -1,44 +1,40 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-> Stan zmierzony 22.10.2026 ~18:50 UTC. Zacznij od tego pliku, nie od historii. Po sesji nadpisz go nowym stanem.
+## Stan (zmierzony 25.11)
 
-## Stan (zmierzony)
-
-- Produkcja: `52ff25c` na `feat/droga-lidera-pl0-pl1` (wypchnięta). Gałąź zawiera CAŁY `origin/main` (dług 0 commitów):
-  drabinka 3D (#17), logo-drabina (#19), CI (#21), sieć LOT (#22), render programowy (#23). healthz: mysql/redis ok,
-  worker alive, uploads ok. Powrót: obrazy `portal-web:powrot-0207887`, `portal-api:powrot-0207887`.
-- Logo: wzięte z `main` (PR #19, gradient „network violet” — og.tsx i ikony PWA już go miały). Odwracalne jednym commitem.
-- Schemat: scalenie nie przyniosło migracji („No pending migrations”). `main` nadal NIE ma pól prod — PR gałęzi do `main` to naprawia.
-- Bramki 22.10: 247 testów API (realny MySQL/Redis), 32 e2e, lint/typecheck/build zielone.
-- Mobile 390 (harness mobile-craft, prod): poziomy scroll 0 na 9 trasach, pola < 16 px 0, `touch-action` ✓, 0 błędów konsoli.
-- Dane testowe audytu 21.10 USUNIĘTE (zlecenie, firma, wiersz konta, 2 zdarzenia outbox; backup `portal-20261022-182553`).
-- Staging zatrzymany (uruchamiany tylko na czas wdrożenia). Analityka: dziura 30.09–14.10 nadal niewyjaśniona.
-
-## Czeka na właściciela
-
-1. Otworzyć PR `feat/droga-lidera-pl0-pl1` → `main` (gałąź zawiera main; scalenie zrówna main z prod). Gałęzie do zamknięcia:
-   `claude/focused-shirley-01366f` (poprawka już w gałęzi), `docs/program-droga-lidera` (wchłonięta).
-2. Workflow `.github/workflows/deploy-staging.yml` (push do main → SSH deploy) — sprzeczny z „wdrożenia ręczne”; decyzja PRZED scaleniem PR.
-3. Dane: duplikat „Macix”, zlecenie „Marketing” w złej branży, identyczne opinie u Konrada — demo czy realne? D3 purge demo.
-4. 3 firmy + 2 Liderów do testów (`/root/docs/TESTERZY-I-SPOLECZNOSC.md`). D5 Search Console.
+- Prod web = `b871406` (gałąź `feat/v17-portal`, wypchnięta; brak z main: 0). API/worker bez zmian od 22.10. `healthz` ok.
+- Martwe linki szczegółów → 404 (naprawiony zastany błąd `loading.tsx`). Na żywo: blok „Pierwszy szczebel” (landing, `/start`, `/panel/punkty`).
+- Strategia pozyskania liderów: `docs/STRATEGIA-LIDERZY-PL.md` (realni: 2, Google: 0).
+- V17 „Światło” (feed/profil/drabinka): makieta na `claude/charming-mcclintock-043cc3`. Maciej 25.11: „Wygląda trochę na AI Loop
+  Trzeba dopracować i podnieść jakość.” Runda jakości w sesji „V17 Światło” (diagnoza 7 punktów w jej wiadomości). Kodu V17 brak.
 
 ## Zadania w kolejności
 
-1. `notFound()` pod `loading.tsx` zwraca 200 (`/zlecenia/<id>`, `/liderzy/<id>`, `/uslugi/<id>`) — MINY 22.10. Rozważyć
-   przeniesienie `loading.tsx` do grup tras list (`(lista)/loading.tsx`), żeby szczegóły dawały prawdziwe 404.
-2. Scena 3D na telefonie: TBT `/` 394–1002 ms w harnessie (CPU ×4). Zmierzyć na prawdziwym telefonie; ewentualnie scena tylko ≥ 900 px.
-3. Katalog nie może wyglądać na martwy: 5–10 prawdziwych profili/zleceń przed zaproszeniem testerów.
+1. V17 „Światło”: dokończyć rundę jakości (fiolet tylko dla akcji głównej, mniej pigułek, skala typografii, pierścień tylko
+   tam, gdzie poziom jest treścią, jeden moment „+pkt” jako podpis wizualny) → zrzuty przed/po 1512+390 → `recenzent-wygladu`
+   → pokazać Maciejowi → wpis akceptacji w `PROGRAM-V17-PORTAL.md` → dopiero wtedy kod za `data-wyglad="v17"`.
+2. Szkice wiadomości „Pierwszy Krąg” (20 osób z `/docker/leaders-of-teams-app/docs/strategia/lejek-tworcow.csv`) — wysyła Maciej.
+3. Scena 3D na telefonie: TBT `/` 394–1002 ms (CPU ×4) — pomiar na prawdziwym telefonie; ewentualnie scena tylko ≥ 900 px.
 4. Dziura w analityce 30.09–14.10 — czy nie działał zapis, czy Portal.
+
+## Czeka na właściciela
+
+- Akceptacja makiety „Światło” po rundzie jakości.
+- D5 Search Console + Bing (DNS, sitemap) — 10 min. 3–5 prawdziwych zleceń HydroSpark. D3 purge demo (25.11: „nie teraz”).
+- Workflow `.github/workflows/deploy-staging.yml` sprzeczny z „wdrożenia ręczne” — decyzja przed PR do main.
+- Gałęzie do zamknięcia (wchłonięte): `claude/dazzling-bose-0da725`, `docs/program-droga-lidera`, `feat/droga-lidera-pl0-pl1`,
+  `feat/s12-widziec-i-reagowac`, `fix/ux-fala2-2110`, `fix/ux-szybkie-2110`. Wstrzymana: `claude/agitated-rubin-da3bd4` (rama App).
 
 ## Czego nie robić
 
-- **Po każdej budowie sprzątaj (VPS 22.11):** czytaj linie `po-budowie:` z kolejki; kontenery próbne `docker rm -fv`; `docker builder prune` tylko pod `vps-kolejka.sh budowa --` i najpierw z `--max-used-space 4GB` (`-af` dopiero gdy nadal brakuje miejsca); pod `budowa` tylko budowa obrazu (testy → `lekkie`). Szczegóły: skill lidera dnia, sekcja 2z.
-
-- Nie wdrażaj `main` wprost — wdrażaj gałąź prod (lub `main` dopiero po scaleniu PR gałęzi prod).
-- Nie zostawiaj stagingu uruchomionego po wdrożeniu (RAM). Budowy przez `/root/scripts/vps-kolejka.sh budowa -- …` (typecheck/testy: `… lekkie -- …`, zrzuty: `… zrzuty -- …`).
-- Usunięcie danych sprawdzaj w API (404), nie w kodzie strony (200 przez streaming).
+- Kodu V17 przed wpisem akceptacji Macieja. Nie przenosić `loading.tsx` nad `[id]`/`[slug]` (MINY: 200 zamiast 404).
+- Nie wdrażaj `main` wprost — wdrażaj `feat/v17-portal`. Po wdrożeniu staging wyłączony (RAM).
+- **Po każdej budowie sprzątaj (VPS 22.11):** czytaj linie `po-budowie:`; kontenery próbne `docker rm -fv`; `docker builder prune`
+  tylko pod `vps-kolejka.sh budowa --` (najpierw `--max-used-space 4GB`). Typecheck/testy → `lekkie`, zrzuty → `zrzuty`.
+- Po przeniesieniu tras usuń `apps/web/.next/types` przed typecheckiem (stare typy wskazują nieistniejące `page.js`).
+- Usunięcie danych sprawdzaj w API (404), nie w kodzie strony.
 
 ## Prompt startowy
 
-Portal LOT, `/docker/portal-staging`, gałąź `feat/droga-lidera-pl0-pl1` (= prod `52ff25c`, zawiera main). Zacznij od punktu 1
-„Zadań” (prawdziwe 404 na stronach szczegółów). Na koniec skill `portal-zamkniecie-sesji`.
+Repo `/docker/portal-staging`, gałąź `feat/v17-portal`. Cel: V17 „Światło” bez „AI loop” → akceptacja Macieja → kod P0 za flagą.
+Zacznij od punktu 1 „Zadań”; zrzuty i diagnoza są na gałęzi `claude/charming-mcclintock-043cc3`.
