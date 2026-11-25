@@ -42,6 +42,9 @@ sąsiada”, nie działa bez drzwi do sąsiada:**
    nie ma ani `leadersofteam.pl`, ani `app.leadersofteams.com`. Pętla z §2 jest
    przerwana dokładnie w miejscu, w którym Lider dochodzi do L5 i ma przejść do
    aplikacji. Linki wychodzące nie są wywołaniem HTTP, więc ADR-009 ich nie dotyczy.
+   **Stan 25.11 (Portal): NIEAKTUALNE** — stopka linkuje trzy adresy z `lib/ecosystem.ts`
+   (od `d0de690`), plik jest bajt w bajt jak w App, Organization `sameAs` na landingu.
+   Do przeniesienia w karcie v3 we wszystkich czterech repo.
 2. **`.com` podpisuje adresy inaczej niż reszta sieci.** `src/config/network.ts`:
    `Agencja` (reszta: `O firmie`) i `International` (reszta: `International / EN`).
    Oba wiersze powstały tego samego dnia (2026-08-27) w dwóch sesjach; `.pl`

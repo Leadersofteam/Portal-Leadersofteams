@@ -17,8 +17,9 @@ Monorepo pnpm: Next.js 15 + Fastify + Prisma + MySQL + Redis + BullMQ. Wdrożeni
 > pracuje zespół_, `leadersofteams.com` _co to za produkt_. Plan opowieści przewijanej 3D
 > dla portalu („Światło z cudzych rąk” — twój punkt nigdy nie świeci sam) i dla
 > pozostałych trzech: **[docs/SIEC-LOT.md](docs/SIEC-LOT.md)** (ten sam plik w czterech
-> repo). Prompt: [docs/PROMPT-SIEC-3D.md](docs/PROMPT-SIEC-3D.md). **Znalezione przy
-> okazji:** portal nie linkuje do żadnego z trzech pozostałych adresów sieci — karta §1.
+> repo). Prompt: [docs/PROMPT-SIEC-3D.md](docs/PROMPT-SIEC-3D.md).
+> **Strategia pozyskania liderów (25.11): [docs/STRATEGIA-LIDERZY-PL.md](docs/STRATEGIA-LIDERZY-PL.md)** —
+> obietnica, dwa tory wejścia, kanały za 0 zł w kolejności, warunki przed zaproszeniami, miara 30 dni.
 
 ## Jedna zasada, z której wynika reszta
 

@@ -15,7 +15,11 @@ interface Industry {
   slug: string;
 }
 
-export const metadata = { title: 'Zlecenia — Leaders of Teams' };
+export const metadata = {
+  title: 'Zlecenia dla Liderów zespołów — sprzedaż, operacje, projekty | Leaders of Teams',
+  description:
+    'Aktualne zlecenia B2B od polskich firm: kwota, termin i wymagany poziom w Drabince. Złóż ofertę, zrealizuj i zdobądź ocenę, która buduje Twój status Lidera. Bez prowizji.',
+};
 
 export default async function OrdersPage({
   searchParams,

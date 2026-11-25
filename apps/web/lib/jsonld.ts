@@ -1,6 +1,7 @@
 // Buildery structured data (schema.org / JSON-LD) dla publicznych stron — dają
 // rich results w Google (Q&A, oceny, oferty pracy). Czysto prezentacyjne: żadnych
 // danych prywatnych, tylko to, co i tak jest publiczne na stronie.
+import { ECOSYSTEM_OTHERS } from '@/lib/ecosystem';
 import { SITE_URL } from '@/lib/site';
 
 type Json = Record<string, unknown>;
@@ -13,6 +14,9 @@ export function organizationJsonLd(): Json {
     url: SITE_URL,
     description:
       'Marketplace usług B2B, społeczność mentoringowa i Drabinka Lidera — status zdobywany realną pracą i mentoringiem.',
+    // sameAs: pozostałe trzy właściwości sieci z jednej listy (ecosystem.ts) —
+    // wyszukiwarka skleja je w jedną markę zamiast czterech obcych domen.
+    sameAs: ECOSYSTEM_OTHERS.map((link) => link.href),
   };
 }
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ApiRequestError, apiFetch } from '@/lib/api';
+import { FirstPoint } from '@/components/ui/first-point';
 import { ART, type ArtName } from '@/components/ui/illustrations';
 
 type Intent = 'LEADER' | 'COMPANY' | 'BOTH';
@@ -116,9 +117,11 @@ export function Wizard({ industries }: { industries: Array<{ id: string; name: s
           { href: '/uslugi', label: 'Zobacz gotowe usługi', art: 'ladder' },
         ]
       : [
-          { href: '/uslugi/nowa', label: 'Opublikuj pierwszą usługę', art: 'rung' },
-          { href: '/grupy', label: 'Odpowiedz na pytanie w grupie', art: 'lantern' },
+          // 25.11: profil pierwszy — Firma wybiera Lidera po profilu, a pusty profil
+          // przy ofercie przegrywa, zanim ktokolwiek oceni pracę.
+          { href: '/panel/profil', label: 'Uzupełnij profil, który zobaczą Firmy', art: 'ladder' },
           { href: '/zlecenia', label: 'Znajdź zlecenie dla siebie', art: 'search' },
+          { href: '/pytania', label: 'Odpowiedz na pytanie innego Lidera', art: 'lantern' },
         ];
 
   return (
@@ -238,6 +241,7 @@ export function Wizard({ industries }: { industries: Array<{ id: string; name: s
               );
             })}
           </div>
+          {intent !== 'COMPANY' && <FirstPoint compact />}
           <div className="wizard-actions">
             <button className="btn secondary" type="button" onClick={() => void finish()}>
               Przejdź do panelu

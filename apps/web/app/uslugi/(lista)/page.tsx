@@ -6,7 +6,7 @@ import { IndustryChips } from '@/components/ui/industry-chips';
 import { SparseCatalogNote, SPARSE_CATALOG_LIMIT } from '@/components/ui/sparse-catalog-note';
 import { publicApi } from '@/lib/server-api';
 
-import { ListingFilters } from './listing-filters';
+import { ListingFilters } from '../listing-filters';
 
 // Typ karty żyje przy komponencie (components/ui/listing-card) — tu tylko alias
 // dla dotychczasowych importerów.

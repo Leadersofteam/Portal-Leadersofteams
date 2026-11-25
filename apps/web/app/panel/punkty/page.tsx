@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { FirstPoint } from '@/components/ui/first-point';
 import { serverApi } from '@/lib/server-api';
 
 interface LadderData {
@@ -153,10 +154,7 @@ export default async function MyPointsPage() {
         <Link href="/drabinka">zobacz pełne reguły</Link>.
       </p>
       {events.length === 0 ? (
-        <p className="muted">
-          Nie masz jeszcze punktów. Zrealizuj i odbierz ocenę za zlecenie z{' '}
-          <Link href="/zlecenia">marketplace'u</Link> — to jedna z dwóch dróg awansu.
-        </p>
+        <FirstPoint />
       ) : (
         events.map((event) => (
           <div key={event.id} className="list-row list-row--stack">

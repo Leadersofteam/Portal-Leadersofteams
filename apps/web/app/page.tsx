@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { JsonLd } from '@/components/json-ld';
 import { LadderScene } from '@/components/ui/ladder-scene';
 import { LeaderRow, type LeaderRowData } from '@/components/ui/leader-row';
+import { FirstPoint } from '@/components/ui/first-point';
 import { FIRM_STEPS } from '@/lib/firm-steps';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
 import { LEVEL_NAMES } from '@/lib/levels';
@@ -124,8 +125,11 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
+        {/* 25.11: konkret pierwszego punktu — „pracą, nie znajomościami” bez liczby
+            nie mówi Liderowi, co zrobić po rejestracji. */}
+        <FirstPoint />
         <div className="hero-cta">
-          <Link className="btn secondary" href="/rejestracja">
+          <Link className="btn" href="/rejestracja">
             Dołącz jako Lider
           </Link>
         </div>

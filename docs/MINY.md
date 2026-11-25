@@ -69,10 +69,13 @@ innej nazwy i potwierdzenia — dziś nazywa się „Zrezygnuj z moderacji".
 
 ### `notFound()` pod `loading.tsx` zwraca 200, nie 404
 
-`/zlecenia/<id>`, `/liderzy/<id>`, `/uslugi/<id>` usuniętego rekordu dają stronę „nie znalezione"
-z kodem **200** (zmierzone 22.10; `/pytania/<id>` bez `loading.tsx` daje 404). Przyczyna: `loading.tsx`
-segmentu włącza streaming — nagłówki 200 wychodzą przed `notFound()`. Next dokleja
-`<meta name="robots" content="noindex">`, więc Google nie indeksuje, ale curl/monitoring widzi 200.
+`/zlecenia/<id>`, `/liderzy/<id>`, `/uslugi/<id>` usuniętego rekordu dawały stronę „nie znalezione"
+z kodem **200** (zmierzone 22.10 i 25.11). Przyczyna: `loading.tsx` NAD stroną szczegółów włącza streaming —
+nagłówki 200 wychodzą przed `notFound()`. Winny był też **główny `app/loading.tsx`** (od 11.08), który
+przykrywał wszystkie 18 stron z `notFound()`. Uwaga: porównanie z `/pytania/<id>` było mylące — taka trasa
+w ogóle nie istnieje, 404 brało się z braku trasy. **Naprawa 25.11:** główny `loading.tsx` usunięty, szkielety
+list w grupach `app/{zlecenia,liderzy,uslugi,grupy}/(lista)/loading.tsx`. Nowy `loading.tsx` kładź wyłącznie
+obok `page.tsx` listy, nigdy w segmencie, który ma pod sobą `[id]`/`[slug]`.
 **Sprawdzając usunięcie danych, patrz na API (`api.leadersofteams.pl/orders/<id>` → 404), nie na kod strony.**
 
 ## Infrastruktura

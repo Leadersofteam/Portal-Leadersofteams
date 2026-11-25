@@ -88,3 +88,14 @@ export const LEVEL_RULES_FALLBACK: LevelRule[] = [
     unlocksTeamCreation: true,
   },
 ];
+
+// Ile daje PIERWSZY ruch — lustro stałych z apps/api/src/modules/ladder/rules.ts
+// (ruleset v1: ocena 5/5 = 100, ANSWER_ACCEPTED_POINTS, COMMUNITY_WEEKLY_CAP,
+// MATURATION_DAYS). Pokazujemy je nowemu Liderowi, bo „zapracuj status” bez liczby
+// nie mówi, co zrobić jutro rano. Zmiana rulesetu = zmiana tu i w rules.ts.
+export const FIRST_POINT = {
+  reviewTopPoints: 100,
+  answerAcceptedPoints: 50,
+  communityWeeklyCap: 300,
+  maturationDays: 7,
+} as const;

@@ -1,3 +1,6 @@
+// Szkielet TYLKO dla listy: grupa (lista) trzyma loading.tsx z dala od [id]/[slug].
+// Loading nad stroną szczegółów streamuje powłokę z 200, zanim notFound() zdąży
+// ustawić 404 — tak martwe linki zwracały 200 (MINY 25.11). Nie przenoś wyżej.
 import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 
 export default function GroupsLoading() {
