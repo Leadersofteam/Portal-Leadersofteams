@@ -130,6 +130,10 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     });
     expect(list.statusCode).toBe(200);
     expect(list.json().orders.some((o: { id: string }) => o.id === orderId)).toBe(true);
+    // V17 „Światło” (expand-only): licznik ofert i znacznik NIP w wierszu strumienia.
+    const row = list.json().orders.find((o: { id: string }) => o.id === orderId);
+    expect(typeof row.offersCount).toBe('number');
+    expect(typeof row.companyVerified).toBe('boolean');
 
     const search = await ctx.app.inject({
       method: 'GET',
@@ -360,6 +364,22 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     const list = await ctx.app.inject({ method: 'GET', url: '/api/v1/leaders' });
     const mine = list.json().leaders.find((l: { id: string }) => l.id === leaderProfileId);
     expect(mine.completedOrders).toBe(1);
+  });
+
+  it('strumień realizacji (V17): publiczny, chronologiczny, bez punktów z prywatnej księgi', async () => {
+    const res = await ctx.app.inject({ method: 'GET', url: '/api/v1/realizations?limit=5' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      realizations: Array<
+        Record<string, unknown> & { publishedAt: string; leader: Record<string, unknown> }
+      >;
+    };
+    for (const r of body.realizations) {
+      expect(r).not.toHaveProperty('points'); // księga punktowa Lidera jest prywatna (PL3)
+      expect(typeof r.leader.level).toBe('number');
+    }
+    const dates = body.realizations.map((r) => r.publishedAt);
+    expect([...dates].sort().reverse()).toEqual(dates);
   });
 
   it('outbox zawiera pełny ślad zdarzeń domenowych cyklu życia', async () => {

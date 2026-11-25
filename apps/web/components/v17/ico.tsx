@@ -1,0 +1,109 @@
+// Ikony V17: @phosphor-icons/react, waga duotone (decyzja 19.11). Import z /dist/ssr, żeby ikona
+// renderowała się w komponentach serwerowych bez "use client". ADR-009: żadnego CDN, ikony idą
+// w bundlu. Opakowanie <i class="ph-duotone"> zachowuje kontrakt makiety: rozmiar ikony to
+// font-size elementu <i> (CSS z pro.css ustawia go per miejsce), kolor dziedziczy currentColor.
+import {
+  AppWindow,
+  Article,
+  ArrowBendUpLeft,
+  ArrowClockwise,
+  ArrowRight,
+  Bell,
+  BookmarkSimple,
+  CalendarBlank,
+  CaretRight,
+  ChatsCircle,
+  CheckCircle,
+  CircleDashed,
+  ClipboardText,
+  CloudSlash,
+  DotsThree,
+  Drop,
+  Eye,
+  Footprints,
+  HandHeart,
+  Heart,
+  HourglassMedium,
+  HouseSimple,
+  Ladder,
+  Lightning,
+  LockSimple,
+  MagnifyingGlass,
+  MapPin,
+  NotePencil,
+  PaintRoller,
+  PencilSimple,
+  Plus,
+  SealCheck,
+  ShareNetwork,
+  SignIn,
+  Snowflake,
+  SolarPanel,
+  Sparkle,
+  Star,
+  Storefront,
+  UserCircle,
+  UserPlus,
+  Users,
+  UsersThree,
+  Wind,
+} from '@phosphor-icons/react/dist/ssr';
+import type { Icon } from '@phosphor-icons/react/dist/lib/types';
+
+const MAP = {
+  'app-window': AppWindow,
+  article: Article,
+  'arrow-bend-up-left': ArrowBendUpLeft,
+  'arrow-clockwise': ArrowClockwise,
+  'arrow-right': ArrowRight,
+  bell: Bell,
+  'bookmark-simple': BookmarkSimple,
+  'calendar-blank': CalendarBlank,
+  'caret-right': CaretRight,
+  'chats-circle': ChatsCircle,
+  'check-circle': CheckCircle,
+  'circle-dashed': CircleDashed,
+  'clipboard-text': ClipboardText,
+  'cloud-slash': CloudSlash,
+  'dots-three': DotsThree,
+  drop: Drop,
+  eye: Eye,
+  footprints: Footprints,
+  'hand-heart': HandHeart,
+  heart: Heart,
+  'hourglass-medium': HourglassMedium,
+  'house-simple': HouseSimple,
+  ladder: Ladder,
+  lightning: Lightning,
+  'lock-simple': LockSimple,
+  'magnifying-glass': MagnifyingGlass,
+  'map-pin': MapPin,
+  'note-pencil': NotePencil,
+  'paint-roller': PaintRoller,
+  'pencil-simple': PencilSimple,
+  plus: Plus,
+  'seal-check': SealCheck,
+  'share-network': ShareNetwork,
+  'sign-in': SignIn,
+  snowflake: Snowflake,
+  'solar-panel': SolarPanel,
+  sparkle: Sparkle,
+  star: Star,
+  storefront: Storefront,
+  'user-circle': UserCircle,
+  'user-plus': UserPlus,
+  users: Users,
+  'users-three': UsersThree,
+  wind: Wind,
+} as const satisfies Record<string, Icon>;
+
+export type IcoName = keyof typeof MAP;
+
+export function Ico({ n }: { n: IcoName }) {
+  const C = MAP[n];
+  return (
+    <i className="ph-duotone" aria-hidden="true">
+      <C weight="duotone" size="1em" />
+    </i>
+  );
+}

@@ -2795,3 +2795,51 @@ a.quoted-post:hover {
     column-gap: 0.5rem;
   }
 }
+
+/* ═════════ V17 „Światło” — NOWE tokeny (makieta pro/pro.css, 25.11) ═════════
+   Dopisane pod flagą wyglądu: bez html[data-wyglad='v17'] (i bez wrappera .v17)
+   nie zmieniają niczego. ISTNIEJĄCYCH --level-*, --primary-*, --text-* tu nie ruszamy —
+   ich wartości z makiety lokalnie nadpisuje styles/v17-swiatlo.css wyłącznie w .v17. */
+html[data-wyglad='v17'],
+.v17 {
+  --bg-v17: #07080d; /* tło <body> pod ramą V17 (body leży poza .v17) */
+  --primary-rgb: 131 113 244;
+  --surface-2: #12141e;
+  --surface-3: #191c28;
+  --line: rgb(150 160 205 / 0.1);
+  --line-2: rgb(150 160 205 / 0.17);
+  --warm: var(--text-body);
+  --warm-rgb: 251 191 36;
+  --t-zlecenie: var(--primary-400);
+  --t-pytanie: #60a5fa;
+  --t-realizacja: #34d399;
+  --t-usluga: #d59be2;
+  --br-pv: #2dd4bf;
+  --br-san: #38bdf8;
+  --br-chlod: #7dd3fc;
+  --shadow-1: none;
+  --shadow-2: 0 8px 24px -12px rgb(0 0 0 / 0.35);
+  --amber: #fbbf24;
+  --fl: 72%;
+}
+html[data-wyglad='v17'][data-theme='light'],
+[data-theme='light'] .v17 {
+  --bg-v17: #f5f5f2;
+  --surface-2: #fafaf8;
+  --surface-3: #f0f0ec;
+  --line: rgb(20 22 45 / 0.08);
+  --line-2: rgb(20 22 45 / 0.15);
+  --warm: var(--text-body);
+  --warm-rgb: 180 83 9;
+  --t-zlecenie: #5a42cb;
+  --t-pytanie: #1d4ed8;
+  --t-realizacja: #047857;
+  --t-usluga: #9b3fae;
+  --br-pv: #0d9488;
+  --br-san: #0284c7;
+  --br-chlod: #0ea5e9;
+  --shadow-1: none;
+  --shadow-2: 0 8px 24px -12px rgb(0 0 0 / 0.35);
+  --amber: #b45309;
+  --fl: 34%;
+}

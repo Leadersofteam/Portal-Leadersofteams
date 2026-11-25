@@ -16,6 +16,7 @@ import './styles/mobile-shell.css';
 import './styles/social.css';
 import './styles/climb.css';
 import './styles/search.css';
+import './styles/v17-swiatlo.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({
@@ -29,6 +30,17 @@ const bricolage = Bricolage_Grotesque({
   display: 'swap',
   variable: '--font-bricolage',
   weight: ['600', '700', '800'],
+});
+
+// V17 „Światło”: Bricolage ze zmienną osią opsz i pełnym zakresem wag (makieta używa 750 i
+// opsz 12–96). Osobna instancja z preload:false, żeby flaga wyłączona nie płaciła ani bajta
+// (plik pobiera się dopiero, gdy CSS V17 go zażąda). Samo-hostowana przez next/font (ADR-009).
+const bricolageV17 = Bricolage_Grotesque({
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  variable: '--font-bricolage-v17',
+  axes: ['opsz'],
+  preload: false,
 });
 
 // Adres bazowy i opis serwisu są w @/lib/site (jedyne źródło prawdy — route
@@ -69,11 +81,17 @@ export const viewport: Viewport = {
 // stąd też suppressHydrationWarning na <html>. Zero cookies(): odczyt cookies
 // w root layoucie uczyniłby dynamiczną KAŻDĄ stronę Portalu (patrz
 // lib/server-api.ts — to naprawiał PD1). Logika lustrzana z lib/theme.ts.
-const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}})();`;
+// Flaga wyglądu V17: ciasteczko lot_wyglad=v17 ustawia middleware (z ?wyglad=v17); tu tylko
+// odbicie na <html>, żeby tokeny V17 działały od pierwszego paintu.
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}try{if(/(?:^|; )lot_wyglad=v17(?:;|$)/.test(document.cookie))document.documentElement.dataset.wyglad='v17';}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl" className={`${inter.variable} ${bricolage.variable}`} suppressHydrationWarning>
+    <html
+      lang="pl"
+      className={`${inter.variable} ${bricolage.variable} ${bricolageV17.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <div className="climb-rail" aria-hidden="true">

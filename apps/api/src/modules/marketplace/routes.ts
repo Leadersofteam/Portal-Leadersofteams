@@ -114,6 +114,22 @@ export function marketplaceRoutes({
     });
 
     // Opinie o Liderze (D8): lista + rozkład ocen na profilu publicznym.
+    // V17 „Światło”: publiczny strumień realizacji (opublikowane oceny Firma→Lider).
+    app.get('/realizations', async (request, reply) => {
+      const q = (request.query ?? {}) as { limit?: string; cursor?: string };
+      const limit = Math.min(Math.max(Number.parseInt(q.limit ?? '10', 10) || 10, 1), 50);
+      const page = await reviews.listRealizations(limit, q.cursor);
+      // Poziom Lidera dokładamy tu (jak w /leaders): moduł reviews nie zna ladder.
+      const levels = await ladder.getLevels(page.realizations.map((r) => r.leader.userId));
+      return reply.send({
+        ...page,
+        realizations: page.realizations.map((r) => ({
+          ...r,
+          leader: { ...r.leader, level: levels.get(r.leader.userId) ?? 0 },
+        })),
+      });
+    });
+
     app.get('/leaders/:id/reviews', async (request, reply) => {
       const { id } = request.params as { id: string };
       const profile = (await profiles.getPublicProfile(id)) as { userId: string };
