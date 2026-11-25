@@ -175,7 +175,7 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
                     href={`/uslugi?tag=${t.slug}`}
                     style={{ marginRight: 12, color: 'var(--text-muted)' }}
                   >
-                    #{t.name}
+                    #{t.name.replace(/^#+/, '')}
                   </Link>
                 ))}
               </p>

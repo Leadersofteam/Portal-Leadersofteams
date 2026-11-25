@@ -1584,3 +1584,16 @@
 .v17 :is(.rn-det, .rn-us) .muted {
   color: var(--text-muted);
 }
+
+/* Trzy selektory (cena, poziom, kolejność) na telefonie: po dwa w rzędzie, trzeci na całą szerokość —
+   makieta miała dwa, a ściśnięte trzy obcinały etykiety („Cena: dow”). */
+@media (max-width: 720px) {
+  .v17 .rn-pasek .rn-sel {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+/* Akapity z linkiem w treści (np. „Zaloguj się, aby złożyć ofertę”) nie mogą być flexem — flex rozrywał zdanie. */
+.v17 p.rn-akcje {
+  display: block;
+}

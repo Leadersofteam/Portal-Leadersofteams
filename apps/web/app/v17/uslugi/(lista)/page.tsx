@@ -8,6 +8,7 @@ import { Naglowek, Ocena, zl } from '@/components/v17/rynek';
 import { Aw, Odznaka, Okladka, rodzajZBranzy } from '@/components/v17/znaki';
 import type { ListingCardData } from '@/components/ui/listing-card';
 import { publicApi } from '@/lib/server-api';
+import { plural } from '@/lib/v17';
 import { loadJa } from '@/lib/v17-data';
 
 // Metadane jak na liście ze starego wyglądu (ten sam adres).
@@ -111,7 +112,7 @@ export default async function UslugiV17({
         tytul="Usługi"
         meta={
           data
-            ? `${uslugi.length}${data.nextCursor ? '+' : ''} ${uslugi.length === 1 ? 'usługa' : 'usług'} · ${sort[0] === 'newest' ? 'najnowsze u góry' : sort[1].toLowerCase()}`
+            ? `${uslugi.length}${data.nextCursor ? '+' : ''} ${plural(uslugi.length, 'usługa', 'usługi', 'usług')} · ${sort[0] === 'newest' ? 'najnowsze u góry' : sort[1].toLowerCase()}`
             : ''
         }
         cta={{ href: '/uslugi/nowa', etykieta: 'Zaproponuj usługę' }}
@@ -154,7 +155,7 @@ export default async function UslugiV17({
         >
           {POZIOM.map(([k, t]) => (
             <option key={k} value={k}>
-              Poziom Lidera: {t}
+              Poziom: {t}
             </option>
           ))}
         </select>
@@ -261,7 +262,7 @@ export default async function UslugiV17({
               </Link>
             ) : null}
             <small className="num">
-              {uslugi.length}
+              Pokazano {uslugi.length}
               {data.nextCursor ? '+' : ''}
             </small>
           </div>

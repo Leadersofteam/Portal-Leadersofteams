@@ -9,7 +9,7 @@ import { Stopka } from '@/components/v17/rama';
 import { Aw } from '@/components/v17/znaki';
 import type { LevelRule } from '@/lib/levels';
 import { publicApi, serverApi } from '@/lib/server-api';
-import { budget, levelsOrFallback, nf, timeAgo } from '@/lib/v17';
+import { budget, levelsOrFallback, nf, plural, timeAgo } from '@/lib/v17';
 import { loadJa, loadMojaDrabinka } from '@/lib/v17-data';
 
 // Metadane jak na liście z starego wyglądu (zachowane 1:1 — to ten sam adres).
@@ -190,7 +190,7 @@ export default async function ZleceniaV17({
         tytul="Zlecenia"
         meta={
           data
-            ? `${zlecenia.length}${data.nextCursor ? '+' : ''} ${zlecenia.length === 1 ? 'otwarte' : 'otwartych'} · najnowsze u góry`
+            ? `${zlecenia.length}${data.nextCursor ? '+' : ''} ${plural(zlecenia.length, 'otwarte', 'otwarte', 'otwartych')} · najnowsze u góry`
             : ''
         }
         cta={{ href: '/zlecenia/nowe', etykieta: 'Dodaj zlecenie' }}
@@ -344,7 +344,7 @@ export default async function ZleceniaV17({
               </Link>
             ) : null}
             <small className="num">
-              {zlecenia.length}
+              Pokazano {zlecenia.length}
               {data.nextCursor ? '+' : ''}
             </small>
           </div>
