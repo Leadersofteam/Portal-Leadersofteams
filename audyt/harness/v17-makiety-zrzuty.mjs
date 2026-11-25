@@ -64,7 +64,11 @@ for (const stan of stany.length ? stany : ['']) {
       await p.goto(`${url0}?${qs}`, { waitUntil: 'load' });
       await p.evaluate(() => document.fonts.ready);
       const full0 = w < 500 || pelna;
-      await p.addStyleTag({ content: '.stany,.motyw{display:none!important}' + (full0 ? '.dolny,.fab{position:static!important}' : '') });
+      await p.addStyleTag({
+        content:
+          '.stany,.motyw{display:none!important}' +
+          (full0 ? '.dolny,.fab{position:static!important}' : ''),
+      });
       await p.waitForTimeout(700);
       const baza = `v17-${nazwa}${stan ? '-' + stan : ''}-${motyw}-${w}`;
       const full = w < 500 || pelna;
