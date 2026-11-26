@@ -481,3 +481,6 @@ które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmier
 - Strumień V17 przez dobę nie pokazywał wpisów (`loadStrumien` nie wołał `/feed`) przy zielonych testach: żaden nie publikował wpisu
   w domyślnym wyglądzie. Pilnuje tego `e2e/v17-strumien.spec.ts`.
 - ZASTANE, NIENAPRAWIONE: uszkodzony obraz przy uploadzie (`vipspng: libpng read error`) daje 500 zamiast czytelnej odmowy.
+- ZASTANE, NIENAPRAWIONE (26.11): limit API (300/min po `request.ip`) obejmuje CAŁY SSR jednym kubełkiem — `serverApi` nie
+  przekazuje adresu klienta. Ekran robiący kilkanaście zapytań wyczerpuje go kilkunastoma odsłonami na minutę. Licz zapytania
+  nowej strony; naprawa dotyka zabezpieczeń, więc osobno i z testem.

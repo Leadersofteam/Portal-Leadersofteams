@@ -1,40 +1,37 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-## Stan (zmierzony 26.11 ~19:50 UTC)
+## Stan (zmierzony 26.11 ~20:35 UTC)
 
-- Prod healthz ok, worker alive; web/api z `feat/v17-portal` (kod `4ce2eed`). P0 ON dla wszystkich, P1 „Rynek” za `?wyglad=v17`.
-- **Na prodzie nadal błąd: strumień V17 nie pokazuje wpisów.** Poprawka gotowa na `claude/intelligent-leakey-584d2c`
-  (kod do `b2c3158` + dokumenty), wypchnięta, NIESCALONA, NIEWDROŻONA; scala się bez konfliktów, brak z main 0.
-- Bramki gałęzi: lint/typy 0, API 256/256, e2e 43/43, build ok. Migracji brak. 13 odstępstw P0 + 11 P1 „czeka”.
-- `portal-dev-mysql-1` zatrzymany (baza dev świeża: migrate + seed). Dysk 89 %.
+- Prod: web/api `55de3f0` z `feat/v17-portal`. Braki V17 + tło wdrożone; wpis z kompozytora widać w strumieniu (dowód w HANDOFF).
+- P0 ON dla wszystkich, P1 „Rynek” za `?wyglad=v17`. Odstępstwa: P0 i P1 w tabeli programu mają status „czeka”.
+- Bramki: lint/typy 0, API 256/256, e2e 43/43. Dysk ~91–94 %. Powrót: `portal-{web,api}:przed-braki-2611`.
 
 ## Zadania w kolejności
 
-1. Scal `refs/heads/claude/intelligent-leakey-584d2c` do `feat/v17-portal`, `pnpm install --offline`, push. Potem agenci
-   `zgodnosc-makiety` (dane, pisanie, więcej, pusty, offline; 1512/390 × 2 motywy) i `recenzent-wygladu`. P1 z sędziów → poprawka.
-2. Pokaż Maciejowi zrzuty (1512 jasny + 390) i jedno pytanie: **„Wdrożyć braki i tło na prod razem z 13 odstępstwami P0?”**
-   (P0 jest publiczne, więc rebuild publikuje je od razu). TAK → `portal-wdrozenie` (web + api, backup, bez migracji), potem
-   pomiar na prodzie: wpis z kompozytora konta testowego widać w strumieniu; konto posprzątać.
-3. Decyzja P1: „Włączyć P1 dla wszystkich razem z 11 odstępstwami?” — TAK: trasy z `V17_P1_ROUTES` do `V17_ROUTES`,
-   `e2e/v17-routing.spec.ts` i testy starego wyglądu tych tras, cytat w tabeli, bramki, rebuild web.
-4. Po wdrożeniu i akceptacji: usunąć stare `/feed`, `/drabinka`, `/profil` (osobny krok). `/wpisy/[id]` jest w starym stylu;
-   wpis w grupie i uznana odpowiedź nie mają formy w V17 — makieta przed kodem.
-5. Drobne zastane: uszkodzony obraz → 500; `/zlecenia/[id]` `OfferForm`/`ReportButton` w starym stylu; „Ostatnie światło” bez „…”.
+1. Odpowiedź Macieja na „Włączyć P1 dla wszystkich razem z 11 odstępstwami?” — TAK: trasy z `V17_P1_ROUTES` do `V17_ROUTES`
+   (`apps/web/lib/v17-routing.ts`), `e2e/v17-routing.spec.ts` i testy starego wyglądu tych tras, cytat w tabeli, bramki,
+   rebuild web, pomiar HTML. Odrzucone → najpierw poprawka makiety.
+2. Limit API wspólny dla SSR (MINY 26.11): przekazać adres klienta albo zwolnić ruch wewnętrzny, z testem, bez osłabienia
+   limitów logowania i rejestracji.
+3. Po akceptacji odstępstw P0: usunąć stare `/feed`, `/drabinka`, `/profil`. `/wpisy/[id]`, wpis w grupie i uznana odpowiedź:
+   makieta przed kodem.
+4. P2 z sędziów: „Moja branża” bez profilu przepuszcza wszystko; ciche błędy akcji wpisu i wylogowania; `.akcja` 40 px na
+   tablecie; hexy tła poza tokenami.
+5. Drobne zastane: uszkodzony obraz → 500; `/zlecenia/[id]` `OfferForm`/`ReportButton` w starym stylu.
 
 ## Czeka na właściciela
 
-- Punkty 2 i 3. ADR-004: „Ostatnie światło” pokazuje „głos za odpowiedź +pkt”, a zasada mówi o ocenie lub uznanej odpowiedzi.
-- D5 Search Console + Bing. 3–5 prawdziwych zleceń HydroSpark. D3 purge demo („nie teraz”). Na prodzie zostały 3 firmy
-  „Test P1 (konto techniczne)” i 3 zlecenia CANCELLED. Workflow `deploy-staging.yml` sprzeczny z „wdrożenia ręczne”.
+- Punkt 1. Co z wpisami persony „Konrad Jaworowski” (i 4 innych kont wyprawy) w publicznym strumieniu: zostają czy ukryć.
+- ADR-004 („głos za odpowiedź +pkt” w „Ostatnim świetle”). D5 Search Console + Bing. 3–5 zleceń HydroSpark. D3 purge demo.
+- Workflow `deploy-staging.yml` sprzeczny z „wdrożenia ręczne”.
 
 ## Czego nie robić
 
-- Nie pisz od nowa P1 ani braków P0 — są gotowe. Nie usuwaj starego wyglądu przed wdrożeniem braków i akceptacją.
-- Nie dopisuj P1 do `V17_ROUTES` bez „tak”. Nie wdrażaj `main` wprost. Reguł punktowych nie ruszać bez rozmowy.
-- `loading.tsx` tylko obok page.tsx listy, nigdy nad `[id]`/`[slug]`/`[handle]`.
-- e2e kasuje wspólną bazę dev — jeden przebieg na raz. Przed budową `free -m` i dysk.
+- Nie dopisuj P1 do `V17_ROUTES` bez „tak”. Nie usuwaj starego wyglądu przed akceptacją. Nie wdrażaj `main` wprost.
+- Reguł punktowych nie ruszać bez rozmowy. `loading.tsx` tylko obok page.tsx listy, nigdy nad `[id]`/`[slug]`/`[handle]`.
+- e2e kasuje wspólną bazę dev — jeden przebieg; po nim `docker stop portal-dev-mysql-1`. Przed budową `free -m` i dysk.
 
 ## Prompt startowy
 
 Jesteś Liderem dnia Portalu LOT (Opus, `/docker/portal-staging`, `feat/v17-portal`). Skill `portal-lider-dnia`; punkt 1 briefu:
-scal gałąź z brakami V17 i oceń ją sędziami, potem jedno pytanie do Macieja o wdrożenie.
+odpowiedź na pytanie o P1 „Rynek”, potem wspólny limit API.

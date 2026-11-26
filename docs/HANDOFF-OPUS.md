@@ -1,5 +1,13 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-11-26 noc — braki V17 P0 + tło NA PRODZIE (`55de3f0`, web + api, bez migracji).** Strumień pokazuje wpisy.
+> Dowód: konto testowe opublikowało wpis z kompozytora (390), widoczny od pierwszej próby zalogowanemu i gościowi; wpis i konto
+> usunięte (SELECT: konto `deleted-*`, 0 pozycji w strumieniu, 0 kont `test-braki-*`). Healthz ok, 0 błędów level 50.
+> Sędziowie: 0 P1 względem makiety braków; recenzent 2×P1 naprawione („Pokaż więcej” ≤ 40; etykieta Drabinki L1–L2).
+> Lint/typy 0, API 256/256, e2e 43/43. Powrót: obrazy `portal-web:przed-braki-2611`, `portal-api:przed-braki-2611`.
+> Sprostowanie: gałąź braków nie scalała się „bez konfliktów” (1 konflikt w briefie).
+> Zastane, nienaprawione: limit API 300/min wspólny dla całego SSR; w publicznym strumieniu wpisy persony testowej z wyprawy.
+
 > **🟡 2026-11-26 wieczór — braki V17 P0 + tło ZAKODOWANE i wypchnięte, NIEWDROŻONE (`claude/intelligent-leakey-584d2c`).**
 > Strumień pokazuje wpisy (naprawa zastanego błędu od 25.11; **na prodzie błąd nadal jest**), zakładki, akcje bez licznika, zdjęcia
 > i cytat, kompozytor na telefonie, awans, offline, menu konta, tło z siecią na wszystkich ekranach V17. API addytywnie (`/feed?types=`,
