@@ -15,7 +15,7 @@
    z `V17_P1_ROUTES` do `V17_ROUTES`, popraw `e2e/v17-routing.spec.ts` (i testy starego wyglądu tych tras), cytat w tabeli,
    bramki, rebuild web, pomiar. Odrzucone → najpierw poprawka do makiety.
 2. **BŁĄD NA PRODZIE: strumień V17 nie pokazuje zwykłych wpisów** (`loadStrumien` w `lib/v17-data.ts` nie woła `/feed`);
-   wpis z kompozytora V17 znika autorowi. Makieta braków `pro/braki.html` czeka na akceptację → kod → dopiero usunięcie
+   wpis z kompozytora V17 znika autorowi. Makieta braków `pro/braki.html` ZAAKCEPTOWANA 26.11 („Tak, koduj”, jaśniejsze tło z siecią Liderów; commit 4d7c1b2) → kod → dopiero usunięcie
    starych `/feed`, `/drabinka`, `/profil`. Maciej 26.11: „Najpierw braki”.
 3. `/zlecenia/[id]` widok Lidera: `OfferForm` i `ReportButton` w starym stylu (P2). „Ostatnie światło”: tytuł ucięty bez „…”.
 4. ADR-004 do rozstrzygnięcia z Maciejem: „Ostatnie światło” może pokazać „głos za odpowiedź +pkt”, a akapit i CLAUDE.md mówią
