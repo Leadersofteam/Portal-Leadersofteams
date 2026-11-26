@@ -14,8 +14,9 @@
 1. **Odpowiedź Macieja na „Włączyć P1 dla wszystkich razem z 11 odstępstwami?”** — TAK: w `apps/web/lib/v17-routing.ts` trasy
    z `V17_P1_ROUTES` do `V17_ROUTES`, popraw `e2e/v17-routing.spec.ts` (i testy starego wyglądu tych tras), cytat w tabeli,
    bramki, rebuild web, pomiar. Odrzucone → najpierw poprawka do makiety.
-2. **Braki V17 P0 → makieta → akceptacja → kod → dopiero usunięcie starych `/feed`, `/drabinka`, `/profil`.** Maciej 26.11:
-   „Najpierw braki”. Braki: docenienie, zapisywanie, cytaty i zdjęcia we wpisach, podgląd offline, przełącznik motywu.
+2. **BŁĄD NA PRODZIE: strumień V17 nie pokazuje zwykłych wpisów** (`loadStrumien` w `lib/v17-data.ts` nie woła `/feed`);
+   wpis z kompozytora V17 znika autorowi. Makieta braków `pro/braki.html` czeka na akceptację → kod → dopiero usunięcie
+   starych `/feed`, `/drabinka`, `/profil`. Maciej 26.11: „Najpierw braki”.
 3. `/zlecenia/[id]` widok Lidera: `OfferForm` i `ReportButton` w starym stylu (P2). „Ostatnie światło”: tytuł ucięty bez „…”.
 4. ADR-004 do rozstrzygnięcia z Maciejem: „Ostatnie światło” może pokazać „głos za odpowiedź +pkt”, a akapit i CLAUDE.md mówią
    tylko o ocenie albo uznanej odpowiedzi. Reguł punktowych nie ruszać bez rozmowy.

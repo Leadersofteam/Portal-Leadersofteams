@@ -71,3 +71,22 @@ wynikają z **brakującego pola w API** albo z decyzji o prywatności i są **zn
 | „Ostatnie światło” — punkt z wagą < 1 | „druga ocena od tej firmy w roku, waga ×0,5” | „ocena N/5 po zleceniu „X” · waga ×0,5” | publiczna Oś światła nie niesie powodu wagi (bywa też młoda firma) — nie zgadujemy |
 | Liczby 4-cyfrowe | P1 `fmt4`: „1 150 zł”; P0: „1500 pkt” | P1 przez `nf4`, P0 bez zmian (`nf`) | każdy ekran jak w swojej makiecie |
 
+
+## Braki wobec starego wyglądu — makieta `braki.html` (26.11, CZEKA na akceptację Macieja)
+
+Stany `?stan=dane|pisanie|offline|wiecej|pusty`; zrzuty `audyt/zrzuty/v17-braki-*.png`. Ładowanie i błąd jak w `feed.html`.
+
+| Brak w V17 | W makiecie |
+|---|---|
+| **Zwykłe wpisy nie są pobierane do strumienia** (błąd na prodzie od 25.11) | wiersz „Wpis”, filtr „Wpisy” |
+| Zakres „Cała społeczność / Obserwowani” | dwie zakładki nad kompozytorem |
+| Docenienie (bez licznika, ADR-010), komentarze, zapis, „Podaj dalej” | pasek akcji wpisu; czas = odnośnik do wpisu |
+| Zdjęcia i cytat we wpisie i w kompozytorze | siatka zdjęć, karta cytatu, miniatury, licznik znaków |
+| Awans w strumieniu | wiersz „Awans na szczebel …” |
+| Kompozytor na telefonie (dziś ukryty) | pełny ekran z FAB |
+| Podgląd offline | baner i zapisane publiczne wpisy |
+| Konto: Panel, Zapisane, Moje punkty, Grupy, Droga, Dla firm, motyw, wylogowanie | menu z karty konta (desktop) i awatara (telefon) |
+
+Poza makietą, do sprawdzenia przy kodzie: odnośniki z Drabinki do `/droga` i `/panel/punkty`, zgłoszenie/edycja/usunięcie
+wpisu (zostają na `/wpisy/[id]`), fokus i Esc w menu i kompozytorze.
+Zmiana wobec `pro.css`: w ciemnym motywie przycisk główny na `--primary-600` (kontrast AA).

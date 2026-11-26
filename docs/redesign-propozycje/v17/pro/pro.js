@@ -474,7 +474,7 @@
 
   window.Pro = {
     // wspólne klocki dla rynek.js (P1, 25.11): ta sama rama, awatary, odznaki i okładki co strumień
-    h: { q, STAN, L, P, fmt, I, ini, hue, aw, odz, szczebelki, okl, gw, nav, gora, dolny, stopka, stany, miernik, komunikat, sz, szWiersz, powloka, bladEkranu, postep, pierscien, znakOsoby },
+    h: { q, STAN, L, P, fmt, I, ini, hue, aw, odz, szczebelki, okl, gw, nav, gora, dolny, stopka, stany, miernik, kartaDrabinki, kartaZlecen, kartaTematow, komunikat, sz, szWiersz, powloka, bladEkranu, postep, pierscien, znakOsoby },
     feed,
     profil: () => { if (STAN) { document.body.innerHTML = stanProfilu(); } else { profil(); document.body.insertAdjacentHTML('beforeend', stany(['pusty', 'ladowanie', 'blad'])); } },
     drabinka: () => { if (STAN === 'ladowanie' || STAN === 'blad') { document.body.innerHTML = stanDrabinki(); } else drabinka(); },

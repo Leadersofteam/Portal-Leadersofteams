@@ -1,0 +1,92 @@
+/* Dodatki makiety braków V17 (26.11). Tylko tokeny z pro.css. */
+.zakres { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+.zakres button { min-height: 48px; font-size: 14.5px; font-weight: 550; color: var(--text-muted); box-shadow: inset 0 -2px 0 transparent; }
+.zakres button[aria-selected='true'] { color: var(--text-strong); font-weight: 700; box-shadow: inset 0 -2px 0 var(--text-strong); }
+.kompozytor textarea.wpisz { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); resize: vertical; color: var(--text-strong); font: 500 17px/1.45 var(--font-display); padding: 8px 0 12px; }
+.kompozytor .btn { min-height: 44px; }
+.kompozytor .btn[disabled] { opacity: 0.45; }
+.kompozytor .rodzaj { height: 44px; }
+.licznik { margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
+.licznik + .btn { margin-left: 12px !important; }
+.miniatury { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.mini { position: relative; width: 88px; height: 88px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line-2); }
+.mini .okl, .mini .okl svg { width: 100%; height: 100%; }
+.mini button { position: absolute; top: 0; right: 0; width: 44px; height: 44px; display: grid; place-items: center; color: var(--text-strong); }
+.mini button i { background: var(--surface); border-radius: 50%; padding: 5px; font-size: 14px; }
+.mini.dodaj { display: grid; place-items: center; font-size: 22px; color: var(--text-muted); border-style: dashed; }
+.bcyt-szkic { display: flex; align-items: flex-start; gap: 4px; }
+.bcyt-szkic .bcyt { flex: 1; }
+.bcyt-szkic .ikonka { margin-top: 10px; flex: none; }
+.bcyt { display: grid; gap: 6px; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--surface); min-width: 0; }
+.bcyt .autor { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-strong); }
+.bcyt .czas { color: var(--text-muted); font-size: 12.5px; }
+.bcyt .odz { color: var(--text-muted); font-size: 12px; }
+.bcyt .odz svg { color: var(--lv); }
+.bcyt .tekst { color: var(--text-body); font-size: 14.5px; line-height: 1.5; }
+.zdjecia { display: grid; gap: 4px; margin-top: 12px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line-2); }
+.zdjecia a { display: block; position: relative; min-height: 0; }
+.zdjecia .okl, .zdjecia .okl svg { display: block; width: 100%; height: 100%; }
+.zdjecia[data-ile='1'] a { aspect-ratio: 16 / 9; }
+.zdjecia[data-ile='3'] { grid-template-columns: 2fr 1fr; grid-template-rows: 130px 130px; }
+.zdjecia[data-ile='3'] a:first-child { grid-row: span 2; }
+.akcje.wpisu .akcja.odp { width: auto; min-width: 44px; padding: 0 10px; gap: 6px; }
+.akcje.wpisu .akcja.wl { color: var(--primary-400); background: rgb(var(--primary-rgb) / 0.12); }
+.awans { display: flex; align-items: center; gap: 16px; margin: 12px 0 8px; padding: 16px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--surface); }
+.awans > span:last-child { display: grid; justify-items: start; gap: 6px; }
+.awans b { font: 700 16px/1.3 var(--font-display); color: var(--text-strong); }
+.awans small { font-size: 12.5px; color: var(--text-muted); }
+.offline { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.offline > i { font-size: 28px; color: var(--text-muted); }
+.offline span { flex: 1; min-width: 200px; display: grid; gap: 2px; }
+.offline b { color: var(--text-strong); }
+.offline small { font-size: 13px; color: var(--text-muted); }
+.zaslona { position: fixed; inset: 0; z-index: 40; background: rgb(0 0 0 / 0.5); }
+.wiecej-menu { position: fixed; z-index: 41; left: max(16px, calc(50% - 616px)); bottom: 100px; width: 320px; max-height: calc(100vh - 120px); overflow-y: auto; border: 1px solid var(--line-2); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-2); }
+.wiecej-menu header { display: flex; align-items: center; gap: 12px; padding: 14px 8px 14px 16px; border-bottom: 1px solid var(--line); }
+.wiecej-menu header > span:nth-child(2) { flex: 1; display: grid; justify-items: start; gap: 4px; }
+.wiecej-menu h2 { margin: 0; font: 700 16px/1.2 var(--font-display); color: var(--text-strong); }
+.wiecej-menu .odz { color: var(--text-muted); font-size: 12.5px; }
+.wiecej-menu .odz svg { color: var(--lv); }
+.wiecej-menu nav { display: grid; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.wiecej-menu nav:last-child { border-bottom: 0; }
+.wiecej-menu nav a, .wiecej-menu nav button { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border-radius: var(--radius-sm); font-size: 14.5px; font-weight: 550; color: var(--text); text-align: left; }
+.wiecej-menu nav i { font-size: 20px; color: var(--text-muted); }
+.wiecej-menu .blok { padding: 12px 18px 14px; border-bottom: 1px solid var(--line); }
+.wiecej-menu .et { display: block; margin-bottom: 8px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+.motyw-wybor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: var(--radius); background: var(--surface-3); }
+.motyw-wybor button { display: grid; justify-items: center; gap: 4px; min-height: 52px; padding: 8px 2px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 550; color: var(--text-muted); }
+.motyw-wybor button i { font-size: 18px; }
+.motyw-wybor button[aria-checked='true'] { background: var(--surface); color: var(--text-strong); box-shadow: var(--shadow-1); }
+.pisze-gora { display: none; }
+@media (max-width: 720px) {
+  .kompozytor.pisze { display: flex; position: fixed; inset: 0; z-index: 40; overflow-y: auto; background: var(--bg); padding: 12px 16px; align-content: start; }
+  .kompozytor.pisze > .aw { display: none; }
+  .pisze-gora { display: flex; align-items: center; gap: 8px; margin: 0 0 8px -10px; }
+  .pisze-gora b { font: 700 18px/1 var(--font-display); color: var(--text-strong); }
+  .kompozytor.pisze textarea.wpisz { min-height: 160px; }
+  .kompozytor.pisze .rodzaje { flex-wrap: wrap; }
+  .wiecej-menu { left: 0; right: 0; bottom: 0; width: auto; max-height: 88vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .kompozytor .rodzaje .btn { width: 100%; margin: 4px 0 0 !important; }
+  .zdjecia[data-ile='3'] { grid-template-rows: 90px 90px; }
+}
+
+/* Poprawki po recenzji 26.11 */
+.wpis .glowa a.czas:hover { text-decoration: underline; }
+button.wyzw { text-align: left; }
+.nav button.ja { width: 100%; }
+.nav .utworz:disabled { opacity: 0.45; }
+.mojprofil { flex: 1; display: grid; justify-items: start; gap: 4px; min-height: 44px; }
+.mojprofil small { font-size: 12.5px; font-weight: 600; color: var(--primary-400); }
+.awans > i { font-size: 32px; color: var(--primary-400); flex: none; }
+.pisze-gora .btn, .inne { display: none; }
+/* biały na --primary-500 w ciemnym ma 3,73:1 (zastane w pro.css) */
+:root:not([data-theme='light']) .btn.glowny { background: var(--primary-600); }
+@media (max-width: 720px) {
+  .pisze-gora .btn { display: inline-flex; margin: 0 0 0 auto !important; width: auto; }
+  .kompozytor .rodzaje .btn.dol { display: none; }
+  .inne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .inne > span { width: 100%; font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+  .wpis .meta .typ span { display: inline !important; }
+  .wpis .glowa a.czas { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; margin: -11px 0; }
+}
+.gora button.wyzw { display: grid; place-items: center; width: 44px; height: 44px; flex: none; }
