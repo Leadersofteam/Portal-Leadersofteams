@@ -24,8 +24,10 @@ import type { Filtr, Zakres } from '@/lib/v17-data';
 export const metadata = { title: 'Strumień — Portal Liderów' };
 
 const KROK = 8;
-// Bezpiecznik „Pokaż więcej”: powyżej tego jedna strona robi się za ciężka dla telefonu.
-const MAKS = 200;
+// Bezpiecznik „Pokaż więcej”. Okno źródła to pokaz + 6, a strona API ma 50: do 40 każde źródło mieści się
+// w JEDNYM zapytaniu. Wyżej jedna odsłona robi kilkadziesiąt zapytań, a limit API (300/min) jest dziś
+// wspólny dla całego SSR (liczony po IP kontenera web), więc kilka takich odsłon dawało 429 wszystkim.
+const MAKS = 40;
 
 const ZAKRESY: Array<[Zakres, string]> = [
   ['wszyscy', 'Cała społeczność'],
@@ -316,7 +318,7 @@ export default async function FeedV17({
             {/* ADR-010: koniec listy mówi, ile widzisz — bez nieskończonego scrolla. „+” = są jeszcze wpisy poza oknem. */}
             <small className="num">
               {strumien.wpisy.length} z {strumien.razem}
-              {strumien.mozeWiecej && pokaz < MAKS ? '+' : ''}
+              {strumien.mozeWiecej ? '+' : ''}
             </small>
           </div>
         </>

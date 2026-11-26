@@ -110,7 +110,8 @@ html[data-theme='light']:has(.v17) {
   border-radius: 0;
   resize: vertical;
   color: var(--text-strong);
-  font: 500 17px/1.45 var(--font-display);
+  /* 600, nie 500: makieta ładuje ten krój dopiero od 600, więc taki obraz był akceptowany. */
+  font: 600 17px/1.45 var(--font-display);
   padding: 8px 0 12px;
 }
 .v17 .kompozytor textarea.wpisz:focus-visible {

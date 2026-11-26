@@ -88,6 +88,9 @@ export function Scena({ level, rules }: { level: number; rules: LevelRule[] }) {
               : n.n === 7
                 ? ['Architekt Zespołów', 'var(--warm)', 650]
                 : null;
+          // Szczeble 1–2 stoją przy lewej krawędzi: etykieta z lewej wypadała poza scenę i wchodziła na
+          // kartę punktów, więc idzie pod węzeł.
+          const pod = teraz && n.n <= 2;
           return (
             <g key={n.n}>
               {teraz ? (
@@ -131,8 +134,8 @@ export function Scena({ level, rules }: { level: number; rules: LevelRule[] }) {
               {etk ? (
                 <text
                   x={n.x - 18}
-                  y={n.y + 4}
-                  textAnchor="end"
+                  y={pod ? n.y + 36 : n.y + 4}
+                  textAnchor={pod ? 'start' : 'end'}
                   style={{ fill: etk[1] as string, font: `${etk[2]} 12px var(--font-sans)` }}
                 >
                   {etk[0]}
