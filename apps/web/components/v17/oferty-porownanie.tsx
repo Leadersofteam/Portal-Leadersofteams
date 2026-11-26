@@ -9,7 +9,7 @@ import { useAction } from '@/components/action-button';
 import { apiFetch } from '@/lib/api';
 
 import { Ico } from './ico';
-import { nf } from '@/lib/v17';
+import { nf4, ocenaSrednia } from '@/lib/v17';
 
 import { zl } from './rynek';
 import { Aw, Odznaka } from './znaki';
@@ -103,6 +103,10 @@ export function OfertyPorownanie({
                       <small>
                         {o.branza} · złożona {o.kiedy}
                       </small>
+                      {/* Status oferty (Zaakceptowana/Odrzucona) stoi przy oferencie, nie w kolumnie ocen. */}
+                      {o.status !== 'SUBMITTED' ? (
+                        <span className="cap">{o.statusEtykieta}</span>
+                      ) : null}
                       {poziom}
                       <p className="not" style={{ margin: '6px 0 0' }}>
                         {o.wiadomosc}
@@ -119,7 +123,7 @@ export function OfertyPorownanie({
                 </td>
                 <td className="poz of-poz">
                   <Odznaka level={o.poziom} kreski />
-                  <span className="pk">{nf(o.punkty ?? 0)} pkt</span>
+                  <span className="pk">{nf4(o.punkty ?? 0)} pkt</span>
                 </td>
                 <td data-e="Cena" className="of-c">
                   {o.cena ? zl(o.cena) : '—'}
@@ -138,15 +142,12 @@ export function OfertyPorownanie({
                     {o.liczbaOcen && o.srednia !== null ? (
                       <>
                         <Ico n="star" />
-                        {String(o.srednia).replace('.', ',')} <small>({o.liczbaOcen})</small>
+                        {ocenaSrednia(o.srednia)} <small>({o.liczbaOcen})</small>
                       </>
                     ) : (
                       'Bez ocen'
                     )}
                   </div>
-                  {o.status !== 'SUBMITTED' ? (
-                    <span className="cap">{o.statusEtykieta}</span>
-                  ) : null}
                 </td>
               </tr>
             );

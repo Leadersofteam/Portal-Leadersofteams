@@ -57,7 +57,7 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
 
     app.get('/listings', async (request, reply) => {
       const filters = parseBody(listingFiltersSchema, request.query);
-      const { listings: rows, nextCursor } = await listings.list(filters);
+      const { listings: rows, nextCursor, total } = await listings.list(filters);
       const sessionUser = await auth.currentUser(request);
       const enriched = await withLeaderMeta(rows);
       const favorites = sessionUser
@@ -69,6 +69,7 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
       return reply.send({
         listings: enriched.map((l) => ({ ...l, isFavorite: favorites.has(l.id) })),
         nextCursor,
+        total,
       });
     });
 

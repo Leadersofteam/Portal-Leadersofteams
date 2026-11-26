@@ -170,6 +170,14 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
     expect(found).toBeDefined();
     expect(found!.priceFrom).toBe(1500);
     expect(found!.leader.displayName).toBe('Lider Usługowy');
+    // „N z M”: `total` liczy wszystkie pasujące, niezależnie od `limit`.
+    const first = (
+      await ctx.app.inject({ method: 'GET', url: '/api/v1/listings?limit=1' })
+    ).json() as { total: number; listings: unknown[] };
+    expect(first.listings).toHaveLength(1);
+    expect(first.total).toBeGreaterThanOrEqual(
+      (list.json() as { listings: unknown[] }).listings.length,
+    );
 
     const filtered = await ctx.app.inject({ method: 'GET', url: '/api/v1/listings?priceMax=1000' });
     expect(

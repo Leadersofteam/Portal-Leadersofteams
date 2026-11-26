@@ -287,7 +287,7 @@ export function createListingsService({ prisma, identity, orders, files, redis }
                 AND status = 'PUBLISHED'
               LIMIT 200`;
           fulltextIds = rows.map((r) => r.id);
-          if (fulltextIds.length === 0) return { listings: [], nextCursor: null };
+          if (fulltextIds.length === 0) return { listings: [], nextCursor: null, total: 0 };
         } else {
           // Fraza krótsza niż próg indeksu — fallback na LIKE po tytule.
           likeQ = filters.q;
@@ -320,18 +320,23 @@ export function createListingsService({ prisma, identity, orders, files, redis }
             ? [{ priceFrom: 'desc' }, { id: 'desc' }]
             : [{ publishedAt: 'desc' }, { id: 'desc' }];
 
-      const rows = await prisma.serviceListing.findMany({
-        where,
-        include: fullInclude,
-        orderBy,
-        take: filters.limit + 1,
-        ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
-      });
+      const [rows, total] = await Promise.all([
+        prisma.serviceListing.findMany({
+          where,
+          include: fullInclude,
+          orderBy,
+          take: filters.limit + 1,
+          ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+        }),
+        // „N z M” na końcu katalogu (V17 „Rynek”) — ten sam `where` co lista.
+        prisma.serviceListing.count({ where }),
+      ]);
       const hasMore = rows.length > filters.limit;
       const page = hasMore ? rows.slice(0, filters.limit) : rows;
       return {
         listings: page.map(decorate),
         nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+        total,
       };
     },
 

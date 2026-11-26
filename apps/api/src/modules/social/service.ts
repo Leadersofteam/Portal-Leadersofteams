@@ -945,7 +945,11 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
         reviewIds.length
           ? prisma.review.findMany({
               where: { id: { in: reviewIds } },
-              select: { id: true, order: { select: { title: true, companyId: true } } },
+              select: {
+                id: true,
+                rating: true,
+                order: { select: { title: true, companyId: true } },
+              },
             })
           : [],
         answerIds.length
@@ -965,6 +969,8 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
           : [],
       ]);
       const reviewById = new Map(reviews.map((r) => [r.id, r.order]));
+      // Ocena (1–5) jest publiczna przy realizacji; Oś światła pokazuje ją w zdaniu „ocena 5/5 po zleceniu”.
+      const ratingById = new Map(reviews.map((r) => [r.id, r.rating]));
       const answerById = new Map(answers.map((a) => [a.id, a.thread]));
       const voteById = new Map(votes.map((v) => [v.id, v.answer.thread]));
       const [companies, people] = await Promise.all([
@@ -1015,6 +1021,7 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
             maturesAt: e.maturesAt,
             title,
             threadId,
+            rating: e.sourceType === 'Review' ? (ratingById.get(e.sourceId) ?? null) : null,
             source,
           };
         }),
