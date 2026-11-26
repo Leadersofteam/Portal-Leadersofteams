@@ -72,7 +72,7 @@ wynikają z **brakującego pola w API** albo z decyzji o prywatności i są **zn
 | Liczby 4-cyfrowe | P1 `fmt4`: „1 150 zł”; P0: „1500 pkt” | P1 przez `nf4`, P0 bez zmian (`nf`) | każdy ekran jak w swojej makiecie |
 
 
-## Braki wobec starego wyglądu — makieta `braki.html` (26.11, CZEKA na akceptację Macieja)
+## Braki wobec starego wyglądu — makieta `braki.html` (26.11, zaakceptowana 26.11)
 
 Stany `?stan=dane|pisanie|offline|wiecej|pusty`; zrzuty `audyt/zrzuty/v17-braki-*.png`. Ładowanie i błąd jak w `feed.html`.
 
