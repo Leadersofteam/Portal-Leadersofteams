@@ -40,6 +40,8 @@ kod za flagą `data-wyglad="v17"` (sesja Sonnet) → `zgodnosc-makiety` ZGODNY w
 Maciej 26.11: „Po ukończeniu zadań, wdrażaj kolejne ekrany w V17 PRO. Cały portal musi być V17 PRO oraz Landing Page.”
 Kolejność: reszta P1 (kreatory, edycja, branże, oferty, zapytania, porównania, firmy, „Dla firm”) → P6 landing + P5 → P2 → P3 → P4.
 Procedura bez zmian: makieta → akceptacja → kod.
+Maciej 26.11: „Pamiętaj o mobile first ale też większych ekranach czyli 3440x1440.” Każda makieta i każdy ekran w kodzie:
+projekt od 390, sprawdzenie 390, 1512 i **3440×1440** (zrzuty wszystkich trzech przed pytaniem o akceptację).
 
 | Paczka                | Zakres (trasy)                                                                                                                                              | Wzorzec                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |

@@ -8,6 +8,8 @@
 
 ## Zadania w kolejności
 
+Każdy ekran: mobile first (390), 1512 i **3440×1440** (Maciej 26.11) — zrzuty wszystkich trzech.
+
 1. Maciej 26.11: cały Portal i landing w V17 PRO. Makieta reszty P1 (`/zlecenia/nowe`, `/uslugi/nowa`, edycja, strony branż,
    `/oferty/[id]`, `/zapytania/[id]`, `/porownanie/*`, `/firmy/[id]`, `/firma/nowa`, `/dla-firm`) → `recenzent-wygladu` →
    zrzuty 1512 + 390 → jedno pytanie. Nowa paczka = OSOBNA lista tras z opt-inem w `lib/v17-routing.ts`.
