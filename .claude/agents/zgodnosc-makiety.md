@@ -25,4 +25,4 @@ Format zwrotu:
 Niezweryfikowane: <czego nie dało się porównać i dlaczego>
 ```
 
-P1 = brakujący lub inny element, układ, tekst wezwania, kolor akcji. P2 = odstęp, wielkość, cień. Nie proponuj zmian makiety — to decyzja Lidera i Macieja.
+P1 = brakujący lub inny element, układ, tekst wezwania, kolor akcji. P2 = odstęp, wielkość, cień. Nie proponuj zmian makiety — to decyzja Lidera i Macieja. Element w kodzie, którego makieta nie ma (nawet działający), zgłaszasz osobno jako „KANDYDAT NA ODSTĘPSTWO” — nie jako ZGODNY i nie przemilczasz.

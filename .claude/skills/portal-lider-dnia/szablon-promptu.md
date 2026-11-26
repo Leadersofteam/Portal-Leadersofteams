@@ -21,6 +21,7 @@ Liczby z pomiaru Lidera (free -m, hash bundla leadersofteams.pl, stan-galezi.sh)
 </stan_zmierzony>
 
 <decyzje>Cytaty właściciela DOSŁOWNIE, z datą. Zakres każdej zgody (np. „tylko tabela X, tylko staging”). Zasady Macieja V17 — dosłownie z docs/PROGRAM-V17-PORTAL.md.</decyzje>
+Nowe trasy V17: własny warunek opt-in w `decydujWyglad` (middleware), NIE dopisek do listy domyślnie włączonej. Element spoza makiety = wiersz ODSTĘPSTWO, nie cicha decyzja.
 
 <zadanie>
 1. Punkt wykonalny od razu, z plikami do ruszenia i funkcją do ponownego użycia (ścieżka).

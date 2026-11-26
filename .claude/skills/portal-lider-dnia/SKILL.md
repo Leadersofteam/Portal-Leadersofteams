@@ -50,6 +50,14 @@ Pomiar 22.11: 14 osieroconych wolumenów po bazach próbnych w jeden dzień (3 G
 - Notatka sesji to raport, nie dowód. „Zrobione” piszesz po **własnym** pomiarze: zrzut (Read obrazu), wynik agenta, hash bundla z HTTPS, SELECT.
 - Makieta → `recenzent-wygladu` bez P1 → SendUserFile (1512 jasny + 390) → **jedno** pytanie o akceptację → wiersz w tabeli programu.
 - Kod → `zgodnosc-makiety` ZGODNY w 4 parach → `portal-bramki` → `portal-wdrozenie` (ręcznie).
+- **Nowa paczka V17 = flaga opt-in, nie dopisek do `V17_ROUTES`** (25.11, P1 „Rynek”): od 25.11 P0 jest domyślnie ON dla wszystkich,
+  więc nowe trasy dopisane do tej samej listy byłyby publiczne zaraz po wdrożeniu. Każda paczka dostaje własny warunek w `decydujWyglad`
+  (`apps/web/middleware.ts`) — tylko `?wyglad=v17` / ciasteczko `v17`; „dla wszystkich” dopiero po akceptacji Macieja na prodzie.
+  Dowód: HTML bez flagi NIE zawiera `/_next/static/chunks/app/v17/<trasa>`, z flagą zawiera; `[id]`/`[slug]` nieistniejące = 404.
+- **Element spoza makiety = ODSTĘPSTWO**, nawet gdy to działająca funkcja: wiersz w tabeli programu (co, dlaczego, zrzut, „czeka na
+  akceptację”), pytanie do Macieja razem z pytaniem o włączenie paczki. Bez akceptacji wdrażasz tylko za flagą opt-in i piszesz to wprost.
+- Rytm z P1: 3 rundy sędziów (18 → ~6 → 1 różnica). Planuj ≥ 2 rundy; poprawki zbieraj w jedną paczkę po werdykcie OBU sędziów.
+- Lider startuje w SWOIM repo (`cwd=/docker/portal-staging`) — sesja z repo App, która dostała prompt Portalu, tylko go uruchamia.
 - Pytania sesji do właściciela przekazujesz dosłownie; odpowiedź wraca do sesji jako cytat.
 - Sesję z długim kontekstem wymieniasz na świeżą z briefem (raport sesji ≤ 10 linii).
 
