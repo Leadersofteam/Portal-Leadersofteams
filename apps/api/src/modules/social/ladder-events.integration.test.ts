@@ -105,9 +105,12 @@ describe.skipIf(!hasInfra)('Oś światła: publiczna księga Lidera (read-only)'
         status: string;
         maturesAt: string | null;
         type: string;
+        rating: number | null;
       }>;
     };
     expect(body.total).toBe(3);
+    // Ocena pojawia się tylko przy punktach z prawdziwej recenzji (fikstura jej nie ma → null).
+    expect(body.events.every((e) => e.rating === null)).toBe(true);
     expect(body.events.map((e) => e.status).sort()).toEqual(['CONFIRMED', 'CONFIRMED', 'PENDING']);
     expect(body.events.some((e) => e.type === 'ADJUSTMENT_MODERATION')).toBe(false);
     // waga ×0,5 dla drugiej oceny tej samej firmy jest jawna

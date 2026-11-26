@@ -899,7 +899,8 @@ body:has(.v17) {
   background: var(--surface-3);
   overflow: hidden;
 }
-.v17 .okl svg {
+/* Tylko okładka (bezpośrednie dziecko): `.okl svg` rozciągał też ikonę Phosphora w `.ikon` na całą kartę. */
+.v17 .okl > svg {
   position: absolute;
   inset: 0;
   width: 100%;

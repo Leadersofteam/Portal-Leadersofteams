@@ -2,11 +2,11 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { nf, plural } from '@/lib/v17';
+import { nf4, ocenaSrednia, plural } from '@/lib/v17';
 
 import { Ico } from './ico';
 
-export const zl = (n: number) => nf(n) + String.fromCharCode(160) + 'zł';
+export const zl = (n: number) => nf4(n) + String.fromCharCode(160) + 'zł';
 
 export function Ocena({
   srednia,
@@ -21,7 +21,7 @@ export function Ocena({
   return (
     <span className={klasa}>
       <Ico n="star" />
-      {String(srednia).replace('.', ',')} <small>({liczba})</small>
+      {ocenaSrednia(srednia)} <small>({liczba})</small>
     </span>
   );
 }

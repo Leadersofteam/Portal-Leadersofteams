@@ -8,7 +8,7 @@ import { Naglowek, Ocena, zl } from '@/components/v17/rynek';
 import { Aw, Odznaka, Okladka, rodzajRynek } from '@/components/v17/znaki';
 import type { ListingCardData } from '@/components/ui/listing-card';
 import { publicApi } from '@/lib/server-api';
-import { ddmm, plural } from '@/lib/v17';
+import { ddmm, nf, plural } from '@/lib/v17';
 import { loadJa } from '@/lib/v17-data';
 
 // Metadane jak na liście ze starego wyglądu (ten sam adres).
@@ -72,11 +72,13 @@ export default async function UslugiV17({
     publicApi<{
       listings: Array<ListingCardData & { publishedAt?: string | null; createdAt?: string }>;
       nextCursor: string | null;
+      total?: number;
     }>(`/listings?${query.toString()}`, 0),
     publicApi<{ industries: Branza[] }>('/industries'),
   ]);
   const branze = branzeData?.industries ?? [];
   const uslugi = data?.listings ?? [];
+  const total = data?.total ?? uslugi.length;
 
   const href = (zmiana: Record<string, string | undefined> = {}) => {
     const p = new URLSearchParams();
@@ -112,7 +114,7 @@ export default async function UslugiV17({
         tytul="Usługi"
         meta={
           data
-            ? `${uslugi.length}${data.nextCursor ? '+' : ''} ${plural(uslugi.length, 'usługa', 'usługi', 'usług')} · ${sort[0] === 'newest' ? 'najnowsze u góry' : sort[1].toLowerCase()}`
+            ? `${nf(total)} ${plural(total, 'usługa', 'usługi', 'usług')} · ${sort[0] === 'newest' ? 'najnowsze u góry' : sort[1].toLowerCase()}`
             : ''
         }
         cta={{ href: '/uslugi/nowa', etykieta: 'Zaproponuj usługę' }}
@@ -253,7 +255,7 @@ export default async function UslugiV17({
               </Link>
             ))}
           </div>
-          {/* ADR-010: koniec listy mówi, ile widzisz — bez nieskończonego scrolla. „+” = są jeszcze usługi. */}
+          {/* ADR-010: koniec listy mówi „N z M” — bez nieskończonego scrolla. */}
           <div className="wiecej">
             {data.nextCursor ? (
               <Link className="vbtn obrys" href={href({ pokaz: String(pokaz + KROK) })}>
@@ -261,8 +263,7 @@ export default async function UslugiV17({
               </Link>
             ) : null}
             <small className="num">
-              Pokazano {uslugi.length}
-              {data.nextCursor ? '+' : ''}
+              {uslugi.length} z {nf(total)}
             </small>
           </div>
         </>

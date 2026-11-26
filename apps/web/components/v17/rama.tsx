@@ -14,6 +14,8 @@ export interface Ja {
   level: number;
   handle: string | null;
   avatarFileId: string | null;
+  /** Widok firmy (tylko ekrany, które to ustawią): kwadratowe logo i „Konto firmy” zamiast osoby ze szczeblem. */
+  firma?: { nazwa: string; branza: string };
 }
 
 export type MenuKlucz =
@@ -58,6 +60,14 @@ function Znak() {
 
 function avatarSrc(id: string | null) {
   return id ? `/api/v1/files/${id}/thumb` : null;
+}
+
+function AwatarKonta({ ja, size }: { ja: Ja; size: number }) {
+  return ja.firma ? (
+    <Aw name={ja.firma.nazwa} size={size} company industry={ja.firma.branza} />
+  ) : (
+    <Aw name={ja.name} size={size} src={avatarSrc(ja.avatarFileId)} />
+  );
 }
 
 export function Stopka() {
@@ -108,7 +118,7 @@ export function Rama({
         </Link>
         {ja ? (
           <Link href={profilHref} aria-label="Twój profil">
-            <Aw name={ja.name} size={36} src={avatarSrc(ja.avatarFileId)} />
+            <AwatarKonta ja={ja} size={36} />
           </Link>
         ) : ja === null ? (
           <Link className="vbtn obrys maly" href="/logowanie">
@@ -143,12 +153,10 @@ export function Rama({
           </Link>
           {ja ? (
             <Link className="ja" href="/drabinka">
-              <Aw name={ja.name} size={44} src={avatarSrc(ja.avatarFileId)} />
+              <AwatarKonta ja={ja} size={44} />
               <span className="kto">
-                <b>{ja.name}</b>
-                <small>
-                  <Odznaka level={ja.level} />
-                </small>
+                <b>{ja.firma ? ja.firma.nazwa : ja.name}</b>
+                <small>{ja.firma ? 'Konto firmy' : <Odznaka level={ja.level} />}</small>
               </span>
               <span className="ikonka" aria-hidden="true">
                 <Ico n="dots-three" />

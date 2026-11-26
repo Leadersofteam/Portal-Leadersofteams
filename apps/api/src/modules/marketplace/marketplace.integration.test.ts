@@ -123,6 +123,47 @@ describe.skipIf(!hasInfra)('marketplace — cykl życia zlecenia end-to-end', ()
     expect(res.json().error.code).toBe('NOT_COMPANY_MEMBER');
   });
 
+  it('W-06: szkic anulowany przed publikacją zostaje niewidoczny dla obcych; firma go widzi', async () => {
+    const draft = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/orders',
+      headers: { cookie: companyCookie },
+      payload: {
+        companyId,
+        title: `Szkic do anulowania ${run}`,
+        description: 'Szkic, który firma anuluje zanim kiedykolwiek stanie się publiczny.',
+        industryId,
+        budgetMin: 1000,
+        budgetMax: 2000,
+        minLevel: 0,
+      },
+    });
+    expect(draft.statusCode).toBe(201);
+    const id = draft.json().id as string;
+    const cancel = await ctx.app.inject({
+      method: 'POST',
+      url: `/api/v1/orders/${id}/cancel`,
+      headers: { cookie: companyCookie },
+    });
+    expect(cancel.statusCode).toBe(200);
+
+    const anon = await ctx.app.inject({ method: 'GET', url: `/api/v1/orders/${id}` });
+    expect(anon.statusCode).toBe(404);
+    const stranger = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/orders/${id}`,
+      headers: { cookie: leaderCookie },
+    });
+    expect(stranger.statusCode).toBe(404);
+    const owner = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/orders/${id}`,
+      headers: { cookie: companyCookie },
+    });
+    expect(owner.statusCode).toBe(200);
+    expect(owner.json().order.status).toBe('CANCELLED');
+  });
+
   it('listing publiczny: filtry + wyszukiwarka FULLTEXT', async () => {
     const list = await ctx.app.inject({
       method: 'GET',

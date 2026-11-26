@@ -4,6 +4,13 @@ import { LEVEL_RULES_FALLBACK, type LevelRule } from '@/lib/levels';
 
 export const nf = (x: number) => x.toLocaleString('pl-PL').replace(/\s/g, ' ');
 
+// Ekrany P1 „Rynek” (makieta: `fmt4`) dzielą tysiące także przy 4 cyfrach: „1 150 zł”. `nf` tego NIE robi
+// (pl-PL grupuje dopiero od 5 cyfr) i tak zostaje, bo makiety P0 pokazują „1500 pkt” — nie ujednolicać.
+export const nf4 = (x: number) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+
+// Średnia ocen zawsze z jednym miejscem („5,0”), jak w makiecie P1. Pojedyncza ocena zostaje „5/5”.
+export const ocenaSrednia = (x: number) => x.toFixed(1).replace('.', ',');
+
 export function initials(name: string): string {
   return (
     name
@@ -50,10 +57,10 @@ export function timeAgo(iso: string | Date, now = new Date()): string {
   return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
 }
 
-export function budget(min: number, max: number): string {
+export function budget(min: number, max: number, fmt: (x: number) => string = nf): string {
   const k = (v: number) => (v >= 1000 ? `${+(v / 1000).toFixed(1)}`.replace('.', ',') : String(v));
   if (min >= 1000 && max >= 1000) return `${k(min)}–${k(max)} tys. zł`;
-  return `${nf(min)}–${nf(max)} zł`;
+  return `${fmt(min)}–${fmt(max)} zł`;
 }
 
 export function plural(n: number, one: string, few: string, many: string): string {

@@ -1598,14 +1598,6 @@
   display: block;
 }
 
-/* Zakładki/chipy kategorii przewijane w poziomie: wygaszenie prawej krawędzi mówi „jest dalej”, zamiast ucinać
-   etykietę w pół słowa bez wskazania. Słowa kluczowe zamiast hexów (lint-tokens). */
-.v17 .filtry.rn-chipy {
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent);
-  mask-image: linear-gradient(to right, black calc(100% - 40px), transparent);
-  padding-right: 40px;
-}
-
 /* Stan „brak ocen” w sekcji szczegółów: mały, jak w makiecie — nie pełnoekranowy komunikat listy. */
 .v17 .rn-sek .komunikat {
   padding: 8px 0 4px;
@@ -1664,8 +1656,9 @@
   align-items: center;
   gap: 10px;
 }
-.v17 .rn-akcje-wl .btn {
-  min-height: 44px;
+/* Firma bez potwierdzonego NIP: szary „?” jak na liście (zielony znak należy się tylko zweryfikowanej). */
+.v17 .rn-firma small.brak i {
+  color: var(--text-muted);
 }
 
 /* „Zapytaj Lidera →” przy ofercie: drugorzędny link w języku makiety (jak .cap), z celem dotyku 44 px. */
@@ -1681,13 +1674,6 @@
   color: var(--text-strong);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-/* Chipy kategorii: szersze wygaszenie prawej krawędzi — nic nie widać „uciętego w pół słowa” (np. „Ma…”) bez wskazania, że lista się przewija. */
-.v17 .filtry.rn-chipy {
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 88px), transparent);
-  mask-image: linear-gradient(to right, black calc(100% - 88px), transparent);
-  padding-right: 88px;
 }
 
 /* Wiersz autora usługi na telefonie: Lider, szczebel i ocena w jednej linii; separator „·” znika zamiast wisieć na początku wiersza. */

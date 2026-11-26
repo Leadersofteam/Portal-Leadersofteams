@@ -344,6 +344,8 @@ export interface ZdarzenieSwiatla {
   maturesAt: string | null;
   title: string | null;
   threadId: string | null;
+  /** Ocena 1–5 przy punktach za zlecenie; dla odpowiedzi null. */
+  rating?: number | null;
   source: { kind: 'company' | 'person'; id: string; name: string; handle: string | null } | null;
 }
 export interface Swiatlo {

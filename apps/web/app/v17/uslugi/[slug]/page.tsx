@@ -13,7 +13,7 @@ import { Ocena, Wstecz } from '@/components/v17/rynek';
 import { Aw, Miernik, Odznaka, Okladka, rodzajRynek } from '@/components/v17/znaki';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi, serverApiStatus } from '@/lib/server-api';
-import { ddmm, levelsOrFallback, nf, plural, progress, temu } from '@/lib/v17';
+import { ddmm, levelsOrFallback, nf4, ocenaSrednia, plural, progress, temu } from '@/lib/v17';
 import { dniDoDojrzenia, loadJa, loadSwiatlo, mojaZLedgera } from '@/lib/v17-data';
 
 interface ListingDetail {
@@ -264,9 +264,11 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
                       <div className="w">
                         <span>Rynek: oceny po zleceniach</span>
                         <b>
-                          {nf(lid.rynek)}
+                          {nf4(lid.rynek)}
+                          {/* Odstęp jako osobny węzeł: wewnątrz inline-flex wiodąca spacja ginie („1 640+100”). */}
+                          {lid.czekaRynek ? ' ' : null}
                           {lid.czekaRynek ? (
-                            <span className="dojrzewa"> +{nf(lid.czekaRynek)}</span>
+                            <span className="dojrzewa">+{nf4(lid.czekaRynek)}</span>
                           ) : null}
                         </b>
                       </div>
@@ -275,58 +277,63 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
                         max={nastepny.pointsRequired}
                         color={kolor}
                         waiting={lid.czekaRynek}
-                        mark={minSciezka}
+                        mark={minSciezka > 0 ? minSciezka : undefined}
                       />
                     </div>
                     <div>
                       <div className="w">
                         <span>Społeczność: uznane odpowiedzi</span>
-                        <b>{nf(lid.spol)}</b>
+                        <b>{nf4(lid.spol)}</b>
                       </div>
                       <Miernik
                         value={lid.spol}
                         max={nastepny.pointsRequired}
                         color={kolor}
                         waiting={lid.czekaSpol}
-                        mark={minSciezka}
+                        mark={minSciezka > 0 ? minSciezka : undefined}
                       />
                     </div>
                   </div>
                   <ul className="rn-wym" aria-label={`Wymagania do poziomu ${nastepny.name}`}>
-                    <li className={lid.rynek >= minSciezka ? 'ok' : undefined}>
-                      <Ico n={lid.rynek >= minSciezka ? 'check-circle' : 'circle'} />
-                      Rynek: min. {nf(minSciezka)} pkt
-                      <small>
-                        {lid.rynek >= minSciezka
-                          ? nf(lid.rynek)
-                          : `brakuje ${nf(minSciezka - lid.rynek)}`}
-                      </small>
-                    </li>
-                    <li className={lid.spol >= minSciezka ? 'ok' : undefined}>
-                      <Ico n={lid.spol >= minSciezka ? 'check-circle' : 'circle'} />
-                      Społeczność: min. {nf(minSciezka)} pkt
-                      <small>
-                        {lid.spol >= minSciezka
-                          ? nf(lid.spol)
-                          : `brakuje ${nf(minSciezka - lid.spol)}`}
-                      </small>
-                    </li>
+                    {minSciezka > 0 ? (
+                      <>
+                        <li className={lid.rynek >= minSciezka ? 'ok' : undefined}>
+                          <Ico n={lid.rynek >= minSciezka ? 'check-circle' : 'circle'} />
+                          Rynek: min. {nf4(minSciezka)} pkt
+                          <small>
+                            {lid.rynek >= minSciezka
+                              ? nf4(lid.rynek)
+                              : `brakuje ${nf4(minSciezka - lid.rynek)}`}
+                          </small>
+                        </li>
+                        <li className={lid.spol >= minSciezka ? 'ok' : undefined}>
+                          <Ico n={lid.spol >= minSciezka ? 'check-circle' : 'circle'} />
+                          Społeczność: min. {nf4(minSciezka)} pkt
+                          <small>
+                            {lid.spol >= minSciezka
+                              ? nf4(lid.spol)
+                              : `brakuje ${nf4(minSciezka - lid.spol)}`}
+                          </small>
+                        </li>
+                      </>
+                    ) : null}
                     <li className={lid.razem >= nastepny.pointsRequired ? 'ok' : undefined}>
                       <Ico n={lid.razem >= nastepny.pointsRequired ? 'check-circle' : 'circle'} />
-                      Razem {nf(nastepny.pointsRequired)} pkt
+                      Razem {nf4(nastepny.pointsRequired)} pkt
                       <small>
                         {lid.razem >= nastepny.pointsRequired
-                          ? nf(lid.razem)
-                          : `brakuje ${nf(nastepny.missingPoints)}`}
+                          ? nf4(lid.razem)
+                          : `brakuje ${nf4(nastepny.missingPoints)}`}
                       </small>
                     </li>
                   </ul>
                 </>
               ) : null}
               <p className="rn-pod">
-                {nastepny ? (
+                {/* Poziomy bez progu ścieżki (do L3): nie ma kreski ani zdania „0% progu”. */}
+                {nastepny && minSciezka > 0 ? (
                   <>
-                    Kreska na pasku to {nf(minSciezka)} pkt:{' '}
+                    Kreska na pasku to {nf4(minSciezka)} pkt:{' '}
                     <b>
                       {nastepny.minPathSharePct}% progu „{nastepny.name}”
                     </b>
@@ -364,12 +371,14 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
               <ol className="os-sw">
                 {swiatlo.events.slice(0, 4).map((e) => {
                   const dni = dniDoDojrzenia(e.maturesAt);
-                  const co =
+                  const waga = e.weight < 1 ? ` · waga ×${String(e.weight).replace('.', ',')}` : '';
+                  const rodzaj =
                     e.type === 'ORDER_COMPLETED_RATED'
-                      ? 'Ocena po zleceniu'
+                      ? `ocena ${e.rating ? `${e.rating}/5 ` : ''}po zleceniu`
                       : e.type === 'ANSWER_ACCEPTED'
-                        ? 'Uznana odpowiedź'
-                        : 'Głos za odpowiedź';
+                        ? 'uznana odpowiedź'
+                        : 'głos za odpowiedź';
+                  const co = `${rodzaj}${e.title ? ` „${e.title}”` : ''}${waga}`;
                   return (
                     <li key={e.id}>
                       <Aw
@@ -380,11 +389,16 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
                       />
                       <span className="co">
                         <b>{e.source?.name ?? 'Użytkownik'}</b> · {co}
-                        {e.weight < 1 ? ` · waga ×${String(e.weight).replace('.', ',')}` : ''}
+                        {/* Jak w makiecie: druga linia to data, a w karencji — samo „dojrzewa za N dni”. */}
                         <small>
-                          {e.title ? `${e.title} · ` : ''}
-                          {dm(e.createdAt)}
-                          {dni ? ` · dojrzewa za ${dni} ${plural(dni, 'dzień', 'dni', 'dni')}` : ''}
+                          {dni ? (
+                            <span className="dojrzewa">
+                              <Ico n="hourglass-medium" />
+                              dojrzewa za {dni} {plural(dni, 'dzień', 'dni', 'dni')}
+                            </span>
+                          ) : (
+                            dm(e.createdAt)
+                          )}
                         </small>
                       </span>
                       <span className="pkt">+{e.points}</span>
@@ -400,7 +414,7 @@ export default async function UslugaV17({ params }: { params: Promise<{ slug: st
               Oceny po zleceniach
               <small>
                 {leader.reviewCount > 0
-                  ? `${String(leader.averageRating).replace('.', ',')} · ${leader.reviewCount} ${plural(leader.reviewCount, 'ocena', 'oceny', 'ocen')}`
+                  ? `${ocenaSrednia(leader.averageRating ?? 0)} · ${leader.reviewCount} ${plural(leader.reviewCount, 'ocena', 'oceny', 'ocen')}`
                   : 'jeszcze bez ocen'}
               </small>
             </h2>

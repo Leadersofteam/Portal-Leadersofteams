@@ -33,16 +33,19 @@ export function ActionButton({
   path,
   label,
   variant = 'primary',
+  className,
 }: {
   path: string;
   label: string;
   variant?: 'primary' | 'secondary';
+  /** Klasy przycisku z innego języka wizualnego (V17: „vbtn …”) — zastępują `btn`. */
+  className?: string;
 }) {
   const { run, error, pending } = useAction();
   return (
     <span>
       <button
-        className={variant === 'primary' ? 'btn' : 'btn secondary'}
+        className={className ?? (variant === 'primary' ? 'btn' : 'btn secondary')}
         disabled={pending}
         onClick={() => void run(() => apiFetch(path, { method: 'POST' }))}
       >

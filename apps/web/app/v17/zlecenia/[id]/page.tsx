@@ -20,7 +20,7 @@ import { orderJsonLd } from '@/lib/jsonld';
 import { OFFER_STATUS_LABELS, ORDER_STATUS_LABELS } from '@/lib/labels';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi, serverApiStatus } from '@/lib/server-api';
-import { budget, dodaneGodz, levelsOrFallback, plural, temu } from '@/lib/v17';
+import { budget, dodaneGodz, levelsOrFallback, nf4, plural, temu } from '@/lib/v17';
 import { loadJa, loadSwiatlo } from '@/lib/v17-data';
 
 interface ReviewsData {
@@ -198,6 +198,10 @@ export default async function ZlecenieV17({
               level: ja.level,
               handle: ja.handle,
               avatarFileId: ja.avatarFileId,
+              // Widok firmy (makieta): rama pokazuje firmę, w imieniu której ktoś porównuje oferty.
+              firma: viewer.isCompanyMember
+                ? { nazwa: order.companyName, branza: order.industry.name }
+                : undefined,
             }
           : null
       }
@@ -232,7 +236,7 @@ export default async function ZlecenieV17({
               <b>
                 <Link href={`/firmy/${order.companyId}`}>{order.companyName}</Link>
               </b>
-              <small>
+              <small className={order.companyVerified ? undefined : 'brak'}>
                 <Ico n={order.companyVerified ? 'seal-check' : 'question'} />
                 {order.companyVerified ? 'Firma zweryfikowana' : 'Firma bez potwierdzonego NIP'}
                 {order.companyOrdersCount
@@ -259,23 +263,31 @@ export default async function ZlecenieV17({
                 </span>
               )}
               {order.status === 'DRAFT' && !publishLocked && (
-                <ActionButton path={`/orders/${order.id}/publish`} label="Opublikuj zlecenie" />
+                <ActionButton
+                  path={`/orders/${order.id}/publish`}
+                  label="Opublikuj zlecenie"
+                  className="vbtn glowny"
+                />
               )}
               {['DRAFT', 'PUBLISHED', 'AWARDED'].includes(order.status) && (
                 <ActionButton
                   path={`/orders/${order.id}/cancel`}
                   label="Anuluj zlecenie"
-                  variant="secondary"
+                  className="vbtn obrys"
                 />
               )}
               {order.status === 'DELIVERED' && (
-                <ActionButton path={`/orders/${order.id}/confirm`} label="Potwierdź wykonanie" />
+                <ActionButton
+                  path={`/orders/${order.id}/confirm`}
+                  label="Potwierdź wykonanie"
+                  className="vbtn glowny"
+                />
               )}
               {['IN_PROGRESS', 'DELIVERED'].includes(order.status) && (
                 <ActionButton
                   path={`/orders/${order.id}/dispute`}
                   label="Zgłoś spór"
-                  variant="secondary"
+                  className="vbtn obrys"
                 />
               )}
             </div>
@@ -293,7 +305,7 @@ export default async function ZlecenieV17({
           <dl className="rn-dl">
             <div>
               <dt>Budżet</dt>
-              <dd>{budget(order.budgetMin, order.budgetMax)}</dd>
+              <dd>{budget(order.budgetMin, order.budgetMax, nf4)}</dd>
             </div>
             <div>
               <dt>Branża</dt>
@@ -331,16 +343,24 @@ export default async function ZlecenieV17({
         {viewer.isAwardedLeader ? (
           <div className="rn-akcje">
             {order.status === 'AWARDED' && (
-              <ActionButton path={`/orders/${order.id}/start`} label="Rozpocznij pracę" />
+              <ActionButton
+                path={`/orders/${order.id}/start`}
+                label="Rozpocznij pracę"
+                className="vbtn glowny"
+              />
             )}
             {order.status === 'IN_PROGRESS' && (
-              <ActionButton path={`/orders/${order.id}/deliver`} label="Oddaj pracę" />
+              <ActionButton
+                path={`/orders/${order.id}/deliver`}
+                label="Oddaj pracę"
+                className="vbtn glowny"
+              />
             )}
             {['IN_PROGRESS', 'DELIVERED'].includes(order.status) && (
               <ActionButton
                 path={`/orders/${order.id}/dispute`}
                 label="Zgłoś spór"
-                variant="secondary"
+                className="vbtn obrys"
               />
             )}
           </div>
@@ -390,9 +410,12 @@ export default async function ZlecenieV17({
                 opis={
                   isLoggedIn
                     ? 'Treść ofert widzi tylko firma, która zleciła pracę — porównuje je cena, termin i poziom w Drabince.'
-                    : 'Zaloguj się jako firma, by porównać oferty.'
+                    : order.status === 'PUBLISHED'
+                      ? 'Zaloguj się, aby złożyć ofertę. Jeśli to zlecenie Twojej firmy, po zalogowaniu porównasz tu oferty.'
+                      : 'Jeśli to zlecenie Twojej firmy, zaloguj się, żeby zobaczyć oferty.'
                 }
               >
+                {/* Jedyne wezwanie do logowania na tym ekranie — drugiego pod stroną już nie ma. */}
                 {isLoggedIn ? null : (
                   <Link
                     className="vbtn glowny"
@@ -424,7 +447,9 @@ export default async function ZlecenieV17({
             <p className="rn-nic">
               <Ico n="seal-check" />
               <span>
-                Po zakończeniu pracy ocenisz wykonawcę.{' '}
+                {viewer.isCompanyMember
+                  ? 'Po zakończeniu pracy ocenisz wykonawcę.'
+                  : 'Po zakończeniu pracy firma oceni wykonawcę.'}{' '}
                 <b>Dopiero ta ocena daje mu punkty — do +100.</b> Oferta ani wybór wykonawcy punktów
                 nie dają.
               </span>
@@ -470,12 +495,6 @@ export default async function ZlecenieV17({
           </p>
         ) : null}
         {canReview ? <ReviewForm orderId={order.id} /> : null}
-
-        {!isLoggedIn && order.status === 'PUBLISHED' ? (
-          <p className="rn-akcje">
-            <Link href="/logowanie">Zaloguj się</Link>, aby złożyć ofertę.
-          </p>
-        ) : null}
 
         <div className="rn-stopka rn-st-szer">
           <Stopka />

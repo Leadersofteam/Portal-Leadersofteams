@@ -347,8 +347,10 @@ export function createOrdersService({
       const awardedLeaderUserId = await getAwardedLeaderUserId(orderId);
       const isAwardedLeader = viewerId !== null && viewerId === awardedLeaderUserId;
 
-      // Szkice widzi tylko firma; reszta cyklu życia jest publiczna.
-      if (order.status === 'DRAFT' && !isCompanyMember) {
+      // Szkice widzi tylko firma — także szkic anulowany przed publikacją (`publishedAt = null`), który nigdy nie był publiczny.
+      const nigdyNieopublikowane =
+        order.status === 'DRAFT' || (order.status === 'CANCELLED' && !order.publishedAt);
+      if (nigdyNieopublikowane && !isCompanyMember) {
         throw new NotFoundError('Zlecenie nie istnieje');
       }
 
