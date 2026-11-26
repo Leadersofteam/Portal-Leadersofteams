@@ -32,12 +32,16 @@ ss -ltnp | grep -E ':(3000|3001)\b'   # MUSI być pusto — patrz niżej
 bash infra/e2e.sh
 ```
 
+W worktree najpierw `pnpm install --offline --frozen-lockfile && pnpm -C apps/api exec prisma generate`. Na VPS ciężkie kroki przez
+`/root/scripts/vps-kolejka.sh lekkie -- …` (build/e2e: `budowa`). e2e kasuje WSPÓLNĄ bazę dev — jeden przebieg na raz w całym repo.
+Usuń `apps/web/*.tmp.mjs` przed lintem. Po zmianie CSS przejrzyj log builda (`autoprefixer` ostrzega bez czerwieni).
+
 ## Trzy sposoby, w jakie zielony kolor kłamie
 
 **1. Testy integracyjne bez infry są POMIJANE, nie uruchamiane.** Każdy ma
 `describe.skipIf(!hasInfra)`. Bez `DATABASE_URL`/`REDIS_URL` cała suita świeci na zielono,
 nie sprawdzając niczego. **Patrz na LICZBĘ wykonanych testów** i porównaj z poprzednim
-przebiegiem (stan na 2026-08-14: **170 testów API, 15 e2e**). Spadek liczby przy zielonym
+przebiegiem (stan na 2026-11-26: **256 testów API, 43 e2e**). Spadek liczby przy zielonym
 kolorze to sygnał, nie sukces.
 
 **2. Sierota na porcie = testy przeciwko POPRZEDNIEMU buildowi.** `infra/e2e.sh` sprawdza

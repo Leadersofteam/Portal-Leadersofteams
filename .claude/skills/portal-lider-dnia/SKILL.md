@@ -53,6 +53,9 @@ Pomiar 22.11: 14 osieroconych wolumenów po bazach próbnych w jeden dzień (3 G
 - Pytania sesji do właściciela przekazujesz dosłownie; odpowiedź wraca do sesji jako cytat.
 - Sesję z długim kontekstem wymieniasz na świeżą z briefem (raport sesji ≤ 10 linii).
 
+- **Zanim zlecisz „napisz X”, sprawdź w kodzie i na prodzie, czy X już nie stoi** (26.11: P1 był wdrożony, a prompt kazał go pisać).
+- Włączenie lub wdrożenie ekranu P0 (domyślnie ON) publikuje odstępstwa od razu — pytanie o odstępstwa PRZED rebuildem web.
+
 ## 4. Zamknięcie dnia: warunek, nie życzenie
 
 `stan-galezi.sh` musi pokazać czubek wypchnięty i zero gałęzi sesji „do zamknięcia” z dzisiaj; brief `docs/SESJA-NASTEPNA.md` zmieniony dziś.

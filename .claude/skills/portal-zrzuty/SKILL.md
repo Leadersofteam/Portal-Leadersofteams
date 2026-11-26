@@ -111,3 +111,10 @@ makieta ↔ Portal była porównywalna 1:1 (agent `zgodnosc-makiety`). 1440 zost
 - Nazwa: `audyt/zrzuty/v17-<ekran>[-<stan>]-<jasny|ciemny>-<1512|390>.png` (ta sama co makiety).
 - Makiety HTML: gotowy `node audyt/harness/v17-makiety-zrzuty.mjs <plik.html> <nazwa> [stany…] [--pelna]`.
 - Przed serią: MemAvailable ≥ 1500 MB i SwapFree ≥ 500 MB; jeden proces Chromium naraz (VPS wspólny z LoT App).
+
+## Zrzuty z builda w worktree (26.11)
+
+Przepis: baza dev (migrate + seed + `SEED_DEMO=1 prisma/seed-demo.ts`, `UPLOADS_DIR` w /tmp) → `next build` → api + worker + web
+lokalnie → dane stanów przez API (konto demo, hasło `demo-portal-2026`; stan pusty = konto bez obserwowanych) → Playwright → gaszenie
+procesów PO CWD worktree (`readlink /proc/<pid>/cwd`; zabicie `pnpm exec` zostawia `next-server`). Stany po kliknięciu (menu, pisanie)
+rób zawsze — tylko one złapały menu bez stylów.

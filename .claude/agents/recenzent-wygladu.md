@@ -12,12 +12,14 @@ zaakceptowane ekrany Portalu: tabela w `docs/PROGRAM-V17-PORTAL.md`.
 
 Zlecenie podaje ekran(y) lub pliki oraz ścieżki zrzutów (390/1512 × jasny/ciemny). Gdy ekran to obecny Portal sprzed V17 — oceniasz, jak daleko jest od V17 PRO (lista luk), nie błędy kodu.
 
-1. **Kod (zmienione pliki):** surowe hexy/`rgb(` poza `:root`/`[data-theme]` (zapadka w globals.css); `catch {}` bez komunikatu; brak wariantu ładowania/błędu/pustego; elementy interaktywne < 44 px (`min-height`); animacje bez `@media (prefers-reduced-motion)`; ikony Lucide albo obce SVG z CDN (V17 = `@phosphor-icons/react` duotone, ilustracje własne SVG); `fonts.googleapis`/`unpkg`/`cdn` w kodzie aplikacji (ADR-009 — fonty tylko `next/font`).
+1. **Kod (zmienione pliki; tokeny V17 także w `app/styles/v17-*.css`, ciemny przycisk i `--bg` nadpisuje `v17-braki.css`):** surowe hexy/`rgb(` poza `:root`/`[data-theme]` (zapadka w globals.css); `catch {}` bez komunikatu; brak wariantu ładowania/błędu/pustego; elementy interaktywne < 44 px (`min-height`); animacje bez `@media (prefers-reduced-motion)`; ikony Lucide albo obce SVG z CDN (V17 = `@phosphor-icons/react` duotone, ilustracje własne SVG); `fonts.googleapis`/`unpkg`/`cdn` w kodzie aplikacji (ADR-009 — fonty tylko `next/font`).
    1b. **Grep obowiązkowy:** `text-transform:\s*uppercase`, `#[0-9a-fA-F]{6}`, `animation:` bez reduced-motion, `infinite` w listach/feedzie (ADR-010), liczniki wyświetleń/streaki (ADR-010), punkty/nagrody za zaproszenia (ADR-004).
-2. **Zrzuty (Read obrazów):** hierarchia (jedno główne wezwanie do działania), przecięcia tekstu z ilustracją/sceną 3D, ucięcia, kontrast, spójność jasny/ciemny, wygląd „szablonu SaaS” (równe karty-klony, napisy WIELKIMI nad każdą sekcją, teksty sklejane kropkami).
+2. **Zrzuty (Read obrazów; także stany po kliknięciu: menu, okno, pisanie — element „widoczny” w teście bywa bez stylów):** hierarchia (jedno główne wezwanie do działania), przecięcia tekstu z ilustracją/sceną 3D, ucięcia, kontrast, spójność jasny/ciemny, wygląd „szablonu SaaS” (równe karty-klony, napisy WIELKIMI nad każdą sekcją, teksty sklejane kropkami).
    2b. **Kompletność:** OTWÓRZ każdy podany zrzut; jeśli podano mniej niż 4 kombinacje (390/1512 × jasny/ciemny) — wpisz to do „Niezweryfikowane”. Policz: przyciski główne na ekran (cel: 1), karty-klony, nagłówki sekcji jako zdanie (nie WIELKIMI).
 3. **Dane:** czy ekran nie udaje liczb, których Portal nie liczy (oceny, punkty Drabinki, liczba zleceń — tylko z API).
-4. **Kierunek własny Portalu (od 20.11, WYTYCZNE §1–§3):** to NIE jest rama LOT App — szyna↔panel, rzędy KPI, siatka liderów, gradientowe ramki = [P1].
+4. **Kierunek własny Portalu (od 20.11, WYTYCZNE §1–§3):** to NIE jest rama LOT App — szyna↔panel, rzędy KPI, siatka liderów z App (canvas), gradientowe ramki = [P1].
+   WYJĄTEK od 26.11 (Maciej): jaśniejsze tło z przezroczystą, statyczną siecią Liderów (`components/v17/tlo-siec.tsx`, tokeny w
+   `app/styles/v17-braki.css`) jest zaakceptowane; sprawdzaj tylko, czy linie nie przecinają drobnego tekstu i czy AA trzyma na węźle.
    Strumień: 3 kolumny jak x.com, wpis jako wiersz z awatarem, chronologicznie, „Pokaż więcej”. Profil: nagłówek + zakładki, przypięte realizacje,
    oś „kto dał ci światło”, **bez heatmapy dni** ([P1]). Drabinka: 7 szczebli i progi zgodne z `apps/api/src/modules/ladder/rules.ts`, dwie ścieżki,
    20% od L4, karencja, L5 → LOT App, L7 → zespół; każde światło ma źródło-człowieka. Odznaka poziomu spójna na każdym ekranie. Ciepły akcent tylko

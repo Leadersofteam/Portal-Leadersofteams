@@ -53,6 +53,16 @@ i fiverr.com w jednym.” Pełne zasady: `docs/WYTYCZNE-V17-PORTAL.md` §1–§3
 - **ADR-009:** w kodzie zero CDN i Google Fonts z sieci (makiety HTML mogą je ładować — to pliki lokalne, nie produkcja).
 - **Stopka „Ekosystem”:** `apps/web/lib/ecosystem.ts` — etykiety i kolejność wspólne dla czterech repo; V17 zmienia wygląd, nie treść.
 
+## Pułapki kodu V17 (26.11)
+
+- **Wszystkie style są pod `.v17`.** Okno, arkusz, menu renderowane obok tego diva wygląda jak goły HTML, a test „toBeVisible” przechodzi.
+  Renderuj wewnątrz (`Rama`), w e2e sprawdź styl (`toHaveCSS('position','fixed')`), obejrzyj zrzut po kliknięciu.
+- `.v17` ma `isolation: isolate` — bez tego sieć tła (`z-index: -1`) znika pod tłem.
+- Okna modalne: `lib/use-dialog.ts` (fokus, Tab, Esc, powrót fokusu — element otwierający musi zostać w drzewie).
+- Docenienie i zakładka: logika w `lib/use-reakcje.ts`, w V17 bez licznika (ADR-010).
+- Strumień czyta źródła po kursorze (`okno()` w `lib/v17-data.ts`); nowe źródło musi trafić do tego mechanizmu, inaczej gubi chronologię.
+- Testy starego wyglądu idą przez `?wyglad=off` albo ciasteczko `lot_wyglad=off` (także `/offline`).
+
 ## Lista kontrolna ekranu (przed pokazaniem Maciejowi)
 
 1. Zdanie „X przestaje robić Y dzięki temu ekranowi” istnieje.

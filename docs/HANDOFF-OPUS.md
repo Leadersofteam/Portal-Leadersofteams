@@ -1,5 +1,13 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟡 2026-11-26 wieczór — braki V17 P0 + tło ZAKODOWANE i wypchnięte, NIEWDROŻONE (`claude/intelligent-leakey-584d2c`).**
+> Strumień pokazuje wpisy (naprawa zastanego błędu od 25.11; **na prodzie błąd nadal jest**), zakładki, akcje bez licznika, zdjęcia
+> i cytat, kompozytor na telefonie, awans, offline, menu konta, tło z siecią na wszystkich ekranach V17. API addytywnie (`/feed?types=`,
+> `actor.industry`, szczebel autora cytatu), bez migracji. Lint/typy 0, API 256/256, e2e 43/43, build ok; po e2e jedna linia CSS.
+> Zrzuty `audyt/zrzuty/v17-braki-kod-*.png`. 13 nowych odstępstw P0 „czeka”. Bez sędziów `zgodnosc-makiety`/`recenzent-wygladu`.
+> Zastane naprawione też: „Pokaż więcej” martwe powyżej 50. Nienaprawione: uszkodzony obraz → 500; tekst lewego menu wprost na
+> węźle sieci ma ok. 3,1:1 (tak samo w zaakceptowanej makiecie).
+
 > **🟡 2026-11-26 — V17 P1: poprawki zgodności wdrożone (`4ce2eed`), dalej za opt-in; czeka decyzja Macieja o włączeniu.**
 > Zlecenie „napisz P1” z promptu startowego było nieaktualne (P1 stało na prodzie od 25.11) — zamiast pisać: pomiar, sędzia
 > (runda 1: 4× NIEZGODNY na drobnicy), sesja Sonnet z 11 poprawkami, runda 2: 4× ZGODNY poza 11 odstępstwami. API addytywnie:
