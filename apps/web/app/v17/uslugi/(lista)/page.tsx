@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { BranzeLinki } from '@/components/v17/branze-linki';
 import { FiltrAuto } from '@/components/v17/filtr-auto';
 import { Ico } from '@/components/v17/ico';
 import { Komunikat } from '@/components/v17/karty';
@@ -13,6 +14,7 @@ import { loadJa } from '@/lib/v17-data';
 
 // Metadane jak na liście ze starego wyglądu (ten sam adres).
 export const metadata = {
+  alternates: { canonical: '/uslugi' },
   title: 'Usługi Liderów — katalog | Leaders of Teams',
   description:
     'Katalog usług Liderów Leaders of Teams: jasny zakres, deklarowane widełki cen i poziom w Drabince zdobyty realną pracą. Wyślij zapytanie i przekształć je w zlecenie.',
@@ -268,6 +270,7 @@ export default async function UslugiV17({
           </div>
         </>
       )}
+      <BranzeLinki branze={branze} base="/uslugi" />
       <div className="rn-stopka">
         <Stopka />
       </div>

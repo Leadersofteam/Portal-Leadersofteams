@@ -26,11 +26,10 @@ const SESSION_COOKIE = 'lot_sid';
 // odsiać uczciwie przedstawiające się crawlery, nie walczyć z podszywaniem.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|monitor|curl|wget|headless/i;
 
-// Flaga wyglądu V17 — P0 „Światło” (feed/profil/drabinka) od 25.11.2026 DOMYŚLNIE WŁĄCZONE (Maciej: „Włącz dla wszystkich”),
-// P1 „Rynek” (zlecenia/usługi) WYŁĄCZNIE za jawnym opt-inem (?wyglad=v17 / ciasteczko lot_wyglad=v17). Reguły i
-// uzasadnienie dwóch list: lib/v17-routing.ts (czysta funkcja, testowana w e2e/v17-routing.spec.ts).
-// `?wyglad=off` zapisuje ciasteczko „off” (rok) — stary wygląd jako awaryjne wyjście; `?wyglad=v17` zdejmuje opt-out
-// (P0) i włącza P1. Wycofanie P0 dla wszystkich = zmienić warunek `p0` w decydujWyglad i przebudować web.
+// Flaga wyglądu V17 — „Światło” (feed/profil/drabinka, od 25.11.2026) i „Rynek” (zlecenia/usługi, od 26.11.2026) są
+// DOMYŚLNIE WŁĄCZONE. Reguły: lib/v17-routing.ts (czysta funkcja, testowana w e2e/v17-routing.spec.ts).
+// `?wyglad=off` zapisuje ciasteczko „off” (rok) — stary wygląd jako awaryjne wyjście; `?wyglad=v17` zdejmuje opt-out.
+// Wycofanie dla wszystkich = zmienić warunek w decydujWyglad i przebudować web.
 // DLACZEGO rewrite w middleware, a nie cookies() na stronach: odczyt cookies w page.tsx
 // uczyniłby dynamiczną /drabinkę nawet z wyłączoną flagą (mina PD1 — patrz lib/server-api.ts).
 const V17_FLAG = 'lot_wyglad';

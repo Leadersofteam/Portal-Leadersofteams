@@ -7,10 +7,11 @@ import { expect, test, type Page } from '@playwright/test';
 const MOBILE = { width: 390, height: 844 };
 const DESKTOP = { width: 1440, height: 900 };
 
+// Stara rama Portalu: sprawdzamy ją na /liderzy (od 26.11 /uslugi ma ramę V17).
 test.describe('kieszonkowa nawigacja', () => {
   test('dolny pasek ma 5 slotów o celach dotyku ≥ 44 px (390 px)', async ({ page }) => {
     await page.setViewportSize(MOBILE);
-    await page.goto('/uslugi');
+    await page.goto('/liderzy');
 
     const nav = page.getByRole('navigation', { name: 'Nawigacja główna' });
     await expect(nav).toBeVisible();
@@ -29,13 +30,13 @@ test.describe('kieszonkowa nawigacja', () => {
 
   test('dolny pasek znika na desktopie', async ({ page }) => {
     await page.setViewportSize(DESKTOP);
-    await page.goto('/uslugi');
+    await page.goto('/liderzy');
     await expect(page.getByRole('navigation', { name: 'Nawigacja główna' })).toBeHidden();
   });
 
   test('przycisk [+] otwiera arkusz i zamyka go Escape', async ({ page }) => {
     await page.setViewportSize(MOBILE);
-    await page.goto('/uslugi');
+    await page.goto('/liderzy');
 
     await page.getByRole('button', { name: 'Utwórz' }).click();
     const sheet = page.locator('dialog.create-sheet');
@@ -152,7 +153,7 @@ test.describe('tabele na telefonie', () => {
 test.describe('szukanie i pakiety', () => {
   test('globalne pole prowadzi na /szukaj z zakładkami', async ({ page }) => {
     await page.setViewportSize(DESKTOP);
-    await page.goto('/uslugi');
+    await page.goto('/liderzy');
     await page.getByPlaceholder('Szukaj usług, Liderów, zleceń…').fill('rekrutacja');
     await page.keyboard.press('Enter');
     await page.waitForURL('**/szukaj?q=rekrutacja');

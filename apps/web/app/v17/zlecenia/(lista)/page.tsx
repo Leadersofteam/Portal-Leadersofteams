@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { BranzeLinki } from '@/components/v17/branze-linki';
 import { FiltrAuto } from '@/components/v17/filtr-auto';
 import { Ico } from '@/components/v17/ico';
 import { Komunikat } from '@/components/v17/karty';
@@ -13,6 +14,7 @@ import { loadJa, loadMojaDrabinka } from '@/lib/v17-data';
 
 // Metadane jak na liście ze starego wyglądu (zachowane 1:1 — to ten sam adres).
 export const metadata = {
+  alternates: { canonical: '/zlecenia' },
   title: 'Zlecenia dla Liderów zespołów — sprzedaż, operacje, projekty | Leaders of Teams',
   description:
     'Aktualne zlecenia B2B od polskich firm: kwota, termin i wymagany poziom w Drabince. Złóż ofertę, zrealizuj i zdobądź ocenę, która buduje Twój status Lidera. Bez prowizji.',
@@ -369,6 +371,7 @@ export default async function ZleceniaV17({
           </div>
         </>
       )}
+      <BranzeLinki branze={branze} base="/zlecenia" />
       <div className="rn-stopka">
         <Stopka />
       </div>

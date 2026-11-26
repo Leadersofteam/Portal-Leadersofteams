@@ -19,6 +19,9 @@ export default function robots(): MetadataRoute.Robots {
         '/rejestracja',
         '/healthz',
         '/wypis-digest',
+        // Zaplecze rewrite'u V17 — te same ekrany żyją pod zwykłymi adresami (i tam wskazuje canonical).
+        // Tu, a nie nagłówkiem w middleware: rewrite potrafi przejść przez middleware dwa razy i oznaczyć adres publiczny.
+        '/v17/',
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

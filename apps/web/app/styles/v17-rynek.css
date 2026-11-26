@@ -1685,3 +1685,35 @@
     display: none;
   }
 }
+
+/* Linki do stron branż pod listą (components/v17/branze-linki.tsx). */
+.v17 .rn-branze {
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.v17 .rn-branze ul {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.v17 .rn-branze a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-muted);
+}
+.v17 .rn-branze a:hover {
+  color: var(--text-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 720px) {
+  .v17 .rn-branze {
+    padding: 16px;
+  }
+}

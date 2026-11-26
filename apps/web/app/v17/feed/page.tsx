@@ -21,7 +21,10 @@ import { levelsOrFallback, progress } from '@/lib/v17';
 import { FILTRY, loadJa, loadMojaDrabinka, loadObserwowanych, loadStrumien } from '@/lib/v17-data';
 import type { Filtr, Zakres } from '@/lib/v17-data';
 
-export const metadata = { title: 'Strumień — Portal Liderów' };
+export const metadata = {
+  title: 'Strumień — Portal Liderów',
+  alternates: { canonical: '/feed' },
+};
 
 const KROK = 8;
 // Bezpiecznik „Pokaż więcej”. Okno źródła to pokaz + 6, a strona API ma 50: do 40 każde źródło mieści się

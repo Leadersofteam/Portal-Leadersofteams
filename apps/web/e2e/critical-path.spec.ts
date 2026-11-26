@@ -204,7 +204,16 @@ test('ścieżka krytyczna: rejestracja → zlecenie → oferta → cykl → ocen
   // 6) Firma: akceptacja oferty → zlecenie przyznane.
   await companyPage.goto(orderUrl);
   await expect(companyPage.getByRole('heading', { name: /Oferty/ })).toBeVisible();
-  await clickUntil(companyPage, 'Wybierz tę ofertę', 'Wybrano Lidera');
+  // V17 „Rynek”: zaznaczenie oferty w porównaniu i dopiero potem jeden przycisk wyboru.
+  await expect(async () => {
+    const radio = companyPage.getByRole('radio', { name: 'Wybierz ofertę: E2E Lider' });
+    if (await radio.isVisible().catch(() => false))
+      await radio.check({ timeout: 1_500 }).catch(() => {});
+    const btn = companyPage.getByRole('button', { name: 'Wybierz wykonawcę' });
+    if (await btn.isEnabled({ timeout: 500 }).catch(() => false))
+      await btn.click({ timeout: 1_500 }).catch(() => {});
+    await expect(companyPage.getByText('Wybrano Lidera').first()).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
 
   // 7) Cykl realizacji: Lider rozpoczyna → oddaje; Firma potwierdza.
   await leaderPage.goto(orderUrl);
@@ -221,11 +230,16 @@ test('ścieżka krytyczna: rejestracja → zlecenie → oferta → cykl → ocen
   // Druga ocena zamyka publikację symultaniczną → obie oceny stają się jawne,
   // więc u Lidera sukcesem jest już NAGŁÓWEK sekcji ocen (nie tekst).
   await leaderPage.goto(orderUrl);
-  await submitReview(leaderPage, leaderPage.getByRole('heading', { name: 'Oceny', exact: true }));
+  await submitReview(
+    leaderPage,
+    leaderPage.getByRole('heading', { name: 'Oceny po zleceniu', exact: true }),
+  );
 
   // Obie oceny opublikowane → sekcja „Oceny" widoczna także dla Firmy.
   await companyPage.goto(orderUrl);
-  await expect(companyPage.getByRole('heading', { name: 'Oceny', exact: true })).toBeVisible({
+  await expect(
+    companyPage.getByRole('heading', { name: 'Oceny po zleceniu', exact: true }),
+  ).toBeVisible({
     timeout: 30_000,
   });
 
