@@ -1,10 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-
 import { IconBookmark } from '@/components/ui/icons';
-import { ApiRequestError, apiFetch } from '@/lib/api';
+import { useZakladka } from '@/lib/use-reakcje';
 
 /**
  * Zakładka — prywatna półka „na później".
@@ -23,26 +20,7 @@ export function BookmarkButton({
   subjectId: string;
   initialActive: boolean;
 }) {
-  const router = useRouter();
-  const [active, setActive] = useState(initialActive);
-  const [pending, setPending] = useState(false);
-
-  async function toggle() {
-    setPending(true);
-    try {
-      const res = await apiFetch<{ bookmarked: boolean }>(
-        `/me/bookmarks/${subjectType}/${subjectId}`,
-        { method: active ? 'DELETE' : 'PUT' },
-      );
-      setActive(res.bookmarked);
-      router.refresh();
-    } catch (err) {
-      // 401 = gość: kierujemy do logowania zamiast połykać kliknięcie.
-      if (err instanceof ApiRequestError && err.status === 401) router.push('/logowanie');
-    } finally {
-      setPending(false);
-    }
-  }
+  const { active, pending, toggle } = useZakladka(subjectType, subjectId, initialActive);
 
   return (
     <button

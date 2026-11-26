@@ -1,10 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-
 import { IconAppreciate } from '@/components/ui/icons';
-import { ApiRequestError, apiFetch } from '@/lib/api';
+import { useDocenienie } from '@/lib/use-reakcje';
 
 /**
  * „Doceniam" — jedyna reakcja w Portalu (ADR-010: to miejsce pracy, nie
@@ -20,28 +17,7 @@ export function AppreciateButton({
   initialCount: number;
   initialActive: boolean;
 }) {
-  const router = useRouter();
-  const [count, setCount] = useState(initialCount);
-  const [active, setActive] = useState(initialActive);
-  const [pending, setPending] = useState(false);
-
-  async function toggle() {
-    setPending(true);
-    try {
-      const res = await apiFetch<{ appreciated: boolean; count: number }>(
-        `/social/posts/${postId}/appreciate`,
-        { method: active ? 'DELETE' : 'PUT' },
-      );
-      setActive(res.appreciated);
-      setCount(res.count);
-      router.refresh();
-    } catch (err) {
-      // 401 = gość: kierujemy do logowania zamiast połykać kliknięcie.
-      if (err instanceof ApiRequestError && err.status === 401) router.push('/logowanie');
-    } finally {
-      setPending(false);
-    }
-  }
+  const { active, count, pending, toggle } = useDocenienie(postId, initialActive, initialCount);
 
   return (
     <button

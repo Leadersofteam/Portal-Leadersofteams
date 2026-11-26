@@ -27,6 +27,10 @@ export default function Loading() {
       <div className="naglowek">
         <h1>Strumień</h1>
       </div>
+      <div className="zakres" aria-hidden="true">
+        <a aria-current="true">Cała społeczność</a>
+        <a>Obserwowani</a>
+      </div>
       <div className="kompozytor" aria-hidden="true">
         <Sz w="48px" h={48} kolo />
         <div className="pole">

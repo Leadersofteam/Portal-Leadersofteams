@@ -11,20 +11,24 @@ import type { Wpis } from '@/lib/v17-data';
 import { Ico } from './ico';
 import type { IcoName } from './ico';
 import { Udostepnij } from './udostepnij';
+import { WierszAwansu, WierszWpisu } from './wpis-spolecznosci';
 import { Aw, Odznaka, Okladka, rodzajZBranzy } from './znaki';
 
-const TYP: Record<Wpis['k'], [string, IcoName, string]> = {
+export const TYP: Record<Wpis['k'], [string, IcoName, string]> = {
+  wpis: ['Wpis', 'article', 'var(--text-muted)'],
+  awans: ['Awans', 'ladder', 'var(--text-muted)'],
   zlecenie: ['Zlecenie', 'clipboard-text', 'var(--t-zlecenie)'],
   pytanie: ['Pytanie', 'chats-circle', 'var(--t-pytanie)'],
   realizacja: ['Realizacja', 'seal-check', 'var(--t-realizacja)'],
   usluga: ['Nowa usługa', 'storefront', 'var(--t-usluga)'],
 };
 
-function Glowa({
+export function Glowa({
   imie,
   href,
   level,
   czas,
+  czasHref,
   k,
   meta,
 }: {
@@ -32,6 +36,8 @@ function Glowa({
   href: string | null;
   level: number | null;
   czas: string;
+  /** Wpis portalowy: czas jest odnośnikiem do strony wpisu. */
+  czasHref?: string;
   k: Wpis['k'];
   meta: string;
 }) {
@@ -47,17 +53,27 @@ function Glowa({
           <span className="imie">{imie}</span>
         )}
         {level !== null ? <Odznaka level={level} /> : null}
-        <span className="czas">· {czas}</span>
+        {czasHref ? (
+          <Link className="czas" href={czasHref} aria-label={`Otwórz wpis, ${czas}`}>
+            · {czas}
+          </Link>
+        ) : (
+          <span className="czas">· {czas}</span>
+        )}
       </div>
       <div className="vmeta">
         <span className="typ" style={{ '--c': c } as React.CSSProperties}>
           <Ico n={ik} />
           <span>{t}</span>
         </span>
-        <span className="sep" aria-hidden="true">
-          ·
-        </span>
-        {meta}
+        {meta ? (
+          <>
+            <span className="sep" aria-hidden="true">
+              ·
+            </span>
+            {meta}
+          </>
+        ) : null}
       </div>
     </>
   );
@@ -82,8 +98,18 @@ const Nic = ({ t, od }: { t: string; od: string }) => (
   </div>
 );
 
-export function WierszStrumienia({ w, idx }: { w: Wpis; idx: number }) {
+export function WierszStrumienia({
+  w,
+  idx,
+  zalogowany = false,
+}: {
+  w: Wpis;
+  idx: number;
+  zalogowany?: boolean;
+}) {
   const czas = timeAgo(w.at);
+  if (w.k === 'wpis') return <WierszWpisu w={w} zalogowany={zalogowany} />;
+  if (w.k === 'awans') return <WierszAwansu w={w} />;
   if (w.k === 'zlecenie') {
     const href = `/zlecenia/${w.id}`;
     return (

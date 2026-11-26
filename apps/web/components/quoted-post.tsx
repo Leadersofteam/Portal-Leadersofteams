@@ -12,6 +12,7 @@ export interface QuotedPostView {
     displayName: string;
     handle: string | null;
     avatarFileId: string | null;
+    level?: number;
   };
 }
 

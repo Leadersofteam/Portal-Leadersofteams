@@ -7,6 +7,8 @@ import { ECOSYSTEM_OTHERS } from '@/lib/ecosystem';
 
 import { Ico } from './ico';
 import type { IcoName } from './ico';
+import { KontoMenu, KontoWyzwalacz } from './konto';
+import { TloSiec } from './tlo-siec';
 import { Aw, Odznaka } from './znaki';
 
 export interface Ja {
@@ -89,6 +91,7 @@ export function Rama({
   aktywny,
   ja,
   szeroka = false,
+  offline = false,
   boczna,
   children,
 }: {
@@ -96,12 +99,15 @@ export function Rama({
   /** null = gość; undefined = nieznany (ładowanie/błąd) — wtedy nie pokazujemy zaproszenia do logowania. */
   ja?: Ja | null;
   szeroka?: boolean;
+  /** Ekran bez sieci: tworzenie wyłączone. */
+  offline?: boolean;
   boczna?: ReactNode;
   children: ReactNode;
 }) {
   const profilHref = ja?.handle ? `/profil/${ja.handle}` : '/panel';
-  return (
-    <div className="v17">
+  const tresc = (
+    <>
+      <TloSiec />
       <a className="sr" href="#tresc">
         Przejdź do treści
       </a>
@@ -117,13 +123,18 @@ export function Rama({
           <Ico n="bell" />
         </Link>
         {ja ? (
-          <Link href={profilHref} aria-label="Twój profil">
+          <KontoWyzwalacz className="konto">
             <AwatarKonta ja={ja} size={36} />
-          </Link>
+          </KontoWyzwalacz>
         ) : ja === null ? (
-          <Link className="vbtn obrys maly" href="/logowanie">
-            Zaloguj się
-          </Link>
+          <>
+            <Link className="vbtn obrys maly" href="/logowanie">
+              Zaloguj się
+            </Link>
+            <KontoWyzwalacz className="ikonka">
+              <Ico n="dots-three" />
+            </KontoWyzwalacz>
+          </>
         ) : null}
       </header>
       <div className={`rama${szeroka ? ' szeroka' : ''}`}>
@@ -147,12 +158,19 @@ export function Rama({
               </li>
             ))}
           </ul>
-          <Link className="vbtn obrys duzy utworz" href="/zlecenia/nowe" aria-label="Utwórz">
-            <Ico n="plus" />
-            <span>Utwórz</span>
-          </Link>
+          {offline ? (
+            <button className="vbtn obrys duzy utworz" type="button" disabled aria-label="Utwórz">
+              <Ico n="plus" />
+              <span>Utwórz</span>
+            </button>
+          ) : (
+            <Link className="vbtn obrys duzy utworz" href="/zlecenia/nowe" aria-label="Utwórz">
+              <Ico n="plus" />
+              <span>Utwórz</span>
+            </Link>
+          )}
           {ja ? (
-            <Link className="ja" href="/drabinka">
+            <KontoWyzwalacz className="ja">
               <AwatarKonta ja={ja} size={44} />
               <span className="kto">
                 <b>{ja.firma ? ja.firma.nazwa : ja.name}</b>
@@ -161,14 +179,17 @@ export function Rama({
               <span className="ikonka" aria-hidden="true">
                 <Ico n="dots-three" />
               </span>
-            </Link>
+            </KontoWyzwalacz>
           ) : ja === null ? (
-            <Link className="ja" href="/logowanie">
+            <KontoWyzwalacz className="ja">
+              <span className="gosc-aw" aria-hidden="true">
+                <Ico n="user-circle" />
+              </span>
               <span className="kto">
                 <b>Gość</b>
                 <small>Zaloguj się, żeby budować szczebel</small>
               </span>
-            </Link>
+            </KontoWyzwalacz>
           ) : null}
         </nav>
         <div className="kolumna" id="tresc" role="main">
@@ -184,6 +205,11 @@ export function Rama({
           </Link>
         ))}
       </nav>
-    </div>
+    </>
+  );
+  // Menu konta MUSI renderować się wewnątrz `.v17` — wszystkie style V17 są pod tym selektorem.
+  // ja === undefined (ładowanie, błąd, offline): nie wiemy, kto patrzy — bez menu.
+  return (
+    <div className="v17">{ja === undefined ? tresc : <KontoMenu ja={ja}>{tresc}</KontoMenu>}</div>
   );
 }

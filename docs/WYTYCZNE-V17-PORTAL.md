@@ -53,13 +53,13 @@ Bierzemy **wzorce zachowania i układu**, nie wygląd, kolory, logo ani nazwy cu
 
 ## 3. Tożsamość wizualna — podobna do App, ale nie ta sama
 
-|           | Portal Liderów                                                                                      | LOT App (dla porównania — NIE kopiujemy) |
-| --------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Układ     | sieć + rynek: 3 kolumny / katalog / profil                                                          | panel ERP: szyna↔panel, rzędy KPI        |
-| Nawigacja | lewa kolumna ikon z podpisem (desktop), dolny pasek 5 slotów (telefon, `bottom-nav.tsx`)            | szyna 76 ↔ panel 256                     |
-| Tło       | czyste (`--bg`/`--surface`), światło poziomów jako jedyny „efekt”; scena 3D tylko `/` i `/drabinka` | siatka liderów (canvas)                  |
-| Karty     | lekkie: obwódka 1 px `--border`, promień `--radius`, bez gradientowych ramek i reflektora           | obramowanie gradientowe                  |
-| Gęstość   | wiersze jak X/GitHub (awatar 40 px, 2 linie, separatory)                                            | kafle i wykresy                          |
+|           | Portal Liderów                                                                                                                 | LOT App (dla porównania — NIE kopiujemy) |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| Układ     | sieć + rynek: 3 kolumny / katalog / profil                                                                                     | panel ERP: szyna↔panel, rzędy KPI        |
+| Nawigacja | lewa kolumna ikon z podpisem (desktop), dolny pasek 5 slotów (telefon, `bottom-nav.tsx`)                                       | szyna 76 ↔ panel 256                     |
+| Tło       | od 26.11: jaśniejsze `--bg` + przezroczysta sieć Liderów (statyczny SVG, `pro/tlo.{js,css}`); scena 3D tylko `/` i `/drabinka` | siatka liderów (canvas)                  |
+| Karty     | lekkie: obwódka 1 px `--border`, promień `--radius`, bez gradientowych ramek i reflektora                                      | obramowanie gradientowe                  |
+| Gęstość   | wiersze jak X/GitHub (awatar 40 px, 2 linie, separatory)                                                                       | kafle i wykresy                          |
 
 **Wspólne z siecią:** fiolet = sieć (`--primary-*`, `--violet-500`), **ciepły akcent = zapracowane** (`--level-7`/bursztyn tylko przy L7 i
 zapracowanym momencie), Bricolage (nagłówki, liczby) + Inter (tekst), **Phosphor duotone** (decyzja 19.11 „Phosphor jak w App”),

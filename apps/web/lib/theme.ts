@@ -38,9 +38,14 @@ function pomaluj(jasny: boolean) {
   } else {
     delete document.documentElement.dataset.theme;
   }
+  // Ekrany V17 mają własne tło (styles/v17-braki.css) — pasek systemowy ma się z nim zgadzać.
+  const v17 = Boolean(document.querySelector('.v17'));
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', jasny ? TLO_JASNE : TLO_CIEMNE);
+    ?.setAttribute(
+      'content',
+      v17 ? (jasny ? '#fafaff' : '#12141f') : jasny ? TLO_JASNE : TLO_CIEMNE,
+    );
 }
 
 let nasluch: ((e: MediaQueryListEvent) => void) | null = null;

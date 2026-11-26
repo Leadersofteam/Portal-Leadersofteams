@@ -37,7 +37,8 @@ i fiverr.com w jednym.” Pełne zasady: `docs/WYTYCZNE-V17-PORTAL.md` §1–§3
 - **oferteo.pl → zlecenia:** kreator „opisz potrzebę → dostań oferty” w 3 krokach, licznik ofert, porównanie ofert obok siebie.
 - **Drabinka z sensem:** 7 szczebli i progi z `apps/api/src/modules/ladder/rules.ts`, dwie ścieżki (rynek/społeczność) z progiem 20% od L4,
   karencja 7 dni, L5 → LOT App, L7 → zespół, każde światło z awatarem osoby, która je dała.
-- **Tożsamość:** NIE rama App (bez szyny↔panel, rzędów KPI, siatki liderów, gradientowych ramek). Tło czyste, karty z obwódką 1 px,
+- **Tożsamość:** NIE rama App (bez szyny↔panel, rzędów KPI, siatki liderów, gradientowych ramek). Tło od 26.11: jaśniejsze z przezroczystą siecią Liderów
+  (`components/v17/tlo-siec.tsx`, tokeny w `styles/v17-braki.css`), karty z obwódką 1 px,
   gęste wiersze. Wspólne z siecią: fiolet, „ciepły = zapracowane” (`--level-7` tylko przy L7), Bricolage + Inter, Phosphor duotone,
   stopka Ekosystem. Scena 3D Drabinki: `/` i `/drabinka`.
 - **Odznaka poziomu** = jeden komponent wszędzie: numer w kółku `--level-n` + nazwa szczebla.

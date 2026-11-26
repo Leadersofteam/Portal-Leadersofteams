@@ -18,6 +18,7 @@ import './styles/climb.css';
 import './styles/search.css';
 import './styles/v17-swiatlo.css';
 import './styles/v17-rynek.css';
+import './styles/v17-braki.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({

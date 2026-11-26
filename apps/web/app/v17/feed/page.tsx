@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { FeedOfflineSnapshot } from '@/components/feed-offline-snapshot';
+import type { QuotedPostView } from '@/components/quoted-post';
 import { Ico } from '@/components/v17/ico';
 import {
   KartaDrabinki,
@@ -16,12 +18,19 @@ import type { LevelRule } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
 import { nf } from '@/lib/v17';
 import { levelsOrFallback, progress } from '@/lib/v17';
-import { FILTRY, loadJa, loadMojaDrabinka, loadStrumien } from '@/lib/v17-data';
-import type { Filtr } from '@/lib/v17-data';
+import { FILTRY, loadJa, loadMojaDrabinka, loadObserwowanych, loadStrumien } from '@/lib/v17-data';
+import type { Filtr, Zakres } from '@/lib/v17-data';
 
 export const metadata = { title: 'Strumień — Portal Liderów' };
 
 const KROK = 8;
+// Bezpiecznik „Pokaż więcej”: powyżej tego jedna strona robi się za ciężka dla telefonu.
+const MAKS = 200;
+
+const ZAKRESY: Array<[Zakres, string]> = [
+  ['wszyscy', 'Cała społeczność'],
+  ['obserwowani', 'Obserwowani'],
+];
 
 export default async function FeedV17({
   searchParams,
@@ -30,24 +39,44 @@ export default async function FeedV17({
 }) {
   const sp = await searchParams;
   const filtr = (FILTRY.find(([k]) => k === sp.filtr)?.[0] ?? 'wszystko') as Filtr;
-  const pokaz = Math.min(Math.max(Number.parseInt(String(sp.pokaz ?? KROK), 10) || KROK, KROK), 48);
+  const pokaz = Math.min(
+    Math.max(Number.parseInt(String(sp.pokaz ?? KROK), 10) || KROK, KROK),
+    MAKS,
+  );
+  const wybrany = ZAKRESY.find(([k]) => k === sp.zakres)?.[0];
 
   const ja = await loadJa();
+  // Gość: cała społeczność. Zalogowany bez jawnego wyboru: „Obserwowani”, chyba że nikogo nie obserwuje —
+  // wtedy pierwszy widok byłby pusty (ta sama reguła co w starym /feed, PL1).
+  const obserwowanych = ja ? await loadObserwowanych() : 0;
+  const zakres: Zakres = !ja
+    ? 'wszyscy'
+    : (wybrany ?? (obserwowanych > 0 ? 'obserwowani' : 'wszyscy'));
+
+  // „Podaj dalej”: cytowany wpis pobieramy po stronie serwera, żeby było widać, CO się podaje.
+  const cytujId = ja && typeof sp.cytuj === 'string' ? sp.cytuj : null;
+  const cytowany = cytujId
+    ? await serverApi<{ post: Omit<Extract<QuotedPostView, object>, 'available'> }>(
+        `/social/posts/${encodeURIComponent(cytujId)}`,
+      )
+    : null;
+  const cytat: QuotedPostView | null = cytowany ? { ...cytowany.post, available: true } : null;
+
   // „Moja branża” wymaga profilu Lidera (branża z profilu). Bez niego zakładka prowadzi do pustego stanu.
   const mp = ja ? await serverApi<Record<string, unknown>>('/me/leader-profile') : null;
   const profile = (mp && ((mp as { profile?: unknown }).profile ?? mp)) as {
     industryId?: string;
-    industry?: { slug: string };
+    industry?: { slug: string; name?: string };
   } | null;
   const branza =
     profile?.industryId && profile.industry
-      ? { id: profile.industryId, slug: profile.industry.slug }
+      ? { id: profile.industryId, slug: profile.industry.slug, name: profile.industry.name }
       : null;
 
   const [moja, levels, strumien, tematy, zlecenia] = await Promise.all([
     ja ? loadMojaDrabinka() : null,
     serverApi<{ levels: LevelRule[] }>('/ladder/levels'),
-    loadStrumien(filtr, pokaz, branza),
+    loadStrumien(filtr, pokaz, branza, zakres),
     serverApi<{ topics: Array<{ name: string; slug: string }> }>('/topics/popular'),
     serverApi<{
       orders: Array<{
@@ -63,11 +92,34 @@ export default async function FeedV17({
   ]);
   const rules = levelsOrFallback(levels?.levels.map((l) => ({ ...l, level: l.level })));
   const avatarSrc = ja?.avatarFileId ? `/api/v1/files/${ja.avatarFileId}/thumb` : null;
-  const href = (f: Filtr, p?: number) =>
-    `/feed?${new URLSearchParams({ ...(f !== 'wszystko' ? { filtr: f } : {}), ...(p ? { pokaz: String(p) } : {}) }).toString()}`.replace(
-      /\?$/,
-      '',
-    );
+  const href = (f: Filtr, p?: number, z: Zakres | undefined = wybrany) => {
+    const q = new URLSearchParams({
+      ...(z ? { zakres: z } : {}),
+      ...(f !== 'wszystko' ? { filtr: f } : {}),
+      ...(p ? { pokaz: String(p) } : {}),
+    }).toString();
+    return q ? `/feed?${q}` : '/feed';
+  };
+
+  const pusteObserwowanie =
+    zakres === 'obserwowani' && obserwowanych === 0 && strumien.wpisy.length === 0;
+  // Migawka offline: wyłącznie publiczne wpisy z „całej społeczności”, bez pól widza (components/feed-offline-snapshot).
+  const migawka =
+    zakres === 'wszyscy' && (filtr === 'wszystko' || filtr === 'wpisy')
+      ? strumien.wpisy.flatMap((w) =>
+          w.k === 'wpis' && w.tresc
+            ? [
+                {
+                  name: w.autor.name,
+                  time: w.at,
+                  text: w.tresc.slice(0, 500),
+                  lv: w.autor.level,
+                  branza: w.branza,
+                },
+              ]
+            : [],
+        )
+      : [];
 
   // Pasek Drabinki (telefon): postęp w oknie bieżącego szczebla — jak w makiecie (70/800).
   const odProgu = moja ? (moja.level ? (rules[moja.level - 1]?.pointsRequired ?? 0) : 0) : 0;
@@ -156,19 +208,42 @@ export default async function FeedV17({
           <Ico n="caret-right" />
         </Link>
       ) : null}
-      {ja ? <Kompozytor name={ja.displayName} avatarSrc={avatarSrc} /> : null}
-      <nav className="filtry" data-przesuw aria-label="Filtr strumienia">
-        {FILTRY.map(([k, t]) => (
-          <Link
-            key={k}
-            className="filtr"
-            href={href(k)}
-            aria-current={k === filtr ? 'true' : undefined}
-          >
-            {t}
-          </Link>
-        ))}
-      </nav>
+      {migawka.length > 0 ? <FeedOfflineSnapshot items={migawka} /> : null}
+      {ja ? (
+        <nav className="zakres" aria-label="Zakres strumienia">
+          {ZAKRESY.map(([k, t]) => (
+            <Link
+              key={k}
+              href={href('wszystko', undefined, k)}
+              aria-current={k === zakres ? 'true' : undefined}
+            >
+              {t}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+      {ja ? (
+        <Kompozytor
+          name={ja.displayName}
+          avatarSrc={avatarSrc}
+          cytat={cytat}
+          powrot={href('wszystko')}
+        />
+      ) : null}
+      {pusteObserwowanie ? null : (
+        <nav className="filtry" data-przesuw aria-label="Filtr strumienia">
+          {FILTRY.map(([k, t]) => (
+            <Link
+              key={k}
+              className="filtr"
+              href={href(k)}
+              aria-current={k === filtr ? 'true' : undefined}
+            >
+              {t}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {wszystkieBledy ? (
         <Komunikat
@@ -179,6 +254,30 @@ export default async function FeedV17({
           <Link className="vbtn glowny" href={href(filtr, pokaz)}>
             <Ico n="arrow-clockwise" />
             Spróbuj ponownie
+          </Link>
+        </Komunikat>
+      ) : pusteObserwowanie ? (
+        <Komunikat
+          ikona="users-three"
+          tytul="Nie obserwujesz jeszcze nikogo"
+          opis="Wejdź na profil Lidera i kliknij „Obserwuj”. Jego wpisy, usługi i awanse pojawią się tutaj."
+        >
+          <Link className="vbtn obrys" href={href('wszystko', undefined, 'wszyscy')}>
+            Zobacz całą społeczność
+          </Link>
+        </Komunikat>
+      ) : strumien.wpisy.length === 0 && zakres === 'obserwowani' ? (
+        <Komunikat
+          ikona="users-three"
+          tytul="W obserwowanych na razie cisza"
+          opis={
+            ['zlecenia', 'pytania', 'realizacje'].includes(filtr)
+              ? 'Zlecenia, pytania i realizacje są w „Całej społeczności”. Tu widać wpisy, usługi i awanse obserwowanych.'
+              : 'Obserwowani nie opublikowali tu jeszcze nic nowego.'
+          }
+        >
+          <Link className="vbtn obrys" href={href(filtr, undefined, 'wszyscy')}>
+            Zobacz całą społeczność
           </Link>
         </Komunikat>
       ) : strumien.wpisy.length === 0 ? (
@@ -201,7 +300,7 @@ export default async function FeedV17({
       ) : (
         <>
           {strumien.wpisy.map((w, i) => (
-            <WierszStrumienia key={`${w.k}-${w.id}`} w={w} idx={i} />
+            <WierszStrumienia key={`${w.k}-${w.id}`} w={w} idx={i} zalogowany={Boolean(ja)} />
           ))}
           {strumien.zrodelBledow > 0 ? (
             <p className="wiecej" role="status">
@@ -209,22 +308,25 @@ export default async function FeedV17({
             </p>
           ) : null}
           <div className="wiecej">
-            {strumien.mozeWiecej ? (
-              <Link className="vbtn obrys" href={href(filtr, pokaz + KROK)}>
+            {strumien.mozeWiecej && pokaz < MAKS ? (
+              <Link className="vbtn obrys" href={href(filtr, pokaz + KROK)} scroll={false}>
                 Pokaż więcej
               </Link>
             ) : null}
             {/* ADR-010: koniec listy mówi, ile widzisz — bez nieskończonego scrolla. „+” = są jeszcze wpisy poza oknem. */}
             <small className="num">
               {strumien.wpisy.length} z {strumien.razem}
-              {strumien.mozeWiecej && strumien.razem <= strumien.wpisy.length ? '+' : ''}
+              {strumien.mozeWiecej && pokaz < MAKS ? '+' : ''}
             </small>
           </div>
         </>
       )}
-      <Link className="fab" href="/zlecenia/nowe" aria-label="Utwórz wpis">
-        <Ico n="plus" />
-      </Link>
+      {/* Zalogowany ma FAB w kompozytorze (otwiera pisanie); gość — drogę do logowania. */}
+      {ja ? null : (
+        <Link className="fab" href="/logowanie" aria-label="Napisz wpis">
+          <Ico n="plus" zwykla />
+        </Link>
+      )}
     </Rama>
   );
 }
