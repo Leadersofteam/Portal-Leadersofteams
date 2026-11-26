@@ -98,7 +98,14 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: `/uslugi/${slug}` },
-    openGraph: { type: 'website', title, description, url: `/uslugi/${slug}` },
+    // Obrazek z PUBLICZNEJ trasy starego widoku: rewrite do /v17 go gubi, a /v17/* jest zamknięte dla robotów.
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `/uslugi/${slug}`,
+      images: [`/uslugi/${slug}/opengraph-image`],
+    },
   };
 }
 
