@@ -90,3 +90,9 @@ Stany `?stan=dane|pisanie|offline|wiecej|pusty`; zrzuty `audyt/zrzuty/v17-braki-
 Poza makietą, do sprawdzenia przy kodzie: odnośniki z Drabinki do `/droga` i `/panel/punkty`, zgłoszenie/edycja/usunięcie
 wpisu (zostają na `/wpisy/[id]`), fokus i Esc w menu i kompozytorze.
 Zmiana wobec `pro.css`: w ciemnym motywie przycisk główny na `--primary-600` (kontrast AA).
+
+### Tło (Maciej 26.11)
+
+„Wolałbym inny kolor tła np. jaśniejsze z lekką siecią liderów przezroczystą. Reszta jest dobra” — `tlo.{js,css}`.
+Zastępuje w tym punkcie zasadę z 20.11 („tło czyste, bez siatki liderów”). Obowiązuje po akceptacji tła; wtedy dla wszystkich
+ekranów V17 (także P0 i P1).

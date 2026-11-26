@@ -1,0 +1,19 @@
+/* Jaśniejsze tło + przezroczysta sieć Liderów. Docelowo wspólne dla wszystkich ekranów V17. */
+:root { --bg: #12141f; --surface: #1a1d2b; --surface-2: #1f2231; --surface-3: #272b3d; --text-faint: #929bb1; }
+[data-theme='light'] { --bg: #fafaff; --surface: #ffffff; --surface-2: #f6f6fd; --surface-3: #eeeef8; --text-faint: #5f6678; }
+html { background: var(--bg); }
+body { background: transparent; }
+.tlo-siec { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+.tlo-siec .linie { stroke: var(--primary-500); stroke-width: 1; opacity: 0.22; }
+.tlo-siec .wezly { opacity: 0.38; }
+[data-theme='light'] .tlo-siec .linie { opacity: 0.2; }
+[data-theme='light'] .tlo-siec .wezly { opacity: 0.34; }
+/* Pod treścią sieć ledwo prześwituje — czytelność tekstu jest ważniejsza. */
+.rama > .kolumna { background: color-mix(in srgb, var(--bg) 82%, transparent); }
+.karta { background: color-mix(in srgb, var(--surface) 92%, transparent); }
+@media (max-width: 720px) {
+  .rama > .kolumna { background: color-mix(in srgb, var(--bg) 78%, transparent); }
+}
+/* Prawa kolumna: linie nie mogą przecinać drobnego tekstu. */
+.bok-lepki > .karta:not(.hero-dr), .bok-lepki > .tematy, .bok-lepki > .stopka { background: color-mix(in srgb, var(--bg) 88%, transparent); border-radius: var(--radius); }
+.bok-lepki > .hero-dr { background: var(--surface); }
