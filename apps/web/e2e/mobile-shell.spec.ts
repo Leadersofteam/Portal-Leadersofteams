@@ -105,7 +105,7 @@ test.describe('PWA', () => {
 test.describe('tabele na telefonie', () => {
   test('/drabinka pokazuje karty na 390 px, a tabelę na desktopie', async ({ page }) => {
     await page.setViewportSize(MOBILE);
-    await page.goto('/drabinka');
+    await page.goto('/drabinka?wyglad=off');
     await expect(page.locator('.rung-cards')).toBeVisible();
     await expect(page.locator('.table-wrap.desktop-only')).toBeHidden();
 

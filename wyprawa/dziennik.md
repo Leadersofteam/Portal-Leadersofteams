@@ -144,6 +144,7 @@ dołączenia. Zrzuty: weryfikacja-w0*-390.png. Deploy: staging → prod, backup
 portal-20260902-085022, healthz ok, worker żyje, zero migracji.
 
 ## 26.11 — P1 „Rynek” (?wyglad=v17), ścieżka firmy z 2 ofertami na produkcji
+
 - 390 i 1512, jasny i ciemny: 2 kółka wyboru 44×44, wszystkie 4 rogi trafiają w pole, klik w róg zaznacza; „Wybierz wykonawcę” (324×44 na 390) nieaktywny bez wyboru.
 - POST /offers/:id/accept → 200; baza: wybrana ACCEPTED, druga REJECTED; 0 zdarzeń punktowych; konsola bez błędów.
 - Konta tymczasowe p1-*@example.com (2 przebiegi, 6 kont) zanonimizowane. Firmie z 2. przebiegu ustawiono emailVerifiedAt w bazie (1 wiersz; anonimizacja wyzerowała).

@@ -23,6 +23,8 @@ async function register(page: Page, displayName: string, email: string) {
   await page.waitForURL('**/panel', { timeout: 30_000 });
 }
 
+// Te testy sprawdzają STARY wygląd (opt-out `?wyglad=off`, zapisuje ciasteczko): od 25.11 domyślny jest V17,
+// którego trasy i ciasteczko pilnuje e2e/v17-routing.spec.ts.
 test('wpis portalowy: kompozytor → feed społeczności → permalink → docenienie', async ({
   browser,
 }) => {
@@ -36,7 +38,7 @@ test('wpis portalowy: kompozytor → feed społeczności → permalink → docen
   await register(author, 'E2E Autor', `autor-${stamp}@e2e.local`);
 
   // Publikacja z ponowieniem — chroni przed wyścigiem hydracji kompozytora.
-  await author.goto('/feed');
+  await author.goto('/feed?wyglad=off');
   await expect(async () => {
     const field = author.getByPlaceholder(/Co dziś zbudowałeś/);
     if (await field.isVisible().catch(() => false)) {
@@ -53,7 +55,7 @@ test('wpis portalowy: kompozytor → feed społeczności → permalink → docen
   // że worker zmaterializował zdarzenie w osi aktywności.
   await register(reader, 'E2E Czytelnik', `czytelnik-${stamp}@e2e.local`);
   await expect(async () => {
-    await reader.goto('/feed?zakres=wszyscy');
+    await reader.goto('/feed?zakres=wszyscy&wyglad=off');
     await expect(reader.getByText(body).first()).toBeVisible({ timeout: 3_000 });
   }).toPass({ timeout: 45_000 });
 
@@ -144,7 +146,7 @@ test('nagłówek rozpoznaje zalogowanego i gościa', async ({ browser }) => {
 });
 
 test('gość widzi feed społeczności bez logowania', async ({ page }) => {
-  await page.goto('/feed?zakres=wszyscy');
+  await page.goto('/feed?zakres=wszyscy&wyglad=off');
   // Kluczowe: ŻADNEGO przekierowania na logowanie — pusty rynek nie wybacza
   // ekranu logowania jako pierwszego wrażenia.
   await expect(page).toHaveURL(/\/feed/);

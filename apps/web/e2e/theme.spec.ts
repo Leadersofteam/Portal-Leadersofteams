@@ -12,8 +12,10 @@ import { expect, test } from '@playwright/test';
 const CIEMNE_TLO = 'rgb(10, 11, 18)';
 const JASNE_TLO = 'rgb(246, 247, 251)';
 
+// Te testy sprawdzają STARY wygląd (opt-out `?wyglad=off`, zapisuje ciasteczko): od 25.11 domyślny jest V17,
+// którego trasy i ciasteczko pilnuje e2e/v17-routing.spec.ts.
 test('domyślnie ciemny: bez atrybutu, ciemne tło', async ({ page }) => {
-  await page.goto('/feed');
+  await page.goto('/feed?wyglad=off');
   await expect(page.getByRole('heading', { name: 'Feed społeczności' })).toBeVisible();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
   const tlo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
@@ -23,7 +25,7 @@ test('domyślnie ciemny: bez atrybutu, ciemne tło', async ({ page }) => {
 test('przełącznik: jasny motyw, sync theme-color, wybór przeżywa reload i hydrację', async ({
   page,
 }) => {
-  await page.goto('/feed');
+  await page.goto('/feed?wyglad=off');
   const toggle = page.getByRole('contentinfo').getByRole('radiogroup', {
     name: 'Motyw kolorystyczny',
   });
@@ -59,7 +61,7 @@ test('przełącznik: jasny motyw, sync theme-color, wybór przeżywa reload i hy
 
 test('opcja „system" idzie za prefers-color-scheme bez reloadu', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/feed');
+  await page.goto('/feed?wyglad=off');
   const toggle = page.getByRole('contentinfo').getByRole('radiogroup', {
     name: 'Motyw kolorystyczny',
   });
