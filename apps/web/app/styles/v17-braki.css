@@ -1,0 +1,610 @@
+/* Braki V17 i tło „sieć Liderów”. Źródło: docs/redesign-propozycje/v17/pro/braki.css i tlo.css
+   (makiety zaakceptowane 26.11: „Reszta jest dobra”, tło „Tak, koduj”). Prefiks .v17, .btn → .vbtn.
+   Importowany PO v17-swiatlo i v17-rynek: nadpisuje tokeny tła dla WSZYSTKICH ekranów V17. */
+
+/* ───────── Tło i tokeny (oba motywy) ───────── */
+html[data-wyglad='v17'],
+html:has(.v17) {
+  --bg-v17: #12141f;
+}
+html[data-wyglad='v17'][data-theme='light'],
+html[data-theme='light']:has(.v17) {
+  --bg-v17: #fafaff;
+}
+.v17 {
+  --bg: #12141f;
+  --surface: #1a1d2b;
+  --surface-2: #1f2231;
+  --surface-3: #272b3d;
+  --text-faint: #929bb1;
+  --zaslona: rgb(0 0 0 / 0.5);
+  isolation: isolate; /* sieć (z-index -1) leży nad tłem .v17, a pod treścią */
+}
+[data-theme='light'] .v17 {
+  --bg: #fafaff;
+  --surface: #ffffff;
+  --surface-2: #f6f6fd;
+  --surface-3: #eeeef8;
+  --text-faint: #5f6678;
+}
+.v17 .tlo-siec {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+.v17 .tlo-siec .linie {
+  stroke: var(--primary-500);
+  stroke-width: 1;
+  opacity: 0.22;
+}
+.v17 .tlo-siec .wezly {
+  opacity: 0.38;
+}
+[data-theme='light'] .v17 .tlo-siec .linie {
+  opacity: 0.2;
+}
+[data-theme='light'] .v17 .tlo-siec .wezly {
+  opacity: 0.34;
+}
+/* Pod treścią sieć ledwo prześwituje — czytelność tekstu jest ważniejsza. */
+.v17 .rama > .kolumna {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+}
+.v17 .karta {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+/* Prawa kolumna: linie nie mogą przecinać drobnego tekstu. */
+.v17 .bok-lepki > .karta:not(.hero-dr),
+.v17 .bok-lepki > .tematy,
+.v17 .bok-lepki > .stopka {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-radius: var(--radius);
+}
+.v17 .bok-lepki > .hero-dr {
+  background: var(--surface);
+}
+/* Kolumna filtrów zleceń (P1) to ten sam drobny tekst po prawej — ta sama osłona. */
+.v17 .bok .rn-filtr {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-radius: var(--radius);
+}
+/* Bez „najkrótszej drogi” (L0–L3 bez progu ścieżki) paski dotykały dolnej krawędzi karty (zastane). */
+.v17 .hero-dr .dwie-sc:last-child {
+  padding-bottom: 16px;
+}
+/* biały na --primary-500 w ciemnym ma 3,73:1 */
+:root:not([data-theme='light']) .v17 .vbtn.glowny {
+  background: var(--primary-600);
+}
+
+/* ───────── Zakres strumienia ───────── */
+.v17 .zakres {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+}
+.v17 .zakres a {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  font-size: 14.5px;
+  font-weight: 550;
+  color: var(--text-muted);
+  box-shadow: inset 0 -2px 0 transparent;
+}
+.v17 .zakres a[aria-current] {
+  color: var(--text-strong);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--text-strong);
+}
+
+/* ───────── Kompozytor ───────── */
+.v17 .kompozytor textarea.wpisz {
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  resize: vertical;
+  color: var(--text-strong);
+  font: 500 17px/1.45 var(--font-display);
+  padding: 8px 0 12px;
+}
+.v17 .kompozytor textarea.wpisz:focus-visible {
+  outline: none;
+  border-radius: 0;
+  border-bottom: 2px solid var(--text-strong);
+}
+.v17 .kompozytor .vbtn {
+  min-height: 44px;
+}
+.v17 .kompozytor .vbtn[disabled],
+.v17 .kompozytor .rodzaj[disabled],
+.v17 .mini.dodaj[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+.v17 .kompozytor .rodzaj {
+  height: 44px;
+}
+.v17 .kompozytor .blad {
+  margin: 8px 0 0;
+  color: var(--danger);
+}
+.v17 .licznik {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.v17 .kompozytor .licznik + .vbtn {
+  margin-left: 12px;
+}
+.v17 .miniatury {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.v17 .mini {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+}
+.v17 .mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.v17 .mini button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--text-strong);
+}
+.v17 .mini button i {
+  display: grid;
+  background: var(--surface);
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 14px;
+}
+.v17 button.mini.dodaj {
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  color: var(--text-muted);
+  border: 1px dashed var(--line-2);
+}
+.v17 .bcyt-szkic {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.v17 .bcyt-szkic .bcyt {
+  flex: 1;
+}
+.v17 .bcyt-szkic .ikonka {
+  margin-top: 10px;
+  flex: none;
+  min-height: 44px;
+}
+.v17 .pisze-gora,
+.v17 .inne {
+  display: none;
+}
+
+/* ───────── Wpis, cytat, zdjęcia, awans ───────── */
+.v17 .bcyt {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  min-width: 0;
+}
+.v17 .bcyt .autor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--text-strong);
+}
+.v17 .bcyt .czas {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.v17 .bcyt .odz {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.v17 .bcyt .odz svg {
+  color: var(--lv);
+}
+.v17 .bcyt .tekst {
+  color: var(--text-body);
+  font-size: 14.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.v17 .wpis .tresc {
+  overflow-wrap: anywhere;
+}
+.v17 .zdjecia {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+}
+.v17 .zdjecia a {
+  display: block;
+  position: relative;
+  min-height: 0;
+}
+.v17 .zdjecia img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.v17 .zdjecia[data-ile='1'] a {
+  aspect-ratio: 16 / 9;
+}
+/* 2 i 4 zdjęcia: makieta pokazuje 1 i 3 — siatka po równo (odstępstwo w PROGRAM-V17-PORTAL). */
+.v17 .zdjecia[data-ile='2'],
+.v17 .zdjecia[data-ile='4'] {
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 160px;
+}
+.v17 .zdjecia[data-ile='3'] {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 130px 130px;
+}
+.v17 .zdjecia[data-ile='3'] a:first-child {
+  grid-row: span 2;
+}
+.v17 .akcje.wpisu .akcja.odp {
+  width: auto;
+  min-width: 44px;
+  padding: 0 10px;
+  gap: 6px;
+}
+.v17 .akcje.wpisu .akcja.wl {
+  color: var(--primary-400);
+  background: rgb(var(--primary-rgb) / 0.12);
+}
+.v17 .wpis .glowa a.czas:hover {
+  text-decoration: underline;
+}
+.v17 .awans {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 0 8px;
+  padding: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.v17 .awans > i {
+  font-size: 32px;
+  color: var(--primary-400);
+  flex: none;
+}
+.v17 .awans > i.ph-duotone {
+  font-size: 32px;
+}
+.v17 .awans > span:last-child {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+.v17 .awans b {
+  font: 700 16px/1.3 var(--font-display);
+  color: var(--text-strong);
+}
+.v17 .awans small {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ───────── Offline ───────── */
+.v17 .offline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.v17 .offline > i.ph-duotone {
+  font-size: 28px;
+  color: var(--text-muted);
+}
+.v17 .offline > span {
+  flex: 1;
+  min-width: 200px;
+  display: grid;
+  gap: 2px;
+}
+.v17 .offline b {
+  color: var(--text-strong);
+}
+.v17 .offline small {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.v17 .nav .utworz:disabled {
+  opacity: 0.45;
+}
+
+/* ───────── Menu konta ───────── */
+.v17 button.wyzw {
+  text-align: left;
+}
+.v17 .nav button.ja {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 10px 12px;
+}
+.v17 .gora button.konto {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.v17 .gora button.ikonka {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 22px;
+}
+.v17 .gosc-aw {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  color: var(--text-muted);
+}
+.v17 .gosc-aw i.ph-duotone {
+  font-size: 28px;
+}
+.v17 .zaslona {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--zaslona);
+}
+.v17 .wiecej-menu {
+  position: fixed;
+  z-index: 41;
+  left: max(16px, calc(50% - 616px));
+  bottom: 100px;
+  width: 320px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+.v17 .wiecej-menu header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 8px 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.v17 .wiecej-menu h2 {
+  margin: 0;
+  font: 700 16px/1.2 var(--font-display);
+  color: var(--text-strong);
+}
+.v17 .wiecej-menu .odz {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.v17 .wiecej-menu .odz svg {
+  color: var(--lv);
+}
+.v17 .mojprofil {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-height: 44px;
+}
+.v17 .mojprofil small {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary-400);
+}
+.v17 .mojprofil .gosc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.v17 .wiecej-menu header .ikonka {
+  min-height: 44px;
+}
+.v17 .wiecej-menu nav {
+  display: grid;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.v17 .wiecej-menu nav:last-child {
+  border-bottom: 0;
+}
+.v17 .wiecej-menu nav a,
+.v17 .wiecej-menu nav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14.5px;
+  font-weight: 550;
+  color: var(--text);
+  text-align: left;
+}
+.v17 .wiecej-menu nav a:hover,
+.v17 .wiecej-menu nav button:hover {
+  background: var(--surface-3);
+}
+.v17 .wiecej-menu nav i.ph-duotone {
+  font-size: 20px;
+  color: var(--text-muted);
+}
+.v17 .wiecej-menu .blok {
+  padding: 12px 18px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.v17 .wiecej-menu .blok:last-child {
+  border-bottom: 0;
+}
+.v17 .wiecej-menu .et {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.v17 .motyw-wybor {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+}
+.v17 .motyw-wybor button {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 52px;
+  padding: 8px 2px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-muted);
+}
+.v17 .motyw-wybor button i.ph-duotone {
+  font-size: 18px;
+}
+.v17 .motyw-wybor button[aria-checked='true'] {
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-1);
+}
+
+@media (max-width: 720px) {
+  .v17 .rama > .kolumna {
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+  }
+  .v17 .kompozytor.pisze {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    align-content: flex-start;
+    align-items: flex-start;
+    border: 0;
+  }
+  .v17 .kompozytor.pisze > .aw {
+    display: none;
+  }
+  .v17 .pisze-gora {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px -10px;
+  }
+  .v17 .pisze-gora b {
+    font: 700 18px/1 var(--font-display);
+    color: var(--text-strong);
+  }
+  .v17 .pisze-gora .ikonka {
+    min-height: 44px;
+    font-size: 20px;
+  }
+  .v17 .pisze-gora .vbtn {
+    margin: 0 0 0 auto;
+  }
+  .v17 .kompozytor.pisze textarea.wpisz {
+    min-height: 160px;
+  }
+  .v17 .kompozytor.pisze .rodzaje {
+    flex-wrap: wrap;
+  }
+  .v17 .kompozytor .rodzaje .vbtn.dol {
+    display: none;
+  }
+  .v17 .inne {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .v17 .inne > span {
+    width: 100%;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .v17 .inne .rodzaj {
+    height: 44px;
+  }
+  .v17 .wiecej-menu {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 88dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .v17 .zdjecia[data-ile='3'] {
+    grid-template-rows: 90px 90px;
+  }
+  .v17 .zdjecia[data-ile='2'],
+  .v17 .zdjecia[data-ile='4'] {
+    grid-auto-rows: 110px;
+  }
+  .v17 .wpis .vmeta .typ span {
+    display: inline;
+  }
+  .v17 .wpis .glowa a.czas {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    margin: -11px 0;
+  }
+}

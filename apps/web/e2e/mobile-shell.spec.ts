@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 // Powłoka mobilna (S8): dolny pasek, PWA, warianty kartowe tabel.
 // Osobny plik, żeby nie wydłużać ścieżki krytycznej — te testy nie potrzebują
@@ -68,7 +68,40 @@ test.describe('PWA', () => {
     expect(res.headers()['service-worker-allowed']).toBe('/');
   });
 
+  // Stary wygląd ekranu offline dostaje tylko jawny opt-out (ciasteczko lot_wyglad=off).
+  const staryWyglad = (page: Page) =>
+    page.addInitScript(() => {
+      document.cookie = 'lot_wyglad=off; path=/';
+    });
+
+  test('offline V17: baner i migawka publicznych wpisów', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'lot_offline_feed',
+        JSON.stringify({
+          savedAt: Date.now(),
+          items: [
+            {
+              name: 'Osoba Testowa',
+              time: new Date().toISOString(),
+              text: 'Wpis próbny do czytania offline',
+              lv: 2,
+              branza: 'Elektryka',
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto('/offline');
+    await expect(page.getByText('Jesteś offline', { exact: true })).toBeVisible();
+    await expect(page.locator('.v17 article.wpis')).toContainText(
+      'Wpis próbny do czytania offline',
+    );
+    await expect(page.getByText('1 zapisany wpis · tylko to, co publiczne')).toBeVisible();
+  });
+
   test('strona offline istnieje i nie odpytuje API', async ({ page }) => {
+    await staryWyglad(page);
     await page.goto('/offline');
     await expect(page.getByRole('heading', { name: /Jesteś offline/ })).toBeVisible();
   });
@@ -77,6 +110,7 @@ test.describe('PWA', () => {
     // Migawkę renderuje skrypt INLINE w dokumencie (nie React) — patrz
     // komentarz w app/offline/page.tsx. Kotwiczymy na POZYTYWNYM śladzie:
     // nagłówku sekcji i treści wpisu.
+    await staryWyglad(page);
     await page.addInitScript(() => {
       localStorage.setItem(
         'lot_offline_feed',

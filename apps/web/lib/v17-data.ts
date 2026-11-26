@@ -1,7 +1,9 @@
 // Dane ekranów V17 „Światło” z PRAWDZIWEGO API (zero fixtur). Strumień składamy po stronie serwera
-// z czterech publicznych źródeł i sortujemy chronologicznie (ADR-010: bez rankingu, bez algorytmu).
+// z feedu społeczności (wpisy, awanse) i publicznych list (zlecenia, pytania, realizacje, usługi),
+// i sortujemy chronologicznie (ADR-010: bez rankingu, bez algorytmu).
 // Czego API nie niesie (miasto i termin zlecenia, termin zbierania ofert, awatary oferentów,
 // liczba powiadomień), tego NIE zmyślamy — komponenty pomijają pole albo pokazują stan pusty.
+import type { QuotedPostView } from '@/components/quoted-post';
 import type { LevelRule } from '@/lib/levels';
 import { serverApi } from '@/lib/server-api';
 
@@ -13,6 +15,29 @@ export interface Aktor {
 }
 
 export type Wpis =
+  | {
+      k: 'wpis';
+      /** Id wpisu portalowego (adres /wpisy/[id] i akcje). */
+      id: string;
+      at: string;
+      autor: Aktor;
+      branza: string | null;
+      tresc: string;
+      zdjecia: string[];
+      cytat: QuotedPostView | null;
+      komentarze: number;
+      doceniony: boolean;
+      zapisany: boolean;
+    }
+  | {
+      k: 'awans';
+      id: string;
+      at: string;
+      lider: Aktor;
+      branza: string | null;
+      /** Szczebel, NA KTÓRY awans nastąpił (nie bieżący autora). */
+      szczebel: number;
+    }
   | {
       k: 'zlecenie';
       id: string;
@@ -117,15 +142,44 @@ interface ListingRow {
   };
 }
 
-export type Filtr = 'wszystko' | 'moja' | 'zlecenia' | 'pytania' | 'realizacje' | 'uslugi';
+export type Filtr =
+  'wszystko' | 'wpisy' | 'moja' | 'zlecenia' | 'pytania' | 'realizacje' | 'uslugi';
 export const FILTRY: Array<[Filtr, string]> = [
   ['wszystko', 'Wszystko'],
+  ['wpisy', 'Wpisy'],
   ['moja', 'Moja branża'],
   ['zlecenia', 'Zlecenia'],
   ['pytania', 'Pytania'],
   ['realizacje', 'Realizacje'],
   ['uslugi', 'Usługi'],
 ];
+
+/** „Cała społeczność” / „Obserwowani”. */
+export type Zakres = 'wszyscy' | 'obserwowani';
+
+export interface FeedRow {
+  id: string;
+  type: string;
+  subjectId: string;
+  meta: Record<string, unknown>;
+  createdAt: string;
+  post?: {
+    body: string;
+    imageFileIds: string[];
+    quoted: QuotedPostView | null;
+    comments: number;
+    viewerAppreciated: boolean;
+    viewerBookmarked: boolean;
+  };
+  actor: {
+    id: string;
+    displayName: string;
+    handle: string | null;
+    avatarFileId: string | null;
+    level: number;
+    industry?: string | null;
+  };
+}
 
 export interface Strumien {
   wpisy: Wpis[];
@@ -137,43 +191,135 @@ export interface Strumien {
   zrodelBledow: number;
 }
 
+interface Okno<T> {
+  rows: T[];
+  wiecej: boolean;
+  blad: boolean;
+}
+
+const pusteOkno = { rows: [], wiecej: false, blad: false };
+
+// Źródło czytamy stronami po kursorze, aż uzbieramy `win` PASUJĄCYCH wierszy. Samo `limit=50`
+// zatrzymywało „Pokaż więcej” na 50 (przycisk martwy), a filtr po stronie web (branża) zostawiał dziury
+// w chronologii. Limit stron to bezpiecznik, nie funkcja — po nim źródło zgłasza „jest więcej”.
+async function okno<T>(
+  url: string,
+  klucz: string,
+  win: number,
+  pasuje: (row: T) => boolean = () => true,
+): Promise<Okno<T>> {
+  const rows: T[] = [];
+  let cursor: string | null = null;
+  for (let strona = 0; strona < 8; strona++) {
+    const res: ({ nextCursor: string | null } & Record<string, unknown>) | null = await serverApi(
+      `${url}${url.includes('?') ? '&' : '?'}limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+    );
+    if (!res) return { rows, wiecej: rows.length > 0, blad: true };
+    rows.push(...(res[klucz] as T[]).filter(pasuje));
+    cursor = res.nextCursor;
+    if (!cursor || rows.length >= win) break;
+  }
+  return { rows: rows.slice(0, win), wiecej: Boolean(cursor) || rows.length > win, blad: false };
+}
+
+/** Ile osób widz obserwuje — decyduje o domyślnej zakładce. */
+export async function loadObserwowanych(): Promise<number> {
+  const d = await serverApi<{ followingCount: number }>('/feed?scope=following&limit=1');
+  return d?.followingCount ?? 0;
+}
+
 export async function loadStrumien(
   filtr: Filtr,
   pokaz: number,
-  industry: { id: string; slug: string } | null,
+  industry: { id: string; name?: string; slug: string } | null,
+  zakres: Zakres,
 ): Promise<Strumien> {
-  const want = (k: Filtr) => filtr === 'wszystko' || filtr === 'moja' || filtr === k;
-  const win = Math.min(pokaz + 6, 50);
-  const ind = filtr === 'moja' && industry ? `&industryId=${encodeURIComponent(industry.id)}` : '';
-  const q = `limit=${win}`;
-  const [orders, threads, reals, lists] = await Promise.all([
-    want('zlecenia')
-      ? serverApi<{ orders: OrderRow[]; nextCursor: string | null }>(`/orders?${q}${ind}`)
-      : null,
-    // Wątki nie mają branży — przy „Mojej branży” ich nie mieszamy (nie udajemy dopasowania).
-    want('pytania') && filtr !== 'moja'
-      ? serverApi<{ threads: ThreadRow[]; nextCursor: string | null }>(`/threads?${q}`)
-      : null,
-    want('realizacje')
-      ? serverApi<{ realizations: RealRow[]; nextCursor: string | null }>(`/realizations?${q}`)
-      : null,
-    want('uslugi')
-      ? serverApi<{ listings: ListingRow[]; nextCursor: string | null }>(
-          `/listings?${q}&sort=newest${ind}`,
-        )
-      : null,
-  ]);
-  const wanted = [
-    want('zlecenia'),
-    want('pytania') && filtr !== 'moja',
-    want('realizacje'),
-    want('uslugi'),
+  const obserwowani = zakres === 'obserwowani';
+  const wszystko = filtr === 'wszystko' || filtr === 'moja';
+  const want = (k: Filtr) => wszystko || filtr === k;
+  const win = pokaz + 6;
+  const moja = filtr === 'moja' && industry;
+  const ind = moja ? `&industryId=${encodeURIComponent(industry.id)}` : '';
+  // „Moja branża” bez profilu Lidera: wpisów nie przypisujemy do żadnej branży (nie udajemy dopasowania).
+  const wBranzy = (a: FeedRow['actor']) =>
+    filtr !== 'moja' || !industry || Boolean(industry.name && a.industry === industry.name);
+
+  // Z feedu bierzemy wpisy portalowe i awanse; w „Obserwowanych” także publikacje usług (po nich
+  // zawężamy listę usług). Zlecenia, pytania i realizacje nie mają „obserwowania” — tam ich nie ma.
+  const typy = [
+    ...(filtr === 'wpisy' || wszystko ? ['SOCIAL_POST_PUBLISHED'] : []),
+    ...(wszystko ? ['LEVEL_ACHIEVED'] : []),
+    ...(obserwowani && want('uslugi') ? ['LISTING_PUBLISHED'] : []),
   ];
-  const got = [orders, threads, reals, lists];
-  const zrodelBledow = wanted.filter((w, i) => w && got[i] === null).length;
+  const publiczne = (k: Filtr) => !obserwowani && want(k);
+
+  const [feed, orders, threads, reals] = await Promise.all([
+    typy.length
+      ? okno<FeedRow>(
+          `/feed?scope=${obserwowani ? 'following' : 'all'}&types=${typy.join(',')}`,
+          'items',
+          win,
+          (r) => wBranzy(r.actor),
+        )
+      : pusteOkno,
+    publiczne('zlecenia')
+      ? okno<OrderRow>(`/orders${ind ? `?${ind.slice(1)}` : ''}`, 'orders', win)
+      : pusteOkno,
+    // Wątki nie mają branży — przy „Mojej branży” ich nie mieszamy (nie udajemy dopasowania).
+    publiczne('pytania') && filtr !== 'moja'
+      ? okno<ThreadRow>('/threads', 'threads', win)
+      : pusteOkno,
+    publiczne('realizacje')
+      ? okno<RealRow>(
+          '/realizations',
+          'realizations',
+          win,
+          (r) => !moja || r.industry.slug === industry.slug,
+        )
+      : pusteOkno,
+  ]);
+  const obserwowaneUslugi = new Set(
+    feed.rows.filter((r) => r.type === 'LISTING_PUBLISHED').map((r) => r.subjectId),
+  );
+  const lists: Okno<ListingRow> =
+    want('uslugi') && (!obserwowani || obserwowaneUslugi.size > 0)
+      ? await okno<ListingRow>(
+          `/listings?sort=newest${ind}`,
+          'listings',
+          obserwowani ? obserwowaneUslugi.size : win,
+          (l) => !obserwowani || obserwowaneUslugi.has(l.id),
+        )
+      : pusteOkno;
+  const zrodla = [feed, orders, threads, reals, lists];
 
   const all: Wpis[] = [];
-  for (const o of orders?.orders ?? [])
+  for (const r of feed.rows) {
+    const lider: Aktor = {
+      name: r.actor.displayName,
+      handle: r.actor.handle,
+      level: r.actor.level,
+      avatarFileId: r.actor.avatarFileId,
+    };
+    const branza = r.actor.industry ?? null;
+    if (r.type === 'SOCIAL_POST_PUBLISHED' && r.post)
+      all.push({
+        k: 'wpis',
+        id: r.subjectId,
+        at: r.createdAt,
+        autor: lider,
+        branza,
+        tresc: r.post.body,
+        zdjecia: r.post.imageFileIds,
+        cytat: r.post.quoted,
+        komentarze: r.post.comments,
+        doceniony: r.post.viewerAppreciated,
+        zapisany: r.post.viewerBookmarked,
+      });
+    const szczebel = Number(r.meta.level ?? 0);
+    if (r.type === 'LEVEL_ACHIEVED' && szczebel >= 1 && szczebel <= 7)
+      all.push({ k: 'awans', id: r.id, at: r.createdAt, lider, branza, szczebel });
+  }
+  for (const o of orders.rows)
     all.push({
       k: 'zlecenie',
       id: o.id,
@@ -187,7 +333,7 @@ export async function loadStrumien(
       minLevel: o.minLevel,
       oferty: o.offersCount ?? 0,
     });
-  for (const t of threads?.threads ?? [])
+  for (const t of threads.rows)
     all.push({
       k: 'pytanie',
       id: t.id,
@@ -198,8 +344,7 @@ export async function loadStrumien(
       odpowiedzi: t.answersCount,
       uznana: t.hasAcceptedAnswer,
     });
-  for (const r of reals?.realizations ?? []) {
-    if (filtr === 'moja' && industry && r.industry.slug !== industry.slug) continue;
+  for (const r of reals.rows)
     all.push({
       k: 'realizacja',
       id: r.id,
@@ -218,8 +363,7 @@ export async function loadStrumien(
       waga: r.weight,
       dojrzewa: r.maturesAt,
     });
-  }
-  for (const l of lists?.listings ?? [])
+  for (const l of lists.rows)
     all.push({
       k: 'usluga',
       id: l.id,
@@ -238,12 +382,11 @@ export async function loadStrumien(
       ocen: l.leader.reviewCount,
     });
   all.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.id < b.id ? 1 : -1));
-  const mozeWiecej = [orders, threads, reals, lists].some((x) => x?.nextCursor);
   return {
     wpisy: all.slice(0, pokaz),
     razem: all.length,
-    mozeWiecej: mozeWiecej || all.length > pokaz,
-    zrodelBledow,
+    mozeWiecej: zrodla.some((z) => z.wiecej) || all.length > pokaz,
+    zrodelBledow: zrodla.filter((z) => z.blad).length,
   };
 }
 

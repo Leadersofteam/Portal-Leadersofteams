@@ -61,6 +61,18 @@ import {
   Users,
   UsersThree,
   Wind,
+  Buildings,
+  ChatCircle,
+  Desktop,
+  Gauge,
+  HandsClapping,
+  Image as ImageIcon,
+  ListChecks,
+  Moon,
+  Repeat,
+  SignOut,
+  Sun,
+  X,
 } from '@phosphor-icons/react/dist/ssr';
 import type { Icon } from '@phosphor-icons/react/dist/lib/types';
 
@@ -123,15 +135,29 @@ const MAP = {
   users: Users,
   'users-three': UsersThree,
   wind: Wind,
+  buildings: Buildings,
+  'chat-circle': ChatCircle,
+  desktop: Desktop,
+  gauge: Gauge,
+  'hands-clapping': HandsClapping,
+  image: ImageIcon,
+  'list-checks': ListChecks,
+  moon: Moon,
+  repeat: Repeat,
+  'sign-out': SignOut,
+  sun: Sun,
+  x: X,
 } as const satisfies Record<string, Icon>;
 
 export type IcoName = keyof typeof MAP;
 
-export function Ico({ n }: { n: IcoName }) {
+// `zwykla`: „x” i „plus” w wadze regular — duotone rysuje pod nimi szary kwadrat, który wygląda
+// jak zepsuta ikona (makieta braki.js).
+export function Ico({ n, zwykla = false }: { n: IcoName; zwykla?: boolean }) {
   const C = MAP[n];
   return (
     <i className="ph-duotone" aria-hidden="true">
-      <C weight="duotone" size="1em" />
+      <C weight={zwykla ? 'regular' : 'duotone'} size="1em" />
     </i>
   );
 }

@@ -11,7 +11,8 @@
 // v2 (PD4): /offline dostał migawkę feedu — zmiana wersji wymusza reinstalację
 // SW i odświeżenie precache'owanego dokumentu (stary siedziałby w cache'u
 // do końca świata, bo instalacja idzie tylko za zmianą bajtów tego pliku).
-const CACHE = 'lot-v3'; // bump P2: precache /offline musi zobaczyc motyw jasny
+// v4: ekran offline V17 (precache /offline musi dostać nowy dokument i chunki).
+const CACHE = 'lot-v4';
 const PRECACHE = ['/offline', '/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {

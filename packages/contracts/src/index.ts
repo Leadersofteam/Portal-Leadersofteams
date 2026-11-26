@@ -601,8 +601,25 @@ export type CreateSocialCommentInput = z.infer<typeof createSocialCommentInputSc
 export const feedScopeSchema = z.enum(['following', 'all']).default('following');
 export type FeedScope = z.infer<typeof feedScopeSchema>;
 
+export const feedItemTypeSchema = z.enum([
+  'POST_PUBLISHED',
+  'LISTING_PUBLISHED',
+  'ANSWER_ACCEPTED',
+  'LEVEL_ACHIEVED',
+  'SOCIAL_POST_PUBLISHED',
+]);
+export type FeedItemType = z.infer<typeof feedItemTypeSchema>;
+
 export const feedQuerySchema = z.object({
   scope: feedScopeSchema,
+  // V17: strumień składa się z kilku źródeł i z feedu bierze tylko część zdarzeń (np. wpisy i awanse).
+  // Filtr po stronie API, bo przy filtrowaniu po stronie web okno „limit” wypełniałyby inne typy.
+  // Lista po przecinku; brak parametru = wszystkie typy (zachowanie sprzed zmiany).
+  types: z
+    .string()
+    .optional()
+    .transform((v) => v?.split(',').filter(Boolean))
+    .pipe(z.array(feedItemTypeSchema).min(1).optional()),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

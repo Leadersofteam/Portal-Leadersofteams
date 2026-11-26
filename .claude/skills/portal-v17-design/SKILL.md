@@ -37,7 +37,8 @@ i fiverr.com w jednym.” Pełne zasady: `docs/WYTYCZNE-V17-PORTAL.md` §1–§3
 - **oferteo.pl → zlecenia:** kreator „opisz potrzebę → dostań oferty” w 3 krokach, licznik ofert, porównanie ofert obok siebie.
 - **Drabinka z sensem:** 7 szczebli i progi z `apps/api/src/modules/ladder/rules.ts`, dwie ścieżki (rynek/społeczność) z progiem 20% od L4,
   karencja 7 dni, L5 → LOT App, L7 → zespół, każde światło z awatarem osoby, która je dała.
-- **Tożsamość:** NIE rama App (bez szyny↔panel, rzędów KPI, siatki liderów, gradientowych ramek). Tło czyste, karty z obwódką 1 px,
+- **Tożsamość:** NIE rama App (bez szyny↔panel, rzędów KPI, siatki liderów, gradientowych ramek). Tło od 26.11: jaśniejsze z przezroczystą siecią Liderów
+  (`components/v17/tlo-siec.tsx`, tokeny w `styles/v17-braki.css`), karty z obwódką 1 px,
   gęste wiersze. Wspólne z siecią: fiolet, „ciepły = zapracowane” (`--level-7` tylko przy L7), Bricolage + Inter, Phosphor duotone,
   stopka Ekosystem. Scena 3D Drabinki: `/` i `/drabinka`.
 - **Odznaka poziomu** = jeden komponent wszędzie: numer w kółku `--level-n` + nazwa szczebla.
@@ -51,6 +52,16 @@ i fiverr.com w jednym.” Pełne zasady: `docs/WYTYCZNE-V17-PORTAL.md` §1–§3
   **nie przechodzi** do Portalu jako licznik aktywności — jeśli coś rośnie, to Drabinka z cudzych ocen („twój punkt nigdy nie świeci sam”).
 - **ADR-009:** w kodzie zero CDN i Google Fonts z sieci (makiety HTML mogą je ładować — to pliki lokalne, nie produkcja).
 - **Stopka „Ekosystem”:** `apps/web/lib/ecosystem.ts` — etykiety i kolejność wspólne dla czterech repo; V17 zmienia wygląd, nie treść.
+
+## Pułapki kodu V17 (26.11)
+
+- **Wszystkie style są pod `.v17`.** Okno, arkusz, menu renderowane obok tego diva wygląda jak goły HTML, a test „toBeVisible” przechodzi.
+  Renderuj wewnątrz (`Rama`), w e2e sprawdź styl (`toHaveCSS('position','fixed')`), obejrzyj zrzut po kliknięciu.
+- `.v17` ma `isolation: isolate` — bez tego sieć tła (`z-index: -1`) znika pod tłem.
+- Okna modalne: `lib/use-dialog.ts` (fokus, Tab, Esc, powrót fokusu — element otwierający musi zostać w drzewie).
+- Docenienie i zakładka: logika w `lib/use-reakcje.ts`, w V17 bez licznika (ADR-010).
+- Strumień czyta źródła po kursorze (`okno()` w `lib/v17-data.ts`); nowe źródło musi trafić do tego mechanizmu, inaczej gubi chronologię.
+- Testy starego wyglądu idą przez `?wyglad=off` albo ciasteczko `lot_wyglad=off` (także `/offline`).
 
 ## Lista kontrolna ekranu (przed pokazaniem Maciejowi)
 

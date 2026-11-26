@@ -179,6 +179,47 @@ describe.skipIf(!hasInfra)('social — follow, feed, profil', () => {
     ).toBe(true);
   });
 
+  // V17: strumień bierze z feedu tylko wpisy i awanse — filtr musi działać po stronie API,
+  // inaczej okno `limit` wypełniałyby inne zdarzenia i wpisy ginęłyby w „Pokaż więcej”.
+  it('feed: `types` zawęża typy, cytat niesie szczebel autora, aktor branżę', async () => {
+    const root = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/social/posts',
+      headers: { cookie: followerCookie },
+      payload: { body: `Wpis do zacytowania ${run}` },
+    });
+    const rootId = (root.json() as { id: string }).id;
+    const quote = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/v1/social/posts',
+      headers: { cookie: followerCookie },
+      payload: { body: `Podaję dalej ${run}`, quotedPostId: rootId },
+    });
+    const quoteId = (quote.json() as { id: string }).id;
+    await social.onSocialPostPublished({ postId: quoteId, authorUserId: followerId });
+
+    interface Body {
+      items: Array<{
+        type: string;
+        subjectId: string;
+        actor: { industry: string | null };
+        post?: { quoted: { author?: { level: number } } | null };
+      }>;
+    }
+    const get = (query: string) => ctx.app.inject({ method: 'GET', url: `/api/v1/feed?${query}` });
+    const posts = (await get('scope=all&types=SOCIAL_POST_PUBLISHED&limit=50')).json() as Body;
+    expect(posts.items.length).toBeGreaterThan(0);
+    expect(new Set(posts.items.map((i) => i.type))).toEqual(new Set(['SOCIAL_POST_PUBLISHED']));
+    const mine = posts.items.find((i) => i.subjectId === quoteId)!;
+    expect(mine.post?.quoted?.author?.level).toBe(0);
+    // Konto bez profilu Lidera nie ma branży — nie zgadujemy.
+    expect(mine.actor.industry).toBeNull();
+
+    const levels = (await get('scope=all&types=LEVEL_ACHIEVED&limit=50')).json() as Body;
+    expect(levels.items.every((i) => i.type === 'LEVEL_ACHIEVED')).toBe(true);
+    expect((await get('scope=all&types=COKOLWIEK')).statusCode).toBe(400);
+  });
+
   // Zakres „cała społeczność" jest oknem wystawowym Portalu: gość ma zobaczyć
   // żywe miejsce, a nie ekran logowania. Oś obserwowanych pozostaje prywatna —
   // bez sesji nie ma czyjej osi pokazać.

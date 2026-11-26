@@ -37,7 +37,7 @@ docker compose -p portal-prod logs worker --since 10m | grep "bez konsumenta"
 - **`docs/HANDOFF-OPUS.md`** — baner sesji NA GÓRZE: co weszło, jakie decyzje zapadły
   i **dlaczego**, jakie zastane błędy znalazłeś. Jeśli któryś wcześniejszy wpis okazał się
   nieprawdziwy — **napisz sprostowanie wprost**, nie poprawiaj po cichu.
-- **`docs/SPRINTY-S15-S19.md`** — odhacz zrobione, dopisz to, co odkryłeś po drodze.
+- **`docs/PROGRAM-*.md`** (bieżący: `PROGRAM-V17-PORTAL.md`) — akceptacje z cytatem, odstępstwa, stan paczek.
 - **`docs/MINY.md`** — każda pułapka, która kosztowała Cię dziś czas, trafia tutaj.
 - **`docs/RISKS.md`** — nowe ryzyka wraz z decyzją właściciela i sposobem odwrócenia.
 - **`docs/SESJA-NASTEPNA.md`** — zadanie na następną sesję + świeże miny.

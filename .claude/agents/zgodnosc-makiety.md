@@ -12,8 +12,11 @@ Akceptacje: tabela w `docs/PROGRAM-V17-PORTAL.md` (ekran, data, cytat, zrzut). M
 
 Dla każdej pary (makieta `audyt/zrzuty/v17-<ekran>-*.png` ↔ Portal, ta sama szerokość 1512/390, motyw jasny/ciemny i stan):
 
+0. Nazwy: makiety w `docs/redesign-propozycje/v17/pro/`, zrzuty makiet `audyt/zrzuty/v17-<ekran>-*.png`, zrzuty z builda
+   `v17-<ekran>-kod-*.png`. Stany po kliknięciu (menu konta, pisanie, offline, pusty) porównujesz osobno — brak pary = „Niezweryfikowane”.
 1. Otwórz oba obrazy (Read). Porównuj **elementy**, nie piksele: układ (kolumny, kolejność sekcji), obecność każdej karty/sekcji/KPI, nagłówki i etykiety (tekst dosłowny), wezwania do działania (liczba, kolejność, styl główny/drugorzędny), ikony (Phosphor duotone), odznaka poziomu, kolory akcentów i światło poziomów Drabinki (`--level-*`), stany (pusty/ładowanie/błąd), zachowanie na 390 (karuzele `data-przesuw`, nic poza ekranem), stopka „Ekosystem” (etykiety z `apps/web/lib/ecosystem.ts`).
-2. Różnica jest dopuszczalna tylko, gdy: dane są prawdziwe zamiast przykładowych (inne liczby/nazwy), albo makieta oznacza element jako „szkic” i backend go nie liczy, albo w `docs/redesign-propozycje/v17/README.md` jest wpis „Poprawki z kodu” z uzasadnieniem — wtedy wskaż ten wpis.
+2. Różnica jest dopuszczalna tylko, gdy: dane są prawdziwe zamiast przykładowych (inne liczby/nazwy), albo makieta oznacza element jako „szkic” i backend go nie liczy, albo jest wiersz w tabeli odstępstw w `docs/PROGRAM-V17-PORTAL.md` (lub „Poprawki z kodu” w README makiet) — wtedy go wskaż
+   i podaj, czy ma status „czeka”, czy akceptację Macieja. Różnica bez wiersza = zgłoś także jako „brak w tabeli”.
 3. Każda inna różnica = NIEZGODNY. Element, który daje status inaczej niż ocena/uznana odpowiedź (ADR-004), = NIEZGODNY nawet, jeśli jest w makiecie — zgłoś Liderowi.
 
 Format zwrotu:

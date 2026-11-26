@@ -474,3 +474,10 @@ które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmier
 - Zmiana domyślnego wyglądu (flaga ON) psuje e2e starych ekranów, a nikt ich nie puścił przy włączeniu. Przy każdym
   przestawieniu domyślnej flagi uruchom całe `infra/e2e.sh`.
 - Publikacja zlecenia wymaga potwierdzonego e-maila (`EMAIL_NOT_VERIFIED`) — konto testowe bez skrzynki nie opublikuje.
+
+## 26.11 — V17: style tylko pod `.v17`, a test „widoczne” tego nie widzi
+
+- Menu konta wyrenderowane obok `div.v17` było gołym HTML na dole strony; e2e zielone (43/43), złapał dopiero zrzut po kliknięciu.
+- Strumień V17 przez dobę nie pokazywał wpisów (`loadStrumien` nie wołał `/feed`) przy zielonych testach: żaden nie publikował wpisu
+  w domyślnym wyglądzie. Pilnuje tego `e2e/v17-strumien.spec.ts`.
+- ZASTANE, NIENAPRAWIONE: uszkodzony obraz przy uploadzie (`vipspng: libpng read error`) daje 500 zamiast czytelnej odmowy.

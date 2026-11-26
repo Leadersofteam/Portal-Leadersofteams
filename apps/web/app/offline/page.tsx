@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { EmptyState } from '@/components/ui/empty-state';
+import { OfflineWybor } from '@/components/v17/offline-ekran';
 
 import { OfflineFeed } from './offline-feed';
 
@@ -17,17 +18,21 @@ export const metadata: Metadata = {
 
 export default function OfflinePage() {
   return (
-    <main>
-      <EmptyState
-        art="ladder"
-        title="Jesteś offline — drabina poczeka"
-        ctaHref="/feed"
-        ctaLabel="Spróbuj ponownie"
-      >
-        Nie mamy teraz połączenia z siecią. Twoje szczeble nigdzie nie uciekną: wróć, gdy zasięg
-        wróci, a wszystko będzie na swoim miejscu.
-      </EmptyState>
-      <OfflineFeed />
-    </main>
+    <OfflineWybor
+      stary={
+        <main>
+          <EmptyState
+            art="ladder"
+            title="Jesteś offline — drabina poczeka"
+            ctaHref="/feed"
+            ctaLabel="Spróbuj ponownie"
+          >
+            Nie mamy teraz połączenia z siecią. Twoje szczeble nigdzie nie uciekną: wróć, gdy zasięg
+            wróci, a wszystko będzie na swoim miejscu.
+          </EmptyState>
+          <OfflineFeed />
+        </main>
+      }
+    />
   );
 }

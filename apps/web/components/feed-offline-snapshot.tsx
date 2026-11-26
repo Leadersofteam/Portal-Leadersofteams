@@ -13,6 +13,8 @@ export interface OfflineFeedItem {
   text: string;
   /** Poziom autora (0 = brak) — publiczny, niesie temperaturę karty offline. */
   lv: number;
+  /** Branża autora — publiczna (ekran offline V17). */
+  branza?: string | null;
 }
 
 /**
