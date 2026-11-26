@@ -1,37 +1,33 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-## Stan (zmierzony 26.11 ~20:35 UTC)
+## Stan (zmierzony 26.11 ~23:15 UTC)
 
-- Prod: web/api `55de3f0` z `feat/v17-portal`. Braki V17 + tło wdrożone; wpis z kompozytora widać w strumieniu (dowód w HANDOFF).
-- P0 ON dla wszystkich, P1 „Rynek” za `?wyglad=v17`. Odstępstwa: P0 i P1 w tabeli programu mają status „czeka”.
-- Bramki: lint/typy 0, API 256/256, e2e 43/43. Dysk ~91–94 %. Powrót: `portal-{web,api}:przed-braki-2611`.
+- Prod: web `5a3a0e6`, api `55de3f0` (`feat/v17-portal`). P0 i P1 „Rynek” w V17 dla wszystkich; wyjście awaryjne `?wyglad=off`.
+- Bramki: lint/typy 0, API 256/256, e2e 42/42. Powrót web: `portal-web:przed-og-2611`. API bez obrazu do powrotu.
+- V17 ma 7 ekranów; reszta i landing w starym wyglądzie.
 
 ## Zadania w kolejności
 
-1. Odpowiedź Macieja na „Włączyć P1 dla wszystkich razem z 11 odstępstwami?” — TAK: trasy z `V17_P1_ROUTES` do `V17_ROUTES`
-   (`apps/web/lib/v17-routing.ts`), `e2e/v17-routing.spec.ts` i testy starego wyglądu tych tras, cytat w tabeli, bramki,
-   rebuild web, pomiar HTML. Odrzucone → najpierw poprawka makiety.
-2. Limit API wspólny dla SSR (MINY 26.11): przekazać adres klienta albo zwolnić ruch wewnętrzny, z testem, bez osłabienia
-   limitów logowania i rejestracji.
-3. Po akceptacji odstępstw P0: usunąć stare `/feed`, `/drabinka`, `/profil`. `/wpisy/[id]`, wpis w grupie i uznana odpowiedź:
-   makieta przed kodem.
-4. P2 z sędziów: „Moja branża” bez profilu przepuszcza wszystko; ciche błędy akcji wpisu i wylogowania; `.akcja` 40 px na
-   tablecie; hexy tła poza tokenami.
-5. Drobne zastane: uszkodzony obraz → 500; `/zlecenia/[id]` `OfferForm`/`ReportButton` w starym stylu.
+1. Maciej 26.11: cały Portal i landing w V17 PRO. Makieta reszty P1 (`/zlecenia/nowe`, `/uslugi/nowa`, edycja, strony branż,
+   `/oferty/[id]`, `/zapytania/[id]`, `/porownanie/*`, `/firmy/[id]`, `/firma/nowa`, `/dla-firm`) → `recenzent-wygladu` →
+   zrzuty 1512 + 390 → jedno pytanie. Nowa paczka = OSOBNA lista tras z opt-inem w `lib/v17-routing.ts`.
+2. Makieta P6 landing (`/`, `/start`, regulamin, prywatność; scena 3D zostaje) i P5 (logowanie, rejestracja, stany). Dalej P2, P3, P4.
+3. Limit API 300/min wspólny dla SSR (MINY 26.11). EACCES cache ISR hubów branż.
+4. P2 z sędziów: „Moja branża” bez profilu przepuszcza wszystko; ciche błędy akcji wpisu i wylogowania; `.akcja` 40 px; hexy tła.
+5. Stare widoki `/feed`, `/drabinka`, `/profil`, `/zlecenia`, `/uslugi` usuwać dopiero po akceptacji odstępstw P0.
 
 ## Czeka na właściciela
 
-- Punkt 1. Co z wpisami persony „Konrad Jaworowski” (i 4 innych kont wyprawy) w publicznym strumieniu: zostają czy ukryć.
-- ADR-004 („głos za odpowiedź +pkt” w „Ostatnim świetle”). D5 Search Console + Bing. 3–5 zleceń HydroSpark. D3 purge demo.
-- Workflow `deploy-staging.yml` sprzeczny z „wdrożenia ręczne”.
+- Akceptacja 13 + 5 odstępstw P0 (wdrożone, w tabeli „czeka”). Wpisy persony „Konrad Jaworowski” w strumieniu: zostają czy ukryć.
+- ADR-004 („Ostatnie światło”). D5 Search Console (po naprawie `noindex` warto zgłosić ponownie sitemapę). D3 purge demo.
 
 ## Czego nie robić
 
-- Nie dopisuj P1 do `V17_ROUTES` bez „tak”. Nie usuwaj starego wyglądu przed akceptacją. Nie wdrażaj `main` wprost.
-- Reguł punktowych nie ruszać bez rozmowy. `loading.tsx` tylko obok page.tsx listy, nigdy nad `[id]`/`[slug]`/`[handle]`.
-- e2e kasuje wspólną bazę dev — jeden przebieg; po nim `docker stop portal-dev-mysql-1`. Przed budową `free -m` i dysk.
+- Nie koduj ekranu bez zaakceptowanej makiety. Nie wdrażaj `main` wprost. Reguł punktowych nie ruszać bez rozmowy.
+- `loading.tsx` tylko obok page.tsx listy, nigdy nad `[id]`/`[slug]`/`[handle]`.
+- e2e kasuje wspólną bazę dev — jeden przebieg; po nim `docker stop portal-dev-mysql-1`.
 
 ## Prompt startowy
 
-Jesteś Liderem dnia Portalu LOT (Opus, `/docker/portal-staging`, `feat/v17-portal`). Skill `portal-lider-dnia`; punkt 1 briefu:
-odpowiedź na pytanie o P1 „Rynek”, potem wspólny limit API.
+Jesteś Liderem dnia Portalu LOT (Opus, `/docker/portal-staging`, `feat/v17-portal`). Skill `portal-lider-dnia` i `portal-v17-design`;
+punkt 1 briefu: makieta reszty P1, potem landing. Kod dopiero po mojej akceptacji.

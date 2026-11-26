@@ -484,3 +484,8 @@ które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmier
 - ZASTANE, NIENAPRAWIONE (26.11): limit API (300/min po `request.ip`) obejmuje CAŁY SSR jednym kubełkiem — `serverApi` nie
   przekazuje adresu klienta. Ekran robiący kilkanaście zapytań wyczerpuje go kilkunastoma odsłonami na minutę. Licz zapytania
   nowej strony; naprawa dotyka zabezpieczeń, więc osobno i z testem.
+- `metadata` w layoucie segmentu `/v17` trafia na adresy PUBLICZNE (rewrite renderuje tę samą stronę). Tak `noindex` objął
+  /feed i profile. Rewrite middleware lokalnie przechodzi przez middleware dwa razy — nagłówków „tylko dla /v17/*” tam nie ustawiaj.
+  Strona V17 musi mieć własny `canonical` i `openGraph.images` (plikowy `opengraph-image` starej trasy się nie przenosi).
+- `po-budowie` zostawia JEDEN obraz do powrotu na aplikację: po dwóch budowach tego samego dnia tag „przed zmianą” znika.
+- ZASTANE (26.11): huby `/zlecenia/branza/*`, `/uslugi/branza/*` — `EACCES` przy zapisie cache ISR w kontenerze web.

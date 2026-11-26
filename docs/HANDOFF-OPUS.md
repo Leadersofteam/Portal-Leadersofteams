@@ -1,5 +1,12 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-11-26 ~23:15 — P1 „Rynek” DLA WSZYSTKICH na prodzie (`5a3a0e6`, tylko web).** Maciej: „Tak, włącz P1”, „Dodaj linki i włącz”.
+> Analiza przed włączeniem znalazła: (1) ZASTANE od 25.11 — `noindex` na /feed, /drabinka i profilach (z `v17/layout`); teraz
+> `Disallow: /v17/` w robots; (2) listy z canonical na stronę główną; (3) usługa V17 bez obrazka udostępniania; (4) brak linków do
+> stron branż. Wszystko naprawione i zmierzone na prodzie. e2e 42/42 (po ostatniej poprawce obrazka tylko lint, typy, build, pomiar).
+> Powrót: `portal-web:przed-og-2611` (P1) albo `?wyglad=off`; obrazy sprzed dzisiejszych braków usunęło sprzątanie po budowie.
+> Zastane, nienaprawione: ISR hubów branż nie zapisuje cache (`EACCES` w `.next/server/app/*/branza/`).
+
 > **🟢 2026-11-26 noc — braki V17 P0 + tło NA PRODZIE (`55de3f0`, web + api, bez migracji).** Strumień pokazuje wpisy.
 > Dowód: konto testowe opublikowało wpis z kompozytora (390), widoczny od pierwszej próby zalogowanemu i gościowi; wpis i konto
 > usunięte (SELECT: konto `deleted-*`, 0 pozycji w strumieniu, 0 kont `test-braki-*`). Healthz ok, 0 błędów level 50.
