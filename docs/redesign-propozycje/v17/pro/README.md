@@ -62,3 +62,12 @@ wynikają z **brakującego pola w API** albo z decyzji o prywatności i są **zn
 | „Kto dał ci światło” | awatar i imię osoby | monogram i nazwa firmy albo osoby, tytuł zlecenia/pytania | źródła są publiczne przy ocenie i odpowiedzi |
 | Profil — linki „Wszystkie 41” / „Wszystkie 37” | link do pełnej listy realizacji i ocen | brak linku; Oś światła kończy się „Pokaż więcej · N z M” (tekst) | nie ma jeszcze stron pełnych list |
 | Okładki realizacji i usług | wzór zależny od branży HVAC/PV/elektryka… | wzór dla rozpoznanych branż, dla pozostałych neutralny „obwód” | makieta znała tylko branże instalacyjne; słownik branż Portalu jest szerszy |
+
+## Poprawki z kodu (26.11, P1 „Rynek” — zgodność z makietą)
+
+| Miejsce | Makieta | Kod | Powód |
+|---|---|---|---|
+| Oferent w porównaniu ofert, „O Liderze” na usłudze | miasto („Sopot”, „Instalacje HVAC · Sopot”) | branża (oferent) i nagłówek profilu (usługa) | profil nie ma pola „miasto” (dodanie = migracja, osobna zgoda) |
+| „Ostatnie światło” — punkt z wagą < 1 | „druga ocena od tej firmy w roku, waga ×0,5” | „ocena N/5 po zleceniu „X” · waga ×0,5” | publiczna Oś światła nie niesie powodu wagi (bywa też młoda firma) — nie zgadujemy |
+| Liczby 4-cyfrowe | P1 `fmt4`: „1 150 zł”; P0: „1500 pkt” | P1 przez `nf4`, P0 bez zmian (`nf`) | każdy ekran jak w swojej makiecie |
+
