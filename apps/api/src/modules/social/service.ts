@@ -98,6 +98,7 @@ export type QuotedPost =
         displayName: string;
         handle: string | null;
         avatarFileId: string | null;
+        level: number;
       };
     };
 
@@ -182,7 +183,11 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
         where: { id: { in: quotedIds } },
         select: { id: true, body: true, authorUserId: true, deletedAt: true, createdAt: true },
       });
-      const quotedAuthors = await identity.getPublicUsers(quoted.map((q) => q.authorUserId));
+      const quotedAuthorIds = quoted.map((q) => q.authorUserId);
+      const [quotedAuthors, quotedLevels] = await Promise.all([
+        identity.getPublicUsers(quotedAuthorIds),
+        ladder.getLevels(quotedAuthorIds),
+      ]);
       const quotedById = new Map(quoted.map((q) => [q.id, q]));
       for (const root of roots) {
         if (!root.quotedPostId) continue;
@@ -203,6 +208,7 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
             displayName: quotedAuthors.get(q.authorUserId)?.displayName ?? 'Użytkownik',
             handle: quotedAuthors.get(q.authorUserId)?.handle ?? null,
             avatarFileId: quotedAuthors.get(q.authorUserId)?.avatarFileId ?? null,
+            level: quotedLevels.get(q.authorUserId) ?? 0,
           },
         });
       }
@@ -713,10 +719,11 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
     //               a pusty rynek nie wybacza ekranu logowania na wejściu.
     async getFeed(
       userId: string | null,
-      { scope = 'following' as FeedScope, cursor, limit = FEED_LIMIT } = {} as {
+      { scope = 'following' as FeedScope, cursor, limit = FEED_LIMIT, types } = {} as {
         scope?: FeedScope;
         cursor?: string;
         limit?: number;
+        types?: ActivityType[];
       },
     ) {
       let followedIds: string[] = [];
@@ -743,7 +750,10 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
       if (scope === 'following' && visibleIds.length === 0) return empty;
 
       const rows = await prisma.activityItem.findMany({
-        where: scope === 'following' ? { actorId: { in: visibleIds } } : {},
+        where: {
+          ...(scope === 'following' ? { actorId: { in: visibleIds } } : {}),
+          ...(types ? { type: { in: types } } : {}),
+        },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -781,6 +791,15 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
             })
           : Promise.resolve([]),
       ]);
+
+      // Branża autora (z widocznego profilu Lidera) — linia meta wiersza strumienia. Publiczna.
+      const profiles = actorIds.length
+        ? await prisma.leaderProfile.findMany({
+            where: { userId: { in: actorIds }, isVisible: true },
+            select: { userId: true, industry: { select: { name: true } } },
+          })
+        : [];
+      const industryBy = new Map(profiles.map((p) => [p.userId, p.industry.name]));
 
       const extras = await loadPostExtras(postIds);
       const postById = new Map(posts.map((p) => [p.id, p]));
@@ -843,6 +862,7 @@ export function createSocialService({ prisma, identity, ladder, files, redis }: 
                 handle: users.get(r.actorId)?.handle ?? null,
                 avatarFileId: users.get(r.actorId)?.avatarFileId ?? null,
                 level: levels.get(r.actorId) ?? 0,
+                industry: industryBy.get(r.actorId) ?? null,
               },
             };
           }),

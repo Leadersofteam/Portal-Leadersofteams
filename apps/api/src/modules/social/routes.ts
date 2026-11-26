@@ -102,9 +102,9 @@ export function socialRoutes({ social, auth }: SocialRoutesDeps) {
 
     app.get('/feed', async (request, reply) => {
       const viewer = await auth.currentUser(request);
-      const { scope, cursor, limit } = parseBody(feedQuerySchema, request.query);
+      const { scope, cursor, limit, types } = parseBody(feedQuerySchema, request.query);
       if (scope === 'following' && !viewer) throw new UnauthorizedError();
-      return reply.send(await social.getFeed(viewer?.id ?? null, { scope, cursor, limit }));
+      return reply.send(await social.getFeed(viewer?.id ?? null, { scope, cursor, limit, types }));
     });
 
     app.get<{ Params: { handle: string } }>('/profiles/:handle', async (request, reply) => {

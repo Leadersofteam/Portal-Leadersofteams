@@ -182,6 +182,17 @@ describe.skipIf(!hasInfra)('anty-MLM: aktywność społeczna nie daje ani jedneg
     });
     expect(bookmarked.statusCode).toBe(200);
 
+    // STRUMIEŃ V17: nowe parametry odczytu (`types`, branża autora, szczebel w cytacie). To czysty odczyt —
+    // krok jest w ścieżce, żeby strażnik widział go, gdyby kiedyś zaczął coś emitować.
+    for (const url of [
+      '/api/v1/feed?scope=all&types=SOCIAL_POST_PUBLISHED,LEVEL_ACHIEVED',
+      '/api/v1/feed?scope=following&types=LISTING_PUBLISHED&limit=1',
+      `/api/v1/social/posts/${postId}`,
+    ]) {
+      const read = await ctx.app.inject({ method: 'GET', url, headers: { cookie: aCookie } });
+      expect(read.statusCode).toBe(200);
+    }
+
     // Zbierz WSZYSTKIE zdarzenia wypuszczone przez tę ścieżkę.
     const events = await ctx.prisma.outboxEvent.findMany({
       where: { createdAt: { gte: startedAt } },
