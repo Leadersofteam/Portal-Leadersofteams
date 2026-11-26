@@ -468,3 +468,9 @@ Typecheck Portalu jest najostrzejszą bramką dla silnika: zmieniasz go gdziekol
 ale ≤ 900 px (jedna kolumna) dawała poziomy scroll 390 → 465 px (22.10, po scaleniu main do
 gałęzi prod). Wrapper `.hero-art-wrap` ma w tym zakresie `overflow-x: clip` — nie `hidden`,
 które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmierz `scrollWidth` na 390.
+
+## 26.11 — testy e2e a domyślny wygląd; publikacja zlecenia na koncie testowym
+
+- Zmiana domyślnego wyglądu (flaga ON) psuje e2e starych ekranów, a nikt ich nie puścił przy włączeniu. Przy każdym
+  przestawieniu domyślnej flagi uruchom całe `infra/e2e.sh`.
+- Publikacja zlecenia wymaga potwierdzonego e-maila (`EMAIL_NOT_VERIFIED`) — konto testowe bez skrzynki nie opublikuje.

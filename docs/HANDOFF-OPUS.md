@@ -1,5 +1,13 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟡 2026-11-26 — V17 P1: poprawki zgodności wdrożone (`4ce2eed`), dalej za opt-in; czeka decyzja Macieja o włączeniu.**
+> Zlecenie „napisz P1” z promptu startowego było nieaktualne (P1 stało na prodzie od 25.11) — zamiast pisać: pomiar, sędzia
+> (runda 1: 4× NIEZGODNY na drobnicy), sesja Sonnet z 11 poprawkami, runda 2: 4× ZGODNY poza 11 odstępstwami. API addytywnie:
+> `/listings` `total`, Oś światła `rating`; bez migracji. Zastane i naprawione: anulowany szkic publiczny po id (W-06); 6 e2e
+> starego wyglądu czerwonych od `3787e5b` (V17 domyślny) → `?wyglad=off`. Test na prodzie: konta `p1-*@example.com`
+> zanonimizowane, `emailVerifiedAt` ustawiony w bazie 2 własnym kontom testowym firmy; zostały 3 firmy i 3 zlecenia CANCELLED.
+> Maciej 26.11 o starym wyglądzie: „Najpierw braki” (V17 P0 nie ma docenienia, zakładek, zdjęć/cytatów, offline, motywu).
+
 > **🟡 2026-11-25 noc — V17 P1 „Rynek” NA PRODZIE ZA FLAGĄ OPT-IN (`?wyglad=v17` / `lot_wyglad=v17`), czeka na Macieja.**
 > Kod `0fc50ae`+`553487f` (feat/v17-portal), web+api przebudowane, layout `91ca8b8f…`. `/zlecenia`, `/uslugi` bez flagi = stary
 > wygląd; P0 dalej dla wszystkich. Osobna lista `V17_P1_ROUTES` w `apps/web/lib/v17-routing.ts` (P1 w `V17_ROUTES` = publiczne od
