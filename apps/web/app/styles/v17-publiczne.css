@@ -1632,8 +1632,8 @@ body:has(.v17p) {
 .v17p .forma p:not(.zgoda):not(.pod-przyciskiem) > a:not(.vbtn) {
   display: inline-block;
   min-height: 0;
-  padding: 11px 0;
-  margin: -11px 0;
+  padding: 13px 0;
+  margin: -13px 0;
 }
 @media (max-width: 720px) {
   .v17p .pierwszy li {

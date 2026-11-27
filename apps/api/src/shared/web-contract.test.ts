@@ -182,9 +182,9 @@ describe('analityka nadąża za stronami', () => {
   const pages = walk(join(WEB_DIR, 'app'))
     .filter((f) => f.endsWith(`${sep}page.tsx`))
     .map((f) => f.slice(join(WEB_DIR, 'app').length + 1, -'/page.tsx'.length))
-    // Grupy tras `(lista)` nie są częścią adresu. `/v17/*` to wersje ekranów za flagą wyglądu:
+    // Grupy tras `(lista)` nie są częścią adresu. `/v17/*` i `/v17p6/*` to wersje ekranów za flagą wyglądu:
     // middleware robi rewrite, więc analityka liczy ORYGINALNY adres (/feed, /drabinka, /profil/…).
-    .filter((route) => !route.startsWith('v17/'))
+    .filter((route) => !/^v17(p6)?(\/|$)/.test(route))
     .map((route) => route.replace(/(^|\/)\([^)]+\)(?=\/|$)/g, '').replace(/^\//, ''))
     .map((route) => (route === 'page.tsx' || route === '' ? '/' : `/${route}`));
 
