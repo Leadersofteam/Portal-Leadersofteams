@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
@@ -48,6 +48,14 @@ async function sprawdz(e: Ekran, gosc: Page) {
   const naBlad = (err: Error) =>
     bledy.push(`${page.url()} @${page.viewportSize()?.width}: ${err.message}`);
   page.on('pageerror', naBlad);
+  // Sporadyczny React #418 (2 z 9 przebiegów 27.11, nieodtworzony w 750 wejściach): po nim React przerysowuje
+  // drzewo i ślad znika, więc DOM sprzed hydracji trzeba mieć, zanim błąd się zdarzy.
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      (window as unknown as { __pre: string }).__pre = document.documentElement.outerHTML;
+    });
+  });
+  let zapisane = 0;
   const sep = e.url.includes('?') ? '&' : '?';
   const widoki = ZRZUTY
     ? ([
@@ -72,6 +80,16 @@ async function sprawdz(e: Ekran, gosc: Page) {
       .soft(page.locator('.v17.rs h1, .v17.rs .komunikat h2').first(), e.nazwa)
       .toHaveText(e.h1, { timeout: 5_000 });
     await page.waitForTimeout(700);
+    if (bledy.length > zapisane) {
+      zapisane = bledy.length;
+      const slad = (n: string) => test.info().outputPath(`${e.nazwa}-${width}-${motyw}-${n}`);
+      writeFileSync(slad('serwer.html'), (await res?.text().catch(() => '')) ?? '');
+      writeFileSync(
+        slad('przed-hydracja.html'),
+        await page.evaluate(() => (window as unknown as { __pre?: string }).__pre ?? ''),
+      );
+      writeFileSync(slad('po.html'), await page.content());
+    }
     if (ZRZUTY) {
       const baza = `${ZRZUTY}/v17-kod-reszta-${e.nazwa}-${motyw}-${width}`;
       if (width !== 1512) await page.screenshot({ path: `${baza}-ekran.png` });
