@@ -223,37 +223,5 @@ table.por .my { background: var(--surface); }
 .uk .ikonka[aria-pressed='true'] { background: var(--text-strong) !important; color: var(--surface); }
 .uk .ikonka[aria-pressed='true'] i { color: var(--surface); }
 
-/* ───────── Duży ekran 3440×1440 (Maciej 26.11: „mobile first ale też większych ekranach”) ─────────
-   Skala całej ramy zamiast osobnych rozmiarów w każdym komponencie, a szerokość zużywają KOLUMNY, nie dłuższe linie tekstu.
-   Przy akceptacji ta reguła wchodzi do wszystkich ekranów V17 (także P0 i P1). */
-@media (min-width: 2400px) {
-  html { zoom: 1.3; }
-  .tlo-siec { width: 100%; height: 100%; }
-  .rama, .nav { min-height: calc(100vh / 1.3); }
-  .nav { height: calc(100vh / 1.3); }
-  .kolumna { min-height: calc(100vh / 1.3); }
-  .rama.szeroka { grid-template-columns: 280px minmax(0, 1760px); }
-  .szeroka .kolumna { border-right: 1px solid var(--line); }
-  .fm { grid-template-columns: minmax(0, 880px) 440px; justify-content: center; gap: 0 64px; padding-top: 16px; }
-  .wt { grid-template-columns: minmax(0, 920px) 440px; justify-content: center; gap: 0 64px; padding-top: 16px; }
-  .st { width: 100%; max-width: 1480px; margin: 0 auto; padding-top: 16px; }
-  .br-lista { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; }
-  .br-lista > .zl-w:nth-child(odd) { border-right: 1px solid var(--line); }
-  .br-lista > .zl-w { align-content: start; }
-  .rn-siatka { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .br-linki { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .dwie-f { display: grid; grid-template-columns: 1fr 1fr; gap: 0 64px; align-items: start; }
-  .st .krok-l { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 32px; }
-  .st .krok-l li { grid-template-columns: minmax(0, 1fr); gap: 10px; border-bottom: 0; align-content: start; }
-  .dl-hero { padding: 24px 0 8px; text-align: center; }
-  .dl-hero p { margin-left: auto !important; margin-right: auto !important; }
-  .dl-hero .st-h1, .dl-hero .st-lid { margin-left: auto; margin-right: auto; }
-  .dl-hero .ak { justify-content: center; }
-  .dl-drogi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; }
-  .dl-drogi > .zl-w { grid-template-columns: 40px minmax(0, 1fr) !important; align-content: start; align-items: start !important; }
-  .dl-drogi .droga-cta { grid-column: 2 !important; margin-top: 10px; }
-  .st .rn-siatka { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
 .br-m { display: none !important; }
 @media (max-width: 720px) { .br-d { display: none !important; } .br-m { display: flex !important; margin-top: 14px; } }

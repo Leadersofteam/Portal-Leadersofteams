@@ -114,7 +114,7 @@ ekranów V17 (także P0 i P1).
 | `/dla-firm` | `dla-firm.html` | `pusty` (bez usług i Liderów — sekcje znikają) |
 
 Zrzuty: `audyt/zrzuty/v17-p1b-*` (`--duzy` w `v17-makiety-zrzuty.mjs` dodaje 3440×1440).
-Od 2400 px cała rama skaluje się ×1,3, a szerokość zużywają kolumny — przy akceptacji reguła obejmuje wszystkie ekrany V17.
+Układ dużego ekranu: wspólny `szerokie.css` (niżej).
 
 ### Miejsca wymagające nowych danych (żadne nie wymaga migracji bazy)
 
@@ -136,3 +136,17 @@ Od 2400 px cała rama skaluje się ×1,3, a szerokość zużywają kolumny — p
 - `/dla-firm`, krok 2: usunięta obietnica „liczba zrealizowanych zleceń” przy ofercie (tabela ofert jej nie pokazuje).
 - Dopisane zdania pomocnicze (np. skutki „Przekształć w zlecenie” i „Zamknij wątek”, „Rozmowa punktów nie daje”).
 - `/firmy/[id]`: poprawna odmiana liczb; „NIP — suma kontrolna OK” (nigdy „zweryfikowana”).
+
+## Duży ekran 3440×1440 (`szerokie.css`, 27.11) — czeka na akceptację
+
+Maciej: „Pamiętaj o mobile first ale też większych ekranach czyli 3440x1440” oraz „Tak, zrób makietę” (zgoda na makietę, nie na kod).
+Jeden plik dla wszystkich ekranów V17, w całości w `@media (min-width: 2400px)`; poniżej progu nic się nie zmienia
+(sprawdzone porównaniem zrzutów 390/1512 przed i po — różnice tylko z szumu renderowania, w powtórce bajt w bajt).
+
+- Cała rama ×1,4 i jedna szerokość (280 + 36/40 + treść = 2076 px CSS) — nawigacja nie skacze między ekranami.
+- Strumień 660 px, prawa kolumna w dwóch podkolumnach; lista zleceń w 2 kolumnach; zlecenie: opis obok porównania ofert;
+  usługa: okładka · opis i Lider · pakiety; usługi w 4 kolumnach; profil: realizacje w 3; Drabinka: wymogi w 3.
+- W makietach 7 wdrożonych ekranów tło sieci ładuje się tylko od progu (`media` + `matchMedia`).
+
+Zrzuty: `audyt/zrzuty/v17-szerokie-*-jasny-3440.png` i `v17-p1b-*-jasny-3440.png`.
+Niezweryfikowane: ciemny 3440, szerokości 2400–3439, `zoom` razem z menu i oknami w kodzie.
