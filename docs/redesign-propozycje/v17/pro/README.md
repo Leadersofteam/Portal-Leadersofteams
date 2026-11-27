@@ -140,7 +140,7 @@ Układ dużego ekranu: wspólny `szerokie.css` (niżej).
 ## Poprawki z kodu (27.11, reszta paczki P1 — za opt-inem `?wyglad=v17`)
 
 11 ekranów zakodowanych (`app/v17/…`, styl `v17-rynek-reszta.css` z regułami 3440). Bez flagi dzisiejsze ekrany.
-Odstępstwa **czekają na akceptację Macieja**:
+Odstępstwa **zaakceptowane przez Macieja 27.11** („Akceptuję”):
 
 | Ekran | Makieta | Kod | Powód |
 |---|---|---|---|
