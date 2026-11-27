@@ -1648,6 +1648,12 @@ body:has(.v17p) {
 .v17p .start h2 + .pola {
   margin-top: 20px;
 }
+/* Strona główna na dużym ekranie ma własne rozmiary — ogólny zoom ram V17 (v17-szerokie.css) jej nie dotyczy. */
+@media (min-width: 2400px) {
+  html:has(.v17p.v17p-landing) {
+    zoom: 1;
+  }
+}
 /* Kanwa sceny jest celowo szersza od drabiny (.ladder-scene-canvas) — na 390 px nie może rozpychać strony. */
 .v17p .p-hero {
   overflow-x: clip;
