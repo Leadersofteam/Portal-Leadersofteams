@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+import { StanBledu } from '@/components/v17p6/stany';
+
 export default function RootError({
   error,
   reset,
@@ -15,17 +17,22 @@ export default function RootError({
   }, [error]);
 
   return (
-    <main>
-      <div className="empty-state" style={{ marginTop: '3rem' }}>
-        <h3>Coś poszło nie tak</h3>
-        <p>
-          Nie udało się wczytać tej strony. Spróbuj ponownie — jeśli problem wraca, wróć za kilka
-          minut.
-        </p>
-        <button className="btn" type="button" onClick={reset}>
-          Spróbuj ponownie
-        </button>
-      </div>
-    </main>
+    <StanBledu
+      reset={reset}
+      dzis={
+        <main>
+          <div className="empty-state" style={{ marginTop: '3rem' }}>
+            <h3>Coś poszło nie tak</h3>
+            <p>
+              Nie udało się wczytać tej strony. Spróbuj ponownie — jeśli problem wraca, wróć za
+              kilka minut.
+            </p>
+            <button className="btn" type="button" onClick={reset}>
+              Spróbuj ponownie
+            </button>
+          </div>
+        </main>
+      }
+    />
   );
 }

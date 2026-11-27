@@ -56,3 +56,101 @@ test.describe('indeksowanie ekranów V17', () => {
     expect(await (await request.get('/robots.txt')).text()).toContain('Disallow: /v17/');
   });
 });
+
+// P6 + P5 (strona główna, dokumenty, logowanie) — osobny opt-in; bez niego użytkownik widzi dzisiejsze ekrany.
+const P6 = [
+  '/',
+  '/start',
+  '/regulamin',
+  '/prywatnosc',
+  '/wypis-digest',
+  '/logowanie',
+  '/rejestracja',
+  '/nie-pamietam-hasla',
+  '/reset-hasla',
+];
+
+test.describe('opt-in v17p6', () => {
+  test('bez opt-inu żaden adres P6 nie jest przepisywany', () => {
+    for (const p of P6) {
+      for (const cookie of [undefined, 'v17', 'off']) {
+        expect(decydujWyglad(p, null, cookie).rewrite, `${p} ${cookie}`).toBe(false);
+      }
+    }
+  });
+
+  test('?wyglad=v17p6 i ciasteczko prowadzą na /v17p6; P0 i P1 zostają włączone', () => {
+    expect(decydujWyglad('/', 'v17p6', undefined)).toEqual({
+      rewrite: true,
+      cel: '/v17p6',
+      set: 'v17p6',
+    });
+    for (const p of P6.slice(1)) {
+      expect(decydujWyglad(p, null, 'v17p6').cel, p).toBe(`/v17p6${p}`);
+    }
+    expect(decydujWyglad('/feed', null, 'v17p6')).toEqual({ rewrite: true });
+    expect(decydujWyglad('/liderzy', null, 'v17p6').rewrite).toBe(false);
+  });
+
+  test('?wyglad=off i ?wyglad=v17 zdejmują opt-in', () => {
+    expect(decydujWyglad('/logowanie', 'off', 'v17p6')).toEqual({ rewrite: false, set: 'off' });
+    expect(decydujWyglad('/logowanie', 'v17', 'v17p6')).toEqual({ rewrite: false, set: 'v17' });
+  });
+
+  test('bez flagi dzisiejsze ekrany; z flagą nowe', async ({ page: bezFlagi, browser }) => {
+    let page = bezFlagi;
+    for (const p of ['/', '/logowanie', '/regulamin', '/nie-ma-takiej-strony']) {
+      await page.goto(p);
+      await expect(page.locator('.site-header'), p).toBeVisible();
+      await expect(page.locator('.v17p'), p).toHaveCount(0);
+    }
+    // Świeży kontekst: strony ISR mają stale-while-revalidate, więc przeglądarka raz pokazałaby kopię sprzed opt-inu.
+    page = await (await browser.newContext()).newPage();
+    await page.goto('/logowanie?wyglad=v17p6');
+    await expect(page.locator('.v17p')).toBeVisible();
+    await expect(page.locator('.site-header')).toBeHidden();
+    for (const p of ['/', '/regulamin', '/rejestracja', '/reset-hasla', '/nie-ma-takiej-strony']) {
+      await page.goto(p);
+      await expect(page.locator('.v17p'), p).toBeVisible();
+    }
+    await page.goto('/?wyglad=off');
+    await expect(page.locator('.site-header')).toBeVisible();
+    await expect(page.locator('.v17p')).toHaveCount(0);
+  });
+
+  test('telefon: menu i arkusz „Utwórz” mają styl i dają się zamknąć', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/?wyglad=v17p6');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+    // Prerender widzi ścieżkę /v17p6/…, przeglądarka publiczną — aktywny slot nie może zginąć.
+    await page.goto('/logowanie');
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Nawigacja dolna' })
+        .getByRole('link', { name: 'Zaloguj' }),
+    ).toHaveAttribute('aria-current', 'page');
+    await page.goto('/');
+    const menu = page.getByRole('navigation', { name: 'Menu', exact: true });
+    await expect(async () => {
+      await page.getByRole('button', { name: 'Menu', exact: true }).click();
+      await expect(menu).toBeVisible({ timeout: 1000 });
+    }).toPass();
+    await expect(menu).toHaveCSS('position', 'fixed');
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await page.getByRole('button', { name: 'Utwórz' }).click();
+    const arkusz = page.getByRole('dialog', { name: 'Co dziś tworzysz?' });
+    await expect(arkusz).toHaveCSS('position', 'fixed');
+    await page.keyboard.press('Escape');
+    await expect(arkusz).toBeHidden();
+  });
+
+  test('strona główna P6: bez noindex, canonical na /', async ({ request }) => {
+    const res = await request.get('/', { headers: { cookie: 'lot_wyglad=v17p6' } });
+    const html = await res.text();
+    expect(html).toContain('v17p-landing');
+    expect(html).not.toContain('noindex');
+    expect(html).toMatch(/rel="canonical" href="[^"/]*\/\/[^"/]+\/?"/);
+    expect(await (await request.get('/robots.txt')).text()).toContain('Disallow: /v17p6');
+  });
+});

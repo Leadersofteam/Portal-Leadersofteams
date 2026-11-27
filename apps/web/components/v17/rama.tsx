@@ -50,7 +50,7 @@ const DOLNY: Array<[string, string, IcoName, string]> = [
 ];
 
 // Znak sieci: trzy punkty o rosnącej jasności (zasada „punkt nie świeci sam”).
-function Znak() {
+export function Znak() {
   return (
     <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
       <circle cx="5" cy="20" r="3.4" style={{ fill: 'var(--level-2)' }} />

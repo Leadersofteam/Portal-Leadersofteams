@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
 
-import { ApiRequestError, apiFetch } from '@/lib/api';
+import { useNoweHaslo } from '@/lib/auth-forms';
 
 /**
  * Strona z linku resetu hasła.
@@ -15,45 +13,7 @@ import { ApiRequestError, apiFetch } from '@/lib/api';
  * Dokładnie ten scenariusz roadmapa wskazywała jako „nie wróci i nie powie dlaczego".
  */
 export default function ResetPasswordPage() {
-  const [token, setToken] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    setToken(new URLSearchParams(window.location.search).get('token'));
-  }, []);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const password = String(form.get('password') ?? '');
-    const repeat = String(form.get('password2') ?? '');
-
-    // Powtórzenie sprawdzamy TYLKO na froncie: to ochrona przed literówką,
-    // nie reguła bezpieczeństwa, więc nie ma po co obciążać nią kontraktu API.
-    if (password !== repeat) {
-      setError('Hasła nie są takie same.');
-      return;
-    }
-    setError(null);
-    setPending(true);
-    try {
-      await apiFetch('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({ token, password }),
-      });
-      setDone(true);
-    } catch (err) {
-      setError(
-        err instanceof ApiRequestError
-          ? err.message
-          : 'Nie udało się ustawić hasła. Spróbuj ponownie.',
-      );
-    } finally {
-      setPending(false);
-    }
-  }
+  const { token, done, error, pending, onSubmit } = useNoweHaslo();
 
   if (done) {
     return (

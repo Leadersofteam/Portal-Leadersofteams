@@ -19,6 +19,7 @@ import './styles/search.css';
 import './styles/v17-swiatlo.css';
 import './styles/v17-rynek.css';
 import './styles/v17-braki.css';
+import './styles/v17-publiczne.css';
 
 // latin-ext jest obowiązkowy: bez niego polskie znaki spadają do fontu systemowego.
 const inter = Inter({
@@ -85,7 +86,7 @@ export const viewport: Viewport = {
 // lib/server-api.ts — to naprawiał PD1). Logika lustrzana z lib/theme.ts.
 // Flaga wyglądu V17: ciasteczko lot_wyglad=v17 ustawia middleware (z ?wyglad=v17); tu tylko
 // odbicie na <html>, żeby tokeny V17 działały od pierwszego paintu.
-const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}try{if(/(?:^|; )lot_wyglad=v17(?:;|$)/.test(document.cookie))document.documentElement.dataset.wyglad='v17';}catch(e){}})();`;
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lot_theme');var l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f6f7fb');}}catch(e){}try{if(/(?:^|; )lot_wyglad=v17(?:p6)?(?:;|$)/.test(document.cookie))document.documentElement.dataset.wyglad='v17';}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

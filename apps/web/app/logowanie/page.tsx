@@ -1,43 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
 
-import { ApiRequestError, apiFetch } from '@/lib/api';
+import { useLogowanie } from '@/lib/auth-forms';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setPending(true);
-    const form = new FormData(event.currentTarget);
-    try {
-      await apiFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: form.get('email'),
-          password: form.get('password'),
-        }),
-      });
-      // `?next=/ścieżka` — powrót tam, skąd gość przyszedł (np. „Zapytaj o pakiet” na usłudze). Wyłącznie ścieżka
-      // względna w obrębie Portalu: `//host` i `/\\host` odpadają (open redirect). Bez parametru — jak dotąd /panel.
-      // window.location zamiast useSearchParams: hook wymusiłby Suspense i zmienił prerender strony logowania.
-      const next = new URLSearchParams(window.location.search).get('next');
-      router.push(next && /^\/[^/\\]/.test(next) ? next : '/panel');
-      router.refresh();
-    } catch (err) {
-      setError(
-        err instanceof ApiRequestError ? err.message : 'Coś poszło nie tak. Spróbuj ponownie.',
-      );
-      setPending(false);
-    }
-  }
+  const { error, pending, onSubmit } = useLogowanie();
 
   return (
     <main>

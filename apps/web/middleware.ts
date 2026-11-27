@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import { decydujWyglad } from '@/lib/v17-routing';
+import type { WygladFlaga } from '@/lib/v17-routing';
 
 // Zliczanie odsłon (S12) — 0 zł, bez cookies, bez skryptu w przeglądarce.
 //
@@ -29,18 +30,15 @@ const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|monitor|curl|
 // Flaga wyglądu V17 — „Światło” (feed/profil/drabinka, od 25.11.2026) i „Rynek” (zlecenia/usługi, od 26.11.2026) są
 // DOMYŚLNIE WŁĄCZONE. Reguły: lib/v17-routing.ts (czysta funkcja, testowana w e2e/v17-routing.spec.ts).
 // `?wyglad=off` zapisuje ciasteczko „off” (rok) — stary wygląd jako awaryjne wyjście; `?wyglad=v17` zdejmuje opt-out.
+// `?wyglad=v17p6` to opt-in paczki P6+P5 (strona główna, logowanie, dokumenty) — bez niego te adresy są stare.
 // Wycofanie dla wszystkich = zmienić warunek w decydujWyglad i przebudować web.
 // DLACZEGO rewrite w middleware, a nie cookies() na stronach: odczyt cookies w page.tsx
 // uczyniłby dynamiczną /drabinkę nawet z wyłączoną flagą (mina PD1 — patrz lib/server-api.ts).
 const V17_FLAG = 'lot_wyglad';
 
-function withFlagCookie(response: NextResponse, set?: 'v17' | 'off'): NextResponse {
-  if (set === 'v17') {
-    response.cookies.set(V17_FLAG, 'v17', { path: '/', maxAge: 31_536_000, sameSite: 'lax' });
-  } else if (set === 'off') {
-    // Przy domyślnie włączonej fladze samo usunięcie ciasteczka znów pokazałoby V17.
-    response.cookies.set(V17_FLAG, 'off', { path: '/', maxAge: 31_536_000, sameSite: 'lax' });
-  }
+function withFlagCookie(response: NextResponse, set?: WygladFlaga): NextResponse {
+  // „off” też zapisujemy: przy domyślnie włączonej fladze samo usunięcie ciasteczka znów pokazałoby V17.
+  if (set) response.cookies.set(V17_FLAG, set, { path: '/', maxAge: 31_536_000, sameSite: 'lax' });
   return response;
 }
 
@@ -88,7 +86,9 @@ export function middleware(request: NextRequest) {
     request.cookies.get(V17_FLAG)?.value,
   );
   const response = decyzja.rewrite
-    ? NextResponse.rewrite(new URL(`/v17${path}${request.nextUrl.search}`, request.url))
+    ? NextResponse.rewrite(
+        new URL(`${decyzja.cel ?? `/v17${path}`}${request.nextUrl.search}`, request.url),
+      )
     : NextResponse.next();
   withFlagCookie(response, decyzja.set);
 

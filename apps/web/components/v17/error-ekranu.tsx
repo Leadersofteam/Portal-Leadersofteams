@@ -11,13 +11,13 @@ import type { MenuKlucz } from './rama';
 // Stan błędu ekranu V17 (error.tsx). Po błędzie React renderuje dokument od nowa po stronie klienta
 // i zdejmuje atrybuty ustawione przez skrypt startowy na <html> — jasny motyw wracał do ciemnego.
 // Przywracamy go z tego samego źródła co boot w layout.tsx (lot_theme), bez zmiany logiki motywu.
-function przywrocMotyw() {
+export function przywrocMotyw() {
   try {
     const t = localStorage.getItem('lot_theme');
     const light =
       t === 'light' || (t === 'system' && matchMedia('(prefers-color-scheme: light)').matches);
     if (light) document.documentElement.dataset.theme = 'light';
-    if (/(?:^|; )lot_wyglad=v17(?:;|$)/.test(document.cookie))
+    if (/(?:^|; )lot_wyglad=v17(?:p6)?(?:;|$)/.test(document.cookie))
       document.documentElement.dataset.wyglad = 'v17';
   } catch {
     /* brak dostępu do storage: zostaje motyw domyślny */

@@ -73,6 +73,13 @@ import {
   SignOut,
   Sun,
   X,
+  LinkBreak,
+  List,
+  PlusCircle,
+  SquaresFour,
+  Warning,
+  WarningCircle,
+  EnvelopeSimple,
 } from '@phosphor-icons/react/dist/ssr';
 import type { Icon } from '@phosphor-icons/react/dist/lib/types';
 
@@ -147,6 +154,13 @@ const MAP = {
   'sign-out': SignOut,
   sun: Sun,
   x: X,
+  'link-break': LinkBreak,
+  list: List,
+  'plus-circle': PlusCircle,
+  'squares-four': SquaresFour,
+  warning: Warning,
+  'warning-circle': WarningCircle,
+  'envelope-simple': EnvelopeSimple,
 } as const satisfies Record<string, Icon>;
 
 export type IcoName = keyof typeof MAP;

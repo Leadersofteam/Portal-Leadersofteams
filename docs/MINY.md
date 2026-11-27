@@ -489,3 +489,9 @@ które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmier
   Strona V17 musi mieć własny `canonical` i `openGraph.images` (plikowy `opengraph-image` starej trasy się nie przenosi).
 - `po-budowie` zostawia JEDEN obraz do powrotu na aplikację: po dwóch budowach tego samego dnia tag „przed zmianą” znika.
 - ZASTANE (26.11): huby `/zlecenia/branza/*`, `/uslugi/branza/*` — `EACCES` przy zapisie cache ISR w kontenerze web.
+
+## Strony ISR i opt-in wyglądu (27.11)
+
+- Strona prerenderowana wychodzi z `stale-while-revalidate`, więc przeglądarka po włączeniu `?wyglad=…` raz pokaże **starą kopię** adresu odwiedzonego wcześniej. W e2e stan „z flagą” sprawdzaj w świeżym kontekście.
+- Przy rewrite w middleware `usePathname()` w prerenderze zwraca ścieżkę docelową (`/v17p6/…`), w przeglądarce publiczną — `aria-current` ginie. Odetnij prefiks.
+- Nie czekaj na cudze e2e przez `pgrep -f 'bash infra/e2e.sh'` wewnątrz kolejki „budowa”: łapie linie poleceń innych sesji i trzyma blokadę całego VPS bez końca (zdarzyło się 27.11). Kolejka sama szereguje przebiegi.

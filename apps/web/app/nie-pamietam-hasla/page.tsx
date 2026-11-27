@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
 
-import { apiFetch } from '@/lib/api';
+import { useProsbaOHaslo } from '@/lib/auth-forms';
 
 /**
  * Zamówienie linku do resetu hasła.
@@ -13,25 +11,7 @@ import { apiFetch } from '@/lib/api';
  * resetu nie dało się nawet POPROSIĆ, mimo że backend obsługiwał go od dawna.
  */
 export default function ForgotPasswordPage() {
-  const [sent, setSent] = useState(false);
-  const [pending, setPending] = useState(false);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setPending(true);
-    try {
-      await apiFetch('/auth/request-password-reset', {
-        method: 'POST',
-        body: JSON.stringify({ email: form.get('email') }),
-      });
-    } catch {
-      // Celowo połykamy błąd: patrz komentarz przy komunikacie niżej.
-    } finally {
-      setPending(false);
-      setSent(true);
-    }
-  }
+  const { sent, pending, onSubmit } = useProsbaOHaslo();
 
   if (sent) {
     return (
