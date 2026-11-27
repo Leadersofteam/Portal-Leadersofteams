@@ -1,21 +1,18 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-## Stan (zmierzony 26.11 ~23:15 UTC)
+## Stan (zmierzony 27.11 ~12:45 UTC)
 
-- Prod: web `5a3a0e6`, api `55de3f0` (`feat/v17-portal`). P0 i P1 „Rynek” w V17 dla wszystkich; wyjście awaryjne `?wyglad=off`.
-- Bramki: lint/typy 0, API 256/256, e2e 42/42. Powrót web: `portal-web:przed-og-2611`. API bez obrazu do powrotu.
-- V17 ma 7 ekranów; reszta i landing w starym wyglądzie.
+- Prod: web `06773a8`, api `55de3f0` (`feat/v17-portal`). P0, P1 i układ 3440 (od 2400 px) na prodzie; `?wyglad=off` wraca do starego.
+- Powrót web: `portal-web:przed-3440-2711`.
+- Dwie sesje kodują: P6+P5 (`claude/ecstatic-golick-3715e4`, opt-in `?wyglad=v17p6`) i reszta Rynku
+  (`claude/sharp-ptolemy-f7b31a`). Niescalone i niewdrożone.
 
 ## Zadania w kolejności
 
 Każdy ekran: mobile first (390), 1512 i **3440×1440** (Maciej 26.11) — zrzuty wszystkich trzech.
 
-1. Makiety zaakceptowane 27.11 („Akceptuje obie”): reszta Rynku + 3440 (`claude/nifty-goldstine-496979` @ `781e52b`) oraz
-   strona główna + logowanie i stany (`claude/loving-hellman-f538bb` @ `4df30bc`). Po zgodzie na scalenie: scal obie (każda
-   scala się czysto, razem konflikt w `audyt/harness/v17-makiety-zrzuty.mjs` i `pro/README.md`), potem kod.
-2. Kod: najpierw układ 3440 i strona główna + logowanie, potem reszta Rynku. Nowa paczka = osobna lista tras z opt-inem.
-   Zastane z lektury kodu (sesja Rynek, nieodtworzone): „Edytuj” szkicu usługi → 404; ponowna publikacja po błędzie tworzy
-   duplikat; „Zweryfikowana” przy samym NIP kontra „rejestru nie sprawdzamy”.
+1. Odebrać obie sesje z kodem (zrzuty 390/1512/3440, odstępstwa), potem pytanie o scalenie.
+2. Wdrożenie za opt-in po „tak”; nowe ekrany potrzebują reguł 3440 (`.fm .wt .st .br-* .dwie-f .dl-*` z makiety `szerokie.css`).
 3. Limit API 300/min wspólny dla SSR (MINY 26.11). EACCES cache ISR hubów branż.
 4. P2 z sędziów: „Moja branża” bez profilu przepuszcza wszystko; ciche błędy akcji wpisu i wylogowania; `.akcja` 40 px; hexy tła.
 5. Stare widoki `/feed`, `/drabinka`, `/profil`, `/zlecenia`, `/uslugi` usuwać dopiero po akceptacji odstępstw P0.

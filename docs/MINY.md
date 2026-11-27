@@ -489,3 +489,5 @@ które zrobiłoby z niego kontener przewijania. Zmieniając rozmiar kanwy, zmier
   Strona V17 musi mieć własny `canonical` i `openGraph.images` (plikowy `opengraph-image` starej trasy się nie przenosi).
 - `po-budowie` zostawia JEDEN obraz do powrotu na aplikację: po dwóch budowach tego samego dnia tag „przed zmianą” znika.
 - ZASTANE (26.11): huby `/zlecenia/branza/*`, `/uslugi/branza/*` — `EACCES` przy zapisie cache ISR w kontenerze web.
+- `next build` pobiera czcionki z Google przy KAŻDEJ budowie obrazu; błąd `next/font … reading '1'` zniknął po ponowieniu (27.11).
+- Powtórka testów w kolejce `budowa` rezygnuje po godzinie (kod 75): przy kilku sesjach ustaw `VPS_KOLEJKA_MAX_CZEKANIA`.

@@ -1,5 +1,10 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-11-27 — układ dużego ekranu (3440×1440) NA PRODZIE (`06773a8`, tylko web).** Maciej: „Tak, wdróż”.
+> Zmierzone: od 2400 px skala 1,4, poniżej 1,0; przewijania w bok brak przy 390/1512/2560/3440; stary wygląd bez skali;
+> menu konta gościa w oknie; konsola czysta. Pierwsza budowa padła na pobraniu czcionki (`next/font`), druga przeszła.
+> Powrót: `portal-web:przed-3440-2711`. Niezweryfikowane: widok zalogowanego i ciemny motyw przy 3440.
+
 > **🟢 2026-11-26 ~23:15 — P1 „Rynek” DLA WSZYSTKICH na prodzie (`5a3a0e6`, tylko web).** Maciej: „Tak, włącz P1”, „Dodaj linki i włącz”.
 > Analiza przed włączeniem znalazła: (1) ZASTANE od 25.11 — `noindex` na /feed, /drabinka i profilach (z `v17/layout`); teraz
 > `Disallow: /v17/` w robots; (2) listy z canonical na stronę główną; (3) usługa V17 bez obrazka udostępniania; (4) brak linków do
