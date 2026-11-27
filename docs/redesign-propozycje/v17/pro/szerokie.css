@@ -1,0 +1,62 @@
+/* Duży ekran (Maciej 26.11: „Pamiętaj o mobile first ale też większych ekranach czyli 3440x1440”; „Tak, zrób makietę”).
+   Wspólny plik dla WSZYSTKICH ekranów V17. Całość siedzi w jednym @media: poniżej 2400 px nic się nie zmienia.
+   Zasada: skala całej ramy zamiast osobnych rozmiarów w komponentach, a szerokość zużywają KOLUMNY z istniejącą treścią —
+   nie dłuższe linie tekstu i nie nowe moduły bez danych. Ładować PO pro.css / rynek.css / p1b.css, przed tlo.css. */
+@media (min-width: 2400px) {
+  html { zoom: 1.4; }
+  .tlo-siec { width: 100%; height: 100%; }
+  .rama, .nav { min-height: calc(100vh / 1.4); }
+  .nav { height: calc(100vh / 1.4); }
+  .kolumna { min-height: calc(100vh / 1.4); }
+  .rama.szeroka { grid-template-columns: 280px minmax(0, 1760px); gap: 0 36px; }
+  .szeroka .kolumna { border-right: 1px solid var(--line); }
+  .fm { grid-template-columns: minmax(0, 880px) 440px; justify-content: center; gap: 0 64px; padding-top: 16px; }
+  .wt { grid-template-columns: minmax(0, 920px) 440px; justify-content: center; gap: 0 64px; padding-top: 16px; }
+  .st { width: 100%; max-width: 1480px; margin: 0 auto; padding-top: 16px; }
+  .br-lista { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; }
+  .br-lista > .zl-w:nth-child(odd) { border-right: 1px solid var(--line); }
+  .br-lista > .zl-w { align-content: start; }
+  .rn-siatka { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .br-linki { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dwie-f { display: grid; grid-template-columns: 1fr 1fr; gap: 0 64px; align-items: start; }
+  .st .krok-l { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 32px; }
+  .st .krok-l li { grid-template-columns: minmax(0, 1fr); gap: 10px; border-bottom: 0; align-content: start; }
+  .dl-hero { padding: 24px 0 8px; text-align: center; }
+  .dl-hero p { margin-left: auto !important; margin-right: auto !important; }
+  .dl-hero .st-h1, .dl-hero .st-lid { margin-left: auto; margin-right: auto; }
+  .dl-hero .ak { justify-content: center; }
+  .dl-drogi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; }
+  .dl-drogi > .zl-w { grid-template-columns: 40px minmax(0, 1fr) !important; align-content: start; align-items: start !important; }
+  .dl-drogi .droga-cta { grid-column: 2 !important; margin-top: 10px; }
+  .st .rn-siatka { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* ── Wdrożone ekrany P0 i P1 ── */
+  /* Strumień (i inne ekrany z prawą kolumną): nawigacja · strumień · prawa kolumna rozłożona na dwie.
+     Strumień zostaje 660 px — dłuższe linie czytałoby się gorzej. */
+  .rama:not(.szeroka) { grid-template-columns: 280px minmax(0, 660px) minmax(0, 1056px); gap: 0 40px; }
+  .rama:not(.szeroka) .bok-lepki:has(> .hero-dr) { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 16px 40px; align-items: start; }
+  .rama:not(.szeroka) .bok-lepki > .hero-dr { grid-row: 1 / span 3; }
+  /* Lista zleceń: wiersze w dwóch kolumnach, filtry po prawej. */
+  .rama:not(.szeroka):has(.rn-filtr) { grid-template-columns: 280px minmax(0, 1356px) 360px; }
+  .kolumna:has(> .zl-w) { display: grid; grid-template-columns: 1fr 1fr; align-content: start; }
+  .kolumna:has(> .zl-w) > :not(.zl-w) { grid-column: 1 / -1; }
+  .kolumna > .zl-w { align-content: start; }
+  .kolumna > .zl-w:nth-of-type(odd) { border-right: 1px solid var(--line); }
+  /* Zlecenie z ofertami: opis i fakty w lewej kolumnie, porównanie ofert obok — oferty widać bez przewijania. */
+  .rn-det:has(.rn-oferty) { display: grid; grid-template-columns: 520px minmax(0, 1fr); grid-template-rows: repeat(5, max-content) 1fr; gap: 0 56px; align-items: start; padding-top: 16px; }
+  .rn-det:has(.rn-oferty) > * { grid-column: 1; }
+  .rn-det:has(.rn-oferty) > .rn-oferty { grid-column: 2; grid-row: 1 / span 6; margin-top: 0; padding-top: 6px; border-top: 0; }
+  .rn-det:has(.rn-oferty) > .rn-stopka { grid-column: 1 / -1; }
+  .rn-det:has(.rn-oferty) .rn-2 { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  /* Usługa: okładka · opis, Lider i oceny · pakiety. */
+  .rn-us { grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr) 380px; grid-template-areas: 'gl tr pak'; gap: 0 48px; padding-top: 16px; }
+  .rn-us .gl { position: sticky; top: 16px; }
+  .rn-us .tr > .rn-sek:first-child { margin-top: 10px; padding-top: 0; border-top: 0; }
+  .rn-ok .okl { aspect-ratio: 4 / 3; }
+  .rn-filtr { padding: 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--bg) 90%, transparent); }
+  /* Profil: tekst „O mnie” w mierze do czytania, realizacje w trzech kolumnach. */
+  .gh-prawa .readme p { max-width: 72ch; }
+  .gh-prawa .przypiete { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Drabinka: trzy wymogi obok siebie — nazwa i liczba blisko siebie, nie na dwóch końcach ekranu. */
+  .wymogi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; }
+}

@@ -1,5 +1,5 @@
 // Zrzuty makiet V17 PRO Portalu z lokalnego pliku (bez serwera, bez logowania) — 1512 + 390 × jasny + ciemny. Kopia narzędzia z LoT App.
-// Użycie: node audyt/harness/v17-makiety-zrzuty.mjs <plik.html> <nazwa> [stan…] [--out katalog] [--pelna] [--cel 56]
+// Użycie: node audyt/harness/v17-makiety-zrzuty.mjs <plik.html> <nazwa> [stan…] [--out katalog] [--pelna] [--cel 56] [--duzy|--tylko-duzy]
 //   stan = wartość ?stan= w makiecie (np. pusty, ladowanie, blad, jak-poszlo); bez stanów = widok domyślny.
 // Wynik: <out>/v17-<nazwa>[-<stan>]-<jasny|ciemny>-<1512|390>.png (+ -390-ekran.png = tylko pierwszy ekran telefonu)
 // oraz raport: scrollWidth na 390 (musi = 390) i liczba celów dotyku < 44 px w widocznych przyciskach/linkach.
@@ -31,6 +31,11 @@ const out =
 const CEL = +(opt('--cel') ?? 44); // ekipa budowy: --cel 56
 const pelna = args.includes('--pelna');
 if (pelna) args.splice(args.indexOf('--pelna'), 1);
+// --duzy: dodatkowo 3440×1440 w jasnym (Maciej 26.11: „też większych ekranach”). --tylko-duzy: sam 3440.
+const tylkoDuzy = args.includes('--tylko-duzy');
+if (tylkoDuzy) args.splice(args.indexOf('--tylko-duzy'), 1);
+const duzy = args.includes('--duzy');
+if (duzy) args.splice(args.indexOf('--duzy'), 1);
 const [plik, nazwa, ...stany] = args;
 if (!plik || !nazwa) {
   console.error('użycie: <plik.html> <nazwa> [stan…]');
@@ -44,10 +49,14 @@ const b = await chromium.launch({ headless: true, executablePath });
 const raport = [];
 for (const stan of stany.length ? stany : ['']) {
   for (const motyw of ['jasny', 'ciemny']) {
-    for (const [w, h, dsf] of [
-      [1512, 982, 1],
-      [390, 844, 2],
-    ]) {
+    const ekrany = tylkoDuzy
+      ? []
+      : [
+          [1512, 982, 1],
+          [390, 844, 2],
+        ];
+    if ((duzy || tylkoDuzy) && motyw === 'jasny') ekrany.push([3440, 1440, 1]);
+    for (const [w, h, dsf] of ekrany) {
       const ctx = await b.newContext({
         viewport: { width: w, height: h },
         deviceScaleFactor: dsf,
