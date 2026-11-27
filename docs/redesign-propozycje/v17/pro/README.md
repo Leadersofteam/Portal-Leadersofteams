@@ -150,3 +150,50 @@ Jeden plik dla wszystkich ekranów V17, w całości w `@media (min-width: 2400px
 
 Zrzuty: `audyt/zrzuty/v17-szerokie-*-jasny-3440.png` i `v17-p1b-*-jasny-3440.png`.
 Niezweryfikowane: ciemny 3440, szerokości 2400–3439, `zoom` razem z menu i oknami w kodzie.
+
+## P6 landing + P5 auth i stany — makieta (26.11, czeka na akceptację)
+
+Zdanie ekranu: **gość przestaje zgadywać, skąd w Portalu bierze się status — widzi to w pierwszym ekranie, zanim założy konto.**
+
+Pliki: `publiczne.{js,css}`, `publiczne-tresc.js` (tekst prawny wycięty automatycznie z `apps/web`), tło `tlo.{js,css}`.
+Zrzuty: `audyt/zrzuty/v17-p6-*.png`, `v17-p5-*.png` (390 i 1512 w obu motywach, pierwszy ekran 3440×1440 w jasnym — opcja `--ultra` harnessu; w repo widoki domyślne,
+ze stanów tylko telefon w jasnym).
+Mobile first; duży ekran od **2400 px** (Maciej 26.11, próg wspólny z paczką Rynek). Wszystkie ekrany: `zoom: 1.3`.
+Wyjątek — strona główna: własne rozmiary (kadr 2240 px zamiast 1560 px po zoomie, nagłówek 100 px, scena 3D 720 px,
+Liderzy w 3 kolumnach, FAQ obok nagłówka).
+
+| Plik (trasa) | Stany `?stan=` |
+|---|---|
+| `landing.html` (`/`) | dane, `zalogowany` (`/?widok=landing`), `bez-liderow`, `menu`, `menu-zalogowany`, `utworz` |
+| `start.html` (`/start`) | krok 1, `2`, `2-blad`, `2-zapis`, `3`, `3-firma` |
+| `dokument.html` (`/regulamin`, `?strona=prywatnosc`) | dane, `prywatnosc` |
+| `wypis.html` (`/wypis-digest`) | gotowe, `ladowanie`, `blad` |
+| `logowanie.html` | dane, `blad`, `wysylanie` |
+| `rejestracja.html` | dane, `firma` (`?cel=firma&dalej=zlecenie`), `blad`, `wysylanie` |
+| `haslo.html` (`/nie-pamietam-hasla`, `/reset-hasla`) | prośba, `wysylanie`, `wyslano`, `nowe`, `rozne`, `bez-tokenu`, `ustawione` |
+| `stan.html` (404, błąd, ładowanie) | 404, `blad`, `ladowanie` |
+| `/offline` | już zaakceptowane w `braki.html?stan=offline` |
+
+### Co zostaje w kodzie bez zmian (makieta tego nie rusza)
+
+- Przekierowanie zalogowanego `/` → `/panel` (307, `middleware.ts`) i furtka `/?widok=landing`.
+- Bramka człowieka: własny proof-of-work liczony w tle (`lib/humancheck.ts`) i pole-pułapka — niewidoczne, bez widżetu.
+- `?next=` po logowaniu, `?cel=firma&dalej=zlecenie` przy rejestracji, kreator `/start` (zapis `/me/onboarding`).
+- Scena 3D: `components/ui/ladder-scene.tsx` (WebGL, SVG `LadderArt` jako stan bez WebGL). W makiecie nieruchomy odpowiednik na canvas 2D.
+- Social proof: sekcja Liderów znika, gdy pusto; JSON-LD; prerender (`publicApi`, ISR); `noindex` na `/start` i `/wypis-digest`.
+- Stopka: cztery kolumny, `lib/ecosystem.ts` (etykiety i kolejność), przełącznik Ciemny / Jasny / Systemowy.
+- Ładowanie: `loading.tsx` wyłącznie obok `page.tsx` listy (mina z MINY.md) — nigdy nad `[id]`/`[slug]`.
+- Weryfikacja e-mail (`/weryfikacja`) należy do P3.
+
+### Różnice wobec dzisiejszych ekranów (do akceptacji razem z makietą)
+
+1. Landing: przy scenie karta „Przykład” (firma → Lider, +100 pkt po ocenie 5/5) — statyczna, podpisana jako przykład.
+2. Landing „Dla Liderów”: schodki pokazują też progi punktowe (z `rules.ts`).
+3. Rejestracja: nowa linia „Zakładając konto, akceptujesz Regulamin i Politykę prywatności”. **Zastany brak:** regulamin §2 mówi
+   o akceptacji, a formularz nie miał do niego żadnego odnośnika.
+4. Regulamin i prywatność: zakładki między dokumentami i spis treści.
+5. Boczna kolumna z latarnią → drabina; logowanie dostaje własne zdanie („Twoje szczeble czekają…”).
+6. Stany sukcesu i błędu (reset, wypis) dostają ikonę; „Pierwszy szczebel… wystarcza na Adepta” bez zmian w treści.
+7. Ekrany publiczne mają górny pasek (jak dziś), nie trzykolumnową ramę zalogowanego.
+8. Landing: „Dołącz jako Lider” w sekcji dla Liderów jest obrysowy (jedno wypełnione wezwanie w treści: „Dodaj zlecenie”).
+9. Pasek poniżej 1100 px: logo, menu i pełne pole szukania w drugim wierszu; w menu gościa „Zaloguj się” i „Dołącz” jako przyciski.

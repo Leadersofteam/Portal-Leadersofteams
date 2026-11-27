@@ -31,11 +31,12 @@ const out =
 const CEL = +(opt('--cel') ?? 44); // ekipa budowy: --cel 56
 const pelna = args.includes('--pelna');
 if (pelna) args.splice(args.indexOf('--pelna'), 1);
-// --duzy: dodatkowo 3440×1440 w jasnym (Maciej 26.11: „też większych ekranach”). --tylko-duzy: sam 3440.
+// --duzy (alias --ultra): dodatkowo 3440×1440 w jasnym (Maciej 26.11: „też większych ekranach”). --tylko-duzy: sam 3440.
 const tylkoDuzy = args.includes('--tylko-duzy');
 if (tylkoDuzy) args.splice(args.indexOf('--tylko-duzy'), 1);
-const duzy = args.includes('--duzy');
-if (duzy) args.splice(args.indexOf('--duzy'), 1);
+const flagaDuzy = args.find((x) => x === '--duzy' || x === '--ultra');
+const duzy = Boolean(flagaDuzy);
+if (flagaDuzy) args.splice(args.indexOf(flagaDuzy), 1);
 const [plik, nazwa, ...stany] = args;
 if (!plik || !nazwa) {
   console.error('użycie: <plik.html> <nazwa> [stan…]');
@@ -73,16 +74,17 @@ for (const stan of stany.length ? stany : ['']) {
       await p.goto(`${url0}?${qs}`, { waitUntil: 'load' });
       await p.evaluate(() => document.fonts.ready);
       const full0 = w < 500 || pelna;
-      await p.addStyleTag({
-        content:
-          '.stany,.motyw{display:none!important}' +
-          (full0 ? '.dolny,.fab{position:static!important}' : ''),
-      });
+      await p.addStyleTag({ content: '.stany,.motyw{display:none!important}' });
       await p.waitForTimeout(700);
       const baza = `v17-${nazwa}${stan ? '-' + stan : ''}-${motyw}-${w}`;
       const full = w < 500 || pelna;
+      // pierwszy ekran PRZED unieruchomieniem paska — inaczej dolny pasek znika ze zrzutu „-ekran”
+      if (w < 500 || w > 3000) await p.screenshot({ path: path.join(out, baza + '-ekran.png') });
+      if (full0) {
+        await p.addStyleTag({ content: '.dolny,.fab{position:static!important}' });
+        await p.waitForTimeout(100);
+      }
       await p.screenshot({ path: path.join(out, baza + '.png'), fullPage: full });
-      if (w < 500) await p.screenshot({ path: path.join(out, baza + '-ekran.png') });
       const m = await p.evaluate((CEL) => {
         const male = [
           ...document.querySelectorAll('button,a,[role=button],input,select,.pill[onclick],.lnk'),
