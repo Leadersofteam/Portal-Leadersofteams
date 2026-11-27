@@ -153,4 +153,19 @@ test.describe('opt-in v17p6', () => {
     expect(html).toMatch(/rel="canonical" href="[^"/]*\/\/[^"/]+\/?"/);
     expect(await (await request.get('/robots.txt')).text()).toContain('Disallow: /v17p6');
   });
+
+  test('3440: strona główna ma własne rozmiary, pozostałe ekrany P6 skalę 1,3', async ({
+    page,
+  }) => {
+    // Ogólny zoom ram V17 (v17-szerokie.css) nie może dołożyć się do rozmiarów strony głównej.
+    await page.setViewportSize({ width: 3440, height: 1440 });
+    for (const [adres, zoom] of [
+      ['/?wyglad=v17p6', '1'],
+      ['/logowanie', '1.3'],
+    ] as const) {
+      await page.goto(adres);
+      await expect(page.locator('.v17p')).toBeVisible();
+      await expect(page.locator('html'), adres).toHaveCSS('zoom', zoom);
+    }
+  });
 });
