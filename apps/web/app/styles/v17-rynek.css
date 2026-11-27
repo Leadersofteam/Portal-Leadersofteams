@@ -1656,7 +1656,7 @@
   align-items: center;
   gap: 10px;
 }
-/* Firma bez potwierdzonego NIP: szary „?” jak na liście (zielony znak należy się tylko zweryfikowanej). */
+/* Firma bez potwierdzonego NIP: szary „?” jak na liście (zielony znak należy się tylko poprawnej sumie kontrolnej NIP). */
 .v17 .rn-firma small.brak i {
   color: var(--text-muted);
 }

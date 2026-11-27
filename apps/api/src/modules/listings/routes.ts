@@ -110,6 +110,13 @@ export function listingsRoutes({ listings, ladder, reviews, identity, auth }: Li
       return reply.send({ listings: await listings.myListings(user.id) });
     });
 
+    app.get<{ Params: { slug: string } }>('/me/listings/slug/:slug', async (request, reply) => {
+      const user = await auth.requireUser(request);
+      const listing = await listings.getOwnBySlug(user.id, request.params.slug);
+      const [enriched] = await withLeaderMeta([listing]);
+      return reply.send({ listing: enriched });
+    });
+
     app.put<{ Params: { id: string } }>('/listings/:id/favorite', async (request, reply) => {
       const user = await auth.requireUser(request);
       return reply.send(await listings.setFavorite(user.id, request.params.id, true));

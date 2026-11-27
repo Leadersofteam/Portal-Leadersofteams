@@ -352,6 +352,20 @@ export function createListingsService({ prisma, identity, orders, files, redis }
       return decorate(listing);
     },
 
+    // Edycja własnej usługi: publiczny odczyt po slug celowo ukrywa szkic i archiwum
+    // (404), więc „Edytuj” przy szkicu kończyło się 404. Ten odczyt jest tylko dla autora.
+    async getOwnBySlug(userId: string, slug: string) {
+      const listing = await prisma.serviceListing.findUnique({
+        where: { slug },
+        include: fullInclude,
+      });
+      // Cudza i nieistniejąca wyglądają tak samo — adres szkicu nie ma zdradzać, że istnieje.
+      if (!listing || listing.leaderProfile.userId !== userId) {
+        throw new NotFoundError('Usługa nie istnieje');
+      }
+      return decorate(listing);
+    },
+
     async myListings(userId: string) {
       // Brak profilu Lidera to brak usług, NIE błąd: panel (SSR) odpytuje tę
       // trasę dla każdego zalogowanego, a świeże konto dostawało tu 400
@@ -491,6 +505,8 @@ export function createListingsService({ prisma, identity, orders, files, redis }
           createdAt: m.createdAt,
           authorName: users.get(m.authorId)?.displayName ?? 'Użytkownik',
           isOwn: m.authorId === userId,
+          // Strona rozmowy: widok V17 podpisuje wiadomości firmy jej nazwą, a po imieniu nie da się tego rozstrzygnąć.
+          fromLeader: m.authorId === inquiry.listing.leaderProfile.userId,
         })),
       };
     },

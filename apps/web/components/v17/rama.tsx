@@ -93,6 +93,7 @@ export function Rama({
   szeroka = false,
   offline = false,
   boczna,
+  reszta = false,
   children,
 }: {
   aktywny: MenuKlucz;
@@ -102,8 +103,12 @@ export function Rama({
   /** Ekran bez sieci: tworzenie wyłączone. */
   offline?: boolean;
   boczna?: ReactNode;
+  /** Ekrany „Rynek — reszta” (makieta p1b): klasa `rs` (duży ekran) i rama gościa bez Powiadomień, Profilu i „Utwórz”. */
+  reszta?: boolean;
   children: ReactNode;
 }) {
+  const goscP1b = reszta && ja === null;
+  const menu = goscP1b ? MENU.filter(([k]) => k !== 'powiadomienia' && k !== 'profil') : MENU;
   const profilHref = ja?.handle ? `/profil/${ja.handle}` : '/panel';
   const tresc = (
     <>
@@ -119,9 +124,11 @@ export function Rama({
         <Link className="ikonka" href="/szukaj" aria-label="Szukaj">
           <Ico n="magnifying-glass" />
         </Link>
-        <Link className="ikonka" href="/powiadomienia" aria-label="Powiadomienia">
-          <Ico n="bell" />
-        </Link>
+        {goscP1b ? null : (
+          <Link className="ikonka" href="/powiadomienia" aria-label="Powiadomienia">
+            <Ico n="bell" />
+          </Link>
+        )}
         {ja ? (
           <KontoWyzwalacz className="konto">
             <AwatarKonta ja={ja} size={36} />
@@ -131,9 +138,11 @@ export function Rama({
             <Link className="vbtn obrys maly" href="/logowanie">
               Zaloguj się
             </Link>
-            <KontoWyzwalacz className="ikonka">
-              <Ico n="dots-three" />
-            </KontoWyzwalacz>
+            {goscP1b ? null : (
+              <KontoWyzwalacz className="ikonka">
+                <Ico n="dots-three" />
+              </KontoWyzwalacz>
+            )}
           </>
         ) : null}
       </header>
@@ -144,7 +153,7 @@ export function Rama({
             <span>Portal Liderów</span>
           </Link>
           <ul>
-            {MENU.map(([k, t, ik, href]) => (
+            {menu.map(([k, t, ik, href]) => (
               <li key={k}>
                 <Link
                   className="poz"
@@ -158,7 +167,7 @@ export function Rama({
               </li>
             ))}
           </ul>
-          {offline ? (
+          {goscP1b ? null : offline ? (
             <button className="vbtn obrys duzy utworz" type="button" disabled aria-label="Utwórz">
               <Ico n="plus" />
               <span>Utwórz</span>
@@ -180,6 +189,17 @@ export function Rama({
                 <Ico n="dots-three" />
               </span>
             </KontoWyzwalacz>
+          ) : goscP1b ? (
+            // Cała karta jest linkiem: przy 721–1180 px podpis znika i zostaje sama ikona.
+            <Link className="ja" href="/logowanie" aria-label="Zaloguj się">
+              <Ico n="user-circle" />
+              <span className="kto">
+                <b>Gość</b>
+                <small>
+                  <span className="tl">Zaloguj się</span>
+                </small>
+              </span>
+            </Link>
           ) : ja === null ? (
             <KontoWyzwalacz className="ja">
               <span className="gosc-aw" aria-hidden="true">
@@ -210,6 +230,8 @@ export function Rama({
   // Menu konta MUSI renderować się wewnątrz `.v17` — wszystkie style V17 są pod tym selektorem.
   // ja === undefined (ładowanie, błąd, offline): nie wiemy, kto patrzy — bez menu.
   return (
-    <div className="v17">{ja === undefined ? tresc : <KontoMenu ja={ja}>{tresc}</KontoMenu>}</div>
+    <div className={reszta ? 'v17 rs' : 'v17'}>
+      {ja === undefined ? tresc : <KontoMenu ja={ja}>{tresc}</KontoMenu>}
+    </div>
   );
 }

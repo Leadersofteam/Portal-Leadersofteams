@@ -4,8 +4,8 @@
 // P0 („Światło”: feed, profil, drabinka) jest domyślnie włączone od 25.11, P1 („Rynek”: zlecenia, usługi) od 26.11
 // (Maciej: „Tak, włącz P1”). Jedno wyjście awaryjne dla obu: `?wyglad=off`. Kolejna paczka V17 przed akceptacją dostaje
 // OSOBNĄ listę z opt-inem — dopisana tutaj byłaby publiczna od razu po wdrożeniu.
-// `/zlecenia/nowe`, `/zlecenia/branza/*`, `/uslugi/nowa`, `/uslugi/branza/*`, `/uslugi/<slug>/edytuj` celowo NIE
-// pasują: nie mają makiety, zostają w starym wyglądzie.
+// Reszta P1 („formularze, branże, wątki, firma”, makieta zaakceptowana 27.11) stoi na V17_OPTIN_ROUTES: działa tylko
+// po `?wyglad=v17` (ciasteczko), bez flagi widać dzisiejsze ekrany. Włączenie dla wszystkich = osobna decyzja Macieja.
 
 export const V17_ROUTES = [
   /^\/feed$/,
@@ -15,6 +15,20 @@ export const V17_ROUTES = [
   /^\/zlecenia\/(?!nowe$|branza$)[^/]+$/,
   /^\/uslugi$/,
   /^\/uslugi\/(?!nowa$|branza$)[^/]+$/,
+];
+
+export const V17_OPTIN_ROUTES = [
+  /^\/zlecenia\/nowe$/,
+  /^\/zlecenia\/branza\/[^/]+$/,
+  /^\/uslugi\/nowa$/,
+  /^\/uslugi\/branza\/[^/]+$/,
+  /^\/uslugi\/[^/]+\/edytuj$/,
+  /^\/oferty\/[^/]+$/,
+  /^\/zapytania\/[^/]+$/,
+  /^\/porownanie\/[^/]+$/,
+  /^\/firmy\/[^/]+$/,
+  /^\/firma\/nowa$/,
+  /^\/dla-firm$/,
 ];
 
 export type WygladFlaga = 'v17' | 'off';
@@ -33,7 +47,9 @@ export function decydujWyglad(
 ): WygladDecyzja {
   const set: WygladFlaga | undefined = query === 'v17' || query === 'off' ? query : undefined;
   const efektywna = set ?? cookie;
-  // Domyślnie ON, wyłącza tylko jawne „off”.
-  const rewrite = efektywna !== 'off' && V17_ROUTES.some((re) => re.test(path));
+  // P0 i P1: domyślnie ON, wyłącza tylko jawne „off”. Nowa paczka: tylko jawne „v17”.
+  const rewrite =
+    (efektywna !== 'off' && V17_ROUTES.some((re) => re.test(path))) ||
+    (efektywna === 'v17' && V17_OPTIN_ROUTES.some((re) => re.test(path)));
   return { rewrite, ...(set ? { set } : {}) };
 }

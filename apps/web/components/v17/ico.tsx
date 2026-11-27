@@ -73,6 +73,17 @@ import {
   SignOut,
   Sun,
   X,
+  ImageSquare,
+  Trash,
+  XCircle,
+  PaperPlaneRight,
+  CaretDown,
+  ArrowBendUpRight,
+  IdentificationCard,
+  UserFocus,
+  WarningCircle,
+  Archive,
+  Info,
 } from '@phosphor-icons/react/dist/ssr';
 import type { Icon } from '@phosphor-icons/react/dist/lib/types';
 
@@ -147,6 +158,17 @@ const MAP = {
   'sign-out': SignOut,
   sun: Sun,
   x: X,
+  'image-square': ImageSquare,
+  trash: Trash,
+  'x-circle': XCircle,
+  'paper-plane-right': PaperPlaneRight,
+  'caret-down': CaretDown,
+  'arrow-bend-up-right': ArrowBendUpRight,
+  'identification-card': IdentificationCard,
+  'user-focus': UserFocus,
+  'warning-circle': WarningCircle,
+  archive: Archive,
+  info: Info,
 } as const satisfies Record<string, Icon>;
 
 export type IcoName = keyof typeof MAP;

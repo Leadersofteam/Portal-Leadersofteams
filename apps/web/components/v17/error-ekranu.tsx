@@ -30,16 +30,18 @@ export function ErrorEkranu({
   tytul,
   naglowek,
   reset,
+  reszta,
 }: {
   aktywny: MenuKlucz;
   szeroka?: boolean;
   tytul: string;
   naglowek: string;
   reset: () => void;
+  reszta?: boolean;
 }) {
   useEffect(przywrocMotyw, []);
   return (
-    <Rama aktywny={aktywny} szeroka={szeroka}>
+    <Rama aktywny={aktywny} szeroka={szeroka} reszta={reszta}>
       <div className="naglowek">
         <h1>{naglowek}</h1>
       </div>

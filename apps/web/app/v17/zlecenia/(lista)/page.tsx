@@ -329,7 +329,7 @@ export default async function ZleceniaV17({
                     <b>{z.companyName}</b>
                     <span className={`zw${z.companyVerified ? '' : ' brak'}`}>
                       <Ico n={z.companyVerified ? 'seal-check' : 'question'} />
-                      {z.companyVerified ? 'Zweryfikowana' : 'Bez NIP'}
+                      {z.companyVerified ? 'NIP — suma kontrolna OK' : 'Bez NIP'}
                     </span>
                     {z.publishedAt ? <span>· {temu(z.publishedAt)}</span> : null}
                   </div>

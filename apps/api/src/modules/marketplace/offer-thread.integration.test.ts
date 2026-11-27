@@ -103,6 +103,10 @@ describe.skipIf(!hasInfra)('marketplace — wątek przy ofercie', () => {
     expect(company.statusCode).toBe(200);
     expect(company.json().thread.viewer).toEqual({ isLeader: false, isCompany: true });
     expect(company.json().thread.canReply).toBe(true);
+    // Karta „Oferent” (V17): szczebel i uchwyt; identyfikator konta nie wychodzi na zewnątrz.
+    expect(company.json().thread.leader.level).toBe(0);
+    expect(company.json().thread.leader).toHaveProperty('handle');
+    expect(company.json().thread).not.toHaveProperty('leaderUserId');
     expect(company.json().thread.messages).toEqual([]);
     expect(company.json().thread.offer.proposedBudget).toBe(2000);
 
@@ -136,6 +140,11 @@ describe.skipIf(!hasInfra)('marketplace — wątek przy ofercie', () => {
     expect(thread.messages[0].authorName).toBe('Firma Wątek');
     expect(thread.messages[0].isOwn).toBe(false);
     expect(thread.messages[1].isOwn).toBe(true);
+    // Podpis wiadomości w V17: firma pod nazwą firmy, Lider pod własną.
+    expect(thread.messages.map((m: { fromLeader: boolean }) => m.fromLeader)).toEqual([
+      false,
+      true,
+    ]);
 
     // Licznik wiadomości na liście ofert Firmy i w „Moich ofertach" Lidera.
     const offers = (await get(companyCookie, `/api/v1/orders/${orderId}/offers`)).json().offers;

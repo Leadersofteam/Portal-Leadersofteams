@@ -97,7 +97,7 @@ Zmiana wobec `pro.css`: w ciemnym motywie przycisk główny na `--primary-600` (
 Zastępuje w tym punkcie zasadę z 20.11 („tło czyste, bez siatki liderów”). Obowiązuje po akceptacji tła; wtedy dla wszystkich
 ekranów V17 (także P0 i P1).
 
-## Reszta paczki P1 (26.11, `p1b.{js,css}`) — czeka na akceptację
+## Reszta paczki P1 (26.11, `p1b.{js,css}`) — zaakceptowana 27.11
 
 | Ekran (trasa) | Plik | Stany `?stan=` |
 |---|---|---|
@@ -136,6 +136,41 @@ Układ dużego ekranu: wspólny `szerokie.css` (niżej).
 - `/dla-firm`, krok 2: usunięta obietnica „liczba zrealizowanych zleceń” przy ofercie (tabela ofert jej nie pokazuje).
 - Dopisane zdania pomocnicze (np. skutki „Przekształć w zlecenie” i „Zamknij wątek”, „Rozmowa punktów nie daje”).
 - `/firmy/[id]`: poprawna odmiana liczb; „NIP — suma kontrolna OK” (nigdy „zweryfikowana”).
+
+## Poprawki z kodu (27.11, reszta paczki P1 — za opt-inem `?wyglad=v17`)
+
+11 ekranów zakodowanych (`app/v17/…`, styl `v17-rynek-reszta.css` z regułami 3440). Bez flagi dzisiejsze ekrany.
+Odstępstwa **czekają na akceptację Macieja**:
+
+| Ekran | Makieta | Kod | Powód |
+|---|---|---|---|
+| ekrany P1 już wdrożone (`/zlecenia`, zlecenie, wpis zlecenia w strumieniu) — widać po wdrożeniu **bez flagi** | „Zweryfikowana” / „Firma zweryfikowana” | „NIP — suma kontrolna OK” | zastany błąd: sprawdzamy tylko sumę kontrolną, nie rejestr |
+| ekrany z `[id]`/`[slug]` | stan ładowania (szkielet) | brak | `loading.tsx` przy segmencie dynamicznym daje 200 zamiast 404 |
+| stany błędu | link wstecz i komunikat per ekran | wspólny `ErrorEkranu` (h1, komunikat, „Wróć do strumienia”) | jeden komponent V17 |
+| dla firm, branże, porównanie | rama gościa | HTML z serwera jak dla gościa; zalogowanemu rama przełącza się w przeglądarce | ISR bez ciasteczek |
+| branże | 6/8 pozycji | porcje po 24, „Pokaż więcej” z kursorem i licznikiem; błąd dociągania tekstem | prawdziwe dane |
+| branże usług, dla firm | okładki rysowane, karta bez zakładki | zdjęcie usługi, gdy jest; „Zapisz usługę” | funkcja dzisiejszego ekranu |
+| dla firm | częściowy łuk przy awatarze | pierścień z poziomu bez postępu, „Bez ocen” | `/leaders` nie zwraca punktów |
+| dla firm, porównanie | — | bez dzisiejszych nadtytułów i sekcji „Jak to działa”, „Kogo spotkasz”; teksty wg makiety (zmiana treści SEO) | makieta |
+| formularze | błędy tylko w stanie `bledy` | walidacja przy każdym polu, fokus na pierwszym błędzie, błąd API w tym samym pasku | API nie niesie błędów per pole |
+| nowe zlecenie | — | informacja o przywróconym szkicu sprzed rejestracji | funkcja dzisiejszego ekranu |
+| nowe zlecenie (gość) | „Zaloguj się” | klik zapisuje szkic | zastany błąd: obietnica „szkic zostanie” bez zapisu (tylko nowy ekran) |
+| nowe zlecenie | podgląd ze znakiem NIP, budżet z krokiem 2 | „Bez NIP” bez numeru; budżet po wpisaniu obu kwot; rama z pierwszą firmą konta | prawdziwe dane |
+| nowe zlecenie | poziomy 4–7 ukryte | widoczne też, gdy któryś wybrany | wybór nie może być niewidoczny |
+| usługa | Szkic / Opublikowana / Zarchiwizowana | także „Wstrzymana” | status istnieje |
+| usługa | — | po zapisie szkicu powrót do „Moich usług”; „Wgrywanie…”, błąd zdjęcia, nazwy grup pakietów dla czytnika | zastany błąd (stary ekran idzie na 404) i dostępność |
+| oferta, zapytanie | wiadomości firmy pod nazwą firmy | tak samo — imię osoby po stronie firmy (dziś widoczne) znika | 1:1 z makietą |
+| oferta, zapytanie | — | „Wysyłanie…”, błąd pod polem i w karcie „Co dalej” | zachowanie dzisiejsze |
+| oferta | `wyslana`, „Propozycja/Czas” zawsze, „Porównaj i wybierz” poza `zamknieta` | ramka sukcesu tylko po wysłaniu; wiersz bez wartości znika; przycisk tylko dla firmy przy otwartej ofercie; tekst dla pustej zamkniętej rozmowy | prawdziwe stany |
+| zapytanie | chip pakietu z ceną; nazwa firmy | cena z bieżącego pakietu (z chwili pytania nie jest zapisana); nazwa z publicznego profilu firmy | brak danych w API |
+| firma | „ocen wystawionych Liderom”; autor bez linku; kolor z branży | dopisana średnia; link do profilu autora; kolor z nazwy; akapity zachowane | funkcja dzisiejsza, firma nie ma branży |
+| firma | ręczny monogram „DK” | dwa pierwsze wyrazy nazwy („MD”) | skrót z prawdziwej nazwy |
+| dla firm | sekcje usług i Liderów zawsze (poza stanem `pusty`) | znikają bez danych; strona ISR odświeża się co 5 min, Liderzy od L1 | jak dziś |
+| jasny motyw (wszystkie ekrany V17) | błędy w jasnoczerwonym z ciemnego motywu | `--danger` w jasnym #b91c1c | kontrast AA |
+| formularze | — | po błędzie z serwera fokus przeskakuje na pasek błędu; długi przycisk w bocznej karcie łamie się przy 721–1000 px | przycisk jest daleko pod paskiem |
+| gość 721–1180 px | ikona w nawigacji | ikona jest linkiem do logowania | inaczej nie ma jak się zalogować |
+| porównanie | karty z `h3` | `h2` o tym wyglądzie; wersaliki z `lib/porownania.ts` zamienione w widoku | poziom nagłówków |
+| gość (telefon) | pasek: logo, szukaj, „Zaloguj się” | tak samo; menu konta gościa ukryte na tych ekranach | makieta |
 
 ## Duży ekran 3440×1440 (`szerokie.css`, 27.11) — czeka na akceptację
 

@@ -651,7 +651,10 @@ export function createOrdersService({
         leader: {
           profileId: offer.leaderProfile.id,
           displayName: users.get(offer.leaderProfile.userId)?.displayName ?? 'Lider',
+          handle: users.get(offer.leaderProfile.userId)?.handle ?? null,
         },
+        // Wyłącznie dla trasy (dokłada szczebel) — nie wychodzi w odpowiedzi.
+        leaderUserId: offer.leaderProfile.userId,
         viewer: { isLeader, isCompany },
         canReply: offerThreadOpen(offer.status, offer.order.status),
         messages: offer.messages.map((m) => ({
@@ -660,6 +663,8 @@ export function createOrdersService({
           createdAt: m.createdAt,
           authorName: users.get(m.authorId)?.displayName ?? 'Użytkownik',
           isOwn: m.authorId === userId,
+          // Strona rozmowy: widok V17 podpisuje wiadomości firmy jej nazwą, a po imieniu nie da się tego rozstrzygnąć.
+          fromLeader: m.authorId === offer.leaderProfile.userId,
         })),
       };
     },

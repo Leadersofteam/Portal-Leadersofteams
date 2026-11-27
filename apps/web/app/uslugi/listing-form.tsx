@@ -83,6 +83,9 @@ export function ListingForm({
   );
   const [imageIds, setImageIds] = useState<string[]>(initial?.imageFileIds ?? []);
   const [uploading, setUploading] = useState(false);
+  // Szkic zapisany w tej karcie, którego publikacja się nie udała — kolejne kliknięcie
+  // poprawia go i publikuje, zamiast tworzyć drugi.
+  const [draft, setDraft] = useState<{ id: string; slug: string } | null>(null);
 
   function setPackage(index: number, patch: Partial<PackageDraft>) {
     setPackages((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
@@ -145,10 +148,19 @@ export function ListingForm({
         router.push(`/uslugi/${initial.slug}`);
         router.refresh();
       } else {
-        const created = await apiFetch<{ id: string; slug: string }>('/listings', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
+        let created = draft;
+        if (created) {
+          await apiFetch(`/listings/${created.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+          });
+        } else {
+          created = await apiFetch<{ id: string; slug: string }>('/listings', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          setDraft(created);
+        }
         await apiFetch(`/listings/${created.id}/publish`, { method: 'POST' });
         router.push(`/uslugi/${created.slug}`);
       }
@@ -160,7 +172,12 @@ export function ListingForm({
 
   return (
     <form onSubmit={onSubmit} className="card" style={{ maxWidth: '46rem' }}>
-      {error && <div className="error-box">{error}</div>}
+      {error && (
+        <div className="error-box">
+          {draft && 'Szkic zapisany, ale nie opublikowany. '}
+          {error}
+        </div>
+      )}
 
       <div className="field">
         <label htmlFor="l-title">Tytuł usługi (min. 10 znaków)</label>
@@ -335,7 +352,9 @@ export function ListingForm({
             : 'Zapisz zmiany'
           : pending
             ? 'Publikowanie…'
-            : 'Opublikuj usługę'}
+            : draft
+              ? 'Opublikuj ponownie'
+              : 'Opublikuj usługę'}
       </button>
     </form>
   );

@@ -75,6 +75,8 @@ body:has(.v17) {
   --level-6: #c92069;
   --level-7: #b45309;
   --success: #047857;
+  /* Błędy pól na bieli: dziedziczony #f87171 miał ok. 2,8:1. */
+  --danger: #b91c1c;
   --info: #1d4ed8;
   --radius-sm: 4px;
   --radius: 6px;
