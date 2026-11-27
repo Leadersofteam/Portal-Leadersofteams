@@ -148,7 +148,7 @@
 
 /* Poprawki z pomiaru przy 2560 px i przy pełnych listach — makieta tego nie sprawdzała (miała 7 branż, kod ma 10+). */
 @media (min-width: 2400px) {
-  .v17 .rama.szeroka .zakladki {
+  .v17 .rama.szeroka .filtry.rn-chipy {
     flex-wrap: wrap;
   }
   .v17 .rn-filtr {
