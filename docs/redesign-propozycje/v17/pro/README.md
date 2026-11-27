@@ -96,3 +96,43 @@ Zmiana wobec `pro.css`: w ciemnym motywie przycisk główny na `--primary-600` (
 „Wolałbym inny kolor tła np. jaśniejsze z lekką siecią liderów przezroczystą. Reszta jest dobra” — `tlo.{js,css}`.
 Zastępuje w tym punkcie zasadę z 20.11 („tło czyste, bez siatki liderów”). Obowiązuje po akceptacji tła; wtedy dla wszystkich
 ekranów V17 (także P0 i P1).
+
+## Reszta paczki P1 (26.11, `p1b.{js,css}`) — czeka na akceptację
+
+| Ekran (trasa) | Plik | Stany `?stan=` |
+|---|---|---|
+| `/zlecenia/nowe` | `zlecenie-nowe.html` | `z-lidera` `budzet` `bledy` `gosc` `bez-firmy` `ladowanie` |
+| `/uslugi/nowa` | `usluga-nowa.html` | `start` `bez-profilu` `publikacja-nieudana` `ladowanie` |
+| `/uslugi/[slug]/edytuj` | `usluga-edycja.html` | `szkic` `archiwum` `ladowanie` `blad` |
+| `/zlecenia/branza/[slug]` | `branza-zlecen.html` | `pusty` |
+| `/uslugi/branza/[slug]` | `branza-uslug.html` | `pusty` |
+| `/oferty/[id]` | `oferta.html` | `wyslana` `pusty` `zamknieta` `ladowanie` `blad` |
+| `/zapytania/[id]` | `zapytanie.html` | `lider` `przeksztalcone` `zamkniete` `ladowanie` `blad` |
+| `/porownanie/[slug]` | `porownanie.html` | — (Fixly i Useme: ten sam układ, teksty z `lib/porownania.ts`) |
+| `/firmy/[id]` | `firma.html` | `pusty` `ladowanie` `blad` |
+| `/firma/nowa` | `firma-nowa.html` | `bledy` `gosc` |
+| `/dla-firm` | `dla-firm.html` | `pusty` (bez usług i Liderów — sekcje znikają) |
+
+Zrzuty: `audyt/zrzuty/v17-p1b-*` (`--duzy` w `v17-makiety-zrzuty.mjs` dodaje 3440×1440).
+Od 2400 px cała rama skaluje się ×1,3, a szerokość zużywają kolumny — przy akceptacji reguła obejmuje wszystkie ekrany V17.
+
+### Miejsca wymagające nowych danych (żadne nie wymaga migracji bazy)
+
+| Miejsce | Czego brakuje | Dane w bazie? |
+|---|---|---|
+| `/oferty/[id]`: poziom Lidera w karcie „Oferent” | `getOfferThread` nie zwraca poziomu | tak (Drabinka) |
+| `/firmy/[id]`: opis firmy | API profilu nie zwraca `Company.description` | tak |
+| `/uslugi/[slug]/edytuj`: edycja szkicu | **zastany błąd**: odczyt po slug daje 404 dla szkicu, a panel pokazuje „Edytuj” | tak |
+| Huby branż: „Pokaż więcej · N z M” | front pomija `nextCursor` i `total` | tak |
+| Huby branż: licznik ofert, data, znak NIP w wierszu | API zwraca, stary widok nie pokazuje | tak |
+| `/zapytania/[id]`: chip pakietu z ceną | dziś surowy tekst `[pakiet: BASIC]` w treści; chip to parsowanie na froncie | tak (prefiks + pakiety) |
+
+### Nowe zachowania w interfejsie (kod, bez nowych danych)
+
+- Kreator zlecenia w 2 krokach formularza (gość: 1 krok, jak dziś) i podgląd wiersza; zapis nadal jako szkic.
+- Błędy przy polach zamiast samego „Nieprawidłowe dane wejściowe” (budżet „do” < „od”, suma kontrolna NIP).
+- `/uslugi/nowa`: po nieudanej publikacji „Opublikuj ponownie” publikuje zapisany szkic (**zastany błąd**: ponowne kliknięcie tworzy duplikat).
+- `/firma/nowa` dla gościa: komunikat z logowaniem zamiast formularza, który kończy się błędem.
+- `/dla-firm`, krok 2: usunięta obietnica „liczba zrealizowanych zleceń” przy ofercie (tabela ofert jej nie pokazuje).
+- Dopisane zdania pomocnicze (np. skutki „Przekształć w zlecenie” i „Zamknij wątek”, „Rozmowa punktów nie daje”).
+- `/firmy/[id]`: poprawna odmiana liczb; „NIP — suma kontrolna OK” (nigdy „zweryfikowana”).
