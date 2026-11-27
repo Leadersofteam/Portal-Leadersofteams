@@ -15,11 +15,17 @@ import { publicApi } from '@/lib/server-api';
 import { temu } from '@/lib/v17';
 
 // Te same metadane i parametry statyczne co w dzisiejszym hubie — adres i SEO nie zależą od wyglądu.
-export { generateMetadata, generateStaticParams } from '@/app/zlecenia/branza/[slug]/page';
+export { generateMetadata } from '@/app/zlecenia/branza/[slug]/page';
 
 // Literał: Next czyta konfigurację segmentu statycznie.
 export const revalidate = 300;
 export const dynamicParams = true;
+
+// Nic przy budowie: strona rzuca, gdy API nie zwraca listy, a build bywa bez API ze slugami
+// z pamięci podręcznej — cały build padał. Huby powstają na żądanie i dalej są w ISR.
+export function generateStaticParams(): Array<{ slug: string }> {
+  return [];
+}
 
 const PORCJA = 24;
 
