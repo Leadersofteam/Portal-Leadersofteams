@@ -10,10 +10,12 @@
 
 Każdy ekran: mobile first (390), 1512 i **3440×1440** (Maciej 26.11) — zrzuty wszystkich trzech.
 
-1. Maciej 26.11: cały Portal i landing w V17 PRO. Makieta reszty P1 (`/zlecenia/nowe`, `/uslugi/nowa`, edycja, strony branż,
-   `/oferty/[id]`, `/zapytania/[id]`, `/porownanie/*`, `/firmy/[id]`, `/firma/nowa`, `/dla-firm`) → `recenzent-wygladu` →
-   zrzuty 1512 + 390 → jedno pytanie. Nowa paczka = OSOBNA lista tras z opt-inem w `lib/v17-routing.ts`.
-2. Makieta P6 landing (`/`, `/start`, regulamin, prywatność; scena 3D zostaje) i P5 (logowanie, rejestracja, stany). Dalej P2, P3, P4.
+1. Makiety zaakceptowane 27.11 („Akceptuje obie”): reszta Rynku + 3440 (`claude/nifty-goldstine-496979` @ `781e52b`) oraz
+   strona główna + logowanie i stany (`claude/loving-hellman-f538bb` @ `4df30bc`). Po zgodzie na scalenie: scal obie (każda
+   scala się czysto, razem konflikt w `audyt/harness/v17-makiety-zrzuty.mjs` i `pro/README.md`), potem kod.
+2. Kod: najpierw układ 3440 i strona główna + logowanie, potem reszta Rynku. Nowa paczka = osobna lista tras z opt-inem.
+   Zastane z lektury kodu (sesja Rynek, nieodtworzone): „Edytuj” szkicu usługi → 404; ponowna publikacja po błędzie tworzy
+   duplikat; „Zweryfikowana” przy samym NIP kontra „rejestru nie sprawdzamy”.
 3. Limit API 300/min wspólny dla SSR (MINY 26.11). EACCES cache ISR hubów branż.
 4. P2 z sędziów: „Moja branża” bez profilu przepuszcza wszystko; ciche błędy akcji wpisu i wylogowania; `.akcja` 40 px; hexy tła.
 5. Stare widoki `/feed`, `/drabinka`, `/profil`, `/zlecenia`, `/uslugi` usuwać dopiero po akceptacji odstępstw P0.
