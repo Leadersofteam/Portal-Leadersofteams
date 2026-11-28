@@ -1,5 +1,12 @@
 # Handoff dla Claude Code — stan projektu i plan sprintów
 
+> **🟢 2026-11-28 ~01:20 UTC — P6+P5 i reszta Rynku NA PRODZIE ZA OPT-INAMI (`a6f6311`, web + api, bez migracji).** Maciej: „Tak, wdrażaj”.
+> `?wyglad=v17p6` = strona główna, `/start`, dokumenty, logowanie i stany; `?wyglad=v17` = reszta Rynku. Jedno ciasteczko — wybór
+> jednego wyłącza drugi. Zmierzone na prodzie 14 tras × 390/1512/3440 × bez flagi / v17p6 / v17: bez flagi widok jak dotąd, 0 błędów JS,
+> 0 przewijania w bok; healthz ok, 0 błędów level 50. Przed wdrożeniem: API 257/257, e2e 58/59 (sporadyczny React #418 na `/oferty/[id]`,
+> przeszedł w powtórce, przyczyna nieznana). Powrót: `portal-web:przed-v17p6-2811`, `portal-api:przed-v17p6-2811`; kopia bazy
+> `portal-20261128-011648.sql.gz`. Niezweryfikowane na żywo: zalogowany, wysłanie formularzy.
+
 > **🟢 2026-11-27 — układ dużego ekranu (3440×1440) NA PRODZIE (`06773a8`, tylko web).** Maciej: „Tak, wdróż”.
 > Zmierzone: od 2400 px skala 1,4, poniżej 1,0; przewijania w bok brak przy 390/1512/2560/3440; stary wygląd bez skali;
 > menu konta gościa w oknie; konsola czysta. Pierwsza budowa padła na pobraniu czcionki (`next/font`), druga przeszła.

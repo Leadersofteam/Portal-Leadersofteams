@@ -1,18 +1,17 @@
 # Portal LOT — następna sesja (jeden ekran)
 
-## Stan (zmierzony 27.11 ~12:45 UTC)
+## Stan (zmierzony 28.11 ~01:20 UTC)
 
-- Prod: web `06773a8`, api `55de3f0` (`feat/v17-portal`). P0, P1 i układ 3440 (od 2400 px) na prodzie; `?wyglad=off` wraca do starego.
-- Powrót web: `portal-web:przed-3440-2711`.
-- Dwie sesje kodują: P6+P5 (`claude/ecstatic-golick-3715e4`, opt-in `?wyglad=v17p6`) i reszta Rynku
-  (`claude/sharp-ptolemy-f7b31a`). Niescalone i niewdrożone.
+- Prod: web i api `a6f6311` (`feat/v17-portal`). P0, P1 i układ 3440 dla wszystkich; `?wyglad=off` wraca do starego.
+- Za opt-inem: reszta Rynku (`?wyglad=v17`) oraz P6+P5 (`?wyglad=v17p6`); jedno ciasteczko, wybór jednego wyłącza drugi.
+- Powrót: `portal-web:przed-v17p6-2811`, `portal-api:przed-v17p6-2811`.
 
 ## Zadania w kolejności
 
 Każdy ekran: mobile first (390), 1512 i **3440×1440** (Maciej 26.11) — zrzuty wszystkich trzech.
 
-1. Odebrać obie sesje z kodem (zrzuty 390/1512/3440, odstępstwa), potem pytanie o scalenie.
-2. Wdrożenie za opt-in po „tak”; nowe ekrany potrzebują reguł 3440 (`.fm .wt .st .br-* .dwie-f .dl-*` z makiety `szerokie.css`).
+1. Maciej ogląda oba opt-iny na prodzie; po „tak” włączyć dla wszystkich (przedtem w 404/błędzie P6 usunąć przełącznik w przeglądarce).
+2. Sporadyczny React #418 na `/oferty/[id]` — test zapisuje HTML i DOM sprzed hydracji przy następnym wystąpieniu.
 3. Limit API 300/min wspólny dla SSR (MINY 26.11). EACCES cache ISR hubów branż.
 4. P2 z sędziów: „Moja branża” bez profilu przepuszcza wszystko; ciche błędy akcji wpisu i wylogowania; `.akcja` 40 px; hexy tła.
 5. Stare widoki `/feed`, `/drabinka`, `/profil`, `/zlecenia`, `/uslugi` usuwać dopiero po akceptacji odstępstw P0.
