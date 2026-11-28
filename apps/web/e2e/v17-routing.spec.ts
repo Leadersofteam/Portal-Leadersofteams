@@ -29,15 +29,37 @@ test.describe('flaga wyglądu V17', () => {
     expect(decydujWyglad('/uslugi/x', null, 'off').rewrite).toBe(false);
   });
 
-  test('P1: trasy bez makiety zostają w starym wyglądzie mimo flagi', () => {
-    for (const p of [
-      '/zlecenia/nowe',
-      '/zlecenia/branza',
-      '/zlecenia/branza/hvac',
-      '/uslugi/nowa',
-      '/uslugi/branza/hvac',
-      '/uslugi/x/edytuj',
-    ]) {
+  const OPTIN = [
+    '/zlecenia/nowe',
+    '/zlecenia/branza/hvac',
+    '/uslugi/nowa',
+    '/uslugi/branza/hvac',
+    '/uslugi/x/edytuj',
+    '/oferty/abc',
+    '/zapytania/abc',
+    '/porownanie/oferteo',
+    '/firmy/abc',
+    '/firma/nowa',
+    '/dla-firm',
+  ];
+
+  test('reszta P1: bez flagi i z „off” zostają dzisiejsze ekrany', () => {
+    for (const p of OPTIN) {
+      expect(decydujWyglad(p, null, undefined).rewrite, p).toBe(false);
+      expect(decydujWyglad(p, null, 'off').rewrite, p).toBe(false);
+      expect(decydujWyglad(p, 'off', 'v17').rewrite, p).toBe(false);
+    }
+  });
+
+  test('reszta P1: ?wyglad=v17 i ciasteczko v17 włączają', () => {
+    for (const p of OPTIN) {
+      expect(decydujWyglad(p, 'v17', undefined), p).toEqual({ rewrite: true, set: 'v17' });
+      expect(decydujWyglad(p, null, 'v17').rewrite, p).toBe(true);
+    }
+  });
+
+  test('reszta P1: opt-in nie łapie tras bez makiety', () => {
+    for (const p of ['/zlecenia/branza', '/uslugi/branza', '/porownanie', '/firma', '/oferty']) {
       expect(decydujWyglad(p, 'v17', 'v17').rewrite, p).toBe(false);
     }
   });

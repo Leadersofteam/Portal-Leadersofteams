@@ -136,7 +136,7 @@ export function WierszStrumienia({
               {w.zweryfikowana ? (
                 <>
                   <Ico n="seal-check" />
-                  <span>Firma zweryfikowana</span>
+                  <span>NIP — suma kontrolna OK</span>
                 </>
               ) : (
                 <span>Firma bez potwierdzonego NIP</span>

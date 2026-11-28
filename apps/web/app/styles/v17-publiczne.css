@@ -522,7 +522,7 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
 }
 
 /* ───────── Stopka serwisu (4 kolumny; „Ekosystem” = lib/ecosystem.ts) ───────── */
-.v17p .st {
+.v17p .p-st {
   border-top: 1px solid var(--line-2);
   background: color-mix(in srgb, var(--surface) 90%, transparent);
   margin-top: 40px;
@@ -535,34 +535,34 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
   margin: 0 auto;
   padding: 40px 24px 28px;
 }
-.v17p .st .znak {
+.v17p .p-st .znak {
   padding: 0 0 12px;
 }
-.v17p .st p {
+.v17p .p-st p {
   margin: 0 0 18px;
   max-width: 38ch;
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--text-muted);
 }
-.v17p .st h4 {
+.v17p .p-st h4 {
   margin: 0 0 6px;
   font: 700 13.5px/1.4 var(--font-sans);
   color: var(--text-strong);
 }
-.v17p .st ul {
+.v17p .p-st ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.v17p .st li a {
+.v17p .p-st li a {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
   font-size: 14px;
   color: var(--text-muted);
 }
-.v17p .st li a:hover {
+.v17p .p-st li a:hover {
   color: var(--text-strong);
   text-decoration: underline;
 }
@@ -776,14 +776,14 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
   width: 100%;
   height: auto;
 }
-.v17p .kroki {
+.v17p .p-kroki {
   list-style: none;
   display: flex;
   gap: 8px;
   margin: 32px 0 24px;
   padding: 0;
 }
-.v17p .kroki li {
+.v17p .p-kroki li {
   flex: 1;
   display: flex;
   align-items: center;
@@ -793,11 +793,11 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
   font: 700 13.5px/1 var(--font-sans);
   color: var(--text-muted);
 }
-.v17p .kroki li.p-teraz {
+.v17p .p-kroki li.p-teraz {
   border-color: var(--text-strong);
   color: var(--text-strong);
 }
-.v17p .kroki li.zrobione {
+.v17p .p-kroki li.zrobione {
   border-color: var(--success);
 }
 .v17p .start h2 {
@@ -1109,7 +1109,7 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
   }
 }
 @media (pointer: coarse) {
-  .v17p .st li a {
+  .v17p .p-st li a {
     min-height: 44px;
     min-width: 44px;
   }
@@ -1257,7 +1257,7 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
     padding: 32px 16px 20px;
     gap: 24px 16px;
   }
-  .v17p .st li a {
+  .v17p .p-st li a {
     min-height: 44px;
     min-width: 44px;
   }
@@ -1463,17 +1463,17 @@ html:not([data-theme='light']) .v17p .vbtn.glowny {
   .v17p.v17p-landing .st-w {
     padding-top: 64px;
   }
-  .v17p.v17p-landing .st p,
-  .v17p.v17p-landing .st li a {
+  .v17p.v17p-landing .p-st p,
+  .v17p.v17p-landing .p-st li a {
     font-size: 16px;
   }
-  .v17p.v17p-landing .st h4 {
+  .v17p.v17p-landing .p-st h4 {
     font-size: 16px;
   }
 }
 
 /* cele dotyku ≥ 44 px także dla odnośników w tekście i znaku w stopce */
-.v17p .st .znak {
+.v17p .p-st .znak {
   display: inline-flex;
   min-height: 44px;
 }

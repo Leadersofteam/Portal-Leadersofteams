@@ -68,6 +68,7 @@ export function marketplaceRoutes({
           name: company.name,
           createdAt: company.createdAt,
           nipVerifiedAt: company.nipVerifiedAt ?? null,
+          description: company.description ?? null,
         },
         stats,
         reviews: recentReviews.map((r) => ({
@@ -278,7 +279,10 @@ export function marketplaceRoutes({
     app.get('/offers/:id/messages', async (request, reply) => {
       const user = await auth.requireUser(request);
       const { id } = request.params as { id: string };
-      return reply.send({ thread: await orders.getOfferThread(user.id, id) });
+      const { leaderUserId, ...thread } = await orders.getOfferThread(user.id, id);
+      // Szczebel oferenta dokładany tutaj (jak w katalogu): marketplace nie liczy punktów.
+      const level = await ladder.getLevel(leaderUserId);
+      return reply.send({ thread: { ...thread, leader: { ...thread.leader, level } } });
     });
 
     app.post('/offers/:id/messages', async (request, reply) => {

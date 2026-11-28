@@ -25,7 +25,6 @@ interface ListingDetail {
     }>;
     images: string[];
     industry: { id: string; name: string };
-    leader: { userId: string };
   };
 }
 
@@ -39,13 +38,17 @@ export default async function EditListingPage({ params }: { params: Promise<{ sl
   const me = await serverApi<{ user: { id: string } | null }>('/auth/me');
   if (!me?.user) redirect('/logowanie');
 
+  // Odczyt właściciela, nie publiczny: publiczny zwraca 404 dla szkicu, a panel pokazuje przy nim „Edytuj”.
   const [data, industriesData] = await Promise.all([
-    serverApi<ListingDetail>(`/listings/slug/${encodeURIComponent(slug)}`),
+    serverApi<ListingDetail>(`/me/listings/slug/${encodeURIComponent(slug)}`),
     serverApi<{ industries: Array<{ id: string; name: string }> }>('/industries'),
   ]);
-  if (!data) notFound();
+  if (!data) {
+    // Cudza, opublikowana usługa → jej strona; reszta nie istnieje.
+    if (await serverApi(`/listings/slug/${encodeURIComponent(slug)}`)) redirect(`/uslugi/${slug}`);
+    notFound();
+  }
   const { listing } = data;
-  if (listing.leader.userId !== me.user.id) redirect(`/uslugi/${listing.slug}`);
 
   return (
     <main>

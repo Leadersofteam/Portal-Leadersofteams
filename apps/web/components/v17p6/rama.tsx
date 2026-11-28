@@ -304,7 +304,7 @@ function Stopka() {
     </div>
   );
   return (
-    <footer className="st">
+    <footer className="p-st">
       <div className="st-w">
         <div>
           <Marka />

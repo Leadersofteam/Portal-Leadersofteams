@@ -19,6 +19,7 @@ import './styles/search.css';
 import './styles/v17-swiatlo.css';
 import './styles/v17-rynek.css';
 import './styles/v17-braki.css';
+import './styles/v17-rynek-reszta.css';
 import './styles/v17-szerokie.css';
 import './styles/v17-publiczne.css';
 

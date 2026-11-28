@@ -13,7 +13,7 @@ export function Kreator({ industries }: { industries: Array<{ id: string; name: 
 
   return (
     <>
-      <ol className="kroki" aria-label="Postęp kreatora">
+      <ol className="p-kroki" aria-label="Postęp kreatora">
         {KROKI.map((t, i) => (
           <li
             key={t}

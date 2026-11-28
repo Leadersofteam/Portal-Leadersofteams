@@ -4,8 +4,8 @@
 // P0 („Światło”: feed, profil, drabinka) jest domyślnie włączone od 25.11, P1 („Rynek”: zlecenia, usługi) od 26.11
 // (Maciej: „Tak, włącz P1”). Jedno wyjście awaryjne dla obu: `?wyglad=off`. Kolejna paczka V17 przed akceptacją dostaje
 // OSOBNĄ listę z opt-inem — dopisana tutaj byłaby publiczna od razu po wdrożeniu.
-// `/zlecenia/nowe`, `/zlecenia/branza/*`, `/uslugi/nowa`, `/uslugi/branza/*`, `/uslugi/<slug>/edytuj` celowo NIE
-// pasują: nie mają makiety, zostają w starym wyglądzie.
+// Reszta P1 („formularze, branże, wątki, firma”, makieta zaakceptowana 27.11) stoi na V17_OPTIN_ROUTES: działa tylko
+// po `?wyglad=v17` (ciasteczko), bez flagi widać dzisiejsze ekrany. Włączenie dla wszystkich = osobna decyzja Macieja.
 
 export const V17_ROUTES = [
   /^\/feed$/,
@@ -15,6 +15,20 @@ export const V17_ROUTES = [
   /^\/zlecenia\/(?!nowe$|branza$)[^/]+$/,
   /^\/uslugi$/,
   /^\/uslugi\/(?!nowa$|branza$)[^/]+$/,
+];
+
+export const V17_OPTIN_ROUTES = [
+  /^\/zlecenia\/nowe$/,
+  /^\/zlecenia\/branza\/[^/]+$/,
+  /^\/uslugi\/nowa$/,
+  /^\/uslugi\/branza\/[^/]+$/,
+  /^\/uslugi\/[^/]+\/edytuj$/,
+  /^\/oferty\/[^/]+$/,
+  /^\/zapytania\/[^/]+$/,
+  /^\/porownanie\/[^/]+$/,
+  /^\/firmy\/[^/]+$/,
+  /^\/firma\/nowa$/,
+  /^\/dla-firm$/,
 ];
 
 // P6 (strona główna, /start, dokumenty, wypis) i P5 (logowanie, rejestracja, hasło) czekają na akceptację
@@ -55,7 +69,9 @@ export function decydujWyglad(
   if (efektywna === 'v17p6' && V17P6_ROUTES.some((re) => re.test(path))) {
     return { rewrite: true, cel: path === '/' ? '/v17p6' : `/v17p6${path}`, ...dodatek };
   }
-  // P0 i P1: domyślnie ON, wyłącza tylko jawne „off” (opt-in P6 ich nie gasi).
-  const rewrite = efektywna !== 'off' && V17_ROUTES.some((re) => re.test(path));
+  // P0 i P1: domyślnie ON, wyłącza tylko jawne „off” (opt-in P6 ich nie gasi). Reszta Rynku: tylko jawne „v17”.
+  const rewrite =
+    (efektywna !== 'off' && V17_ROUTES.some((re) => re.test(path))) ||
+    (efektywna === 'v17' && V17_OPTIN_ROUTES.some((re) => re.test(path)));
   return { rewrite, ...dodatek };
 }

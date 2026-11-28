@@ -1,7 +1,7 @@
 // Treść hubów branżowych (PL4). Programmatic SEO bez generatora: dziesięć
 // branż × trzy wejścia (usługi / zlecenia / Liderzy) = trzydzieści akapitów
 // napisanych ręcznie, każdy mówi coś INNEGO o tej branży w tym kontekście.
-// Zasada z planu: „każda strona wnosi odrębną wartość, nie podmianę zmiennej".
+// Zasada z planu: „każda strona wnosi odrębną wartość, nie podmianę zmiennej”.
 // Slugi = `industries.slug` z bazy (seed); brak wpisu → hub używa tekstu
 // ogólnego, nie pada.
 export interface IndustryCopy {
@@ -18,7 +18,7 @@ export const INDUSTRY_COPY: Record<string, IndustryCopy> = {
     uslugi:
       'Automatyzacje procesów, agenci AI, integracje między narzędziami. Tu kupujesz zakres, nie obietnicę: usługa ma pakiet, cenę i Lidera z poziomem zdobytym wdrożeniami, które ktoś ocenił.',
     zlecenia:
-      'Najlepsze zlecenia z AI i automatyzacji opisują proces „jak jest" i „jak ma być", nie narzędzie. Widełki i dane wejściowe na start oszczędzają obu stronom tygodnia rozmów.',
+      'Najlepsze zlecenia z AI i automatyzacji opisują proces „jak jest” i „jak ma być”, nie narzędzie. Widełki i dane wejściowe na start oszczędzają obu stronom tygodnia rozmów.',
     liderzy:
       'Lider automatyzacji pokazuje zrealizowane wdrożenia, nie certyfikaty. Poziom w Drabince rośnie tylko od ocen Firm i uznanych odpowiedzi — sprawdź go zamiast portfolio z logotypów.',
   },
@@ -32,7 +32,7 @@ export const INDUSTRY_COPY: Record<string, IndustryCopy> = {
   },
   'e-commerce': {
     uslugi:
-      'Sklepy, integracje płatności i logistyki, optymalizacja konwersji. Pakiet z ceną i zakresem zamiast „wycena po rozmowie" — porównasz trzy usługi w pięć minut.',
+      'Sklepy, integracje płatności i logistyki, optymalizacja konwersji. Pakiet z ceną i zakresem zamiast „wycena po rozmowie” — porównasz trzy usługi w pięć minut.',
     zlecenia:
       'Dobre zlecenie e-commerce podaje platformę, skalę (zamówienia miesięcznie) i to, co dziś boli. Oferty składają Liderzy o wymaganym poziomie, resztę odsiewa Drabinka.',
     liderzy:
@@ -56,9 +56,9 @@ export const INDUSTRY_COPY: Record<string, IndustryCopy> = {
   },
   it: {
     uslugi:
-      'Wdrożenia, integracje, utrzymanie, audyty bezpieczeństwa. Pakiety z ceną i zakresem; poziom Lidera zdobyty realizacjami ocenionymi przez Firmy, nie listą technologii.',
+      'Wdrożenia, integracje, utrzymanie, audyty bezpieczeństwa. Pakiety z ceną i zakresem; poziom Lidera zdobyty realizacjami ocenionymi przez firmy, nie listą technologii.',
     zlecenia:
-      'Zlecenie IT opisuje stan obecny, oczekiwany efekt i ograniczenia (stack, terminy, dostęp). Próg „od poziomu" pozwala otworzyć je tylko dla sprawdzonych Liderów.',
+      'Zlecenie IT opisuje stan obecny, oczekiwany efekt i ograniczenia (stack, terminy, dostęp). Próg „od poziomu” pozwala otworzyć je tylko dla sprawdzonych Liderów.',
     liderzy:
       'Poziom w Drabince to zapracowany dowód: każdy punkt ma źródło w ocenie po odbiorze albo w uznanej odpowiedzi. Zobacz oś awansów na profilu, nie tylko odznakę.',
   },
@@ -72,7 +72,7 @@ export const INDUSTRY_COPY: Record<string, IndustryCopy> = {
   },
   'produkcja-logistyka': {
     uslugi:
-      'Optymalizacja procesów, lean, planowanie, łańcuch dostaw. Usługa z zakresem i ceną zamiast ogólnej „konsultacji" — i Lider, którego oceniły firmy produkcyjne.',
+      'Optymalizacja procesów, lean, planowanie, łańcuch dostaw. Usługa z zakresem i ceną zamiast ogólnej „konsultacji” — i Lider, którego oceniły firmy produkcyjne.',
     zlecenia:
       'W produkcji i logistyce zlecenie opisz przez liczby: wolumen, wąskie gardło, koszt dziś. Widełki budżetu i próg poziomu Lidera ustawiasz sam.',
     liderzy:

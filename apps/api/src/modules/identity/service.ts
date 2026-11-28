@@ -85,7 +85,9 @@ export interface IdentityService {
   listUsers(search?: string): Promise<AdminUserRow[]>;
   setUserRole(actorId: string, userId: string, role: 'USER' | 'MODERATOR'): Promise<void>;
   getPublicCompanies(companyIds: string[]): Promise<Map<string, CompanySummary>>;
-  getCompanyMeta(companyId: string): Promise<(CompanySummary & { createdAt: Date }) | null>;
+  getCompanyMeta(
+    companyId: string,
+  ): Promise<(CompanySummary & { createdAt: Date; description: string | null }) | null>;
   // Wiek konta użytkownika — dla progu dojrzałości głosu Q&A i limitów świeżych
   // kont (kwalifikacja/limit rozstrzygana w modułach; identity tylko dostarcza datę).
   getUserCreatedAt(userId: string): Promise<Date | null>;
@@ -532,7 +534,7 @@ export function createIdentityService(
     async getCompanyMeta(companyId) {
       const company = await prisma.company.findUnique({
         where: { id: companyId },
-        select: { id: true, name: true, createdAt: true, nipVerifiedAt: true },
+        select: { id: true, name: true, createdAt: true, nipVerifiedAt: true, description: true },
       });
       return company;
     },

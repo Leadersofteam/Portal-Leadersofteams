@@ -245,7 +245,7 @@ export default async function ZlecenieV17({
               </b>
               <small className={order.companyVerified ? undefined : 'brak'}>
                 <Ico n={order.companyVerified ? 'seal-check' : 'question'} />
-                {order.companyVerified ? 'Firma zweryfikowana' : 'Firma bez potwierdzonego NIP'}
+                {order.companyVerified ? 'NIP — suma kontrolna OK' : 'Firma bez potwierdzonego NIP'}
                 {order.companyOrdersCount
                   ? ` · ${order.companyOrdersCount} ${plural(order.companyOrdersCount, 'zlecenie', 'zlecenia', 'zleceń')}`
                   : ''}

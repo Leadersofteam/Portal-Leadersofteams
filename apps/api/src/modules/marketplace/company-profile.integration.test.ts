@@ -73,6 +73,7 @@ describe.skipIf(!hasInfra)('publiczny profil Firmy', () => {
       orders: unknown[];
     };
     expect(body.company.name).toContain(String(run));
+    expect(body.company).toHaveProperty('description', null);
     expect(body.stats.ordersPublished).toBe(0);
     expect(body.reviews).toEqual([]);
     expect(body.orders).toEqual([]);

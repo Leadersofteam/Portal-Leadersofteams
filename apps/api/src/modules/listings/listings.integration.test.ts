@@ -269,6 +269,46 @@ describe.skipIf(!hasInfra)('listings — usługi, zapytania, konwersja', () => {
     expect((after.json() as { inquiry: { status: string } }).inquiry.status).toBe('CONVERTED');
   });
 
+  // Zastany błąd: „Edytuj” przy szkicu prowadziło w 404, bo formularz czytał trasę publiczną.
+  it('szkic: publicznie 404, autor czyta go przez /me/listings/slug, obcy nie', async () => {
+    const draft = (
+      await ctx.app.inject({
+        method: 'POST',
+        url: '/api/v1/listings',
+        headers: { cookie: leaderCookie },
+        payload: {
+          industryId,
+          title: `Szkic do poprawienia ${run}`,
+          description:
+            'Opis szkicu, który autor chce jeszcze dopracować przed publikacją w katalogu.',
+          tags: [],
+          packages: [
+            {
+              tier: 'BASIC',
+              name: 'Audyt',
+              priceDeclared: 500,
+              scope: 'Przegląd i krótki raport',
+              deliveryDays: 3,
+            },
+          ],
+          imageFileIds: [],
+        },
+      })
+    ).json() as { slug: string };
+    const url = `/api/v1/me/listings/slug/${draft.slug}`;
+    const publiczny = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/v1/listings/slug/${draft.slug}`,
+    });
+    expect(publiczny.statusCode).toBe(404);
+    const autor = await ctx.app.inject({ method: 'GET', url, headers: { cookie: leaderCookie } });
+    expect(autor.statusCode).toBe(200);
+    expect((autor.json() as { listing: { status: string } }).listing.status).toBe('DRAFT');
+    const obcy = await ctx.app.inject({ method: 'GET', url, headers: { cookie: companyCookie } });
+    expect(obcy.statusCode).toBe(404);
+    expect((await ctx.app.inject({ method: 'GET', url })).statusCode).toBe(401);
+  });
+
   it('ANTY-MLM: publikacja usługi, zapytanie i konwersja NIE tworzą żadnego PointEvent', async () => {
     const events = await ctx.prisma.pointEvent.count({ where: { userId: leaderUserId } });
     expect(events).toBe(0);
